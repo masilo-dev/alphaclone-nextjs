@@ -1,3 +1,5 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 
 import React, { useState, useEffect } from 'react';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -144,11 +146,11 @@ const BrandingSettings = () => {
                                     onChange={(e) => setBranding({ ...branding, brand_color_primary: e.target.value })}
                                     className="w-10 h-10 rounded-lg border-0 bg-transparent cursor-pointer"
                                 />
-                                <input
+                                <AlphaCloneInput
                                     type="text"
                                     value={branding.brand_color_primary}
                                     onChange={(e) => setBranding({ ...branding, brand_color_primary: e.target.value })}
-                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)]"
+                                    className="w-full px-3 py-2"
                                 />
                             </div>
                         </div>
@@ -161,11 +163,11 @@ const BrandingSettings = () => {
                                     onChange={(e) => setBranding({ ...branding, brand_color_secondary: e.target.value })}
                                     className="w-10 h-10 rounded-lg border-0 bg-transparent cursor-pointer"
                                 />
-                                <input
+                                <AlphaCloneInput
                                     type="text"
                                     value={branding.brand_color_secondary}
                                     onChange={(e) => setBranding({ ...branding, brand_color_secondary: e.target.value })}
-                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)]"
+                                    className="w-full px-3 py-2"
                                 />
                             </div>
                         </div>
@@ -180,7 +182,7 @@ const BrandingSettings = () => {
                     <div className="space-y-4">
                         <div>
                             <label className="block type-label font-medium text-[var(--ws-text-muted)] mb-1">Legal Business Name</label>
-                            <input
+                            <AlphaCloneInput
                                 type="text"
                                 value={branding.legal_name}
                                 onChange={(e) => setBranding({ ...branding, legal_name: e.target.value })}
@@ -196,20 +198,20 @@ const BrandingSettings = () => {
                         </div>
                         <div>
                             <label className="block type-label font-medium text-[var(--ws-text-muted)] mb-1">Tax ID / VAT Number</label>
-                            <input
+                            <AlphaCloneInput
                                 type="text"
                                 value={branding.tax_id}
                                 onChange={(e) => setBranding({ ...branding, tax_id: e.target.value })}
-                                className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/50 outline-none"
+                                className="w-full px-3 py-2"
                                 placeholder="e.g. US-123456789"
                             />
                         </div>
                         <div>
                             <label className="block type-label font-medium text-[var(--ws-text-muted)] mb-1">Business Address</label>
-                            <textarea
+                            <AlphaCloneTextarea
                                 value={branding.business_address}
                                 onChange={(e) => setBranding({ ...branding, business_address: e.target.value })}
-                                className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/50 outline-none min-h-[100px]"
+                                className="w-full px-3 py-2 min-h-[100px]"
                                 placeholder="Full registered address..."
                             />
                         </div>

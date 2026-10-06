@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useCallback } from 'react';
 import { 
   Search, Globe, Github, FileText, Server, Shield, 
@@ -203,12 +206,12 @@ export default function EmailDiscoveryTool() {
             </label>
             <div className="relative">
               <Globe className="absolute left-3 top-3 w-5 h-5 text-[var(--ws-text-muted)]" />
-              <input
+              <AlphaCloneInput
                 type="text"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
                 placeholder="company.com"
-                className="w-full pl-10 pr-4 py-2.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5"
               />
             </div>
           </div>
@@ -217,12 +220,12 @@ export default function EmailDiscoveryTool() {
             <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
               Company Name <span className="text-[var(--ws-text-muted)]">(optional, helps GitHub search)</span>
             </label>
-            <input
+            <AlphaCloneInput
               type="text"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               placeholder="Acme Corp"
-              className="w-full px-4 py-2.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2.5"
             />
           </div>
         </div>

@@ -1,5 +1,8 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Users, Activity, Clock, Monitor, MousePointer, 
@@ -140,15 +143,15 @@ export default function WorkerMonitoringDashboard() {
         </div>
         
         <div className="flex items-center gap-3">
-          <select
+          <AlphaCloneSelect
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value as any)}
-            className="px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)]"
+            className="px-3 py-2"
           >
             <option value="today">Today</option>
             <option value="week">This Week</option>
             <option value="month">This Month</option>
-          </select>
+          </AlphaCloneSelect>
           
           <button
             onClick={loadData}

@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React from 'react';
 import { Search, LayoutGrid, List, SlidersHorizontal, X } from 'lucide-react';
 
@@ -38,11 +41,11 @@ export default function ListViewToolbar({
       <div className="flex items-center gap-2">
         <div className="flex flex-1 items-center gap-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 h-10">
           <Search className="w-4 h-4 text-[var(--ws-text-muted)] flex-shrink-0" />
-          <input
+          <AlphaCloneInput
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={searchPlaceholder}
-            className="flex-1 bg-transparent type-ui text-[var(--ws-text-primary)] outline-none placeholder:text-slate-600"
+            className="flex-1"
           />
           {search && (
             <button onClick={() => onSearchChange('')} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">

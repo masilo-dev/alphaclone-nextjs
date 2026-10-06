@@ -1,5 +1,8 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { cn } from '@/lib/utils';
@@ -182,17 +185,17 @@ function AddMailboxForm({ tenantId, onCreated, onCancel }: AddMailboxFormProps) 
           <label className="block text-[11px] font-semibold uppercase tracking-wide text-[var(--ws-text-muted)]">
             Provider
           </label>
-          <select
+          <AlphaCloneSelect
             value={provider}
             onChange={(e) => setProvider(e.target.value)}
-            className="w-full h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+            className="w-full h-9 px-3"
           >
             {Object.entries(PROVIDER_STYLES).map(([key, ps]) => (
               <option key={key} value={key}>
                 {ps.label}
               </option>
             ))}
-          </select>
+          </AlphaCloneSelect>
         </div>
 
         <div className="space-y-1">

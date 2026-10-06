@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, User, Bot, HelpCircle } from 'lucide-react';
@@ -87,13 +90,13 @@ export const AlphaConciergeBubble: React.FC = () => {
                         {/* Input */}
                         <div className="p-4 border-t border-[var(--ws-border)] bg-black/20">
                             <div className="flex space-x-2">
-                                <input
+                                <AlphaCloneInput
                                     type="text"
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                                     placeholder="Ask me anything..."
-                                    className="flex-1 bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="flex-1 px-3 py-2"
                                 />
                                 <button 
                                     onClick={handleSend}

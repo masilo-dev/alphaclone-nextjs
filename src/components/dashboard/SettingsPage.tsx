@@ -1,5 +1,10 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect } from 'react';
 import {
     CreditCard, Lock, Loader2,
@@ -499,11 +504,11 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div className="space-y-1">
                                                 <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black">{translate('Full Name')}</label>
-                                                <input value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)]" />
+                                                <AlphaCloneInput value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} className="w-full h-10 px-3" />
                                             </div>
                                             <div className="space-y-1">
                                                 <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black">{translate('Phone Number')}</label>
-                                                <input value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)]" placeholder="+1 (555) 000-0000" />
+                                                <AlphaCloneInput value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} className="w-full h-10 px-3" placeholder="+1 (555) 000-0000" />
                                             </div>
                                         </div>
                                         <button onClick={handleSaveProfile} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-[var(--text-inverse)] type-caption font-black uppercase tracking-wider rounded-xl">{translate('Save Profile')}</button>
@@ -535,9 +540,9 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 >
                                     <div className="p-4 space-y-4 border-t border-[var(--ws-border)]">
                                         <div className="space-y-3">
-                                            <input type="password" placeholder={translate('Current Password')} value={passwordData.currentPassword} onChange={e => setPasswordData({...passwordData, currentPassword: e.target.value})} className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)]" />
-                                            <input type="password" placeholder={translate('New Password')} value={passwordData.newPassword} onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})} className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)]" />
-                                            <input type="password" placeholder={translate('Confirm New Password')} value={passwordData.confirmPassword} onChange={e => setPasswordData({...passwordData, confirmPassword: e.target.value})} className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)]" />
+                                            <AlphaCloneInput type="password" placeholder={translate('Current Password')} value={passwordData.currentPassword} onChange={e => setPasswordData({...passwordData, currentPassword: e.target.value})} className="w-full h-10 px-3" />
+                                            <AlphaCloneInput type="password" placeholder={translate('New Password')} value={passwordData.newPassword} onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})} className="w-full h-10 px-3" />
+                                            <AlphaCloneInput type="password" placeholder={translate('Confirm New Password')} value={passwordData.confirmPassword} onChange={e => setPasswordData({...passwordData, confirmPassword: e.target.value})} className="w-full h-10 px-3" />
                                         </div>
                                         <button onClick={handleChangePassword} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-[var(--text-inverse)] type-caption font-black uppercase tracking-wider rounded-xl">{translate('Update Password')}</button>
                                     </div>
@@ -610,12 +615,12 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 >
                                     <div className="p-4 space-y-4 border-t border-[var(--ws-border)]">
                                         <div className="space-y-3">
-                                            <input value={businessSettings.businessName} onChange={e => setBusinessSettings({...businessSettings, businessName: e.target.value})} placeholder={translate('Official legal company name')} className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)]" />
-                                            <input value={businessSettings.tradingName} onChange={e => setBusinessSettings({...businessSettings, tradingName: e.target.value})} placeholder={translate('Short name on invoices (e.g. ACS)')} className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)]" />
+                                            <AlphaCloneInput value={businessSettings.businessName} onChange={e => setBusinessSettings({...businessSettings, businessName: e.target.value})} placeholder={translate('Official legal company name')} className="w-full h-10 px-3" />
+                                            <AlphaCloneInput value={businessSettings.tradingName} onChange={e => setBusinessSettings({...businessSettings, tradingName: e.target.value})} placeholder={translate('Short name on invoices (e.g. ACS)')} className="w-full h-10 px-3" />
                                             <p className="type-card-description text-[var(--ws-text-muted)]">{translate('PDF invoices use the short trading name when set — keeps layouts clean.')}</p>
-                                            <input value={businessSettings.email} onChange={e => setBusinessSettings({...businessSettings, email: e.target.value})} placeholder={translate('Business Email')} className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)]" />
-                                            <textarea value={businessSettings.address} onChange={e => setBusinessSettings({...businessSettings, address: e.target.value})} placeholder={translate('Business Address')} rows={2} className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-3 type-ui text-[var(--ws-text-primary)] resize-none" />
-                                            <textarea value={businessSettings.bankDetails} onChange={e => setBusinessSettings({...businessSettings, bankDetails: e.target.value})} placeholder={translate('Bank transfer account details')} rows={2} className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-3 type-ui text-[var(--ws-text-primary)] resize-none" />
+                                            <AlphaCloneInput value={businessSettings.email} onChange={e => setBusinessSettings({...businessSettings, email: e.target.value})} placeholder={translate('Business Email')} className="w-full h-10 px-3" />
+                                            <AlphaCloneTextarea value={businessSettings.address} onChange={e => setBusinessSettings({...businessSettings, address: e.target.value})} placeholder={translate('Business Address')} rows={2} className="w-full p-3 resize-none" />
+                                            <AlphaCloneTextarea value={businessSettings.bankDetails} onChange={e => setBusinessSettings({...businessSettings, bankDetails: e.target.value})} placeholder={translate('Bank transfer account details')} rows={2} className="w-full p-3 resize-none" />
                                         </div>
                                         <button onClick={() => void handleSaveBusiness()} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-[var(--text-inverse)] type-caption font-black uppercase tracking-wider rounded-xl">{translate('Save Details')}</button>
                                     </div>
@@ -647,7 +652,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                     <div className="p-4 space-y-4 border-t border-[var(--ws-border)]">
                                         <div className="space-y-1">
                                             <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black">{translate('Tax country (VAT / GST)')}</label>
-                                            <select
+                                            <AlphaCloneSelect
                                                 value={businessSettings.taxCountry}
                                                 onChange={(e) => {
                                                     const code = e.target.value;
@@ -658,7 +663,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                                         taxRate: lookup.rate > 0 ? lookup.rate : businessSettings.taxRate,
                                                     });
                                                 }}
-                                                className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-caption text-[var(--ws-text-primary)] outline-none"
+                                                className="w-full h-10 px-3"
                                             >
                                                 <option value="ZW">{translate('Zimbabwe (15% VAT)')}</option>
                                                 <option value="ZA">{translate('South Africa (15% VAT)')}</option>
@@ -667,32 +672,32 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                                 <option value="NG">{translate('Nigeria (7.5% VAT)')}</option>
                                                 <option value="GB">{translate('United Kingdom (20% VAT)')}</option>
                                                 <option value="US">{translate('United States (manual)')}</option>
-                                            </select>
+                                            </AlphaCloneSelect>
                                         </div>
                                         <div className="space-y-1">
                                             <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black">{translate('Default tax rate (%)')}</label>
-                                            <input
+                                            <AlphaCloneInput
                                                 type="number"
                                                 min={0}
                                                 max={100}
                                                 step={0.5}
                                                 value={businessSettings.taxRate}
                                                 onChange={(e) => setBusinessSettings({ ...businessSettings, taxRate: parseFloat(e.target.value) || 0 })}
-                                                className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-caption text-[var(--ws-text-primary)] outline-none"
+                                                className="w-full h-10 px-3"
                                             />
                                         </div>
                                         <div className="space-y-1">
                                             <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black">{translate('Workspace currency')}</label>
-                                            <select 
+                                            <AlphaCloneSelect
                                                 value={businessSettings.currency} 
                                                 onChange={e => setBusinessSettings({...businessSettings, currency: e.target.value})}
-                                                className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-caption text-[var(--ws-text-primary)] outline-none"
+                                                className="w-full h-10 px-3"
                                             >
                                                 <option value="USD">USD ($)</option>
                                                 <option value="EUR">EUR (€)</option>
                                                 <option value="GBP">GBP (£)</option>
                                                 <option value="KES">KES (Ksh)</option>
-                                            </select>
+                                            </AlphaCloneSelect>
                                             <p className="type-card-description text-[var(--ws-text-muted)] pt-1">{translate('Applies to invoices and reports for this workspace.')}</p>
                                         </div>
                                     </div>
@@ -1018,18 +1023,18 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     {/* Personal language — does not change workspace for other users */}
                     <div className="space-y-1.5">
                         <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black">{translate('Your language')}</label>
-                        <select
+                        <AlphaCloneSelect
                             name="language"
                             data-testid="language-select"
                             aria-label={translate('Your language')}
                             value={language}
                             onChange={(e) => setLanguage(e.target.value as typeof language)}
-                            className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-caption text-[var(--ws-text-primary)] outline-none"
+                            className="w-full h-10 px-3"
                         >
                             {LANGUAGES.map((lang) => (
                                 <option key={lang.code} value={lang.code}>{lang.label}</option>
                             ))}
-                        </select>
+                        </AlphaCloneSelect>
                         <p className="type-card-description text-[var(--ws-text-muted)]">{translate('Personal preference only — other team members keep their own language.')}</p>
                     </div>
 

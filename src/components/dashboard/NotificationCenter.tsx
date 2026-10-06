@@ -76,7 +76,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
             return;
         }
         setLoadError(null);
-        if (loaded) setNotifications(loaded);
+        if (loaded) setNotifications([...new Map(loaded.map(notification => [notification.id, notification])).values()]);
     }, [userId, tenantId]);
 
     const handleMarkAsRead = useCallback(async (id: string) => {
@@ -114,7 +114,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
         loadNotifications();
 
         const unsubscribe = notificationService.subscribeToNotifications(userId, tenantId, (newNotif: Notification) => {
-            setNotifications(prev => [newNotif, ...prev]);
+            setNotifications(prev => [newNotif, ...prev.filter(notification => notification.id !== newNotif.id)]);
 
             // Also push to native OS notifications if permissions are granted
             // (so users on other tabs / PWA standalone still see it instantly)
@@ -202,7 +202,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -8, scale: 0.97 }}
                             transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-                            className="fixed top-[calc(env(safe-area-inset-top,0px)+3.25rem)] right-3 sm:right-4 w-[min(100vw-1.5rem,22rem)] sm:w-96 max-h-[min(75dvh,600px)] bg-[var(--surface-elevated)] dark:bg-[var(--ws-canvas)] border border-[var(--border-default)] dark:border-[var(--ws-border)] rounded-2xl shadow-2xl shadow-black/50 ac-layer-menu flex flex-col overflow-hidden"
+                            className="fixed top-[calc(env(safe-area-inset-top,0px)+3.25rem)] right-3 sm:right-4 w-[min(calc(100vw-1.5rem),22rem)] sm:w-96 max-h-[min(75dvh,600px)] bg-[var(--ws-panel)] border border-[var(--border-default)] dark:border-[var(--ws-border)] rounded-[var(--ws-radius-lg)] shadow-xl ac-layer-menu flex flex-col overflow-hidden"
                         >
                             {/* Header */}
                             <div className="p-4 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--surface-secondary)] dark:bg-gradient-to-r dark:from-slate-900 dark:to-slate-950">

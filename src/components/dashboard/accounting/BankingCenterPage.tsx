@@ -1,5 +1,8 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Landmark, RefreshCw, Loader2, Plus } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
@@ -289,16 +292,16 @@ export default function BankingCenterPage() {
             />
             <div>
               <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Type</label>
-              <select
+              <AlphaCloneSelect
                 value={form.accountType}
                 onChange={(e) => setForm((f) => ({ ...f, accountType: e.target.value as AccountType }))}
-                className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
+                className="w-full px-3 py-2"
               >
                 <option value="checking">Checking</option>
                 <option value="savings">Savings</option>
                 <option value="credit">Credit</option>
                 <option value="other">Other</option>
-              </select>
+              </AlphaCloneSelect>
             </div>
           </div>
           <Input

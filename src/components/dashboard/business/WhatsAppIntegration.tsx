@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -355,34 +358,34 @@ export default function WhatsAppIntegration() {
                 <>
                   <div>
                     <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1.5">WhatsApp Business Account (WABA) ID</label>
-                    <input
+                    <AlphaCloneInput
                       type="text"
                       value={wabaId}
                       onChange={(e) => setWabaId(e.target.value)}
                       placeholder="e.g. 104857285918239"
-                      className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-emerald-500/40"
+                      className="w-full px-4 py-2.5"
                     />
                   </div>
 
                   <div>
                     <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1.5">Phone Number ID</label>
-                    <input
+                    <AlphaCloneInput
                       type="text"
                       value={phoneNumberId}
                       onChange={(e) => setPhoneNumberId(e.target.value)}
                       placeholder="e.g. 109827364528192"
-                      className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-emerald-500/40"
+                      className="w-full px-4 py-2.5"
                     />
                   </div>
 
                   <div>
                     <label className="block type-caption font-semibold text-[var(--ws-text-muted)] mb-1.5">Meta Access Token</label>
-                    <input
+                    <AlphaCloneInput
                       type="password"
                       value={accessToken}
                       onChange={(e) => setAccessToken(e.target.value)}
                       placeholder="EAABw..."
-                      className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-emerald-500/40"
+                      className="w-full px-4 py-2.5"
                     />
                   </div>
                 </>
@@ -395,12 +398,12 @@ export default function WhatsAppIntegration() {
 
               <div>
                 <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1.5">Display Name / Alias (Optional)</label>
-                <input
+                <AlphaCloneInput
                   type="text"
                   value={alias}
                   onChange={(e) => setAlias(e.target.value)}
                   placeholder="e.g. Primary Support Line"
-                  className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-emerald-500/40"
+                  className="w-full px-4 py-2.5"
                 />
               </div>
 

@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
@@ -418,21 +422,21 @@ export default function ScraperCampaignsPage() {
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="type-label font-medium">Business type or keywords
-                  <input className={`${fieldClass} mt-1.5`} value={form.keywords} onChange={e => setForm({...form, keywords:e.target.value})} placeholder="e.g. accounting firms" />
+                  <AlphaCloneInput className={`${fieldClass} mt-1.5`} value={form.keywords} onChange={e => setForm({...form, keywords:e.target.value})} placeholder="e.g. accounting firms" />
                 </label>
                 <label className="type-label font-medium">Location
-                  <div className="relative mt-1.5"><MapPin className="absolute left-3 top-3 text-[var(--ws-text-secondary)]" size={17}/><input className={`${fieldClass} pl-10`} value={form.location} onChange={e => setForm({...form, location:e.target.value})} placeholder="City, region or country" /></div>
+                  <div className="relative mt-1.5"><MapPin className="absolute left-3 top-3 text-[var(--ws-text-secondary)]" size={17}/><AlphaCloneInput className={`${fieldClass} pl-10`} value={form.location} onChange={e => setForm({...form, location:e.target.value})} placeholder="City, region or country" /></div>
                 </label>
                 <label className="type-label font-medium">Search mode
-                  <select className={`${fieldClass} mt-1.5`} value={form.searchType} onChange={e => setForm({...form,searchType:e.target.value})}>
+                  <AlphaCloneSelect className={`${fieldClass} mt-1.5`} value={form.searchType} onChange={e => setForm({...form,searchType:e.target.value})}>
                     <option value="businesses_by_location">Businesses by location</option><option value="businesses_by_keyword">Businesses by keyword</option>
                     <option value="domain_discovery" disabled>Domain discovery (coming soon)</option><option value="website_contact_discovery" disabled>Website contact discovery (coming soon)</option>
                     <option value="public_directory_discovery" disabled>Public directory discovery (coming soon)</option><option value="public_social_discovery" disabled>Public social profile discovery (coming soon)</option>
                     <option value="csv_import" disabled>CSV import (coming soon)</option><option value="manual" disabled>Manual lead entry (coming soon)</option>
-                  </select>
+                  </AlphaCloneSelect>
                 </label>
                 <label className="type-label font-medium">Industry
-                  <input className={`${fieldClass} mt-1.5`} value={form.industry} onChange={e => setForm({...form,industry:e.target.value})} placeholder="Optional industry" />
+                  <AlphaCloneInput className={`${fieldClass} mt-1.5`} value={form.industry} onChange={e => setForm({...form,industry:e.target.value})} placeholder="Optional industry" />
                 </label>
               </div>
               <fieldset className="mt-5"><legend className="type-ui font-semibold">Required public information</legend>
@@ -441,12 +445,12 @@ export default function ScraperCampaignsPage() {
               </fieldset>
               <button type="button" onClick={() => setAdvanced(!advanced)} className="mt-5 inline-flex min-h-11 items-center gap-2 type-ui font-semibold text-teal-400"><SlidersHorizontal size={16}/>{advanced ? 'Hide' : 'Show'} advanced filters</button>
               {advanced && <div className="grid gap-4 border-t border-[var(--ws-border)] pt-4 md:grid-cols-2">
-                <label className="type-label">Country<input className={`${fieldClass} mt-1`} value={form.country} onChange={e=>setForm({...form,country:e.target.value})}/></label>
-                <label className="type-label">City or region<input className={`${fieldClass} mt-1`} value={form.city} onChange={e=>setForm({...form,city:e.target.value})}/></label>
-                <label className="type-label">Excluded keywords<input className={`${fieldClass} mt-1`} value={form.excludedKeywords} onChange={e=>setForm({...form,excludedKeywords:e.target.value})} placeholder="comma separated"/></label>
-                <label className="type-label">Excluded domains<input className={`${fieldClass} mt-1`} value={form.excludedDomains} onChange={e=>setForm({...form,excludedDomains:e.target.value})} placeholder="comma separated"/></label>
-                <label className="type-label">Result limit<input type="number" min={1} max={500} className={`${fieldClass} mt-1`} value={form.resultLimit} onChange={e=>setForm({...form,resultLimit:Number(e.target.value)})}/></label>
-                <label className="type-label">Radius (km)<input type="number" min={1} max={200} className={`${fieldClass} mt-1`} value={form.radiusKm} onChange={e=>setForm({...form,radiusKm:Number(e.target.value)})}/></label>
+                <label className="type-label">Country<AlphaCloneInput className={`${fieldClass} mt-1`} value={form.country} onChange={e=>setForm({...form,country:e.target.value})}/></label>
+                <label className="type-label">City or region<AlphaCloneInput className={`${fieldClass} mt-1`} value={form.city} onChange={e=>setForm({...form,city:e.target.value})}/></label>
+                <label className="type-label">Excluded keywords<AlphaCloneInput className={`${fieldClass} mt-1`} value={form.excludedKeywords} onChange={e=>setForm({...form,excludedKeywords:e.target.value})} placeholder="comma separated"/></label>
+                <label className="type-label">Excluded domains<AlphaCloneInput className={`${fieldClass} mt-1`} value={form.excludedDomains} onChange={e=>setForm({...form,excludedDomains:e.target.value})} placeholder="comma separated"/></label>
+                <label className="type-label">Result limit<AlphaCloneInput type="number" min={1} max={500} className={`${fieldClass} mt-1`} value={form.resultLimit} onChange={e=>setForm({...form,resultLimit:Number(e.target.value)})}/></label>
+                <label className="type-label">Radius (km)<AlphaCloneInput type="number" min={1} max={200} className={`${fieldClass} mt-1`} value={form.radiusKm} onChange={e=>setForm({...form,radiusKm:Number(e.target.value)})}/></label>
               </div>}
               <div className="mt-6 flex flex-col-reverse gap-3 border-t border-[var(--ws-border)] pt-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="type-caption text-[var(--ws-text-secondary)]">Only businesses with a public phone or email are saved. Duplicate companies in this workspace are skipped.</p>
@@ -521,7 +525,7 @@ function ResultsPanel({ searches, selected, setSelected, candidates, metrics, re
   return <div className="space-y-4">
     <div className="flex flex-col gap-3 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 sm:flex-row sm:items-center sm:justify-between">
       <div><h2 className="font-semibold">{selected?.name || 'No search selected'}</h2><p className="type-caption text-[var(--ws-text-secondary)]">{selected ? `${selected.status.replace('_',' ')} · ${selected.progress}% complete` : 'Create a search to discover public business leads.'}</p>{!canReview ? <p className="mt-1 type-caption text-[var(--warning-text,var(--warning-500))]">View-only review: ask a workspace admin to accept candidates into CRM.</p> : null}</div>
-      {searches.length>0 && <select aria-label="Selected search" className={`${fieldClass} sm:max-w-xs`} value={selected?.id||''} onChange={e=>{const s=searches.find(x=>x.id===e.target.value);if(s)setSelected(s)}}>{searches.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>}
+      {searches.length>0 && <AlphaCloneSelect aria-label="Selected search" className={`${fieldClass} sm:max-w-xs`} value={selected?.id||''} onChange={e=>{const s=searches.find(x=>x.id===e.target.value);if(s)setSelected(s)}}>{searches.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</AlphaCloneSelect>}
     </div>
     <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">{Object.entries(metrics).map(([label,value])=><div key={label} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4"><p className="type-caption uppercase tracking-wide text-[var(--ws-text-secondary)]">{label.replace('_',' ')}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value}</p></div>)}</div>
     <div className="flex gap-2">
@@ -618,7 +622,7 @@ function ListsPanel({
         <h2 className="font-semibold">Create list</h2>
         <p className="mt-1 type-caption text-[var(--ws-text-secondary)]">Lists stay in your workspace and can feed outreach batches.</p>
         <form onSubmit={onCreateList} className="mt-4 space-y-3">
-          <input
+          <AlphaCloneInput
             className={fieldClass}
             value={newListName}
             onChange={(event) => setNewListName(event.target.value)}
@@ -701,7 +705,7 @@ function SettingsPanel({
       <p className="type-caption text-[var(--ws-text-secondary)]">Saved per workspace on this device. New searches start with these values.</p>
       <label className="block type-label font-medium">
         Default result limit
-        <input
+        <AlphaCloneInput
           type="number"
           min={1}
           max={500}

@@ -1,3 +1,4 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User } from '../../../types';
@@ -400,13 +401,13 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block type-label font-bold text-[var(--ws-text-secondary)] mb-2">Email Address *</label>
-                        <input
+                        <AlphaCloneInput
                             type="email"
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="colleague@example.com"
-                            className="w-full px-4 py-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-teal-500 text-[var(--ws-text-primary)] placeholder-slate-600 transition-colors"
+                            className="w-full px-4 py-3 transition-colors"
                         />
                     </div>
 

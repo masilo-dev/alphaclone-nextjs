@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -219,34 +222,34 @@ export default function BrevoIntegration() {
                     <div className="space-y-2">
                         <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">API Key</label>
                         <div className="relative">
-                            <input
+                            <AlphaCloneInput
                                 type="password"
                                 value={config.apiKey}
                                 onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
                                 placeholder="xkeysib-xxxxxxxxxxxxxxxxxxx"
-                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 pl-10 type-ui text-[var(--ws-text-primary)] outline-none focus:border-cyan-500/40"
+                                className="w-full px-4 py-3 pl-10"
                             />
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                         </div>
                     </div>
                     <div className="space-y-2">
                         <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Verified Sender Email</label>
-                        <input
+                        <AlphaCloneInput
                             type="email"
                             value={config.fromEmail}
                             onChange={(e) => setConfig({ ...config, fromEmail: e.target.value })}
                             placeholder="hello@yourdomain.com"
-                            className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-[var(--ws-text-primary)] outline-none focus:border-cyan-500/40"
+                            className="w-full px-4 py-3"
                         />
                     </div>
                     <div className="space-y-2">
                         <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Sender Name</label>
-                        <input
+                        <AlphaCloneInput
                             type="text"
                             value={config.fromName}
                             onChange={(e) => setConfig({ ...config, fromName: e.target.value })}
                             placeholder="Your Company Name"
-                            className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-[var(--ws-text-primary)] outline-none focus:border-cyan-500/40"
+                            className="w-full px-4 py-3"
                         />
                     </div>
                 </div>
@@ -269,12 +272,12 @@ export default function BrevoIntegration() {
                     <div className="pt-2 border-t border-[var(--ws-border)]">
                         <p className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest mb-2">Send Test Email</p>
                         <div className="flex flex-col md:flex-row gap-3">
-                            <input
+                            <AlphaCloneInput
                                 type="email"
                                 value={testRecipient}
                                 onChange={(e) => setTestRecipient(e.target.value)}
                                 placeholder="recipient@domain.com"
-                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-[var(--ws-text-primary)] outline-none focus:border-cyan-500/40"
+                                className="w-full px-4 py-3"
                             />
                             <Button
                                 type="button"

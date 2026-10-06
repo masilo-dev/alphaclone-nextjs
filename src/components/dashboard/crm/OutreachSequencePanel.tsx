@@ -1,5 +1,8 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState } from 'react';
 import { outreachSequenceService, OutreachSequence } from '@/services/outreachSequenceService';
 import { Play, Mail, MessageSquare, Clock, CheckCircle2, Send, ExternalLink } from 'lucide-react';
@@ -66,19 +69,19 @@ export function OutreachSequencePanel({
           <label className="block type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1">
             Select Sequence Template
           </label>
-          <select
+          <AlphaCloneSelect
             value={selectedSeqId}
             onChange={(e) => {
               setSelectedSeqId(e.target.value);
               setActiveStepIndex(0);
               setRunning(false);
             }}
-            className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-teal-500/50"
+            className="w-full px-3 py-2 font-bold"
           >
             {sequences.map(s => (
               <option key={s.id} value={s.id}>{s.name} - ({s.steps.length} Steps)</option>
             ))}
-          </select>
+          </AlphaCloneSelect>
           <p className="type-card-description text-[var(--ws-text-muted)] mt-1">{currentSeq.description}</p>
         </div>
 

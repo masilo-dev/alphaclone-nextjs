@@ -1,3 +1,4 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
 import React, { useEffect, useState } from 'react';
 import { X, Loader2, Save, Trash2, PenTool, BookmarkCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -160,7 +161,7 @@ export const SignerProfileModal: React.FC<SignerProfileModalProps> = ({ profile,
                             {PROVIDER_FIELDS.map((field) => (
                                 <div key={field.key} className={field.key === 'providerAddress' ? 'md:col-span-2' : ''}>
                                     <label className={CONTRACT_LABEL_CLASS}>{t(field.label)}</label>
-                                    <input
+                                    <AlphaCloneInput
                                         className={CONTRACT_INPUT_CLASS}
                                         value={draft[field.key]}
                                         onChange={(e) => setField(field.key, e.target.value)}

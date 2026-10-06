@@ -1,5 +1,8 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Cpu, Play, CheckCircle, X, AlertTriangle, Clock, 
@@ -921,15 +924,15 @@ const AIAgentsTab: React.FC = () => {
                 {/* Lead Action Mode select */}
                 <div className="space-y-2">
                   <label className="type-label font-bold text-[var(--ws-text-secondary)] block">Autonomous Lead Qualifier Action Mode</label>
-                  <select
+                  <AlphaCloneSelect
                     value={rules.lead_action_mode || 'draft_and_task'}
                     onChange={(e) => handleUpdateRules({ lead_action_mode: e.target.value as any })}
-                    className="w-full h-11 px-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] hover:border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)] focus:outline-none focus:border-purple-500 transition-all cursor-pointer font-bold"
+                    className="w-full h-11 px-3 transition-all cursor-pointer font-bold"
                   >
                     <option value="draft_and_task">Draft reply & create follow-up task (Standard Mode)</option>
                     <option value="task_only">Create follow-up task only (Strict AI Refusal of Direct Replies)</option>
                     <option value="draft_only">Draft response only (Zero Task Pollution Mode)</option>
-                  </select>
+                  </AlphaCloneSelect>
                   <span className="type-ui text-[var(--ws-text-muted)] block leading-relaxed">
                     Controls how the AI responds when a buying signal is detected. You can require tasks only, draft messaging only, or both.
                   </span>
@@ -938,10 +941,10 @@ const AIAgentsTab: React.FC = () => {
                 {/* Email Provider Routing select */}
                 <div className="space-y-2">
                   <label className="type-label font-bold text-[var(--ws-text-secondary)] block">Dispatch Email Provider Routing</label>
-                  <select
+                  <AlphaCloneSelect
                     value={rules.email_provider || 'system_default'}
                     onChange={(e) => handleUpdateRules({ email_provider: e.target.value as any })}
-                    className="w-full h-11 px-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] hover:border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)] focus:outline-none focus:border-purple-500 transition-all cursor-pointer font-bold"
+                    className="w-full h-11 px-3 transition-all cursor-pointer font-bold"
                   >
                     <option value="system_default">System Default Platform Route (Brevo)</option>
                     <option value="zoho">Zoho Mail Integration</option>
@@ -949,7 +952,7 @@ const AIAgentsTab: React.FC = () => {
                     <option value="sendgrid">SendGrid SMTP Delivery</option>
                     <option value="resend">Resend (Modern Dispatch)</option>
                     <option value="gmail">Gmail / Google Workspace SMTP App Password</option>
-                  </select>
+                  </AlphaCloneSelect>
                   <span className="type-ui text-[var(--ws-text-muted)] block leading-relaxed">
                     Directs automated email dispatch to your active connected integrations. Falls back to platform defaults if not found.
                   </span>

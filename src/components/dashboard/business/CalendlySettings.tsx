@@ -1,3 +1,4 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
 import React, { useState, useEffect } from 'react';
 import { Calendar, CheckCircle2, AlertCircle, ExternalLink, RefreshCw, XCircle, Link, Copy, Users, ArrowRightLeft } from 'lucide-react';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -337,12 +338,12 @@ const CalendlySettings: React.FC = () => {
                         <div className="flex flex-col gap-2">
                             <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Paste your Calendly Link</label>
                             <div className="flex gap-2">
-                                <input
+                                <AlphaCloneInput
                                     type="text"
                                     value={manualUrl}
                                     onChange={(e) => setManualUrl(e.target.value)}
                                     placeholder="https://calendly.com/your-profile/30min"
-                                    className="flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-2 text-[var(--ws-text-primary)] type-ui focus:outline-none focus:border-teal-500 transition-colors"
+                                    className="flex-1 px-4 py-2 transition-colors"
                                 />
                                 <button
                                     onClick={handleSaveManual}

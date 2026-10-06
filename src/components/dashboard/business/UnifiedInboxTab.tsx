@@ -1,5 +1,9 @@
 "use client";
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   MessageSquare,
@@ -1012,12 +1016,12 @@ export default function UnifiedInboxTab({
 
             {/* Instant Search Bar */}
             <div className="relative">
-              <input
+              <AlphaCloneInput
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by sender, subject, text..."
-                className="w-full pl-8 pr-3 py-1.5 bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-secondary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500"
+                className="w-full pl-8 pr-3 py-1.5"
               />
               <Search className="w-3.5 h-3.5 text-[var(--ws-text-muted)] absolute left-2.5 top-2.5 pointer-events-none" />
             </div>
@@ -1197,14 +1201,14 @@ export default function UnifiedInboxTab({
                 <div className="relative">
                   <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1 block">To</label>
                   <div className="relative">
-                    <input
+                    <AlphaCloneInput
                       type="text"
                       value={contactSearch}
                       onChange={(e) => handleContactSearch(e.target.value)}
                       onBlur={() => setTimeout(() => setShowContactDrop(false), 150)}
                       onFocus={() => contactSearch && contactResults.length > 0 && setShowContactDrop(true)}
                       placeholder="Search contacts or type email..."
-                      className="w-full pl-3 pr-8 py-2.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-secondary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500"
+                      className="w-full pl-3 pr-8 py-2.5"
                     />
                     <ChevronDown className="w-3.5 h-3.5 text-[var(--ws-text-muted)] absolute right-2.5 top-3 pointer-events-none" />
                   </div>
@@ -1241,23 +1245,23 @@ export default function UnifiedInboxTab({
 
                 <div>
                   <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1 block">Subject</label>
-                  <input
+                  <AlphaCloneInput
                     type="text"
                     value={composeSubject}
                     onChange={(e) => setComposeSubject(e.target.value)}
                     placeholder="Email subject"
-                    className="w-full px-3 py-2.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-secondary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500"
+                    className="w-full px-3 py-2.5"
                   />
                 </div>
 
                 <div>
                   <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1 block">Message</label>
-                  <textarea
+                  <AlphaCloneTextarea
                     rows={12}
                     value={composeBody}
                     onChange={(e) => setComposeBody(e.target.value)}
                     placeholder="Write your message..."
-                    className="w-full px-4 py-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-ui leading-6 text-[var(--ws-text-secondary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 resize-y min-h-48"
+                    className="w-full px-4 py-3 leading-6 resize-y min-h-48"
                   />
                 </div>
 
@@ -1458,32 +1462,32 @@ export default function UnifiedInboxTab({
                       )}
 
                     {selectedMessage.channel === "email" && (
-                      <input
+                      <AlphaCloneInput
                         type="text"
                         value={replySubject}
                         onChange={(e) => setReplySubject(e.target.value)}
                         placeholder="Email subject"
-                        className="w-full px-3 py-2 bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
+                        className="w-full px-3 py-2"
                       />
                     )}
 
                     {/* Optional instruction input */}
                     <div className="flex gap-2">
-                      <input
+                      <AlphaCloneInput
                         type="text"
                         placeholder="Add instructions for draft (e.g. 'say yes, book for Friday at 3pm')"
                         value={customReplyPrompt}
                         onChange={(e) => setCustomReplyPrompt(e.target.value)}
-                        className="flex-1 px-3 py-2 bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
+                        className="flex-1 px-3 py-2"
                       />
                     </div>
 
-                    <textarea
+                    <AlphaCloneTextarea
                       rows={8}
                       value={draftReplyText}
                       onChange={(e) => setDraftReplyText(e.target.value)}
                       placeholder="AI draft or manual message response..."
-                      className="w-full min-h-48 px-4 py-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg type-ui leading-6 text-[var(--ws-text-secondary)] placeholder-slate-600 focus:outline-none focus:border-teal-500 resize-y"
+                      className="w-full min-h-48 px-4 py-3 leading-6 resize-y"
                     />
 
                     <div className="flex justify-end gap-2">

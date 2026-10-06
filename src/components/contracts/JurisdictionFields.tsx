@@ -1,3 +1,5 @@
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
 import React, { useState } from 'react';
 import { EU_JURISDICTIONS } from '@/config/euJurisdictions';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -35,7 +37,7 @@ export const JurisdictionFields: React.FC<JurisdictionFieldsProps> = ({ jurisdic
                 <label className={CONTRACT_LABEL_CLASS}>
                     {t('Governing Jurisdiction')}{required ? ' *' : ''}
                 </label>
-                <select
+                <AlphaCloneSelect
                     className={CONTRACT_INPUT_CLASS}
                     value={selectValue}
                     onChange={(e) => {
@@ -55,9 +57,9 @@ export const JurisdictionFields: React.FC<JurisdictionFieldsProps> = ({ jurisdic
                         <option key={j.code} value={j.label}>{j.label}</option>
                     ))}
                     <option value={CUSTOM}>{t('Other (type below)')}</option>
-                </select>
+                </AlphaCloneSelect>
                 {showCustomInput && (
-                    <input
+                    <AlphaCloneInput
                         className={`${CONTRACT_INPUT_CLASS} mt-2`}
                         value={jurisdiction}
                         onChange={(e) => onChange({ jurisdiction: e.target.value, governingLaw })}
@@ -69,7 +71,7 @@ export const JurisdictionFields: React.FC<JurisdictionFieldsProps> = ({ jurisdic
                 <label className={CONTRACT_LABEL_CLASS}>
                     {t('Governing Law')}{required ? ' *' : ''}
                 </label>
-                <input
+                <AlphaCloneInput
                     className={CONTRACT_INPUT_CLASS}
                     value={governingLaw}
                     onChange={(e) => onChange({ jurisdiction, governingLaw: e.target.value })}

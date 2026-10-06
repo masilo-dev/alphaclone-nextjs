@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -714,11 +717,11 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                             </div>
                                         </div>
                                         <div className="flex gap-2">
-                                            <input
+                                            <AlphaCloneInput
                                                 value={aiPrompt}
                                                 onChange={e => setAiPrompt(e.target.value)}
                                                 placeholder="What should AI write? (no auto greeting)"
-                                                className="flex-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-caption text-[var(--ws-text-primary)] placeholder:text-slate-600 focus:border-teal-500/50 outline-none"
+                                                className="flex-1 px-3 py-2"
                                                 onKeyDown={e => e.key === 'Enter' && handleAIGenerate()}
                                             />
                                             <Button
@@ -749,12 +752,12 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
                                 <div>
                                     <label className="type-caption text-[var(--ws-text-muted)] uppercase font-bold tracking-wider block mb-1.5">From</label>
-                                    <input
+                                    <AlphaCloneInput
                                         type="text"
                                         value={from}
                                         onChange={e => setFrom(e.target.value)}
                                         placeholder="sender@yourdomain.com"
-                                        className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-xl px-3 py-2.5 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/40 outline-none"
+                                        className="w-full px-3 py-2.5"
                                     />
                                 </div>
 
@@ -771,7 +774,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                         </button>
                                     </div>
                                     <div className="relative">
-                                        <input
+                                        <AlphaCloneInput
                                             type="text"
                                             value={to}
                                             onChange={e => {
@@ -781,7 +784,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                             }}
                                             onFocus={() => setShowContactDropdown(true)}
                                             placeholder="Type email or click Select from contacts…"
-                                            className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-xl px-3 py-2.5 pr-16 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/40 outline-none"
+                                            className="w-full px-3 py-2.5 pr-16"
                                         />
                                         <button 
                                             type="button"
@@ -802,20 +805,20 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                             >
                                                 <div>
                                                     <label className="type-caption text-[var(--ws-text-muted)] uppercase font-bold tracking-wider block mb-1">CC</label>
-                                                    <input
+                                                    <AlphaCloneInput
                                                         type="text"
                                                         value={cc}
                                                         onChange={e => setCc(e.target.value)}
-                                                        className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-caption text-[var(--ws-text-primary)] focus:border-teal-500/40 outline-none"
+                                                        className="w-full px-3 py-2"
                                                     />
                                                 </div>
                                                 <div>
                                                     <label className="type-caption text-[var(--ws-text-muted)] uppercase font-bold tracking-wider block mb-1">BCC</label>
-                                                    <input
+                                                    <AlphaCloneInput
                                                         type="text"
                                                         value={bcc}
                                                         onChange={e => setBcc(e.target.value)}
-                                                        className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-caption text-[var(--ws-text-primary)] focus:border-teal-500/40 outline-none"
+                                                        className="w-full px-3 py-2"
                                                     />
                                                 </div>
                                             </motion.div>
@@ -884,12 +887,12 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
                                 <div>
                                     <label className="type-caption text-[var(--ws-text-muted)] uppercase font-bold tracking-wider block mb-1.5">Subject</label>
-                                    <input
+                                    <AlphaCloneInput
                                         type="text"
                                         value={subject}
                                         onChange={e => setSubject(e.target.value)}
                                         placeholder="Subject"
-                                        className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-xl px-3 py-2.5 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/40 outline-none"
+                                        className="w-full px-3 py-2.5"
                                     />
                                 </div>
 

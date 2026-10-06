@@ -1,5 +1,9 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Activity,
@@ -315,8 +319,8 @@ export default function BonnieWorkspaceViews({
         <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <label className="type-label text-[var(--ws-text-muted)]">Active run</label>
-            <select
-              className="max-w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 type-caption dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)]"
+            <AlphaCloneSelect
+              className="max-w-full px-2 py-1.5 dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)]"
               value={detail?.run?.id || ''}
               onChange={(e) => {
                 const id = e.target.value;
@@ -329,7 +333,7 @@ export default function BonnieWorkspaceViews({
                   {r.title?.slice(0, 80) || r.id} ({r.status})
                 </option>
               ))}
-            </select>
+            </AlphaCloneSelect>
             {detail?.run?.id && (
               <button
                 type="button"
@@ -573,15 +577,15 @@ export default function BonnieWorkspaceViews({
               </div>
               <div className="rounded-xl border border-slate-200 p-4 dark:border-[var(--ws-border)]">
                 <label className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Mission</label>
-                <select
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 type-ui dark:border-[var(--ws-border)] dark:bg-[var(--ws-canvas)]"
+                <AlphaCloneSelect
+                  className="mt-1 w-full px-3 py-2 dark:border-[var(--ws-border)] dark:bg-[var(--ws-canvas)]"
                   value={outcomeKey}
                   onChange={(e) => setOutcomeKey(e.target.value)}
                 >
                   {outcomesCatalog.map((o: any) => (
                     <option key={o.outcome_key} value={o.outcome_key}>{o.title}</option>
                   ))}
-                </select>
+                </AlphaCloneSelect>
                 <label className="mt-3 flex items-center gap-2 type-label text-slate-600 dark:text-[var(--ws-text-secondary)]">
                   <input type="checkbox" checked={outcomeExecute} onChange={(e) => setOutcomeExecute(e.target.checked)} />
                   Execute provider writes (publish, send, invoice, schedule)
@@ -600,8 +604,8 @@ export default function BonnieWorkspaceViews({
                   ].map(([key, label]) => (
                     <div key={key}>
                       <label className="type-ui text-[var(--ws-text-muted)]">{label}</label>
-                      <input
-                        className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 type-caption dark:border-[var(--ws-border)] dark:bg-[var(--ws-canvas)]"
+                      <AlphaCloneInput
+                        className="mt-0.5 w-full px-2 py-1.5 dark:border-[var(--ws-border)] dark:bg-[var(--ws-canvas)]"
                         value={outcomeParams[key] || ''}
                         onChange={(e) => setOutcomeParams((prev) => ({ ...prev, [key]: e.target.value }))}
                       />

@@ -1,5 +1,10 @@
 'use client';
 
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Linkedin, RefreshCw, ExternalLink, MessageCircle, ThumbsUp, AlertTriangle, Loader2, Sparkles, X, Plus, Calendar, Send } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -980,23 +985,23 @@ ${parentContext}Return only the comment text.`;
       </div>
 
       <div className="relative group">
-        <textarea
+        <AlphaCloneTextarea
           value={aiTopic}
           onChange={(e) => setAiTopic(e.target.value)}
           placeholder="What should this post be about? Describe it or let AI draft it..."
           rows={4}
-          className="w-full min-h-[96px] bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl p-4 text-base text-[var(--ws-text-primary)] placeholder-slate-600 focus:border-teal-500/50 focus:outline-none transition-all resize-y group-hover:border-[var(--ws-border)]"
+          className="w-full min-h-[96px] p-4 transition-all resize-y group-hover:border-[var(--ws-border)]"
         />
       </div>
 
       <div className="space-y-3 pt-2">
         <div className="group relative">
-          <textarea
+          <AlphaCloneTextarea
             value={composeCaption}
             onChange={(e) => setComposeCaption(e.target.value)}
             placeholder="Post content will appear here..."
             rows={8}
-            className="w-full min-h-[180px] bg-transparent border-b border-[var(--ws-border)] py-2 text-base text-[var(--ws-text-secondary)] placeholder-slate-700 focus:border-teal-500 focus:outline-none transition-all resize-y"
+            className="w-full min-h-[180px] py-2 transition-all resize-y"
           />
         </div>
 
@@ -1031,30 +1036,30 @@ ${parentContext}Return only the comment text.`;
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div className="relative">
-            <input
+            <AlphaCloneInput
               value={composeLinkUrl}
               onChange={(e) => setComposeLinkUrl(e.target.value)}
               placeholder="Link URL (option)"
-              className="w-full bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]/50 rounded-xl px-4 py-2.5 type-ui text-[var(--ws-text-primary)] placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+              className="w-full px-4 py-2.5"
             />
           </div>
           <div className="relative">
-            <input
+            <AlphaCloneInput
               value={composeImageUrl}
               onChange={(e) => setComposeImageUrl(e.target.value)}
               placeholder="Media URL (option)"
-              className="w-full bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]/50 rounded-xl px-4 py-2.5 type-ui text-[var(--ws-text-primary)] placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+              className="w-full px-4 py-2.5"
             />
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
           <div className="flex-1 relative">
-            <input
+            <AlphaCloneInput
               type="datetime-local"
               value={composeScheduledAt}
               onChange={(e) => setComposeScheduledAt(e.target.value)}
-              className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-2.5 type-ui text-[var(--ws-text-primary)] focus:border-teal-500 focus:outline-none [color-scheme:dark]"
+              className="w-full px-4 py-2.5 [color-scheme:dark]"
             />
           </div>
           <button
@@ -1079,10 +1084,10 @@ ${parentContext}Return only the comment text.`;
         </div>
 
         <div className="pt-2 border-t border-[var(--ws-border)]/50">
-           <select
+           <AlphaCloneSelect
             value={selectedLinkedInOrganizationId}
             onChange={(e) => setSelectedLinkedInOrganizationId(e.target.value)}
-            className="w-full bg-transparent py-2 type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest focus:outline-none cursor-pointer hover:text-[var(--ws-text-secondary)] transition-colors"
+            className="w-full py-2 font-bold uppercase tracking-widest cursor-pointer hover:text-[var(--ws-text-secondary)] transition-colors"
           >
             <option value="" className="bg-[var(--ws-panel)]">Personal Profile</option>
             {companyPages.map((page) => (
@@ -1090,7 +1095,7 @@ ${parentContext}Return only the comment text.`;
                 Company: {page.name || page.vanityName}
               </option>
             ))}
-          </select>
+          </AlphaCloneSelect>
         </div>
       </div>
     </div>
@@ -1370,20 +1375,20 @@ ${parentContext}Return only the comment text.`;
 
         <div className="flex items-center gap-2">
           {integrations.length > 0 && (
-            <select
+            <AlphaCloneSelect
               value={selectedLinkedInMemberId}
               onChange={(e) => {
                 setSelectedLinkedInMemberId(e.target.value);
                 setSelectedLinkedInOrganizationId('');
               }}
-              className="h-11 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 type-caption font-semibold text-[var(--ws-text-secondary)] hover:border-slate-600 focus:outline-none max-w-[240px]"
+              className="h-11 px-3 font-semibold max-w-[240px]"
             >
               {integrations.map((row) => (
                 <option key={row.linkedin_member_id} value={row.linkedin_member_id} className="bg-[var(--ws-panel)]">
                   {row.linkedin_member_id}
                 </option>
               ))}
-            </select>
+            </AlphaCloneSelect>
           )}
           {!selectedIntegration?.is_active && (
             <button
@@ -1604,11 +1609,11 @@ ${parentContext}Return only the comment text.`;
                                 </button>
                               </div>
                               <div className="flex flex-col sm:flex-row gap-2">
-                                <input 
+                                <AlphaCloneInput
                                   value={replyByComment[c.commentUrn] || ''}
                                   onChange={(e) => setReplyByComment(prev => ({...prev, [c.commentUrn]: e.target.value}))}
                                   placeholder="Type reply..." 
-                                  className="flex-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-base text-[var(--ws-text-primary)] focus:border-teal-500 focus:outline-none"
+                                  className="flex-1 px-4 py-3"
                                 />
                                 <button 
                                   onClick={() => handleComment(post, c.commentUrn)}

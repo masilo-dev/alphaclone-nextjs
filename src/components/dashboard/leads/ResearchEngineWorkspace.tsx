@@ -1,5 +1,9 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
 import {
@@ -330,21 +334,21 @@ export default function ResearchEngineWorkspace() {
           {jobs.length > 0 && (
             <div className="flex items-center gap-2">
               <label className="text-xs font-medium text-[var(--ws-text-muted)]">Previous Runs:</label>
-              <select
+              <AlphaCloneSelect
                 aria-label="Select research run"
                 value={activeJob?.id || ''}
                 onChange={(e) => {
                   const found = jobs.find((j) => j.id === e.target.value);
                   if (found) setActiveJob(found);
                 }}
-                className="h-9 rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs font-medium text-slate-700 outline-none focus:border-blue-500"
+                className="h-9 px-3 font-medium"
               >
                 {jobs.map((j) => (
                   <option key={j.id} value={j.id}>
                     {j.query} ({j.location || 'Global'}) — {new Date(j.created_at).toLocaleDateString()}
                   </option>
                 ))}
-              </select>
+              </AlphaCloneSelect>
             </div>
           )}
         </div>
@@ -358,12 +362,12 @@ export default function ResearchEngineWorkspace() {
               </label>
               <div className="relative">
                 <Search className="absolute left-3.5 top-3 h-4 w-4 text-[var(--ws-text-muted)]" />
-                <input
+                <AlphaCloneInput
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="e.g. Plumbing companies, Dental clinics, SaaS agencies"
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  className="h-10 w-full pl-10 pr-3"
                   required
                 />
               </div>
@@ -375,12 +379,12 @@ export default function ResearchEngineWorkspace() {
               </label>
               <div className="relative">
                 <Building2 className="absolute left-3.5 top-3 h-4 w-4 text-[var(--ws-text-muted)]" />
-                <input
+                <AlphaCloneInput
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="e.g. Sydney, Australia, Austin TX"
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  className="h-10 w-full pl-10 pr-3"
                 />
               </div>
             </div>
@@ -390,13 +394,13 @@ export default function ResearchEngineWorkspace() {
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Leads
                 </label>
-                <input
+                <AlphaCloneInput
                   type="number"
                   min="5"
                   max="200"
                   value={targetCount}
                   onChange={(e) => setTargetCount(Number(e.target.value))}
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-blue-600"
+                  className="h-10 w-full px-3"
                 />
               </div>
 
@@ -473,37 +477,37 @@ export default function ResearchEngineWorkspace() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-slate-200">
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Target Industry</label>
-                    <input
+                    <AlphaCloneInput
                       type="text"
                       value={industry}
                       onChange={(e) => setIndustry(e.target.value)}
                       placeholder="e.g. Healthcare, Home Services"
-                      className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-800 outline-none"
+                      className="h-9 w-full px-3"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Business Scale</label>
-                    <select
+                    <AlphaCloneSelect
                       value={businessSize}
                       onChange={(e) => setBusinessSize(e.target.value as any)}
-                      className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-800 outline-none"
+                      className="h-9 w-full px-3"
                     >
                       <option value="any">Any Business Size</option>
                       <option value="small">Small Business (1-20)</option>
                       <option value="medium">Mid-Sized (20-100)</option>
                       <option value="large">Enterprise (100+)</option>
-                    </select>
+                    </AlphaCloneSelect>
                   </div>
 
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Custom ICP Instruction</label>
-                    <input
+                    <AlphaCloneInput
                       type="text"
                       value={customInstructions}
                       onChange={(e) => setCustomInstructions(e.target.value)}
                       placeholder="e.g. Must have booking form or pricing"
-                      className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-800 outline-none"
+                      className="h-9 w-full px-3"
                     />
                   </div>
                 </div>
@@ -664,12 +668,12 @@ export default function ResearchEngineWorkspace() {
 
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[var(--ws-text-muted)]" />
-            <input
+            <AlphaCloneInput
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search in results..."
-              className="h-8 w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-xs text-slate-800 outline-none focus:border-blue-500"
+              className="h-8 w-full pl-8 pr-3"
             />
           </div>
         </div>

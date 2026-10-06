@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Mail, Send, X, Loader2, CheckCircle2, User, Search, Users, ChevronDown, MailCheck, Sparkles } from 'lucide-react';
 import { Button, Input } from '../../ui/UIComponents';
@@ -387,13 +391,13 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                                 <div className="p-2 border-b border-[var(--ws-border)]">
                                     <div className="relative">
                                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--ws-text-muted)]" />
-                                        <input
+                                        <AlphaCloneInput
                                             autoFocus
                                             type="text"
                                             value={contactSearch}
                                             onChange={(e) => setContactSearch(e.target.value)}
                                             placeholder="Search clients..."
-                                            className="w-full bg-[var(--ws-panel)] text-[var(--ws-text-primary)] type-caption rounded-lg pl-8 pr-3 py-2 outline-none border border-[var(--ws-border)] focus:border-[var(--brand-blue-500)]/50 transition-all"
+                                            className="w-full pl-8 pr-3 py-2 transition-all"
                                         />
                                     </div>
                                 </div>
@@ -478,12 +482,12 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                                 Bonnie draft
                             </button>
                         </div>
-                        <textarea
+                        <AlphaCloneTextarea
                             value={body}
                             onChange={(e) => setBody(e.target.value)}
                             placeholder="Type your message here..."
                             disabled={!selectedClient?.email || loadingProvider}
-                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] p-3 rounded-[12px] text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-[var(--brand-blue-500)] transition-colors h-[140px] max-h-[140px] resize-none overflow-y-auto"
+                            className="w-full p-3 transition-colors h-[140px] max-h-[140px] resize-none overflow-y-auto"
                         />
                     </div>
                 </div>

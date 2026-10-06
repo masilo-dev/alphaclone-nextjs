@@ -1,5 +1,10 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Receipt, Trash2, Edit2, CheckCircle2,
@@ -438,39 +443,39 @@ export default function ExpenseTrackerTab() {
                         className="hidden"
                         onChange={handleCameraScan}
                     />
-                    <select
+                    <AlphaCloneSelect
                         value={statusFilter}
                         onChange={e => setStatusFilter(e.target.value)}
-                        className="min-h-11 px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
+                        className="min-h-11 px-3 py-2"
                     >
                         <option value="all">All Statuses</option>
                         <option value="pending">Pending</option>
                         <option value="approved">Approved</option>
                         <option value="rejected">Rejected</option>
                         <option value="reimbursed">Reimbursed</option>
-                    </select>
-                    <select
+                    </AlphaCloneSelect>
+                    <AlphaCloneSelect
                         value={categoryFilter}
                         onChange={e => setCategoryFilter(e.target.value)}
-                        className="min-h-11 px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
+                        className="min-h-11 px-3 py-2"
                     >
                         <option value="all">All Categories</option>
                         {categories.map(c => (
                             <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
                         ))}
-                    </select>
-                    <input
+                    </AlphaCloneSelect>
+                    <AlphaCloneInput
                         type="date"
                         value={dateFrom}
                         onChange={e => setDateFrom(e.target.value)}
-                        className="min-h-11 px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
+                        className="min-h-11 px-3 py-2"
                         aria-label="From date"
                     />
-                    <input
+                    <AlphaCloneInput
                         type="date"
                         value={dateTo}
                         onChange={e => setDateTo(e.target.value)}
-                        className="min-h-11 px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
+                        className="min-h-11 px-3 py-2"
                         aria-label="To date"
                     />
                     {(statusFilter !== 'all' || categoryFilter !== 'all' || dateFrom || dateTo) && (
@@ -547,51 +552,51 @@ export default function ExpenseTrackerTab() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Date *</label>
-                            <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui" />
+                            <AlphaCloneInput type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                                className="w-full px-3 py-2" />
                         </div>
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Amount *</label>
-                            <input type="number" min="0" step="0.01" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                            <AlphaCloneInput type="number" min="0" step="0.01" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
                                 placeholder="0.00"
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2" />
                         </div>
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Tax Amount</label>
-                            <input type="number" min="0" step="0.01" value={form.tax_amount} onChange={e => setForm(f => ({ ...f, tax_amount: e.target.value }))}
+                            <AlphaCloneInput type="number" min="0" step="0.01" value={form.tax_amount} onChange={e => setForm(f => ({ ...f, tax_amount: e.target.value }))}
                                 placeholder="0.00"
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2" />
                         </div>
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Vendor / Payee</label>
-                            <input type="text" value={form.vendor_name} onChange={e => setForm(f => ({ ...f, vendor_name: e.target.value }))}
+                            <AlphaCloneInput type="text" value={form.vendor_name} onChange={e => setForm(f => ({ ...f, vendor_name: e.target.value }))}
                                 placeholder="e.g. Amazon, Uber"
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2" />
                         </div>
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Category</label>
-                            <select value={form.category_id} onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui">
+                            <AlphaCloneSelect value={form.category_id} onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
+                                className="w-full px-3 py-2">
                                 <option value="">Uncategorized</option>
                                 {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Payment Method</label>
-                            <select value={form.payment_method} onChange={e => setForm(f => ({ ...f, payment_method: e.target.value }))}
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui capitalize">
+                            <AlphaCloneSelect value={form.payment_method} onChange={e => setForm(f => ({ ...f, payment_method: e.target.value }))}
+                                className="w-full px-3 py-2 capitalize">
                                 {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m.replace('_', ' ')}</option>)}
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1.5 block">Paid From (Asset)</label>
-                            <select value={form.asset_account_id} onChange={e => setForm(f => ({ ...f, asset_account_id: e.target.value }))}
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui">
+                            <AlphaCloneSelect value={form.asset_account_id} onChange={e => setForm(f => ({ ...f, asset_account_id: e.target.value }))}
+                                className="w-full px-3 py-2">
                                 <option value="">Select Account</option>
                                 {assetAccounts.map(acc => (
                                     <option key={acc.id} value={acc.id}>{acc.accountName} ({acc.accountCode})</option>
                                 ))}
-                            </select>
+                            </AlphaCloneSelect>
                             {assetAccounts.length === 0 && (
                                 <p className="mt-2 type-card-description text-amber-400">
                                     No asset accounts are available yet. Open Accounting and initialize the chart of accounts if this stays empty.
@@ -600,25 +605,25 @@ export default function ExpenseTrackerTab() {
                         </div>
                         <div className="sm:col-span-2">
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Description</label>
-                            <input type="text" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                            <AlphaCloneInput type="text" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                                 placeholder="What was this expense for?"
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2" />
                         </div>
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Status</label>
-                            <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui">
+                            <AlphaCloneSelect value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
+                                className="w-full px-3 py-2">
                                 <option value="pending">Pending</option>
                                 <option value="approved">Approved</option>
                                 <option value="rejected">Rejected</option>
                                 <option value="reimbursed">Reimbursed</option>
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
                         <div className="sm:col-span-2 lg:col-span-3">
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Notes</label>
-                            <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                            <AlphaCloneTextarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                                 rows={2} placeholder="Additional notes..."
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui resize-none" />
+                                className="w-full px-3 py-2 resize-none" />
                         </div>
                         <div className="flex items-center gap-2">
                             <input type="checkbox" id="billable" checked={form.billable} onChange={e => setForm(f => ({ ...f, billable: e.target.checked }))}
@@ -628,16 +633,16 @@ export default function ExpenseTrackerTab() {
                         {form.billable && (
                             <div className="sm:col-span-2">
                                 <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Bill to client</label>
-                                <select
+                                <AlphaCloneSelect
                                     value={form.client_id}
                                     onChange={(e) => setForm((f) => ({ ...f, client_id: e.target.value }))}
-                                    className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-ui"
+                                    className="w-full px-3 py-2"
                                 >
                                     <option value="">Select client</option>
                                     {clients.map((c) => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
-                                </select>
+                                </AlphaCloneSelect>
                             </div>
                         )}
                         {receiptPreview && (
@@ -709,7 +714,7 @@ export default function ExpenseTrackerTab() {
                                 <span>{expense.expense_categories?.name || '—'}</span>
                                 <span className="capitalize">{expense.payment_method?.replace('_', ' ') || '—'}</span>
                             </div>
-                            <select
+                            <AlphaCloneSelect
                                 value={expense.status}
                                 onChange={(e) => handleStatusChange(expense.id, e.target.value)}
                                 className={`w-full min-h-11 type-caption px-2 py-2 border rounded-lg bg-[var(--ws-canvas)] focus:outline-none ${STATUS_STYLES[expense.status] || STATUS_STYLES.pending}`}
@@ -718,7 +723,7 @@ export default function ExpenseTrackerTab() {
                                 <option value="approved">Approved</option>
                                 <option value="rejected">Rejected</option>
                                 <option value="reimbursed">Reimbursed</option>
-                            </select>
+                            </AlphaCloneSelect>
                             <div className={`${rowActionsClass} justify-end`}>
                                 <button onClick={() => handleEdit(expense)} className="min-h-11 px-3 py-2 rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-secondary)] type-ui">Edit</button>
                                 <button onClick={() => handleDelete(expense.id)} className="min-h-11 px-3 py-2 rounded-lg border border-red-500/30 text-red-400 type-ui">Delete</button>
@@ -791,7 +796,7 @@ export default function ExpenseTrackerTab() {
                                         )}
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <select
+                                        <AlphaCloneSelect
                                             value={expense.status}
                                             onChange={e => handleStatusChange(expense.id, e.target.value)}
                                             className={`type-caption px-2 py-1 border rounded-lg bg-transparent focus:outline-none cursor-pointer ${STATUS_STYLES[expense.status] || STATUS_STYLES.pending}`}
@@ -800,7 +805,7 @@ export default function ExpenseTrackerTab() {
                                             <option value="approved">Approved</option>
                                             <option value="rejected">Rejected</option>
                                             <option value="reimbursed">Reimbursed</option>
-                                        </select>
+                                        </AlphaCloneSelect>
                                     </td>
                                     <td className="px-4 py-3 text-right">
                                         <div className={`justify-end ${rowActionsClass}`}>

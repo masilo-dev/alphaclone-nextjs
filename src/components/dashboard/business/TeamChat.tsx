@@ -1,3 +1,4 @@
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 import React, { useState, useRef, useEffect } from 'react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Send, MessageCircle, CheckCircle, CheckCheck } from 'lucide-react';
@@ -432,13 +433,13 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
                 {/* Input */}
                 <div className="p-4 bg-[var(--ws-panel)] border-t border-[var(--ws-border)]">
                     <div className="relative">
-                        <textarea
+                        <AlphaCloneTextarea
                             ref={inputRef}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={handleKeyDown}
                             placeholder="Type a message or use @ to assign tasks..."
-                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl pl-4 pr-12 py-3 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-indigo-500 resize-none h-12"
+                            className="w-full pl-4 pr-12 py-3 resize-none h-12"
                         />
                         <button
                             onClick={handleSendMessage}

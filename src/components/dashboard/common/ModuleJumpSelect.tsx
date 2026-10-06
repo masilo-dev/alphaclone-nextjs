@@ -1,5 +1,8 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React from 'react';
 import { ChevronDown } from 'lucide-react';
 
@@ -35,14 +38,14 @@ export default function ModuleJumpSelect({
         {label}
       </label>
       <div className="relative">
-        <select
+        <AlphaCloneSelect
           id="module-jump-select"
           value={currentHref && options.some((o) => o.href === currentHref) ? currentHref : ''}
           onChange={(e) => {
             const href = e.target.value;
             if (href) onNavigate(href);
           }}
-          className="w-full appearance-none rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] type-ui font-semibold text-[var(--ws-text-primary)] pl-3 pr-9 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--info-text)]"
+          className="w-full appearance-none font-semibold pl-3 pr-9 py-2.5"
         >
           <option value="" disabled>
             {label}
@@ -52,7 +55,7 @@ export default function ModuleJumpSelect({
               {opt.label}
             </option>
           ))}
-        </select>
+        </AlphaCloneSelect>
         <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
       </div>
     </div>

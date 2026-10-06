@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
     Mail, Send, Inbox, Archive, Trash2, Search, Loader2, Plus, 
@@ -555,9 +558,9 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                         <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-gray-400 md:hidden"><Menu size={24} /></button>
                         <div className="relative flex-1">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
-                            <input 
+                            <AlphaCloneInput
                                 type="text" placeholder="Search mail..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full bg-black/40 border border-[var(--ws-border)] rounded-2xl pl-12 pr-4 py-3 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/50 outline-none"
+                                className="w-full pl-12 pr-4 py-3"
                             />
                         </div>
                     </div>
@@ -783,11 +786,11 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                     </div>
                                     <div className="flex items-center gap-4">
                                         <div className="flex-1 relative">
-                                            <input 
+                                            <AlphaCloneInput
                                                 value={replyBody}
                                                 onChange={e => setReplyBody(e.target.value)}
                                                 placeholder="Type a quick reply..." 
-                                                className="w-full bg-black/40 border border-[var(--ws-border)] rounded-2xl px-5 py-4 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/50 pr-12"
+                                                className="w-full px-5 py-4 pr-12"
                                                 onKeyDown={e => e.key === 'Enter' && handleQuickReply()}
                                             />
                                             <button 

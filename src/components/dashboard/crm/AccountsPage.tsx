@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Building2, Plus, Loader2, ChevronRight } from 'lucide-react';
@@ -178,11 +181,11 @@ export default function AccountsPage() {
           )}
           {detailTab === 'overview' && (
             <div className="flex flex-wrap items-end gap-2 pt-2">
-              <input
+              <AlphaCloneInput
                 type="datetime-local"
                 value={followUpDate}
                 onChange={(e) => setFollowUpDate(e.target.value)}
-                className="px-3 py-2 rounded-xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] type-ui"
+                className="px-3 py-2"
               />
               <button
                 type="button"

@@ -1,5 +1,10 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Download, Eye, Palette, Layout, Type, Image as ImageIcon, Sliders, Copy, Share2, FileText, Presentation, Zap, Sparkles, Plus, X } from 'lucide-react';
@@ -431,15 +436,15 @@ export default function PresentationTemplates() {
 
                                     <div>
                                         <label className="block type-label font-medium text-gray-300 mb-2">Font Family</label>
-                                        <select
+                                        <AlphaCloneSelect
                                             value={selectedFont}
                                             onChange={(e) => setSelectedFont(parseInt(e.target.value))}
-                                            className="w-full bg-gray-700 border border-gray-600 text-[var(--ws-text-primary)] rounded-lg px-3 py-2"
+                                            className="w-full px-3 py-2"
                                         >
                                             {selectedTemplate.fonts.map((font, index) => (
                                                 <option key={index} value={index}>{font}</option>
                                             ))}
-                                        </select>
+                                        </AlphaCloneSelect>
                                     </div>
                                 </div>
                             </div>
@@ -528,30 +533,30 @@ export default function PresentationTemplates() {
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block type-label font-medium text-gray-300 mb-2">Title</label>
-                                        <input
+                                        <AlphaCloneInput
                                             type="text"
                                             value={slides[currentSlide].title}
                                             onChange={(e) => handleSlideEdit(currentSlide, 'title', e.target.value)}
-                                            className="w-full bg-gray-700 border border-gray-600 text-[var(--ws-text-primary)] rounded-lg px-3 py-2"
+                                            className="w-full px-3 py-2"
                                         />
                                     </div>
 
                                     <div>
                                         <label className="block type-label font-medium text-gray-300 mb-2">Subtitle (Optional)</label>
-                                        <input
+                                        <AlphaCloneInput
                                             type="text"
                                             value={slides[currentSlide].subtitle || ''}
                                             onChange={(e) => handleSlideEdit(currentSlide, 'subtitle', e.target.value)}
-                                            className="w-full bg-gray-700 border border-gray-600 text-[var(--ws-text-primary)] rounded-lg px-3 py-2"
+                                            className="w-full px-3 py-2"
                                         />
                                     </div>
 
                                     <div>
                                         <label className="block type-label font-medium text-gray-300 mb-2">Layout</label>
-                                        <select
+                                        <AlphaCloneSelect
                                             value={slides[currentSlide].layout}
                                             onChange={(e) => handleSlideEdit(currentSlide, 'layout', e.target.value)}
-                                            className="w-full bg-gray-700 border border-gray-600 text-[var(--ws-text-primary)] rounded-lg px-3 py-2"
+                                            className="w-full px-3 py-2"
                                         >
                                             <option value="title">Title Slide</option>
                                             <option value="content">Content Only</option>
@@ -559,16 +564,16 @@ export default function PresentationTemplates() {
                                             <option value="image-right">Image Right</option>
                                             <option value="two-column">Two Column</option>
                                             <option value="three-column">Three Column</option>
-                                        </select>
+                                        </AlphaCloneSelect>
                                     </div>
 
                                     <div>
                                         <label className="block type-label font-medium text-gray-300 mb-2">Content (One per line)</label>
-                                        <textarea
+                                        <AlphaCloneTextarea
                                             value={slides[currentSlide].content.join('\n')}
                                             onChange={(e) => handleSlideEdit(currentSlide, 'content', e.target.value.split('\n').filter(line => line.trim()))}
                                             rows={6}
-                                            className="w-full bg-gray-700 border border-gray-600 text-[var(--ws-text-primary)] rounded-lg px-3 py-2"
+                                            className="w-full px-3 py-2"
                                             placeholder="Enter each bullet point on a new line"
                                         />
                                     </div>

@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Activity, AlertTriangle, ChevronDown, ChevronRight, RefreshCw, Search, ShieldCheck, User, Building2, HelpCircle, Terminal } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
@@ -192,11 +195,11 @@ export default function AuditTrailPage() {
         <label className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ws-text-muted)]" aria-hidden="true" />
           <span className="sr-only">Search audit trail</span>
-          <input
+          <AlphaCloneInput
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search business events, clients, actors, or actions..."
-            className="h-10 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] py-2 pl-9 pr-3 type-ui text-[var(--ws-text-primary)] outline-none transition-colors placeholder:text-[var(--ws-text-muted)] focus:border-teal-500"
+            className="h-10 w-full py-2 pl-9 pr-3 transition-colors"
           />
         </label>
       </div>

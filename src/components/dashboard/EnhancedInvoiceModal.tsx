@@ -1,5 +1,10 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
@@ -533,10 +538,10 @@ export default function EnhancedInvoiceModal({
       <div className="relative" ref={dropdownRef}>
         <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Search Client</label>
         <div className="relative">
-          <input
+          <AlphaCloneInput
             type="text"
             placeholder="Search existing contacts..."
-            className="w-full px-3 py-2 pl-10 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+            className="w-full px-3 py-2 pl-10"
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -606,21 +611,21 @@ export default function EnhancedInvoiceModal({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Client Name</label>
-          <input
+          <AlphaCloneInput
             type="text"
             value={formData.clientName}
             onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
-            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            className="w-full px-3 py-2"
             placeholder="Enter client name"
           />
         </div>
         <div>
           <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Client Email</label>
-          <input
+          <AlphaCloneInput
             type="email"
             value={formData.clientEmail}
             onChange={(e) => setFormData(prev => ({ ...prev, clientEmail: e.target.value }))}
-            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            className="w-full px-3 py-2"
             placeholder="client@example.com"
           />
         </div>
@@ -652,10 +657,10 @@ export default function EnhancedInvoiceModal({
 
       <div>
         <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Linked contract (optional)</label>
-        <select
+        <AlphaCloneSelect
           value={formData.contractId}
           onChange={(e) => setFormData((prev) => ({ ...prev, contractId: e.target.value }))}
-          className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+          className="w-full px-3 py-2"
         >
           <option value="">No contract linked</option>
           {contracts
@@ -665,7 +670,7 @@ export default function EnhancedInvoiceModal({
                 {contract.title} ({contract.status.replaceAll('_', ' ')})
               </option>
             ))}
-        </select>
+        </AlphaCloneSelect>
         <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
           Billing documents filed to the vault will reference this agreement when sent.
         </p>
@@ -683,11 +688,11 @@ export default function EnhancedInvoiceModal({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Due Date</label>
-          <input
+          <AlphaCloneInput
             type="date"
             value={formData.dueDate}
             onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
-            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            className="w-full px-3 py-2"
           />
         </div>
       </div>
@@ -710,10 +715,10 @@ export default function EnhancedInvoiceModal({
 
       <div>
         <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Notes</label>
-        <textarea
+        <AlphaCloneTextarea
           value={formData.notes}
           onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-          className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+          className="w-full px-3 py-2"
           rows={3}
           placeholder="Additional notes..."
         />
@@ -726,29 +731,29 @@ export default function EnhancedInvoiceModal({
       {formData.items.map((item, index) => (
         <div key={index} className="flex items-center space-x-2 p-4 border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 rounded-lg">
           <div className="flex-1">
-            <input
+            <AlphaCloneInput
               type="text"
               value={item.description}
               onChange={(e) => handleItemChange(index, 'description', e.target.value)}
               placeholder="Item description"
-              className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-3 py-2"
             />
           </div>
           <div className="w-20">
-            <input
+            <AlphaCloneInput
               type="number"
               value={item.quantity}
               onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-3 py-2"
               min="1"
             />
           </div>
           <div className="w-24">
-            <input
+            <AlphaCloneInput
               type="number"
               value={item.rate}
               onChange={(e) => handleItemChange(index, 'rate', parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-3 py-2"
               step="0.01"
             />
           </div>

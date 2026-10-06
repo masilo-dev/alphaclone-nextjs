@@ -1,5 +1,10 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { Bot, CalendarClock, ChevronDown, ChevronUp, Loader2, Pause, Play, Plus, Trash2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -119,12 +124,12 @@ export default function TaskScheduler({ onTaskComplete }: { onTaskComplete?: (ta
 
     {showCreate && <div className="dashboard-panel-soft p-5 space-y-4">
       <div className="flex justify-between"><h3 className="font-semibold text-[var(--ws-text-primary)]">New scheduled task</h3><button onClick={() => setShowCreate(false)} aria-label="Close"><X className="w-5 h-5 text-[var(--ws-text-muted)]" /></button></div>
-      <input value={name} onChange={(event) => setName(event.target.value)} maxLength={200} placeholder="Task name" className="w-full rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]" />
-      <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} maxLength={20000} rows={5} placeholder="Describe the analysis, summary, or draft the AI should produce." className="w-full rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)] resize-y" />
+      <AlphaCloneInput value={name} onChange={(event) => setName(event.target.value)} maxLength={200} placeholder="Task name" className="w-full px-3 py-2" />
+      <AlphaCloneTextarea value={prompt} onChange={(event) => setPrompt(event.target.value)} maxLength={20000} rows={5} placeholder="Describe the analysis, summary, or draft the AI should produce." className="w-full px-3 py-2 resize-y" />
       <div className="grid sm:grid-cols-3 gap-3">
-        <select value={frequency} onChange={(event) => setFrequency(event.target.value as Frequency)} className="rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select>
-        <input type="time" value={time} onChange={(event) => setTime(event.target.value)} className="rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]" />
-        {frequency !== 'daily' ? <input type="number" min={frequency === 'weekly' ? 0 : 1} max={frequency === 'weekly' ? 6 : 28} value={day} onChange={(event) => setDay(Number(event.target.value))} aria-label={frequency === 'weekly' ? 'Day of week, Sunday is 0' : 'Day of month'} className="rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]" /> : <div className="rounded-lg border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-muted)]">UTC timezone</div>}
+        <AlphaCloneSelect value={frequency} onChange={(event) => setFrequency(event.target.value as Frequency)} className="px-3 py-2"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></AlphaCloneSelect>
+        <AlphaCloneInput type="time" value={time} onChange={(event) => setTime(event.target.value)} className="px-3 py-2" />
+        {frequency !== 'daily' ? <AlphaCloneInput type="number" min={frequency === 'weekly' ? 0 : 1} max={frequency === 'weekly' ? 6 : 28} value={day} onChange={(event) => setDay(Number(event.target.value))} aria-label={frequency === 'weekly' ? 'Day of week, Sunday is 0' : 'Day of month'} className="px-3 py-2" /> : <div className="rounded-lg border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-muted)]">UTC timezone</div>}
       </div>
       {frequency === 'weekly' && <p className="type-card-description text-[var(--ws-text-muted)]">Weekly day: 0 Sunday through 6 Saturday.</p>}
       <button disabled={busyId === 'create'} onClick={createTask} className="px-4 py-2 rounded-lg bg-violet-500 disabled:opacity-50 text-[var(--ws-text-primary)] font-semibold">{busyId === 'create' ? 'Scheduling…' : 'Create schedule'}</button>

@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTenant } from '@/contexts/TenantContext';
@@ -392,12 +395,12 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                         <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">Query live Teams presence for any user in your tenant.</p>
                         <form onSubmit={handlePresenceCheck} className="space-y-3">
                             <div className="relative">
-                                <input
+                                <AlphaCloneInput
                                     type="email"
                                     value={searchEmail}
                                     onChange={(e) => setSearchEmail(e.target.value)}
                                     placeholder="user@domain.com"
-                                    className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 pl-10 pr-4 py-2.5 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
+                                    className="w-full pl-10 pr-4 py-2.5"
                                 />
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                             </div>

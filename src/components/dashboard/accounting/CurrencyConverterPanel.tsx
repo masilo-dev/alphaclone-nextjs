@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect } from 'react';
 import { currencyService, CurrencyCode } from '@/services/currencyService';
 import { ArrowRightLeft, DollarSign, Globe, RefreshCw } from 'lucide-react';
@@ -59,11 +63,11 @@ export function CurrencyConverterPanel() {
           </label>
           <div className="relative">
             <span className="absolute left-3 top-2.5 type-caption text-[var(--ws-text-muted)]">{baseSymbol}</span>
-            <input
+            <AlphaCloneInput
               type="number"
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
-              className="w-full pl-8 pr-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-indigo-500/50"
+              className="w-full pl-8 pr-3 py-2 font-bold"
             />
           </div>
         </div>
@@ -72,34 +76,34 @@ export function CurrencyConverterPanel() {
           <label className="block type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1">
             From
           </label>
-          <select
+          <AlphaCloneSelect
             value={baseCurrency}
             onChange={(e) => setBaseCurrency(e.target.value as CurrencyCode)}
-            className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-indigo-500/50"
+            className="w-full px-3 py-2 font-bold"
           >
             {currencies.map((c) => (
               <option key={c.code} value={c.code}>
                 {c.code} - {c.name}
               </option>
             ))}
-          </select>
+          </AlphaCloneSelect>
         </div>
 
         <div>
           <label className="block type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1">
             To
           </label>
-          <select
+          <AlphaCloneSelect
             value={targetCurrency}
             onChange={(e) => setTargetCurrency(e.target.value as CurrencyCode)}
-            className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-indigo-500/50"
+            className="w-full px-3 py-2 font-bold"
           >
             {currencies.map((c) => (
               <option key={c.code} value={c.code}>
                 {c.code} - {c.name}
               </option>
             ))}
-          </select>
+          </AlphaCloneSelect>
         </div>
       </div>
 

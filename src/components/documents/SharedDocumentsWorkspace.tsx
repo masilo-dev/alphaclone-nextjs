@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FileText, Grid2X2, List, Plus, Search, Upload, X } from 'lucide-react';
@@ -346,11 +349,11 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
               <label className="relative min-w-[220px] flex-1">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-[var(--ws-text-muted)]" aria-hidden />
                 <span className="sr-only">{t('Search documents')}</span>
-                <input
+                <AlphaCloneInput
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={t('Search name, number, description…')}
-                  className="min-h-11 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 pl-9 pr-3 type-ui text-white focus:border-teal-500 focus:outline-none"
+                  className="min-h-11 w-full pl-9 pr-3"
                 />
               </label>
               <button
@@ -378,13 +381,13 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
               >
                 <label className="min-w-[240px] flex-1 type-label text-[var(--ws-text-secondary)]">
                   Document name
-                  <input
+                  <AlphaCloneInput
                     autoFocus
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
                     maxLength={300}
-                    className="mt-1 min-h-11 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-3 text-white"
+                    className="mt-1 min-h-11 w-full px-3"
                   />
                 </label>
                 <button className="min-h-11 rounded-lg bg-teal-600 px-4 font-semibold text-white">

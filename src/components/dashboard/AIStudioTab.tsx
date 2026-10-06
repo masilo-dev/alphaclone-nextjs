@@ -1,3 +1,5 @@
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import AIOutputDisclaimer from '@/components/ai/AIOutputDisclaimer';
@@ -354,10 +356,10 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                         <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                             {activeTab === 'content' ? 'What do you want to write?' : 'Describe what you want to generate'}
                         </label>
-                        <textarea
+                        <AlphaCloneTextarea
                             value={prompt}
                             onChange={(e) => setPrompt(e.target.value)}
-                            className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 resize-none"
+                            className="w-full px-4 py-3 resize-none"
                             rows={4}
                             placeholder={
                                 activeTab === 'logo' ? 'e.g., A modern tech startup logo with blue and green colors' :
@@ -371,31 +373,31 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     {activeTab === 'logo' && (
                         <div>
                             <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Style</label>
-                            <select
+                            <AlphaCloneSelect
                                 value={style}
                                 onChange={(e) => setStyle(e.target.value as any)}
-                                className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
+                                className="w-full px-4 py-2"
                             >
                                 <option value="modern">Modern</option>
                                 <option value="minimalist">Minimalist</option>
                                 <option value="vintage">Vintage</option>
                                 <option value="abstract">Abstract</option>
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
                     )}
 
                     {activeTab === 'image' && (
                         <div>
                             <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Size</label>
-                            <select
+                            <AlphaCloneSelect
                                 value={imageSize}
                                 onChange={(e) => setImageSize(e.target.value as any)}
-                                className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
+                                className="w-full px-4 py-2"
                             >
                                 <option value="1024x1024">Square (1024x1024)</option>
                                 <option value="1792x1024">Landscape (1792x1024)</option>
                                 <option value="1024x1792">Portrait (1024x1792)</option>
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
                     )}
 
@@ -403,30 +405,30 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Content Type</label>
-                                <select
+                                <AlphaCloneSelect
                                     value={contentType}
                                     onChange={(e) => setContentType(e.target.value as any)}
-                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
+                                    className="w-full px-4 py-2"
                                 >
                                     <option value="general">General</option>
                                     <option value="blog">Blog Post</option>
                                     <option value="email">Email</option>
                                     <option value="social">Social Media</option>
-                                </select>
+                                </AlphaCloneSelect>
                             </div>
                             <div>
                                 <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">AI Model</label>
-                                <select
+                                <AlphaCloneSelect
                                     value={selectedModel}
                                     onChange={(e) => setSelectedModel(e.target.value)}
-                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
+                                    className="w-full px-4 py-2"
                                 >
                                     {CLAUDE_MODELS.map(model => (
                                         <option key={model.id} value={model.id}>
                                             {model.name}
                                         </option>
                                     ))}
-                                </select>
+                                </AlphaCloneSelect>
                                 <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                                     {CLAUDE_MODELS.find(m => m.id === selectedModel)?.description}
                                 </p>

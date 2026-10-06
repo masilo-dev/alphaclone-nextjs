@@ -1,6 +1,7 @@
+import { Button as CanonicalButton } from './button';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useBlurValidation } from '@/hooks/useBlurValidation';
-import { Loader2, X, ChevronDown, MoreVertical } from 'lucide-react';
+import { X, ChevronDown, MoreVertical } from 'lucide-react';
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { WORKSPACE, Z_INDEX } from '@/constants/design';
@@ -25,62 +26,12 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
-  children,
-  className = '',
-  variant = 'primary',
-  size = 'md',
-  isLoading = false,
-  disabled = false,
-  icon,
-  type = 'button',
-  ...props
+  children, variant = 'primary', size = 'md', ...props
 }, ref) => {
   const { t } = useLanguage();
-  const isActuallyDisabled = Boolean(disabled || isLoading);
-  const renderedChildren = typeof children === 'string' ? t(children) : children;
-
-  const baseStyles =
-    'inline-flex items-center justify-center font-medium transition-all select-none touch-manipulation ' +
-    'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring,var(--brand-blue-500))] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background-app)] ' +
-    'disabled:cursor-[var(--interactive-disabled-cursor,not-allowed)] disabled:opacity-[var(--interactive-disabled-opacity,0.5)] ' +
-    '[&:not(:disabled)]:cursor-[var(--interactive-cursor,pointer)] [&:not(:disabled)]:pointer-events-auto';
-
-  const variants: Record<string, string> = {
-    primary: `${WORKSPACE.action.primary} border-0 active:scale-[0.98]`,
-    default: `${WORKSPACE.action.primary} border-0 active:scale-[0.98]`,
-    secondary: "bg-[var(--interactive-secondary,var(--brand-teal))] text-[var(--text-inverse)] hover:bg-[var(--interactive-secondary-hover)] active:scale-[0.98]",
-    outline: "border border-[var(--border-default)] bg-[var(--surface-primary)] text-[var(--text-primary)] hover:bg-[var(--surface-hover,var(--ws-panel))] active:scale-[0.98]",
-    ghost: "text-[var(--text-secondary)] hover:bg-[var(--surface-hover,var(--ws-panel))] hover:text-[var(--text-primary)]",
-    danger: "bg-[var(--danger,var(--error-500))] text-[var(--text-inverse)] hover:brightness-95 active:scale-[0.98]",
-    destructive: "bg-[var(--danger,var(--error-500))] text-[var(--text-inverse)] hover:brightness-95 active:scale-[0.98]",
-    icon: "bg-transparent hover:bg-[var(--surface-hover,var(--ws-panel))] text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
-    navigation: `${WORKSPACE.nav.item} justify-start`,
-    cta: "bg-gradient-to-r from-[var(--brand-blue-400)] to-[var(--brand-blue-500)] text-[var(--text-inverse)] shadow-lg hover:brightness-110 active:scale-[0.98]",
-  };
-
-  const sizes: Record<string, string> = {
-    sm: "h-8 px-3 type-caption min-h-9 min-w-9 rounded-[8px]",
-    md: "h-10 px-4 py-2 type-ui min-h-11 min-w-11 rounded-[10px]",
-    lg: "h-12 px-6 text-base min-h-12 min-w-12 rounded-[12px]",
-    default: "h-10 px-4 py-2 type-ui min-h-11 min-w-11 rounded-[10px]",
-    icon: "h-10 w-10 p-0 min-h-10 min-w-10 rounded-[10px]",
-  };
-
-  return (
-    <button
-      ref={ref}
-      type={type}
-      className={`${baseStyles} ${variants[variant] || variants.primary} ${sizes[size] || sizes.md} ${className}`}
-      disabled={isActuallyDisabled}
-      aria-busy={isLoading || undefined}
-      aria-disabled={isActuallyDisabled || undefined}
-      {...props}
-    >
-      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
-      {!isLoading && icon && <span className="mr-2 flex items-center" aria-hidden="true">{icon}</span>}
-      {renderedChildren}
-    </button>
-  );
+  return <CanonicalButton ref={ref} variant={variant === 'default' ? 'primary' : variant} size={size} {...props}>
+    {typeof children === 'string' ? t(children) : children}
+  </CanonicalButton>;
 });
 Button.displayName = 'Button';
 
@@ -288,6 +239,8 @@ export const Modal: React.FC<ModalProps> = ({
   const titleId = React.useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
+  const closeRef = useRef(onClose);
+  useEffect(() => { closeRef.current = onClose; }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -301,7 +254,7 @@ export const Modal: React.FC<ModalProps> = ({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClose();
+        closeRef.current();
         return;
       }
       if (e.key !== 'Tab' || !panel) return;
@@ -333,7 +286,7 @@ export const Modal: React.FC<ModalProps> = ({
       document.body.style.overflow = prevOverflow;
       previouslyFocused.current?.focus?.();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen || typeof document === 'undefined') return null;
 
@@ -346,6 +299,7 @@ export const Modal: React.FC<ModalProps> = ({
         aria-modal="true"
         tabIndex={-1}
         aria-labelledby={title ? titleId : undefined}
+        aria-label={title ? undefined : t('Dialog')}
         style={{ backgroundColor: 'var(--surface-primary, var(--ws-panel))' }}
         className={`relative ${WORKSPACE.panel.base} rounded-t-2xl sm:rounded-xl w-full ${maxWidth} shadow-none animate-fade-in overflow-hidden max-h-[92dvh] sm:max-h-[85vh] flex flex-col ${className}`}
       >
@@ -360,7 +314,7 @@ export const Modal: React.FC<ModalProps> = ({
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
-        <div className="p-4 overflow-y-auto">
+        <div className="min-h-0 flex-1 p-4 overflow-y-auto overscroll-contain">
           {children}
         </div>
       </div>

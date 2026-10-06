@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -215,12 +218,12 @@ const TwilioIntegration: React.FC = () => {
                         <div className="space-y-1.5">
                             <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest ml-1">Account SID</label>
                             <div className="relative">
-                                <input
+                                <AlphaCloneInput
                                     type="text"
                                     placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                                     value={accountSid}
                                     onChange={e => setAccountSid(e.target.value)}
-                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-4 py-3 type-ui text-[var(--ws-text-primary)] font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
+                                    className="w-full px-4 py-3 font-mono transition-all"
                                 />
                                 <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-700" />
                             </div>
@@ -248,12 +251,12 @@ const TwilioIntegration: React.FC = () => {
 
                         <div className="space-y-1.5 md:col-span-2">
                             <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest ml-1">From Phone Number</label>
-                            <input
+                            <AlphaCloneInput
                                 type="tel"
                                 placeholder="+1234567890"
                                 value={phoneNumber}
                                 onChange={e => setPhoneNumber(e.target.value)}
-                                className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-4 py-3 type-ui text-[var(--ws-text-primary)] font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
+                                className="w-full px-4 py-3 font-mono transition-all"
                             />
                             <p className="type-card-description text-[var(--ws-text-muted)] mt-1.5 ml-1">Must be an active Twilio number in E.164 format (e.g. +12125551234)</p>
                         </div>

@@ -1,5 +1,10 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -834,15 +839,15 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                     {isConnected && !isMobile && (
                         <div className="flex items-center gap-2 bg-black/40 px-3 py-2 rounded-xl border border-[var(--ws-border)]">
                             <Users size={14} className="text-teal-400" />
-                            <select 
+                            <AlphaCloneSelect
                                 value={selectedPageId}
                                 onChange={(e) => setSelectedPageId(e.target.value)}
-                                className="bg-transparent type-caption font-bold text-gray-300 outline-none cursor-pointer pr-2"
+                                className="font-bold cursor-pointer pr-2"
                             >
                                 {pages.map(p => (
                                     <option key={p.page_id} value={p.page_id} className="bg-[var(--ws-canvas)]">{p.page_name}</option>
                                 ))}
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
                     )}
                     <button 
@@ -897,12 +902,12 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                                     <div className="relative flex-1">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
-                                        <input
+                                        <AlphaCloneInput
                                             value={leadSearchQuery}
                                             onChange={(e) => setLeadSearchQuery(e.target.value)}
                                             onKeyDown={(e) => e.key === 'Enter' && void handleLeadSearch()}
                                             placeholder="Search Facebook leads by name, email, phone, company…"
-                                            className="w-full pl-10 pr-4 py-3 rounded-xl bg-black/40 border border-[var(--ws-border)] text-[var(--ws-text-primary)] type-ui placeholder:text-[var(--ws-text-muted)] focus:border-teal-500/50 outline-none"
+                                            className="w-full pl-10 pr-4 py-3"
                                         />
                                     </div>
                                     <button
@@ -1015,11 +1020,11 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                     </div>
 
                                     <div className="space-y-4">
-                                        <textarea
+                                        <AlphaCloneTextarea
                                             value={postMessage}
                                             onChange={(e) => setPostMessage(e.target.value)}
                                             placeholder="What's happening on your page?"
-                                            className="w-full bg-black/40 border border-[var(--ws-border)] rounded-2xl p-5 text-base text-[var(--ws-text-primary)] min-h-[200px] outline-none focus:border-blue-500/50 transition-all resize-none"
+                                            className="w-full p-5 min-h-[200px] transition-all resize-none"
                                         />
                                         
                                         {imagePreview && (
@@ -1043,11 +1048,11 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                             
                                             <div className="relative">
                                                 <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={20} />
-                                                <input 
+                                                <AlphaCloneInput
                                                     type="datetime-local"
                                                     value={scheduleAt}
                                                     onChange={(e) => setScheduleAt(e.target.value)}
-                                                    className="w-full bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl pl-12 pr-4 py-4 type-ui text-[var(--ws-text-primary)] outline-none focus:border-blue-500/50 [color-scheme:dark]"
+                                                    className="w-full pl-12 pr-4 py-4 [color-scheme:dark]"
                                                 />
                                             </div>
                                         </div>
@@ -1455,38 +1460,38 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                             <div className="p-6 sm:p-8 space-y-6">
                                 <div className="space-y-2">
                                     <label className="type-caption font-black text-gray-600 uppercase tracking-widest px-2">Post Topic</label>
-                                    <input 
+                                    <AlphaCloneInput
                                         type="text" 
                                         value={aiTopic}
                                         onChange={(e) => setAiTopic(e.target.value)}
                                         placeholder="What should the post be about?"
-                                        className="w-full bg-black/40 border border-[var(--ws-border)] rounded-2xl px-5 py-4 type-ui text-[var(--ws-text-primary)] outline-none focus:border-blue-500/50 transition-all"
+                                        className="w-full px-5 py-4 transition-all"
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="type-caption font-black text-gray-600 uppercase tracking-widest px-2">Tone</label>
-                                        <select 
+                                        <AlphaCloneSelect
                                             value={aiTone}
                                             onChange={(e) => setAiTone(e.target.value as any)}
-                                            className="w-full h-14 bg-black/40 border border-[var(--ws-border)] rounded-2xl px-4 type-ui text-[var(--ws-text-primary)] outline-none focus:border-blue-500/50"
+                                            className="w-full h-14 px-4"
                                         >
                                             <option value="engaging">Engaging</option>
                                             <option value="professional">Professional</option>
                                             <option value="casual">Casual</option>
                                             <option value="promotional">Promotional</option>
-                                        </select>
+                                        </AlphaCloneSelect>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="type-caption font-black text-gray-600 uppercase tracking-widest px-2">Format</label>
-                                        <select 
+                                        <AlphaCloneSelect
                                             value={aiPostType}
                                             onChange={(e) => setAiPostType(e.target.value as any)}
-                                            className="w-full h-14 bg-black/40 border border-[var(--ws-border)] rounded-2xl px-4 type-ui text-[var(--ws-text-primary)] outline-none focus:border-blue-500/50"
+                                            className="w-full h-14 px-4"
                                         >
                                             <option value="standard">Short Post</option>
                                             <option value="facebook_200_words">Long Form</option>
-                                        </select>
+                                        </AlphaCloneSelect>
                                     </div>
                                 </div>
                                 <button 

@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     MessageSquare, Send, Inbox, Search, Loader2, 
@@ -294,12 +297,12 @@ export default function MessengerInbox() {
                     <div className="p-4 px-6 border-b border-[var(--ws-border)]">
                         <div className="relative group">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-blue-500 transition-colors pointer-events-none" size={16} />
-                            <input 
+                            <AlphaCloneInput
                                 type="text" 
                                 placeholder="Search conversations..." 
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-lg pl-12 pr-4 py-3 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/30 focus:outline-none transition-all placeholder:text-gray-600 type-ui"
+                                className="w-full pl-12 pr-4 py-3 transition-all"
                             />
                         </div>
                     </div>
@@ -460,12 +463,12 @@ export default function MessengerInbox() {
                                     </div>
 
                                     <form onSubmit={handleSend} className="relative flex gap-2">
-                                        <input 
+                                        <AlphaCloneInput
                                             type="text" 
                                             placeholder="Write a message..."
                                             value={replyText}
                                             onChange={e => setReplyText(e.target.value)}
-                                            className="flex-1 bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-lg px-5 py-4 focus:ring-2 focus:ring-teal-500/30 focus:outline-none transition-all type-ui pr-16"
+                                            className="flex-1 px-5 py-4 transition-all pr-16"
                                         />
                                         <button 
                                             disabled={sending || !replyText.trim()}

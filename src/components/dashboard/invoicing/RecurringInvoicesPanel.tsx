@@ -1,5 +1,9 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   RefreshCw, Plus, Trash2, Play, Pause, Calendar, Repeat, Loader2, ChevronDown, ChevronUp, FileText,
@@ -224,8 +228,8 @@ export default function RecurringInvoicesPanel({
           <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Client</label>
-              <select
-                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]"
+              <AlphaCloneSelect
+                className="mt-1 w-full px-3 py-2"
                 value={form.clientId}
                 onChange={(e) => handleClientPick(e.target.value)}
               >
@@ -233,55 +237,55 @@ export default function RecurringInvoicesPanel({
                 {clients.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
-              </select>
+              </AlphaCloneSelect>
             </div>
             <div>
               <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Client name</label>
-              <input
+              <AlphaCloneInput
                 required
-                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]"
+                className="mt-1 w-full px-3 py-2"
                 value={form.clientName}
                 onChange={(e) => setForm((f) => ({ ...f, clientName: e.target.value }))}
               />
             </div>
             <div>
               <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Email</label>
-              <input
+              <AlphaCloneInput
                 type="email"
-                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]"
+                className="mt-1 w-full px-3 py-2"
                 value={form.clientEmail}
                 onChange={(e) => setForm((f) => ({ ...f, clientEmail: e.target.value }))}
               />
             </div>
             <div>
               <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Amount (USD)</label>
-              <input
+              <AlphaCloneInput
                 required
                 type="number"
                 min="0"
                 step="0.01"
-                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]"
+                className="mt-1 w-full px-3 py-2"
                 value={form.amount}
                 onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
               />
             </div>
             <div>
               <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Frequency</label>
-              <select
-                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]"
+              <AlphaCloneSelect
+                className="mt-1 w-full px-3 py-2"
                 value={form.frequency}
                 onChange={(e) => setForm((f) => ({ ...f, frequency: e.target.value as RecurringFrequency }))}
               >
                 {FREQUENCIES.map((f) => (
                   <option key={f} value={f}>{f}</option>
                 ))}
-              </select>
+              </AlphaCloneSelect>
             </div>
             <div>
               <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Start date</label>
-              <input
+              <AlphaCloneInput
                 type="date"
-                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]"
+                className="mt-1 w-full px-3 py-2"
                 value={form.startDate}
                 onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
               />

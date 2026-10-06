@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect } from 'react';
 import { Search, X, Loader2, Mail, Briefcase, MapPin, Building2, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -104,12 +107,12 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                         <div className="absolute inset-y-0 left-4 flex items-center text-gray-500 group-focus-within:text-teal-400 transition-colors pointer-events-none">
                             <Search size={18} />
                         </div>
-                        <input 
+                        <AlphaCloneInput
                             type="text"
                             placeholder="Search by name, email, or industry..."
                             value={query}
                             onChange={e => setQuery(e.target.value)}
-                            className="w-full bg-gray-950/50 border border-[var(--ws-border)] rounded-2xl pl-12 pr-4 py-3 type-ui focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50 focus:outline-none transition-all placeholder:text-gray-700 font-medium"
+                            className="w-full pl-12 pr-4 py-3 transition-all font-medium"
                         />
                     </div>
                 </div>

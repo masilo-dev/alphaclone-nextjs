@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Building2, ChevronLeft, ChevronRight, Mail, Phone, RefreshCw, Search, User } from 'lucide-react';
 import { contactService, type ContactWithCompany } from '@/services/contactService';
@@ -191,11 +194,11 @@ export default function UnifiedContactsList({
         <div className="flex items-center gap-2">
           <div className="relative flex-1 sm:w-72">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ws-text-muted)]" />
-            <input
+            <AlphaCloneInput
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search name, email or phone"
-              className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] py-2 pl-9 pr-3 type-ui text-[var(--ws-text-primary)]"
+              className="w-full py-2 pl-9 pr-3"
             />
           </div>
           <button

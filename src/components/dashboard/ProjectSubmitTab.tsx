@@ -1,3 +1,4 @@
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 import React from 'react';
 import { Card, Input, Button } from '../ui/UIComponents';
 
@@ -42,8 +43,8 @@ const ProjectSubmitTab: React.FC<ProjectSubmitTabProps> = ({
                     />
                     <div>
                         <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">Description & Requirements</label>
-                        <textarea
-                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-4 py-3 text-[var(--ws-text-secondary)] placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50 min-h-[120px]"
+                        <AlphaCloneTextarea
+                            className="w-full px-4 py-3 min-h-[120px]"
                             value={newProject.description}
                             onChange={e => setNewProject({ ...newProject, description: e.target.value })}
                         />

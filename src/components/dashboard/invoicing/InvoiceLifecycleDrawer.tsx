@@ -1,4 +1,9 @@
 "use client";
+
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
 import { useCallback, useEffect, useState } from "react";
 import {
   AlertTriangle,
@@ -480,55 +485,55 @@ export function InvoiceLifecycleDrawer({
               <div className="mt-3 grid gap-2">
                 {mode === "installment" ? (
                   <>
-                    <input
+                    <AlphaCloneInput
                       value={form.label}
                       onChange={(e) =>
                         setForm({ ...form, label: e.target.value })
                       }
                       placeholder="Milestone or installment"
-                      className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+                      className="p-2"
                     />
-                    <input
+                    <AlphaCloneInput
                       value={form.dueDate}
                       onChange={(e) =>
                         setForm({ ...form, dueDate: e.target.value })
                       }
                       type="date"
-                      className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+                      className="p-2"
                     />
                   </>
                 ) : mode === "adjustment" ? (
-                  <select
+                  <AlphaCloneSelect
                     value={form.adjustmentType}
                     onChange={(e) =>
                       setForm({ ...form, adjustmentType: e.target.value })
                     }
-                    className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+                    className="p-2"
                   >
                     <option value="credit_note">Credit note</option>
                     <option value="discount">Discount</option>
                     <option value="write_off">Write-off</option>
                     <option value="refund">Refund</option>
                     <option value="fee">Fee</option>
-                  </select>
+                  </AlphaCloneSelect>
                 ) : null}
-                <input
+                <AlphaCloneInput
                   value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: e.target.value })}
                   type="number"
                   min="0"
                   step="0.01"
                   placeholder="Amount"
-                  className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+                  className="p-2"
                 />
                 {mode !== "installment" ? (
-                  <textarea
+                  <AlphaCloneTextarea
                     value={form.reason}
                     onChange={(e) =>
                       setForm({ ...form, reason: e.target.value })
                     }
                     placeholder="Reason or collection notes"
-                    className="min-h-20 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+                    className="min-h-20 p-2"
                   />
                 ) : null}
                 <div className="flex gap-2">

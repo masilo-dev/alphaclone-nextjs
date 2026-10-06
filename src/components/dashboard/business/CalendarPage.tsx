@@ -1,3 +1,6 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { User, Project } from '../../../types';
@@ -984,59 +987,59 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block type-label font-medium mb-2">Event Title *</label>
-                        <input
+                        <AlphaCloneInput
                             type="text"
                             required
                             value={formData.title}
                             onChange={e => setFormData({ ...formData, title: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
+                            className="w-full px-4 py-2"
                         />
                     </div>
 
                     <div>
                         <label className="block type-label font-medium mb-2">Description</label>
-                        <textarea
+                        <AlphaCloneTextarea
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
                             rows={3}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
+                            className="w-full px-4 py-2"
                         />
                     </div>
 
                     <div>
                         <label className="block type-caption font-medium mb-2">Start Time *</label>
-                        <input
+                        <AlphaCloneInput
                             type="datetime-local"
                             required
                             value={formData.startTime}
                             onChange={e => setFormData({ ...formData, startTime: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
+                            className="w-full px-4 py-2"
                         />
                     </div>
 
                     <div>
                         <label className="block type-caption font-medium mb-2">End Time *</label>
-                        <input
+                        <AlphaCloneInput
                             type="datetime-local"
                             required
                             value={formData.endTime}
                             onChange={e => setFormData({ ...formData, endTime: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
+                            className="w-full px-4 py-2"
                         />
                     </div>
 
                     <div>
                         <label className="block type-label font-medium mb-2">Event Type</label>
-                        <select
+                        <AlphaCloneSelect
                             value={formData.eventType}
                             onChange={e => setFormData({ ...formData, eventType: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
+                            className="w-full px-4 py-2"
                         >
                             <option value="meeting">Meeting</option>
                             <option value="deadline">Deadline</option>
                             <option value="reminder">Reminder</option>
                             <option value="event">Event</option>
-                        </select>
+                        </AlphaCloneSelect>
                     </div>
 
                     <div className="flex gap-3 pt-4">

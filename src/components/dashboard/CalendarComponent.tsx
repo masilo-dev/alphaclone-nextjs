@@ -1,3 +1,6 @@
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
 import React, { useState, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -944,10 +947,10 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
                             <div>
                                 <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Description</label>
-                                <textarea
+                                <AlphaCloneTextarea
                                     value={newEvent.description}
                                     onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 resize-none"
+                                    className="w-full px-4 py-2 resize-none"
                                     rows={3}
                                     placeholder="Add event description..."
                                 />
@@ -972,17 +975,17 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
                             <div>
                                 <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Event Type</label>
-                                <select
+                                <AlphaCloneSelect
                                     value={newEvent.type}
                                     onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value as any })}
-                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
+                                    className="w-full px-4 py-2"
                                 >
                                     <option value="meeting">Meeting</option>
                                     <option value="call">Video Call</option>
                                     <option value="reminder">Reminder</option>
                                     <option value="deadline">Deadline</option>
                                     <option value="task">Task</option>
-                                </select>
+                                </AlphaCloneSelect>
                             </div>
 
                             <Input
@@ -1009,7 +1012,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                 </div>
                                 {(newEvent as any).questions?.map((q: any, idx: number) => (
                                     <div key={q.id} className="flex gap-2">
-                                        <input
+                                        <AlphaCloneInput
                                             value={q.text}
                                             onChange={(e) => {
                                                 const newQs = [...(newEvent as any).questions];
@@ -1017,7 +1020,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                                 setNewEvent({ ...newEvent, questions: newQs } as any);
                                             }}
                                             placeholder={`Question ${idx + 1}`}
-                                            className="flex-1 px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-ui focus:outline-none focus:border-teal-500"
+                                            className="flex-1 px-4 py-2"
                                         />
                                         {(newEvent as any).questions.length > 1 && (
                                             <button

@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState } from 'react';
 import { Sparkles, FileText, Check, Copy, Printer, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -114,22 +117,22 @@ This proposal remains valid for 30 days. Upon acceptance, an official contract w
           <label className="block type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1">
             Client Name
           </label>
-          <input
+          <AlphaCloneInput
             type="text"
             value={clientName}
             onChange={(e) => setClientName(e.target.value)}
-            className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-purple-500/50"
+            className="w-full px-3 py-2 font-bold"
           />
         </div>
         <div>
           <label className="block type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1">
             Project Title
           </label>
-          <input
+          <AlphaCloneInput
             type="text"
             value={projectTitle}
             onChange={(e) => setProjectTitle(e.target.value)}
-            className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-purple-500/50"
+            className="w-full px-3 py-2 font-bold"
           />
         </div>
       </div>

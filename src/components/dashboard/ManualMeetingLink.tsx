@@ -1,3 +1,4 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
 import React, { useState } from 'react';
 import { Button } from '../ui/UIComponents';
 import { Video, ExternalLink, Copy, Check } from 'lucide-react';
@@ -66,12 +67,12 @@ const ManualMeetingLink: React.FC<ManualMeetingLinkProps> = ({ user, onJoinRoom 
                     <label className="block type-caption font-black text-blue-400 uppercase tracking-widest mb-2 px-1">
                         Secure Room URL
                     </label>
-                    <input
+                    <AlphaCloneInput
                         type="text"
                         value={meetingUrl}
                         onChange={(e) => setMeetingUrl(e.target.value)}
                         placeholder="https://alphaclonesystems.com/meet/room-name"
-                        className="w-full bg-gray-900/50 border border-blue-500/30 rounded-lg px-4 py-3 text-[var(--ws-text-primary)] placeholder-gray-600 focus:outline-none focus:border-blue-400 transition-all shadow-inner"
+                        className="w-full px-4 py-3 transition-all"
                     />
                 </div>
 

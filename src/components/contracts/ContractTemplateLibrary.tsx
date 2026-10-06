@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState } from 'react';
 import { FileText, Copy, Plus, ChevronDown, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -267,12 +270,12 @@ export function ContractTemplateLibrary({ onUseTemplate }: ContractTemplateLibra
           </h3>
           <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">Starter templates — clone into a new draft instantly</p>
         </div>
-        <input
+        <AlphaCloneInput
           type="text"
           placeholder="Search templates..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="px-3 py-2 bg-[var(--ws-panel)] border border-white/10 rounded-xl type-ui text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50 w-full sm:w-64"
+          className="px-3 py-2 w-full sm:w-64"
         />
       </div>
 

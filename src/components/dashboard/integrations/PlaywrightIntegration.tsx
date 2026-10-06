@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Input } from '../../ui/UIComponents';
 import { toast } from 'react-hot-toast';
@@ -350,12 +353,12 @@ export function PlaywrightIntegration() {
             <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-3">
               <h4 className="type-ui font-medium text-[var(--ws-text-primary)] mb-2">Quick Lead Search</h4>
               <div className="space-y-2">
-                <input
+                <AlphaCloneInput
                   type="url"
                   placeholder="https://example.com"
                   value={scrapingUrl}
                   onChange={(e) => setScrapingUrl(e.target.value)}
-                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)]"
+                  className="w-full px-3 py-2"
                 />
                 <Button
                   size="sm"

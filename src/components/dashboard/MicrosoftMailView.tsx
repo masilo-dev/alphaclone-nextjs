@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
@@ -411,12 +415,12 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                 <div className="p-3 border-b border-[var(--ws-border)]">
                     <div className="relative">
                         <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--ws-text-muted)]" />
-                        <input
+                        <AlphaCloneInput
                             type="text"
                             placeholder="Search mail..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl pl-9 pr-4 py-1.5 type-caption text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-blue-500 transition-all"
+                            className="w-full pl-9 pr-4 py-1.5 transition-all"
                         />
                     </div>
                 </div>
@@ -533,23 +537,23 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                         onSelect={(email) => appendComposeRecipient(email)}
                                     />
                                 </div>
-                                <input
+                                <AlphaCloneInput
                                     type="text"
                                     placeholder="recipient@domain.com (comma separated for multiple)"
                                     value={composeTo}
                                     onChange={(e) => setComposeTo(e.target.value)}
-                                    className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-2.5 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600"
+                                    className="w-full px-4 py-2.5 transition-all"
                                 />
                             </div>
                             
                             <div className="flex flex-col gap-1.5">
                                 <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Subject</label>
-                                <input
+                                <AlphaCloneInput
                                     type="text"
                                     placeholder="Enter subject line..."
                                     value={composeSubject}
                                     onChange={(e) => setComposeSubject(e.target.value)}
-                                    className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-2.5 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600"
+                                    className="w-full px-4 py-2.5 transition-all"
                                 />
                             </div>
                             
@@ -560,12 +564,12 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                     <span className="type-caption font-black uppercase tracking-wider">Bonnie AI Assistant</span>
                                 </div>
                                 <div className="flex gap-2">
-                                    <input
+                                    <AlphaCloneInput
                                         type="text"
                                         placeholder="Ask AI to write: e.g. Write a professional contract proposal..."
                                         value={aiPrompt}
                                         onChange={(e) => setAiPrompt(e.target.value)}
-                                        className="flex-1 bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-xl px-3 py-2 type-caption text-[var(--ws-text-primary)] focus:outline-none focus:border-violet-500 transition-all"
+                                        className="flex-1 px-3 py-2 transition-all"
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter') {
                                                 e.preventDefault();
@@ -585,11 +589,11 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                             
                             <div className="flex flex-col gap-1.5 flex-1 min-h-[300px]">
                                 <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Message</label>
-                                <textarea
+                                <AlphaCloneTextarea
                                     placeholder="Write your email content here (HTML is supported)..."
                                     value={composeBody}
                                     onChange={(e) => setComposeBody(e.target.value)}
-                                    className="w-full flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-4 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600 min-h-[250px] resize-y custom-scrollbar"
+                                    className="w-full flex-1 p-4 transition-all min-h-[250px] resize-y custom-scrollbar"
                                 />
                             </div>
                         </div>
@@ -742,11 +746,11 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                         {activeLabel !== 'sent' && (
                             <div className="p-6 pt-0 mt-auto">
                                 <div className="bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl p-2 focus-within:border-blue-500/50 transition-all shadow-xl">
-                                    <textarea
+                                    <AlphaCloneTextarea
                                         value={replyBody}
                                         onChange={(e) => setReplyBody(e.target.value)}
                                         placeholder="Type your response..."
-                                        className="w-full bg-transparent border-none focus:ring-0 text-[var(--ws-text-primary)] type-ui min-h-[100px] p-3 resize-none custom-scrollbar outline-none"
+                                        className="w-full min-h-[100px] p-3 resize-none custom-scrollbar"
                                     />
                                     <div className="flex items-center justify-between p-2 border-t border-slate-900 mt-2">
                                         <div className="flex items-center gap-2">

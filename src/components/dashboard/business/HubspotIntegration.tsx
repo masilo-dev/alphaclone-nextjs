@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -273,12 +276,12 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
             <div className="p-4">
                 <div className="relative mb-4">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
-                    <input
+                    <AlphaCloneInput
                         type="text"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="Search contacts by name, email, or company..."
-                        className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 pl-10 pr-4 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-orange-500/40"
+                        className="w-full pl-10 pr-4 py-2.5"
                     />
                 </div>
 

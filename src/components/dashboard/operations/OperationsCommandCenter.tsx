@@ -1,5 +1,10 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import {
@@ -623,12 +628,12 @@ export function OperationsCommandCenter() {
           </div>
 
           <form onSubmit={handleAskBonnie} className="flex items-center gap-3">
-            <input
+            <AlphaCloneInput
               type="text"
               value={bonnieQuery}
               onChange={(e) => setBonnieQuery(e.target.value)}
               placeholder="e.g. What requires my attention today? Or What is our highest bottleneck?"
-              className="flex-1 px-4 py-3 rounded-xl bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] placeholder-gray-500 type-ui focus:outline-none focus:border-cyan-500 transition"
+              className="flex-1 px-4 py-3 transition"
             />
             <button
               type="submit"
@@ -723,54 +728,54 @@ export function OperationsCommandCenter() {
             <form onSubmit={submitNewDecision} className="space-y-3 type-caption">
               <div>
                 <label className="block text-gray-400 mb-1">Decision Title</label>
-                <input
+                <AlphaCloneInput
                   type="text"
                   required
                   value={newDecision.decision_title}
                   onChange={(e) => setNewDecision({ ...newDecision, decision_title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
+                  className="w-full px-3 py-2"
                 />
               </div>
               <div>
                 <label className="block text-gray-400 mb-1">Context & Background</label>
-                <textarea
+                <AlphaCloneTextarea
                   required
                   value={newDecision.context}
                   onChange={(e) => setNewDecision({ ...newDecision, context: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] h-20"
+                  className="w-full px-3 py-2 h-20"
                 />
               </div>
               <div>
                 <label className="block text-gray-400 mb-1">Objective</label>
-                <input
+                <AlphaCloneInput
                   type="text"
                   required
                   value={newDecision.objective}
                   onChange={(e) => setNewDecision({ ...newDecision, objective: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
+                  className="w-full px-3 py-2"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-gray-400 mb-1">Cost (£)</label>
-                  <input
+                  <AlphaCloneInput
                     type="number"
                     value={newDecision.cost_amount}
                     onChange={(e) => setNewDecision({ ...newDecision, cost_amount: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
+                    className="w-full px-3 py-2"
                   />
                 </div>
                 <div>
                   <label className="block text-gray-400 mb-1">Reversibility</label>
-                  <select
+                  <AlphaCloneSelect
                     value={newDecision.reversibility}
                     onChange={(e) => setNewDecision({ ...newDecision, reversibility: e.target.value as any })}
-                    className="w-full px-3 py-2 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
+                    className="w-full px-3 py-2"
                   >
                     <option value="reversible">Reversible</option>
                     <option value="partially_reversible">Partially Reversible</option>
                     <option value="irreversible">Irreversible</option>
-                  </select>
+                  </AlphaCloneSelect>
                 </div>
               </div>
               <div className="flex items-center justify-end gap-2 pt-2">
@@ -801,107 +806,107 @@ export function OperationsCommandCenter() {
             <form onSubmit={submitAlamosEvaluation} className="space-y-3 type-caption">
               <div>
                 <label className="block text-gray-400 mb-1">Decision / Project Title</label>
-                <input
+                <AlphaCloneInput
                   type="text"
                   required
                   value={alamosForm.title}
                   onChange={(e) => setAlamosForm({ ...alamosForm, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
+                  className="w-full px-3 py-2"
                 />
               </div>
 
               <div>
                 <label className="block text-cyan-400 font-bold mb-1">ALAMOS 01: Key Outcome Metric</label>
-                <input
+                <AlphaCloneInput
                   type="text"
                   required
                   placeholder="e.g. Increase monthly recurring revenue by 15%"
                   value={alamosForm.alamos_01_outcome_metric}
                   onChange={(e) => setAlamosForm({ ...alamosForm, alamos_01_outcome_metric: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
+                  className="w-full px-3 py-2"
                 />
               </div>
 
               <div>
                 <label className="block text-cyan-400 font-bold mb-1">ALAMOS 02: Zero Multipliers (Single points of failure)</label>
-                <input
+                <AlphaCloneInput
                   type="text"
                   required
                   placeholder="e.g. Single API key rate limit breach"
                   value={alamosForm.alamos_02_zero_multiplier}
                   onChange={(e) => setAlamosForm({ ...alamosForm, alamos_02_zero_multiplier: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
+                  className="w-full px-3 py-2"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-cyan-400 font-bold mb-1">ALAMOS 03: Success Probability (0-1)</label>
-                  <input
+                  <AlphaCloneInput
                     type="number"
                     step="0.05"
                     min="0"
                     max="1"
                     value={alamosForm.alamos_03_success_probability}
                     onChange={(e) => setAlamosForm({ ...alamosForm, alamos_03_success_probability: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
+                    className="w-full px-3 py-2"
                   />
                 </div>
                 <div>
                   <label className="block text-cyan-400 font-bold mb-1">Resulting Action Protocol</label>
-                  <select
+                  <AlphaCloneSelect
                     value={alamosForm.resulting_action}
                     onChange={(e) => setAlamosForm({ ...alamosForm, resulting_action: e.target.value as any })}
-                    className="w-full px-3 py-2 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] font-bold"
+                    className="w-full px-3 py-2 font-bold"
                   >
                     {['BUILD', 'FIX', 'SCALE', 'KEEP', 'SIMPLIFY', 'TEST', 'DEFER', 'AUTOMATE', 'REMOVE', 'KILL'].map((act) => (
                       <option key={act} value={act}>{act}</option>
                     ))}
-                  </select>
+                  </AlphaCloneSelect>
                 </div>
               </div>
 
               <div>
                 <label className="block text-cyan-400 font-bold mb-1">ALAMOS 04: Costs & Tradeoffs</label>
-                <input
+                <AlphaCloneInput
                   type="text"
                   required
                   value={alamosForm.alamos_04_cost_and_tradeoffs}
                   onChange={(e) => setAlamosForm({ ...alamosForm, alamos_04_cost_and_tradeoffs: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
+                  className="w-full px-3 py-2"
                 />
               </div>
 
               <div>
                 <label className="block text-cyan-400 font-bold mb-1">ALAMOS 05: Failure Modes</label>
-                <input
+                <AlphaCloneInput
                   type="text"
                   required
                   value={alamosForm.alamos_05_potential_failure_modes}
                   onChange={(e) => setAlamosForm({ ...alamosForm, alamos_05_potential_failure_modes: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
+                  className="w-full px-3 py-2"
                 />
               </div>
 
               <div>
                 <label className="block text-cyan-400 font-bold mb-1">ALAMOS 06: Verification Plan</label>
-                <input
+                <AlphaCloneInput
                   type="text"
                   required
                   value={alamosForm.alamos_06_verification_method}
                   onChange={(e) => setAlamosForm({ ...alamosForm, alamos_06_verification_method: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
+                  className="w-full px-3 py-2"
                 />
               </div>
 
               <div>
                 <label className="block text-cyan-400 font-bold mb-1">ALAMOS 07: Post-Evidence Plan</label>
-                <input
+                <AlphaCloneInput
                   type="text"
                   required
                   value={alamosForm.alamos_07_post_evidence_plan}
                   onChange={(e) => setAlamosForm({ ...alamosForm, alamos_07_post_evidence_plan: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
+                  className="w-full px-3 py-2"
                 />
               </div>
 

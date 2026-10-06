@@ -1,5 +1,8 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Globe, LogOut, Settings, Smartphone, Sparkles } from 'lucide-react';
@@ -153,18 +156,18 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
             <Globe className="w-3 h-3" />
             {t('Language')}
           </label>
-          <select
+          <AlphaCloneSelect
             value={language}
             onChange={(e) => setLanguage(e.target.value as typeof language)}
             aria-label={t('Language')}
-            className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--surface-primary)] px-2.5 py-1.5 type-caption text-[var(--text-primary)] outline-none focus:border-teal-500/50"
+            className="w-full px-2.5 py-1.5"
           >
             {LANGUAGES.map((lang) => (
               <option key={lang.code} value={lang.code}>
                 {lang.nativeName} · {lang.label} ({lang.code.toUpperCase()})
               </option>
             ))}
-          </select>
+          </AlphaCloneSelect>
         </div>
 
         <button

@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import { useState } from 'react';
 import { Check, Clipboard, ExternalLink, Eye, EyeOff, KeyRound, Mail, ShieldCheck, UserRoundPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -95,7 +98,7 @@ export default function ClientPortalAccessPanel({ client, tenantId, onClose, onC
             <label htmlFor="client-portal-email" className="mb-1.5 block type-label font-semibold text-[var(--ws-text-primary)]">Client email</label>
             <div className="relative">
               <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ws-text-muted)]" aria-hidden="true" />
-              <input id="client-portal-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="client@company.com" className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-9 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none transition-colors placeholder:text-[var(--ws-text-muted)] focus:border-[var(--ac-accent)] focus:ring-2 focus:ring-[var(--focus-ring)]" />
+              <AlphaCloneInput id="client-portal-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="client@company.com" className="w-full px-9 py-2.5 transition-colors" />
             </div>
             <p className="mt-1.5 type-card-description text-[var(--ws-text-muted)]">This updates the email on the client record if it has changed.</p>
           </div>

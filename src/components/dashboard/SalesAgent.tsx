@@ -1,5 +1,9 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Bot, Search, Play, Pause, Settings, RefreshCw, Plus, Filter, Database, MessageSquare, ArrowRight, CheckCircle2, AlertCircle, UserPlus, Phone, Send, Trash2, Upload, FileSpreadsheet, X, Mail, ExternalLink, FileText, Zap, Layout, CheckSquare, Clock, ShieldCheck, Globe } from 'lucide-react';
@@ -1089,9 +1093,9 @@ const SalesAgent: React.FC = () => {
                     <label htmlFor="growth-agent-view" className="sr-only">
                         {t('Select Growth Agent mode')}
                     </label>
-                    <select
+                    <AlphaCloneSelect
                         id="growth-agent-view"
-                        className="w-full max-w-full px-3 py-2 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] type-ui text-[var(--ws-text-primary)] [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        className="w-full max-w-full px-3 py-2 [color-scheme:dark]"
                         value={activeTab === 'agent' ? 'agent' : 'omni'}
                         onChange={(e) => {
                             const v = e.target.value;
@@ -1107,7 +1111,7 @@ const SalesAgent: React.FC = () => {
                         <option className="bg-[var(--ws-panel)] text-[var(--ws-text-primary)]" value="omni">{t('Lead search')}</option>
                         <option className="bg-[var(--ws-panel)] text-[var(--ws-text-primary)]" value="agent">{t('Agent chat')}</option>
                         <option className="bg-[var(--ws-panel)] text-[var(--ws-text-primary)]" value="marketplace">{t('Integration marketplace')}</option>
-                    </select>
+                    </AlphaCloneSelect>
                 </div>
             </div>
 
@@ -1208,9 +1212,9 @@ const SalesAgent: React.FC = () => {
                             </div>
                         )}
                         <div className="flex gap-4">
-                            <input
+                            <AlphaCloneInput
                                 type="text"
-                                className="flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg px-4 py-3 text-[var(--ws-text-primary)] focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-50"
+                                className="flex-1 px-4 py-3 disabled:opacity-50"
                                 placeholder={aiConfigured ? "Type a message to the agent..." : "AI core offline..."}
                                 disabled={!aiConfigured}
                                 value={inputText}

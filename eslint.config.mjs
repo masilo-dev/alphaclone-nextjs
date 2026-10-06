@@ -50,6 +50,9 @@ const eslintConfig = defineConfig([
   },
   globalIgnores([
     ".next/**",
+    // Workflow compiler output is generated, not authored application code.
+    "src/app/.well-known/workflow/**",
+    "qa/results/**",
     "out/**",
     "build/**",
     "dist/**",

@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState } from 'react';
 import { X, Copy, Link2, Lock, Calendar, Loader2, User } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -111,12 +114,12 @@ export function ProjectPortalShareDialog({
             <label className="flex items-center gap-2 type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-2">
               <Lock className="w-3.5 h-3.5" /> Optional password
             </label>
-            <input
+            <AlphaCloneInput
               type="text"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Leave blank for open link"
-              className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)] outline-none focus:border-violet-400"
+              className="w-full h-10 px-3"
             />
           </div>
 

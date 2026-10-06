@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useCallback } from 'react';
 import { ClipboardList, RefreshCw, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -110,45 +114,45 @@ export default function OperationsConsoleTab() {
           <h2 className="text-lg font-semibold text-[var(--ws-text-primary)]">Log incident</h2>
           <div>
             <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1">Title</label>
-            <input
+            <AlphaCloneInput
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]"
+              className="w-full px-3 py-2"
               placeholder="Short headline"
             />
           </div>
           <div>
             <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1">Product area</label>
-            <input
+            <AlphaCloneInput
               value={area}
               onChange={(e) => setArea(e.target.value)}
-              className="w-full rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]"
+              className="w-full px-3 py-2"
               placeholder="e.g. Meetings, Facebook integration, Billing"
             />
           </div>
           <div>
             <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1">User impact</label>
-            <textarea
+            <AlphaCloneTextarea
               value={impact}
               onChange={(e) => setImpact(e.target.value)}
-              className="w-full rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)] min-h-[72px]"
+              className="w-full px-3 py-2 min-h-[72px]"
               placeholder="Who is blocked and how severely?"
             />
           </div>
           <div>
             <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1">Steps to reproduce</label>
-            <textarea
+            <AlphaCloneTextarea
               value={stepsToReproduce}
               onChange={(e) => setStepsToReproduce(e.target.value)}
-              className="w-full rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)] min-h-[88px]"
+              className="w-full px-3 py-2 min-h-[88px]"
             />
           </div>
           <div>
             <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1">Expected behavior</label>
-            <textarea
+            <AlphaCloneTextarea
               value={expectedBehavior}
               onChange={(e) => setExpectedBehavior(e.target.value)}
-              className="w-full rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)] min-h-[72px]"
+              className="w-full px-3 py-2 min-h-[72px]"
             />
           </div>
           <button

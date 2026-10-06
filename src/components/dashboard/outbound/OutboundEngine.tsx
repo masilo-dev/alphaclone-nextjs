@@ -1,5 +1,8 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTenant } from '@/contexts/TenantContext';
@@ -841,15 +844,15 @@ function MailboxesTab({
           <h3 className="text-sm font-semibold text-slate-800">New mailbox</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input placeholder="Display name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="bg-white text-sm" />
-            <select
+            <AlphaCloneSelect
               value={form.provider}
               onChange={(e) => setForm((f) => ({ ...f, provider: e.target.value }))}
-              className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-800"
+              className="h-10 px-3"
             >
               {['microsoft', 'zoho', 'brevo', 'resend', 'sendgrid', 'smtp', 'other'].map((p) => (
                 <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
               ))}
-            </select>
+            </AlphaCloneSelect>
             <Input placeholder="from@yourdomain.com" value={form.email_address} onChange={(e) => setForm((f) => ({ ...f, email_address: e.target.value }))} className="bg-white text-sm" />
             <Input placeholder="From name (optional)" value={form.from_name} onChange={(e) => setForm((f) => ({ ...f, from_name: e.target.value }))} className="bg-white text-sm" />
             <div className="flex items-center gap-2">

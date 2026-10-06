@@ -1,5 +1,8 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -948,10 +951,10 @@ export function OutreachInbox() {
                 </div>
                 <div className="col-span-4 space-y-2">
                   <label className="block type-ui font-semibold text-[var(--ws-text-secondary)]">Dispatch via</label>
-                  <select
+                  <AlphaCloneSelect
                     value={composeProvider}
                     onChange={(e) => setComposeProvider(normalizeDeliveryProvider(e.target.value))}
-                    className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-2 py-2 type-caption text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 h-9"
+                    className="w-full px-2 py-2 h-9"
                   >
                     <option value="auto">Auto (Best deliverability)</option>
                     {(connectedProviders.length ? connectedProviders : [
@@ -963,7 +966,7 @@ export function OutreachInbox() {
                         {p.label}{p.connected === false && p.id !== 'auto' ? ' (connect first)' : ''}
                       </option>
                     ))}
-                  </select>
+                  </AlphaCloneSelect>
                 </div>
               </div>
               <div className="space-y-2">

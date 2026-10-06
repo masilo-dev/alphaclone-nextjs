@@ -1,4 +1,9 @@
 "use client";
+
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
 import { useCallback, useEffect, useState } from "react";
 import {
   AlertTriangle,
@@ -486,15 +491,15 @@ export function OutreachLifecyclePanel() {
             <p className="type-card-description font-bold text-[var(--ws-text-primary)]">CRM audiences</p>
           </div>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <input
+            <AlphaCloneInput
               value={audienceForm.name}
               onChange={(e) =>
                 setAudienceForm({ ...audienceForm, name: e.target.value })
               }
               placeholder="Audience name"
-              className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+              className="p-2"
             />
-            <select
+            <AlphaCloneSelect
               value={audienceForm.source}
               onChange={(e) =>
                 setAudienceForm({
@@ -504,36 +509,36 @@ export function OutreachLifecyclePanel() {
                   industry: "",
                 })
               }
-              className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+              className="p-2"
             >
               <option value="leads">Leads</option>
               <option value="contacts">Contacts</option>
               <option value="clients">Clients</option>
-            </select>
-            <input
+            </AlphaCloneSelect>
+            <AlphaCloneInput
               value={audienceForm.status}
               onChange={(e) =>
                 setAudienceForm({ ...audienceForm, status: e.target.value })
               }
               placeholder="Status (optional)"
-              className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+              className="p-2"
             />
-            <input
+            <AlphaCloneInput
               value={audienceForm.industry}
               onChange={(e) =>
                 setAudienceForm({ ...audienceForm, industry: e.target.value })
               }
               placeholder="Industry (optional)"
               disabled={audienceForm.source === "contacts"}
-              className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)] disabled:opacity-40"
+              className="p-2 disabled:opacity-40"
             />
-            <input
+            <AlphaCloneInput
               value={audienceForm.search}
               onChange={(e) =>
                 setAudienceForm({ ...audienceForm, search: e.target.value })
               }
               placeholder="Name or email contains"
-              className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)] sm:col-span-2"
+              className="p-2 sm:col-span-2"
             />
           </div>
           <button
@@ -560,15 +565,15 @@ export function OutreachLifecyclePanel() {
             <p className="type-card-description font-bold text-[var(--ws-text-primary)]">A/B experiments</p>
           </div>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <input
+            <AlphaCloneInput
               value={experimentForm.name}
               onChange={(e) =>
                 setExperimentForm({ ...experimentForm, name: e.target.value })
               }
               placeholder="Experiment name"
-              className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+              className="p-2"
             />
-            <select
+            <AlphaCloneSelect
               value={experimentForm.sequenceId}
               onChange={(e) =>
                 setExperimentForm({
@@ -576,7 +581,7 @@ export function OutreachLifecyclePanel() {
                   sequenceId: e.target.value,
                 })
               }
-              className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+              className="p-2"
             >
               <option value="">Select sequence</option>
               {sequences.map((sequence) => (
@@ -584,8 +589,8 @@ export function OutreachLifecyclePanel() {
                   {sequence.name}
                 </option>
               ))}
-            </select>
-            <input
+            </AlphaCloneSelect>
+            <AlphaCloneInput
               value={experimentForm.hypothesis}
               onChange={(e) =>
                 setExperimentForm({
@@ -594,22 +599,22 @@ export function OutreachLifecyclePanel() {
                 })
               }
               placeholder="Hypothesis"
-              className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+              className="p-2"
             />
-            <select
+            <AlphaCloneSelect
               value={experimentForm.metric}
               onChange={(e) =>
                 setExperimentForm({ ...experimentForm, metric: e.target.value })
               }
-              className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+              className="p-2"
             >
               <option value="open_rate">Open rate</option>
               <option value="click_rate">Click rate</option>
               <option value="reply_rate">Reply rate</option>
               <option value="meeting_rate">Meeting rate</option>
               <option value="revenue">Revenue</option>
-            </select>
-            <input
+            </AlphaCloneSelect>
+            <AlphaCloneInput
               value={experimentForm.subjectA}
               onChange={(e) =>
                 setExperimentForm({
@@ -618,9 +623,9 @@ export function OutreachLifecyclePanel() {
                 })
               }
               placeholder="A subject (blank = campaign subject)"
-              className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+              className="p-2"
             />
-            <input
+            <AlphaCloneInput
               value={experimentForm.subjectB}
               onChange={(e) =>
                 setExperimentForm({
@@ -629,23 +634,23 @@ export function OutreachLifecyclePanel() {
                 })
               }
               placeholder="B subject"
-              className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+              className="p-2"
             />
-            <textarea
+            <AlphaCloneTextarea
               value={experimentForm.bodyA}
               onChange={(e) =>
                 setExperimentForm({ ...experimentForm, bodyA: e.target.value })
               }
               placeholder="A message (blank = campaign message)"
-              className="min-h-16 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+              className="min-h-16 p-2"
             />
-            <textarea
+            <AlphaCloneTextarea
               value={experimentForm.bodyB}
               onChange={(e) =>
                 setExperimentForm({ ...experimentForm, bodyB: e.target.value })
               }
               placeholder="B message / offer"
-              className="min-h-16 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+              className="min-h-16 p-2"
             />
           </div>
           <button
@@ -718,18 +723,18 @@ export function OutreachLifecyclePanel() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <label className="type-caption font-bold uppercase text-[var(--ws-text-muted)]">
               Name
-              <input
+              <AlphaCloneInput
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="mt-1 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption normal-case text-[var(--ws-text-primary)]"
+                className="mt-1 w-full p-2 normal-case"
               />
             </label>
             <label className="type-caption font-bold uppercase text-[var(--ws-text-muted)]">
               Saved audience
-              <select
+              <AlphaCloneSelect
                 value={form.audienceId}
                 onChange={(e) => setForm({ ...form, audienceId: e.target.value })}
-                className="mt-1 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption normal-case text-[var(--ws-text-primary)]"
+                className="mt-1 w-full p-2 normal-case"
               >
                 <option value="">Select audience</option>
                 {audiences.map((audience) => (
@@ -737,19 +742,19 @@ export function OutreachLifecyclePanel() {
                     {audience.name} ({audience.estimated_size || 0})
                   </option>
                 ))}
-              </select>
+              </AlphaCloneSelect>
             </label>
             <label className="type-caption font-bold uppercase text-[var(--ws-text-muted)]">
               Timezone
-              <input
+              <AlphaCloneInput
                 value={form.timezone}
                 onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-                className="mt-1 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption normal-case text-[var(--ws-text-primary)]"
+                className="mt-1 w-full p-2 normal-case"
               />
             </label>
             <label className="type-caption font-bold uppercase text-[var(--ws-text-muted)]">
               Max / 7 days
-              <input
+              <AlphaCloneInput
                 type="number"
                 min="1"
                 max="30"
@@ -757,30 +762,30 @@ export function OutreachLifecyclePanel() {
                 onChange={(e) =>
                   setForm({ ...form, maxPerWeek: Number(e.target.value) })
                 }
-                className="mt-1 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption normal-case text-[var(--ws-text-primary)]"
+                className="mt-1 w-full p-2 normal-case"
               />
             </label>
             <div className="grid grid-cols-2 gap-2">
               <label className="type-caption font-bold uppercase text-[var(--ws-text-muted)]">
                 Quiet from
-                <input
+                <AlphaCloneInput
                   type="time"
                   value={form.quietStart}
                   onChange={(e) =>
                     setForm({ ...form, quietStart: e.target.value })
                   }
-                  className="mt-1 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+                  className="mt-1 w-full p-2"
                 />
               </label>
               <label className="type-caption font-bold uppercase text-[var(--ws-text-muted)]">
                 Until
-                <input
+                <AlphaCloneInput
                   type="time"
                   value={form.quietEnd}
                   onChange={(e) =>
                     setForm({ ...form, quietEnd: e.target.value })
                   }
-                  className="mt-1 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+                  className="mt-1 w-full p-2"
                 />
               </label>
             </div>
@@ -791,7 +796,7 @@ export function OutreachLifecyclePanel() {
                 key={index}
                 className="grid gap-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-3 lg:grid-cols-[7rem_7rem_10rem_1fr_1fr_auto]"
               >
-                <select
+                <AlphaCloneSelect
                   value={step.channel}
                   onChange={(e) =>
                     setSteps(
@@ -805,7 +810,7 @@ export function OutreachLifecyclePanel() {
                       ),
                     )
                   }
-                  className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+                  className="p-2"
                 >
                   <option value="email">Email</option>
                   <option value="linkedin">LinkedIn</option>
@@ -813,8 +818,8 @@ export function OutreachLifecyclePanel() {
                   <option value="whatsapp">WhatsApp</option>
                   <option value="call">Call task</option>
                   <option value="task">Task</option>
-                </select>
-                <input
+                </AlphaCloneSelect>
+                <AlphaCloneInput
                   type="number"
                   min="0"
                   value={step.delayMinutes}
@@ -828,9 +833,9 @@ export function OutreachLifecyclePanel() {
                     )
                   }
                   placeholder="Delay min"
-                  className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+                  className="p-2"
                 />
-                <select
+                <AlphaCloneSelect
                   value={step.condition}
                   onChange={(e) =>
                     setSteps(
@@ -841,7 +846,7 @@ export function OutreachLifecyclePanel() {
                       ),
                     )
                   }
-                  className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+                  className="p-2"
                 >
                   <option value="always">Always</option>
                   <option value="not_opened">Not opened</option>
@@ -849,8 +854,8 @@ export function OutreachLifecyclePanel() {
                   <option value="clicked">Clicked</option>
                   <option value="no_reply">No reply</option>
                   <option value="positive_reply">Positive reply</option>
-                </select>
-                <input
+                </AlphaCloneSelect>
+                <AlphaCloneInput
                   value={step.subject}
                   onChange={(e) =>
                     setSteps(
@@ -860,9 +865,9 @@ export function OutreachLifecyclePanel() {
                     )
                   }
                   placeholder="Subject / task title"
-                  className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+                  className="p-2"
                 />
-                <input
+                <AlphaCloneInput
                   value={step.body}
                   onChange={(e) =>
                     setSteps(
@@ -872,7 +877,7 @@ export function OutreachLifecyclePanel() {
                     )
                   }
                   placeholder="Message / instructions"
-                  className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 type-caption text-[var(--ws-text-primary)]"
+                  className="p-2"
                 />
                 <button
                   onClick={() =>
@@ -1039,7 +1044,7 @@ export function OutreachLifecyclePanel() {
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <label className="type-caption uppercase text-[var(--ws-text-muted)]">
                     Daily limit{" "}
-                    <input
+                    <AlphaCloneInput
                       type="number"
                       min="1"
                       max="10000"
@@ -1051,7 +1056,7 @@ export function OutreachLifecyclePanel() {
                           Number(event.target.value),
                         )
                       }
-                      className="ml-1 w-20 rounded border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-1 type-caption text-[var(--ws-text-primary)]"
+                      className="ml-1 w-20 p-1"
                     />
                   </label>
                   {sender.warmup_status !== "warming" ? (

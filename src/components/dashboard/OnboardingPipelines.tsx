@@ -1,3 +1,5 @@
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 import React, { useState, useEffect } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { Plus, MoreVertical, Mail, Phone, Calendar, DollarSign, Edit, Trash2, X, Loader2, Sparkles } from 'lucide-react';
@@ -440,10 +442,10 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                                 <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                                     Stage
                                 </label>
-                                <select
+                                <AlphaCloneSelect
                                     value={formData.stage}
                                     onChange={(e) => setFormData({ ...formData, stage: e.target.value as Lead['stage'] })}
-                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
+                                    className="w-full px-4 py-2"
                                 >
                                     {[
                                         { value: 'lead', label: 'Lead' },
@@ -461,7 +463,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                                             </option>
                                         );
                                     })}
-                                </select>
+                                </AlphaCloneSelect>
                             </div>
                         </div>
 
@@ -469,12 +471,12 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                             <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                                 Notes
                             </label>
-                            <textarea
+                            <AlphaCloneTextarea
                                 value={formData.notes}
                                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                 placeholder="Add notes about this lead..."
                                 rows={4}
-                                className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 resize-none"
+                                className="w-full px-4 py-2 resize-none"
                             />
                         </div>
 

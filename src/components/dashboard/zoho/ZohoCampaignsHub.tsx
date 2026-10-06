@@ -1,5 +1,9 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -396,22 +400,22 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
           </div>
           <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-4 space-y-3">
             <p className="type-caption font-bold uppercase text-[var(--ws-text-muted)]">Add CRM contact to list</p>
-            <select
+            <AlphaCloneSelect
               value={subscribeListKey}
               onChange={(e) => setSubscribeListKey(e.target.value)}
-              className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-caption text-[var(--ws-text-primary)]"
+              className="w-full h-10 px-3"
             >
               <option value="">Select mailing list</option>
               {lists.map((l) => (
                 <option key={l.listKey} value={l.listKey}>{l.name}</option>
               ))}
-            </select>
-            <input
+            </AlphaCloneSelect>
+            <AlphaCloneInput
               type="email"
               value={subscribeEmail}
               onChange={(e) => setSubscribeEmail(e.target.value)}
               placeholder="contact@example.com"
-              className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-caption text-[var(--ws-text-primary)]"
+              className="w-full h-10 px-3"
             />
             <button type="button" onClick={handleSubscribe} className="rounded-xl bg-teal-600 px-4 py-2 type-ui font-bold text-[var(--text-inverse)]">
               Add to list
@@ -420,37 +424,37 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
         </div>
       ) : (
         <div className="max-w-2xl space-y-4">
-          <input
+          <AlphaCloneInput
             value={compose.campaignName}
             onChange={(e) => setCompose({ ...compose, campaignName: e.target.value })}
             placeholder="Campaign name"
-            className="w-full h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 type-ui text-[var(--ws-text-primary)]"
+            className="w-full h-11 px-4"
           />
-          <input
+          <AlphaCloneInput
             value={compose.subject}
             onChange={(e) => setCompose({ ...compose, subject: e.target.value })}
             placeholder="Email subject"
-            className="w-full h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 type-ui text-[var(--ws-text-primary)]"
+            className="w-full h-11 px-4"
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <input
+            <AlphaCloneInput
               value={compose.fromEmail}
               onChange={(e) => setCompose({ ...compose, fromEmail: e.target.value })}
               placeholder="From email"
-              className="h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 type-ui text-[var(--ws-text-primary)]"
+              className="h-11 px-4"
             />
-            <input
+            <AlphaCloneInput
               value={compose.fromName}
               onChange={(e) => setCompose({ ...compose, fromName: e.target.value })}
               placeholder="From name (optional)"
-              className="h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 type-ui text-[var(--ws-text-primary)]"
+              className="h-11 px-4"
             />
           </div>
-          <input
+          <AlphaCloneInput
             value={compose.contentUrl}
             onChange={(e) => setCompose({ ...compose, contentUrl: e.target.value })}
             placeholder="Public HTML content URL (hosted newsletter HTML)"
-            className="w-full h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 type-ui text-[var(--ws-text-primary)]"
+            className="w-full h-11 px-4"
           />
           <div>
             <p className="type-caption font-bold uppercase text-[var(--ws-text-muted)] mb-2">Mailing lists</p>

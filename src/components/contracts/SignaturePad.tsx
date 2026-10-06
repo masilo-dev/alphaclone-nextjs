@@ -1,3 +1,4 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
 import React, { useRef, useState, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { X, Check, PenTool, RotateCcw, Loader2, BookmarkCheck } from 'lucide-react';
@@ -253,12 +254,12 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                                 <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">
                                     {t('Legal Full Name')} *
                                 </label>
-                                <input
+                                <AlphaCloneInput
                                     type="text"
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
                                     placeholder={t('Type your official legal name')}
-                                    className="w-full bg-slate-905 border border-white/10 rounded-2xl p-4 text-white text-base font-medium outline-none focus:ring-2 focus:ring-teal-500 placeholder-slate-600"
+                                    className="w-full p-4 font-medium"
                                 />
                             </div>
 

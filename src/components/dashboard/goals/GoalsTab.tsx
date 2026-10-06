@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Target, Trash2, Gauge, CalendarDays, Zap, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
@@ -168,18 +171,18 @@ export default function GoalsTab() {
     >
       <div className="space-y-4 ac-scroll-full pb-6">
         <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 mb-4 flex flex-wrap gap-2">
-          <input
+          <AlphaCloneInput
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Goal name"
-            className="flex-1 min-w-[160px] bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)]"
+            className="flex-1 min-w-[160px] px-3 py-2"
           />
-          <input
+          <AlphaCloneInput
             value={target}
             onChange={(e) => setTarget(e.target.value)}
             placeholder="Target"
             type="number"
-            className="w-32 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)]"
+            className="w-32 px-3 py-2"
           />
           <button
             onClick={() => void handleCreate()}

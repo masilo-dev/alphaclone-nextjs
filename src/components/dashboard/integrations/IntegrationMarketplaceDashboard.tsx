@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '../../ui/UIComponents';
@@ -193,12 +196,12 @@ export function IntegrationMarketplaceDashboard() {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
-          <input
+          <AlphaCloneInput
             type="text"
             placeholder="Search integrations…"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-ui placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500"
+            className="w-full pl-9 pr-4 py-2"
           />
         </div>
         <label className="flex items-center gap-2 type-label text-[var(--ws-text-secondary)] self-center cursor-pointer select-none">

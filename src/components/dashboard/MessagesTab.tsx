@@ -1,3 +1,5 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Send,
@@ -954,8 +956,8 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                   </div>
                   <div className="relative mt-4">
                     <Search className="w-4 h-4 text-[var(--ws-text-muted)] absolute left-3 top-3" />
-                    <input
-                      className="w-full bg-[var(--ws-surface-secondary)] border border-slate-600 rounded-lg pl-9 pr-4 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
+                    <AlphaCloneInput
+                      className="w-full pl-9 pr-4 py-2"
                       placeholder={
                         sidebarTab === "chats"
                           ? "Search chats..."
@@ -1504,8 +1506,8 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                         )}
                       </div>
 
-                      <textarea
-                        className="flex-1 min-w-0 bg-[var(--ws-surface-secondary)] border border-slate-600 rounded-xl px-3 md:px-4 py-2 md:py-3 type-ui text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 focus:bg-[var(--ws-surface-tertiary)] transition-all hover:bg-[var(--ws-surface-tertiary)] resize-none h-[44px] md:h-[50px] min-h-[44px] md:min-h-[50px] max-h-[120px] md:max-h-[150px]"
+                      <AlphaCloneTextarea
+                        className="flex-1 min-w-0 px-3 md:px-4 py-2 md:py-3 transition-all resize-none h-[44px] md:h-[50px] min-h-[44px] md:min-h-[50px] max-h-[120px] md:max-h-[150px]"
                         placeholder="Type your message..."
                         rows={1}
                         value={newMessage}

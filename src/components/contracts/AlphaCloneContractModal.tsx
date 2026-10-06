@@ -1,3 +1,6 @@
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -495,8 +498,8 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1.5">
                                     <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest pl-1">Select Existing Client</label>
-                                    <select
-                                        className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg p-3 text-[var(--ws-text-secondary)] type-ui outline-none focus:ring-2 focus:ring-teal-500/30"
+                                    <AlphaCloneSelect
+                                        className="w-full p-3"
                                         value={selectedClientId}
                                         onChange={e => setSelectedClientId(e.target.value)}
                                     >
@@ -504,7 +507,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                         {clients.map(c => (
                                             <option key={c.id} value={c.id}>{c.name}</option>
                                         ))}
-                                    </select>
+                                    </AlphaCloneSelect>
                                 </div>
                                 <div className="md:col-start-1">
                                     <Input
@@ -652,32 +655,32 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                     <div className="space-y-1.5">
                                         <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest pl-1">Contract Template</label>
-                                        <select
-                                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg p-3 text-[var(--ws-text-secondary)] type-ui outline-none focus:ring-2 focus:ring-teal-500/30"
+                                        <AlphaCloneSelect
+                                            className="w-full p-3"
                                             value={variables.templateType}
                                             onChange={e => handleVariableChange('templateType', e.target.value)}
                                         >
                                             <option value="comprehensive">Comprehensive MSA (5+ Pages)</option>
                                             <option value="simple">Simple PSA (1-2 Pages)</option>
-                                        </select>
+                                        </AlphaCloneSelect>
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest pl-1">Contract Language</label>
-                                        <select
-                                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg p-3 text-[var(--ws-text-secondary)] type-ui outline-none focus:ring-2 focus:ring-teal-500/30"
+                                        <AlphaCloneSelect
+                                            className="w-full p-3"
                                             value={variables.language}
                                             onChange={e => handleVariableChange('language', e.target.value)}
                                         >
                                             <option value="en">English (Default)</option>
                                             <option value="es">Spanish (Español)</option>
                                             <option value="fr">French (Français)</option>
-                                        </select>
+                                        </AlphaCloneSelect>
                                     </div>
                                 </div>
                                 <div className="mt-4">
                                     <label className="type-label font-medium text-[var(--ws-text-secondary)] mb-2 block">Payment Schedule *</label>
-                                    <select
-                                        className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg p-3 text-[var(--ws-text-secondary)]"
+                                    <AlphaCloneSelect
+                                        className="w-full p-3"
                                         value={variables.paymentSchedule}
                                         onChange={(e) => handleVariableChange('paymentSchedule', e.target.value)}
                                     >
@@ -686,14 +689,14 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                                 {key.replace(/_/g, ' ').toUpperCase()}
                                             </option>
                                         ))}
-                                    </select>
+                                    </AlphaCloneSelect>
                                 </div>
                             </div>
 
                             <div className="border-t border-[var(--ws-border)] pt-4">
                                 <h3 className="text-white font-bold mb-3">Project Scope *</h3>
-                                <textarea
-                                    className="w-full h-24 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg p-3 text-[var(--ws-text-secondary)]"
+                                <AlphaCloneTextarea
+                                    className="w-full h-24 p-3"
                                     value={variables.projectScope}
                                     onChange={(e) => handleVariableChange('projectScope', e.target.value)}
                                 />
@@ -701,8 +704,8 @@ const AlphaCloneContractModal: React.FC<Props> = ({
 
                             <div>
                                 <h3 className="text-white font-bold mb-3">Deliverables *</h3>
-                                <textarea
-                                    className="w-full h-24 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg p-3 text-[var(--ws-text-secondary)]"
+                                <AlphaCloneTextarea
+                                    className="w-full h-24 p-3"
                                     value={variables.projectDeliverables}
                                     onChange={(e) => handleVariableChange('projectDeliverables', e.target.value)}
                                 />
@@ -781,9 +784,9 @@ const AlphaCloneContractModal: React.FC<Props> = ({
 
                                     {/* Add Comment */}
                                     <div className="flex gap-2">
-                                        <input
+                                        <AlphaCloneInput
                                             type="text"
-                                            className="flex-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg p-3 text-[var(--ws-text-secondary)] type-ui"
+                                            className="flex-1 p-3"
                                             placeholder="Add a comment about the contract..."
                                             value={newComment}
                                             onChange={(e) => setNewComment(e.target.value)}
@@ -928,10 +931,10 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 <div className="mt-8 pt-6 border-t border-[var(--ws-border)] w-full max-w-md">
                                     <p className="text-[var(--ws-text-muted)] type-card-description mb-3">Share External Signing Link</p>
                                     <div className="flex gap-2">
-                                        <input
+                                        <AlphaCloneInput
                                             readOnly
                                             value={`${window.location.origin}/dashboard/business/contracts`}
-                                            className="flex-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 text-[var(--ws-text-muted)] type-ui"
+                                            className="flex-1 px-3 py-2"
                                         />
                                         <Button
                                             variant="outline"

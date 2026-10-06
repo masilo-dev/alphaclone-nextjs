@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   TrendingUp, TrendingDown, DollarSign, Calendar, Plus, 
@@ -364,62 +368,62 @@ export default function CashFlowForecastTab() {
             <form onSubmit={handleSave} className="p-5 space-y-4">
               <div>
                 <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Projection Date</label>
-                <input
+                <AlphaCloneInput
                   type="date"
                   required
                   value={form.projection_date}
                   onChange={e => setForm(f => ({ ...f, projection_date: e.target.value }))}
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2"
                 />
               </div>
 
               <div>
                 <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Movement Type</label>
-                <select
+                <AlphaCloneSelect
                   value={form.type}
                   onChange={e => setForm(f => ({ ...f, type: e.target.value as any }))}
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2"
                 >
                   <option value="inflow">Inflow (Incoming cash)</option>
                   <option value="outflow">Outflow (Outgoing cost)</option>
-                </select>
+                </AlphaCloneSelect>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Amount (USD)</label>
-                  <input
+                  <AlphaCloneInput
                     type="number"
                     required
                     min="1"
                     placeholder="2500"
                     value={form.amount}
                     onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500 font-mono"
+                    className="w-full px-3 py-2 font-mono"
                   />
                 </div>
 
                 <div>
                   <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Category</label>
-                  <input
+                  <AlphaCloneInput
                     type="text"
                     required
                     placeholder="e.g. Project Phase 2, Hosting"
                     value={form.category}
                     onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
+                    className="w-full px-3 py-2"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Description</label>
-                <input
+                <AlphaCloneInput
                   type="text"
                   placeholder="Additional context notes"
                   value={form.description}
                   onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2"
                 />
               </div>
 

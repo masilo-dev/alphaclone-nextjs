@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useMemo, useState } from 'react';
 import { BookOpen, Search, ChevronRight, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
@@ -35,12 +38,12 @@ export default function PlatformHelpTab() {
       toolbar={
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" aria-hidden />
-          <input
+          <AlphaCloneInput
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search terms…"
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] type-ui text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500/50"
+            className="w-full pl-10 pr-4 py-2.5"
             aria-label="Search platform guide"
           />
         </div>

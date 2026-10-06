@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { CheckCircle2, ChevronDown, ChevronUp, X } from 'lucide-react';
 import type { User } from '@/types';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
 
 interface NewUserSetupPanelProps {
   user: User;
@@ -21,10 +22,22 @@ export function NewUserSetupPanel({ user, tenantId, stats, onDismiss, className 
   const [collapsed, setCollapsed] = useState(false);
   const [completed, setCompleted] = useState<string[]>([]);
   const [tourActive, setTourActive] = useState(false);
+  const { data: progress } = useQuery<Record<string, boolean | null>>({
+    queryKey: ['onboarding-progress', tenantId, user.id],
+    queryFn: async ({ signal }) => {
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/onboarding/progress`, { signal, credentials: 'same-origin' });
+      if (!response.ok) throw new Error('Getting started progress could not be loaded');
+      return (await response.json()).progress;
+    },
+    staleTime: 60_000, retry: false,
+  });
   const steps = [
-    { id: 'profile', title: 'Complete business profile', href: '/dashboard/settings', done: Boolean(user.company?.trim()) },
-    { id: 'client', title: 'Add your first client', href: '/dashboard/crm/workspace?quickAdd=true', done: Number(stats?.clientCount) > 0 },
-    { id: 'project', title: 'Create your first project', href: '/dashboard/business/projects/manage?create=true', done: Number(stats?.activeProjects) > 0 },
+    { id: 'profile', title: 'Complete business profile', href: '/dashboard/settings', done: progress?.profile === true || Boolean(user.company?.trim()) },
+    { id: 'client', title: 'Add your first client', href: '/dashboard/crm/workspace?quickAdd=true', done: progress?.client === true || Number(stats?.clientCount) > 0 },
+    { id: 'project', title: 'Create your first project', href: '/dashboard/business/projects/manage?create=true', done: progress?.project === true || Number(stats?.activeProjects) > 0 },
+    { id: 'email', title: 'Connect email', href: '/dashboard/settings/integrations', done: progress?.email === true },
+    { id: 'social', title: 'Connect a social account', href: '/dashboard/business/social', done: progress?.social === true },
+    { id: 'execution', title: 'Perform your first AlphaClone execution', href: '/dashboard/bonnie', done: progress?.execution === true },
   ];
   const observed = steps.filter(step => step.done).map(step => step.id).join(',');
   useEffect(() => {

@@ -1,5 +1,10 @@
 'use client';
 
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import DOMPurify from 'dompurify';
@@ -1721,11 +1726,11 @@ Voice & rules:
                                     </div>
                                     <div className="space-y-2">
                                         <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider px-1">Campaign Goal</label>
-                                        <textarea
+                                        <AlphaCloneTextarea
                                             value={campaignGoal}
                                             onChange={(e) => setCampaignGoal(e.target.value)}
                                             placeholder="Example: Re-engage cold leads who haven’t replied in 60 days."
-                                            className="w-full min-h-[88px] bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl p-4 type-ui text-[var(--ws-text-primary)] outline-none resize-y"
+                                            className="w-full min-h-[88px] p-4 resize-y"
                                         />
                                     </div>
                                 </div>
@@ -1760,38 +1765,38 @@ Voice & rules:
                                     <div className="space-y-5 animate-in fade-in duration-300">
                                         <div className="space-y-1.5">
                                             <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider px-1">Internal Name</label>
-                                            <input 
+                                            <AlphaCloneInput
                                                 value={form.name} 
                                                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                                                 placeholder="e.g. Q2 Outreach Campaign"
-                                                className="w-full h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/50"
+                                                className="w-full h-11 px-4"
                                             />
                                         </div>
 
                                         <div className="space-y-1.5">
                                             <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider px-1">Subject Line</label>
-                                            <input 
+                                            <AlphaCloneInput
                                                 value={form.subject} 
                                                 onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
                                                 placeholder="e.g. Quick question about workspace optimization"
-                                                className="w-full h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/50"
+                                                className="w-full h-11 px-4"
                                             />
                                         </div>
 
                                         <div className="grid gap-3 sm:grid-cols-2 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 p-4">
                                             <div className="space-y-1.5">
                                                 <label htmlFor="campaign-from-name" className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider px-1">Sender name</label>
-                                                <input
+                                                <AlphaCloneInput
                                                     id="campaign-from-name"
                                                     value={form.fromName}
                                                     onChange={(e) => setForm((f) => ({ ...f, fromName: e.target.value }))}
                                                     placeholder="e.g. Anna from Bistro Warszawa"
-                                                    className="w-full h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/50"
+                                                    className="w-full h-11 px-4"
                                                 />
                                             </div>
                                             <div className="space-y-1.5">
                                                 <label htmlFor="campaign-from-email" className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider px-1">Business reply-to email</label>
-                                                <input
+                                                <AlphaCloneInput
                                                     id="campaign-from-email"
                                                     type="email"
                                                     value={form.fromEmail}
@@ -1817,11 +1822,11 @@ Voice & rules:
                                             </label>
                                             {form.abTestEnabled && (
                                                 <>
-                                                    <input
+                                                    <AlphaCloneInput
                                                         value={form.subjectB}
                                                         onChange={(e) => setForm((f) => ({ ...f, subjectB: e.target.value }))}
                                                         placeholder="Subject line B"
-                                                        className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-caption text-[var(--ws-text-primary)]"
+                                                        className="w-full h-10 px-3"
                                                     />
                                                     <div className="flex items-center gap-3">
                                                         <span className="type-ui text-[var(--ws-text-muted)]">Split to B: {form.abSplitPercent}%</span>
@@ -1851,13 +1856,13 @@ Voice & rules:
                                             <div className="grid gap-3 md:grid-cols-[160px_1fr]">
                                                 <div>
                                                     <label className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Emails per day</label>
-                                                    <input
+                                                    <AlphaCloneInput
                                                         type="number"
                                                         min={1}
                                                         max={3}
                                                         value={form.sequenceDailyLimit}
                                                         onChange={(e) => setForm((f) => ({ ...f, sequenceDailyLimit: Math.max(1, Math.min(3, Number(e.target.value) || 1)) }))}
-                                                        className="mt-1 w-full h-10 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 type-ui text-[var(--ws-text-primary)] outline-none"
+                                                        className="mt-1 w-full h-10 px-3"
                                                     />
                                                 </div>
                                                 <p className="self-end type-card-description leading-relaxed text-[var(--ws-text-muted)]">
@@ -1996,15 +2001,15 @@ Voice & rules:
                                                     <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider px-1">Campaign Language</label>
                                                     <div className="relative">
                                                         <Languages className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)] pointer-events-none" />
-                                                        <select
+                                                        <AlphaCloneSelect
                                                             value={form.languageMode}
                                                             onChange={e => setForm(f => ({ ...f, languageMode: e.target.value as CampaignLanguageMode }))}
-                                                            className="w-full h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl pl-9 pr-4 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/50"
+                                                            className="w-full h-11 pl-9 pr-4"
                                                         >
                                                             {CAMPAIGN_LANGUAGE_OPTIONS.map(option => (
                                                                 <option key={option.code} value={option.code}>{option.label}</option>
                                                             ))}
-                                                        </select>
+                                                        </AlphaCloneSelect>
                                                     </div>
                                                 </div>
                                             </>
@@ -2099,11 +2104,11 @@ Voice & rules:
 
                                         {recipientType === 'few' && (
                                             <div className="p-4 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl space-y-3">
-                                                <input 
+                                                <AlphaCloneInput
                                                     value={contactSearch}
                                                     onChange={e => setContactSearch(e.target.value)}
                                                     placeholder="Search contacts name..."
-                                                    className="w-full h-9 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 type-caption text-[var(--ws-text-primary)] outline-none"
+                                                    className="w-full h-9 px-3"
                                                 />
                                                 <div className="max-h-40 overflow-y-auto space-y-1">
                                                     {contacts.filter(c => !contactSearch || c.name?.toLowerCase().includes(contactSearch.toLowerCase())).map(c => (
@@ -2126,11 +2131,11 @@ Voice & rules:
                                                     <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Paste Leads List</span>
                                                     <p className="type-card-description text-[var(--ws-text-muted)]">Paste names and emails (e.g. "John Doe, john@example.com" or just "john@example.com" on separate lines).</p>
                                                 </div>
-                                                <textarea
+                                                <AlphaCloneTextarea
                                                     value={pasteLeadsText}
                                                     onChange={e => setPasteLeadsText(e.target.value)}
                                                     placeholder="John Doe, john@example.com&#10;Mary Smith, mary@example.com&#10;sales@clientcompany.com"
-                                                    className="w-full h-32 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl p-3 type-caption text-[var(--ws-text-primary)] outline-none resize-none font-mono"
+                                                    className="w-full h-32 p-3 resize-none font-mono"
                                                 />
                                                 <button
                                                     onClick={handleImportLeads}
@@ -2178,11 +2183,11 @@ Voice & rules:
                                                         {aiGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />} Write it for me
                                                     </button>
                                                 </div>
-                                                <textarea
+                                                <AlphaCloneTextarea
                                                     value={plainFromHtml(form.bodyHtml)}
                                                     onChange={e => setForm(f => ({ ...f, bodyHtml: htmlFromPlain(e.target.value) }))}
                                                     placeholder={"Type your email the way you'd write it to a customer.\n\nLeave a blank line between paragraphs. No code needed — we handle the formatting."}
-                                                    className="w-full h-48 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 type-ui text-[var(--ws-text-primary)] outline-none resize-none leading-relaxed focus:border-teal-500/40"
+                                                    className="w-full h-48 p-4 resize-none leading-relaxed"
                                                 />
                                                 <p className="type-card-description text-[var(--ws-text-muted)] px-1">Tip: pick a template above to start, or let AI write a first draft — then tweak the words.</p>
                                                 <div className="space-y-2">
@@ -2226,11 +2231,11 @@ Voice & rules:
                                                         {aiGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />} AI writer
                                                     </button>
                                                 </div>
-                                                <textarea
+                                                <AlphaCloneTextarea
                                                     value={form.bodyHtml}
                                                     onChange={e => setForm(f => ({ ...f, bodyHtml: e.target.value }))}
                                                     placeholder="Write message HTML or plain text here..."
-                                                    className="w-full h-40 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 type-caption text-[var(--ws-text-primary)] outline-none resize-none font-mono"
+                                                    className="w-full h-40 p-4 resize-none font-mono"
                                                 />
                                             </div>
                                         ) : (
@@ -2582,12 +2587,12 @@ Voice & rules:
                                                         {sendingTestEmail ? 'Sending...' : 'Send test'}
                                                     </button>
                                                 </div>
-                                                <input
+                                                <AlphaCloneInput
                                                     type="email"
                                                     value={testEmailAddress}
                                                     onChange={(e) => setTestEmailAddress(e.target.value)}
                                                     placeholder={senderProfile?.fromEmail || 'name@example.com'}
-                                                    className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-2 type-ui text-[var(--ws-text-primary)] outline-none"
+                                                    className="w-full px-3 py-2"
                                                 />
                                                 <p className="type-card-description text-[var(--ws-text-muted)]">
                                                     Test uses {resolvedProviderMeta?.label || DELIVERY_PROVIDER_LABELS[resolvedProvider]} with the current subject and message draft.
@@ -2611,11 +2616,11 @@ Voice & rules:
                                                 <span className="type-ui text-[var(--ws-text-primary)] font-medium">Schedule for later</span>
                                             </label>
                                             {form.scheduleEnabled && (
-                                                <input
+                                                <AlphaCloneInput
                                                     type="datetime-local"
                                                     value={form.scheduledAt}
                                                     onChange={(e) => setForm((f) => ({ ...f, scheduledAt: e.target.value }))}
-                                                    className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)]"
+                                                    className="w-full px-3 py-2"
                                                 />
                                             )}
                                             <label className="flex items-center gap-3 cursor-pointer">
@@ -2754,11 +2759,11 @@ Voice & rules:
 
                                     {/* Input Form */}
                                     <form onSubmit={handleCopilotSend} className="flex gap-2 pt-2 border-t border-[var(--ws-border)]">
-                                        <input
+                                        <AlphaCloneInput
                                             value={copilotInput}
                                             onChange={e => setCopilotInput(e.target.value)}
                                             placeholder="Suggest tech outreach, paste emails..."
-                                            className="flex-1 h-9 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 type-caption text-[var(--ws-text-primary)] placeholder-slate-600 outline-none focus:border-teal-500/40"
+                                            className="flex-1 h-9 px-3"
                                         />
                                         <button 
                                             type="submit"

@@ -1,3 +1,5 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { Search, X, FileText, MessageSquare, DollarSign, User, Filter, Mail } from 'lucide-react';
@@ -183,7 +185,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                     {/* Search Input */}
                     <div className="flex items-center gap-2.5 p-[14px] border-b border-[var(--ws-border)]">
                         <Search className="w-5 h-5 text-[var(--ws-text-muted)]" />
-                        <input
+                        <AlphaCloneInput
                             ref={inputRef}
                             type="text"
                             value={query}
@@ -191,7 +193,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                             onKeyDown={handleKeyDown}
                             aria-label={t('Search contacts, contracts, documents, invoices and campaigns') || 'Search contacts, contracts, documents, invoices and campaigns'}
                             placeholder="Search contacts, contracts, documents, invoices and campaigns..."
-                            className="flex-1 bg-transparent text-[var(--ws-text-primary)] placeholder-slate-400 outline-none"
+                            className="flex-1"
                             autoFocus
                         />
                         {query && (
@@ -219,14 +221,14 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="type-label text-[var(--ws-text-muted)] mb-2 block">Type</label>
-                                    <select
+                                    <AlphaCloneSelect
                                         multiple
                                         value={filters.type || []}
                                         onChange={(e) => {
                                             const values = Array.from(e.target.selectedOptions, opt => opt.value);
                                             setFilters({ ...filters, type: values as any });
                                         }}
-                                        className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-ui focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        className="w-full px-3 py-2"
                                     >
                                         <option value="project">Projects</option>
                                         <option value="message">Messages</option>
@@ -236,14 +238,14 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                                         <option value="campaign">Campaigns</option>
                                         {user.role === 'admin' && <option value="user">Users</option>}
                                         <option value="all">All</option>
-                                    </select>
+                                    </AlphaCloneSelect>
                                 </div>
                                 <div>
                                     <label className="type-caption text-[var(--ws-text-muted)] mb-2 block">Status</label>
-                                    <input
+                                    <AlphaCloneInput
                                         type="text"
                                         placeholder="Filter by status..."
-                                        className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-ui focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        className="w-full px-3 py-2"
                                         onChange={(e) => {
                                             const newFilters = { ...filters };
                                             if (e.target.value) {

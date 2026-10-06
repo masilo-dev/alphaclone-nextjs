@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import { useCallback, useEffect, useState } from 'react';
 import { CheckCircle2, Circle, Loader2, Plus } from 'lucide-react';
 import { taskService, type Task } from '@/services/taskService';
@@ -85,11 +88,11 @@ export function ProjectTasksPanel({ projectId, userId, onProgressChange }: Proje
       </div>
 
       <form onSubmit={handleCreate} className="flex gap-2">
-        <input
+        <AlphaCloneInput
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Add a task for this project…"
-          className="flex-1 min-w-0 px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-ui outline-none focus:border-[var(--brand-blue-500)]"
+          className="flex-1 min-w-0 px-3 py-2"
         />
         <button
           type="submit"

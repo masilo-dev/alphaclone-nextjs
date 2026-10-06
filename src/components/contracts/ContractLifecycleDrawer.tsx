@@ -1,5 +1,9 @@
 "use client";
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import { useCallback, useEffect, useState } from "react";
 import {
   CalendarClock,
@@ -672,46 +676,46 @@ export function ContractLifecycleDrawer({
               <div className="mt-3 grid gap-2">
                 {action === "signer" ? (
                   <>
-                    <input
+                    <AlphaCloneInput
                       value={form.name}
                       onChange={(e) =>
                         setForm({ ...form, name: e.target.value })
                       }
                       placeholder="Signer name"
-                      className="rounded-lg border border-white/10 bg-[var(--ws-canvas)] p-2 type-caption text-white"
+                      className="p-2"
                     />
-                    <input
+                    <AlphaCloneInput
                       value={form.email}
                       onChange={(e) =>
                         setForm({ ...form, email: e.target.value })
                       }
                       placeholder="Signer email"
                       type="email"
-                      className="rounded-lg border border-white/10 bg-[var(--ws-canvas)] p-2 type-caption text-white"
+                      className="p-2"
                     />
                   </>
                 ) : action === "version" ? (
                   <>
-                    <input
+                    <AlphaCloneInput
                       value={form.changeSummary}
                       onChange={(e) =>
                         setForm({ ...form, changeSummary: e.target.value })
                       }
                       placeholder="What changed?"
-                      className="rounded-lg border border-white/10 bg-[var(--ws-canvas)] p-2 type-caption text-white"
+                      className="p-2"
                     />
-                    <textarea
+                    <AlphaCloneTextarea
                       value={form.body}
                       onChange={(e) =>
                         setForm({ ...form, body: e.target.value })
                       }
                       placeholder="Contract content"
-                      className="min-h-72 rounded-lg border border-white/10 bg-[var(--ws-canvas)] p-3 font-mono type-caption text-white"
+                      className="min-h-72 p-3 font-mono"
                     />
                   </>
                 ) : (
                   <>
-                    <input
+                    <AlphaCloneInput
                       value={form.title}
                       onChange={(e) =>
                         setForm({ ...form, title: e.target.value })
@@ -721,24 +725,24 @@ export function ContractLifecycleDrawer({
                           ? "Obligation title"
                           : "Thread title"
                       }
-                      className="rounded-lg border border-white/10 bg-[var(--ws-canvas)] p-2 type-caption text-white"
+                      className="p-2"
                     />
-                    <textarea
+                    <AlphaCloneTextarea
                       value={form.body}
                       onChange={(e) =>
                         setForm({ ...form, body: e.target.value })
                       }
                       placeholder="Details"
-                      className="min-h-20 rounded-lg border border-white/10 bg-[var(--ws-canvas)] p-2 type-caption text-white"
+                      className="min-h-20 p-2"
                     />
                     {action === "obligation" ? (
-                      <input
+                      <AlphaCloneInput
                         value={form.dueDate}
                         onChange={(e) =>
                           setForm({ ...form, dueDate: e.target.value })
                         }
                         type="datetime-local"
-                        className="rounded-lg border border-white/10 bg-[var(--ws-canvas)] p-2 type-caption text-white"
+                        className="p-2"
                       />
                     ) : null}
                   </>
