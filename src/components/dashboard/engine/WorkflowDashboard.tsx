@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Zap, Plus, Trash2, Edit2, ToggleLeft, ToggleRight, Play, ChevronDown,
@@ -411,16 +415,16 @@ export default function WorkflowDashboard() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Name *</label>
-                            <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                            <AlphaCloneInput value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                                 placeholder="e.g. High-Intent Lead Alert"
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2" />
                         </div>
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Trigger *</label>
-                            <select value={form.trigger_type} onChange={e => setForm(f => ({ ...f, trigger_type: e.target.value as TriggerType }))}
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui">
+                            <AlphaCloneSelect value={form.trigger_type} onChange={e => setForm(f => ({ ...f, trigger_type: e.target.value as TriggerType }))}
+                                className="w-full px-3 py-2">
                                 {Object.entries(TRIGGER_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
                     </div>
 
@@ -437,16 +441,16 @@ export default function WorkflowDashboard() {
                         )}
                         {form.conditions.map((c, i) => (
                             <div key={i} className="flex gap-2 mb-2">
-                                <input value={c.field} onChange={e => setForm(f => { const conds = [...f.conditions]; conds[i] = { ...conds[i], field: e.target.value }; return { ...f, conditions: conds }; })}
+                                <AlphaCloneInput value={c.field} onChange={e => setForm(f => { const conds = [...f.conditions]; conds[i] = { ...conds[i], field: e.target.value }; return { ...f, conditions: conds }; })}
                                     placeholder="field (e.g. intent_label)"
-                                    className="flex-1 px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500" />
-                                <select value={c.operator} onChange={e => setForm(f => { const conds = [...f.conditions]; conds[i] = { ...conds[i], operator: e.target.value as WorkflowCondition['operator'] }; return { ...f, conditions: conds }; })}
-                                    className="px-2 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500">
+                                    className="flex-1 px-3 py-1.5" />
+                                <AlphaCloneSelect value={c.operator} onChange={e => setForm(f => { const conds = [...f.conditions]; conds[i] = { ...conds[i], operator: e.target.value as WorkflowCondition['operator'] }; return { ...f, conditions: conds }; })}
+                                    className="px-2 py-1.5">
                                     {['equals','not_equals','contains','greater_than','less_than','exists'].map(op => <option key={op} value={op}>{op}</option>)}
-                                </select>
-                                <input value={String(c.value)} onChange={e => setForm(f => { const conds = [...f.conditions]; conds[i] = { ...conds[i], value: e.target.value }; return { ...f, conditions: conds }; })}
+                                </AlphaCloneSelect>
+                                <AlphaCloneInput value={String(c.value)} onChange={e => setForm(f => { const conds = [...f.conditions]; conds[i] = { ...conds[i], value: e.target.value }; return { ...f, conditions: conds }; })}
                                     placeholder="value"
-                                    className="flex-1 px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500" />
+                                    className="flex-1 px-3 py-1.5" />
                                 <button onClick={() => setForm(f => ({ ...f, conditions: f.conditions.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-[var(--error-text,var(--error-500))]"><X className="w-3.5 h-3.5" /></button>
                             </div>
                         ))}
@@ -462,15 +466,15 @@ export default function WorkflowDashboard() {
                         </div>
                         {form.actions.map((a, i) => (
                             <div key={i} className="flex gap-2 mb-2">
-                                <select value={a.type} onChange={e => setForm(f => { const acts = [...f.actions]; acts[i] = { ...acts[i], type: e.target.value as ActionType }; return { ...f, actions: acts }; })}
-                                    className="px-2 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500">
+                                <AlphaCloneSelect value={a.type} onChange={e => setForm(f => { const acts = [...f.actions]; acts[i] = { ...acts[i], type: e.target.value as ActionType }; return { ...f, actions: acts }; })}
+                                    className="px-2 py-1.5">
                                     {Object.entries(ACTION_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                                </select>
-                                <input
+                                </AlphaCloneSelect>
+                                <AlphaCloneInput
                                     value={JSON.stringify(a.config)}
                                     onChange={e => { try { const cfg = JSON.parse(e.target.value); setForm(f => { const acts = [...f.actions]; acts[i] = { ...acts[i], config: cfg }; return { ...f, actions: acts }; }); } catch { } }}
                                     placeholder='{"message":"{{contact_name}} signed up"}'
-                                    className="flex-1 px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-caption font-mono focus:outline-none focus:border-teal-500" />
+                                    className="flex-1 px-3 py-1.5 font-mono" />
                                 <button onClick={() => setForm(f => ({ ...f, actions: f.actions.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-[var(--error-text,var(--error-500))]"><X className="w-3.5 h-3.5" /></button>
                             </div>
                         ))}

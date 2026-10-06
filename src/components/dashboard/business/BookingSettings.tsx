@@ -1,3 +1,5 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { tenantService } from '@/services/tenancy/TenantService';
@@ -164,10 +166,10 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             <div className="flex-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl flex items-center px-4 py-3 gap-2 overflow-hidden">
                                                 <Globe className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" />
                                                 <span className="type-ui text-[var(--ws-text-muted)] truncate inline-block max-w-[120px] sm:max-w-none">alphaclonesystems.com/book/</span>
-                                                <input
+                                                <AlphaCloneInput
                                                     value={settings.slug}
                                                     onChange={(e) => setSettings({ ...settings, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                                                    className="flex-1 bg-transparent border-none outline-none type-ui font-bold text-[var(--ws-text-primary)] placeholder-slate-600 min-w-[50px]"
+                                                    className="flex-1 font-bold min-w-[50px]"
                                                     placeholder="username"
                                                 />
                                             </div>
@@ -233,7 +235,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                             <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-[var(--ws-surface-secondary)] p-6 rounded-3xl border border-[var(--ws-border)]">
                                 <div className="flex-1 w-full space-y-2">
                                     <label className="type-caption font-black text-slate-600 uppercase tracking-widest px-2">Shift Start</label>
-                                    <input
+                                    <AlphaCloneInput
                                         type="time"
                                         value={settings.availability.hours.start}
                                         onChange={(e) => setSettings({
@@ -246,7 +248,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 }
                                             }
                                         })}
-                                        className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-6 py-4 text-base font-bold text-[var(--ws-text-primary)] focus:border-teal-500 outline-none"
+                                        className="w-full px-6 py-4 font-bold"
                                     />
                                 </div>
                                 <div className="hidden sm:block pt-6">
@@ -254,7 +256,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                 </div>
                                 <div className="flex-1 w-full space-y-2">
                                     <label className="type-caption font-black text-slate-600 uppercase tracking-widest px-2">Shift End</label>
-                                    <input
+                                    <AlphaCloneInput
                                         type="time"
                                         value={settings.availability.hours.end}
                                         onChange={(e) => setSettings({
@@ -267,7 +269,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 }
                                             }
                                         })}
-                                        className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-6 py-4 text-base font-bold text-[var(--ws-text-primary)] focus:border-teal-500 outline-none"
+                                        className="w-full px-6 py-4 font-bold"
                                     />
                                 </div>
                             </div>
@@ -278,7 +280,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                     <label className="type-label font-bold text-[var(--ws-text-primary)]">Operational Timezone</label>
                                     <p className="type-card-description text-[var(--ws-text-muted)]">Your availability will be calculated based on this zone.</p>
                                 </div>
-                                <select
+                                <AlphaCloneSelect
                                     value={settings.availability.timezone || 'UTC'}
                                     onChange={(e) => setSettings({
                                         ...settings,
@@ -287,7 +289,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             timezone: e.target.value
                                         }
                                     })}
-                                    className="w-full sm:w-64 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-3 type-ui font-bold text-[var(--ws-text-primary)] outline-none focus:border-teal-500"
+                                    className="w-full sm:w-64 px-4 py-3 font-bold"
                                 >
                                     <option value="UTC">UTC (Universal Time)</option>
                                     <option value="America/New_York">Eastern Time (US & Canada)</option>
@@ -300,7 +302,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                     <option value="Asia/Singapore">Singapore (SGT)</option>
                                     <option value="Asia/Tokyo">Tokyo (JST)</option>
                                     <option value="Australia/Sydney">Sydney (AEST)</option>
-                                </select>
+                                </AlphaCloneSelect>
                             </div>
 
                             {/* [NEW] Booking Logic Settings */}
@@ -314,10 +316,10 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                     <div className="space-y-2">
                                         <label className="type-caption font-black text-slate-600 uppercase tracking-widest px-2">Buffer Time</label>
                                         <div className="relative">
-                                            <select
+                                            <AlphaCloneSelect
                                                 value={settings.bufferTime || 15}
                                                 onChange={(e) => setSettings({ ...settings, bufferTime: parseInt(e.target.value) })}
-                                                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 type-ui font-bold text-[var(--ws-text-primary)] outline-none focus:border-teal-500 appearance-none"
+                                                className="w-full px-4 py-3 font-bold appearance-none"
                                             >
                                                 <option value={0}>None</option>
                                                 <option value={5}>5 mins</option>
@@ -325,7 +327,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 <option value={15}>15 mins</option>
                                                 <option value={30}>30 mins</option>
                                                 <option value={60}>1 hour</option>
-                                            </select>
+                                            </AlphaCloneSelect>
                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--ws-text-muted)] type-caption font-bold">MIN</div>
                                         </div>
                                         <p className="type-card-description text-[var(--ws-text-muted)] px-2 leading-tight">Padding between meetings.</p>
@@ -335,10 +337,10 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                     <div className="space-y-2">
                                         <label className="type-caption font-black text-slate-600 uppercase tracking-widest px-2">Minimum Notice</label>
                                         <div className="relative">
-                                            <select
+                                            <AlphaCloneSelect
                                                 value={settings.minNotice || 4}
                                                 onChange={(e) => setSettings({ ...settings, minNotice: parseInt(e.target.value) })}
-                                                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 type-ui font-bold text-[var(--ws-text-primary)] outline-none focus:border-teal-500 appearance-none"
+                                                className="w-full px-4 py-3 font-bold appearance-none"
                                             >
                                                 <option value={0}>Instant</option>
                                                 <option value={1}>1 hour</option>
@@ -346,7 +348,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 <option value={4}>4 hours</option>
                                                 <option value={24}>24 hours</option>
                                                 <option value={48}>48 hours</option>
-                                            </select>
+                                            </AlphaCloneSelect>
                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--ws-text-muted)] type-caption font-bold">URS</div>
                                         </div>
                                         <p className="type-card-description text-[var(--ws-text-muted)] px-2 leading-tight">Prevent last-minute bookings.</p>
@@ -356,16 +358,16 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                     <div className="space-y-2">
                                         <label className="type-caption font-black text-slate-600 uppercase tracking-widest px-2">Booking Limit</label>
                                         <div className="relative">
-                                            <select
+                                            <AlphaCloneSelect
                                                 value={settings.futureLimit || 60}
                                                 onChange={(e) => setSettings({ ...settings, futureLimit: parseInt(e.target.value) })}
-                                                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 type-ui font-bold text-[var(--ws-text-primary)] outline-none focus:border-teal-500 appearance-none"
+                                                className="w-full px-4 py-3 font-bold appearance-none"
                                             >
                                                 <option value={14}>2 weeks</option>
                                                 <option value={30}>30 days</option>
                                                 <option value={60}>60 days</option>
                                                 <option value={90}>3 months</option>
-                                            </select>
+                                            </AlphaCloneSelect>
                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--ws-text-muted)] type-caption font-bold">DYS</div>
                                         </div>
                                         <p className="type-card-description text-[var(--ws-text-muted)] px-2 leading-tight">How far ahead people can book.</p>
@@ -399,7 +401,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             <div className="w-10 h-10 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl flex items-center justify-center shrink-0">
                                                 <span className="type-caption font-black text-slate-600">0{idx + 1}</span>
                                             </div>
-                                            <input
+                                            <AlphaCloneInput
                                                 type="text"
                                                 value={type.name}
                                                 onChange={(e) => {
@@ -407,13 +409,13 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                     newTypes[idx].name = e.target.value;
                                                     setSettings({ ...settings, meetingTypes: newTypes });
                                                 }}
-                                                className="bg-transparent text-[var(--ws-text-primary)] font-bold placeholder:text-slate-700 outline-none w-full"
+                                                className="font-bold w-full"
                                                 placeholder="Meeting Name"
                                             />
                                         </div>
                                         <div className="flex items-center justify-between sm:justify-end gap-6 sm:pl-4 sm:border-l sm:border-[var(--ws-border)]">
                                             <div className="flex items-center gap-3">
-                                                <input
+                                                <AlphaCloneInput
                                                     type="number"
                                                     value={type.duration}
                                                     onChange={(e) => {
@@ -421,7 +423,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                         newTypes[idx].duration = parseInt(e.target.value);
                                                         setSettings({ ...settings, meetingTypes: newTypes });
                                                     }}
-                                                    className="bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-2 w-24 text-center type-ui font-black text-teal-400"
+                                                    className="px-4 py-2 w-24 text-center font-black"
                                                 />
                                                 <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">MIN</span>
                                             </div>

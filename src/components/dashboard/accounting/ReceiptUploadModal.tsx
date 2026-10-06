@@ -1,3 +1,4 @@
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { X, Upload, Loader2, Camera, Receipt } from 'lucide-react';
@@ -244,10 +245,10 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                                     </div>
                                     <div>
                                         <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Category / Expense Account</label>
-                                        <select
+                                        <AlphaCloneSelect
                                             value={selectedAccountId}
                                             onChange={(e) => setSelectedAccountId(e.target.value)}
-                                            className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
+                                            className="w-full px-3 py-2 transition-all cursor-pointer"
                                         >
                                             <option value="">Select account...</option>
                                             {accounts
@@ -257,7 +258,7 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                                                     {account.accountName}
                                                 </option>
                                             ))}
-                                        </select>
+                                        </AlphaCloneSelect>
                                     </div>
 
                                     <div className="pt-4 border-t border-[var(--ws-border)]">
@@ -274,10 +275,10 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                                         {isPaid && (
                                             <div>
                                                 <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Paid from account</label>
-                                                <select
+                                                <AlphaCloneSelect
                                                     value={selectedAssetAccountId}
                                                     onChange={(e) => setSelectedAssetAccountId(e.target.value)}
-                                                    className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
+                                                    className="w-full px-3 py-2 transition-all cursor-pointer"
                                                 >
                                                     <option value="">Select cash/bank account...</option>
                                                     {accounts
@@ -287,7 +288,7 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                                                             {account.accountName}
                                                         </option>
                                                     ))}
-                                                </select>
+                                                </AlphaCloneSelect>
                                             </div>
                                         )}
                                     </div>

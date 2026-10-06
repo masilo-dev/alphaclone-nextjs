@@ -1,5 +1,8 @@
 'use client';
 
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, MessageCircle, CheckCircle, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -170,12 +173,12 @@ export default function EnhancedTeamChat() {
         {/* Input */}
         <div className="p-4 bg-[var(--ws-panel)] border-t border-[var(--ws-border)]">
           <div className="relative">
-            <textarea
+            <AlphaCloneTextarea
               value={newMessage}
               onChange={e => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type a message..."
-              className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl pl-4 pr-12 py-3 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-indigo-500 resize-none h-12"
+              className="w-full pl-4 pr-12 py-3 resize-none h-12"
             />
             <button
               onClick={sendMessage}

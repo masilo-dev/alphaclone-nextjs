@@ -1,5 +1,8 @@
 'use client';
 
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Twitter, Link2, RefreshCw, Send, Loader2 } from 'lucide-react';
@@ -246,13 +249,13 @@ export default function XIntegrationTab() {
           </div>
         </div>
 
-        <textarea
+        <AlphaCloneTextarea
           value={postText}
           onChange={(e) => setPostText(e.target.value)}
           placeholder="Write a post..."
           maxLength={280}
           rows={4}
-          className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 text-[var(--ws-text-primary)] type-ui resize-none focus:outline-none focus:border-sky-500"
+          className="w-full px-4 py-3 resize-none"
         />
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 h-2 rounded-full bg-[var(--ws-surface-secondary)] overflow-hidden">

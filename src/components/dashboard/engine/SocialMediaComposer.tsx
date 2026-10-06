@@ -1,5 +1,10 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
     Image as ImageIcon, Video, Send, Calendar, Clock, X, Plus, Hash,
@@ -929,11 +934,11 @@ Return only the comment text.`;
                             {showAiPanel && (
                                 <div className="mb-3 p-3 bg-violet-500/10 border border-violet-500/20 rounded-xl space-y-2">
                                     <p className="type-card-description font-semibold text-violet-300">AI Caption Generator</p>
-                                    <input
+                                    <AlphaCloneInput
                                         value={aiTopic}
                                         onChange={e => setAiTopic(e.target.value)}
                                         placeholder="What is this post about? e.g. 'summer sale, 30% off all services'"
-                                        className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-violet-500 type-ui"
+                                        className="w-full px-3 py-2"
                                     />
                                     <div className="flex gap-2 flex-wrap">
                                         {(['engaging', 'professional', 'casual', 'promotional'] as const).map(t => (
@@ -1016,12 +1021,12 @@ Return only the comment text.`;
                                 </div>
                             )}
 
-                            <textarea
+                            <AlphaCloneTextarea
                                 value={caption}
                                 onChange={e => setCaption(e.target.value)}
                                 rows={8}
                                 placeholder="Write your post caption here, or use AI Write above..."
-                                className="w-full min-h-[180px] px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-base text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 resize-y"
+                                className="w-full min-h-[180px] px-4 py-3 resize-y"
                             />
                             <p className={`type-card-description text-right mt-1 ${charWarning ? 'text-amber-400' : 'text-slate-600'}`}>
                                 {charCount.toLocaleString()} chars
@@ -1069,12 +1074,12 @@ Return only the comment text.`;
                                         <span className="ml-auto type-caption text-[var(--ws-text-muted)] italic">Images are temporary unless attached</span>
                                     </div>
 
-                                    <textarea
+                                    <AlphaCloneTextarea
                                         value={aiImagePrompt}
                                         onChange={e => setAiImagePrompt(e.target.value)}
                                         placeholder="Describe the image, e.g. 'A professional team meeting in a modern office, warm lighting, photorealistic'"
                                         rows={2}
-                                        className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-indigo-500 type-ui resize-none"
+                                        className="w-full px-3 py-2 resize-none"
                                     />
 
                                     <div className="flex items-center gap-2 flex-wrap">
@@ -1201,12 +1206,12 @@ Return only the comment text.`;
                                     </span>
                                 ))}
                             </div>
-                            <input
+                            <AlphaCloneInput
                                 value={hashtagInput}
                                 onChange={e => setHashtagInput(e.target.value)}
                                 onKeyDown={handleAddHashtag}
                                 placeholder="Type hashtag + Enter (no # needed)"
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui"
+                                className="w-full px-3 py-2"
                             />
                         </div>
 
@@ -1215,9 +1220,9 @@ Return only the comment text.`;
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1.5 block">Link (optional)</label>
                             <div className="relative">
                                 <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
-                                <input value={linkUrl} onChange={e => setLinkUrl(e.target.value)}
+                                <AlphaCloneInput value={linkUrl} onChange={e => setLinkUrl(e.target.value)}
                                     placeholder="https://yourwebsite.com"
-                                    className="w-full pl-9 pr-4 py-2.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui" />
+                                    className="w-full pl-9 pr-4 py-2.5" />
                             </div>
                         </div>
 
@@ -1292,10 +1297,10 @@ Return only the comment text.`;
                             {platforms.includes('facebook') && fbPages.length > 0 && (
                                 <div className="mt-3">
                                     <label className="type-label text-[var(--ws-text-muted)] mb-1 block">Page</label>
-                                    <select value={selectedPageId} onChange={e => setSelectedPageId(e.target.value)}
-                                        className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-ui focus:outline-none focus:border-teal-500">
+                                    <AlphaCloneSelect value={selectedPageId} onChange={e => setSelectedPageId(e.target.value)}
+                                        className="w-full px-3 py-2">
                                         {fbPages.map(p => <option key={p.page_id} value={p.page_id}>{p.page_name}</option>)}
-                                    </select>
+                                    </AlphaCloneSelect>
                                 </div>
                             )}
 
@@ -1323,17 +1328,17 @@ Return only the comment text.`;
                                 <div className="mt-3 rounded-lg border border-sky-500/20 bg-sky-500/5 p-2.5">
                                     <p className="type-card-description font-semibold text-[var(--info-text,var(--info-500))] mb-2">LinkedIn Scopes</p>
                                     <label className="type-label text-[var(--ws-text-muted)] mb-1 block">LinkedIn Account</label>
-                                    <select
+                                    <AlphaCloneSelect
                                         value={selectedLinkedInMemberId}
                                         onChange={(e) => setSelectedLinkedInMemberId(e.target.value)}
-                                        className="w-full px-3 py-2 mb-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-ui focus:outline-none focus:border-sky-500"
+                                        className="w-full px-3 py-2 mb-2"
                                     >
                                         {linkedinIntegrations.map((row) => (
                                             <option key={row.linkedin_member_id} value={row.linkedin_member_id}>
                                                 {row.linkedin_member_id}
                                             </option>
                                         ))}
-                                    </select>
+                                    </AlphaCloneSelect>
                                     {selectedLinkedInMemberId && (
                                         <p className="type-card-description text-[var(--info-text,var(--info-500))] mb-2">Active account: {selectedLinkedInMemberId}</p>
                                     )}
@@ -1380,8 +1385,8 @@ Return only the comment text.`;
                             <div className="mb-3">
                                 <AIOutputDisclaimer type="social" />
                             </div>
-                            <input type="datetime-local" value={scheduledAt} onChange={e => setScheduledAt(e.target.value)}
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui mb-3" />
+                            <AlphaCloneInput type="datetime-local" value={scheduledAt} onChange={e => setScheduledAt(e.target.value)}
+                                className="w-full px-3 py-2 mb-3" />
 
                             <div className="flex flex-col gap-2">
                                 <button
@@ -1473,11 +1478,11 @@ Return only the comment text.`;
                                                 <ExternalLink className="w-3 h-3" /> View on Facebook
                                             </a>
                                             <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2">
-                                                <input
+                                                <AlphaCloneInput
                                                     value={facebookCommentByPost[post.id] || ''}
                                                     onChange={(e) => setFacebookCommentByPost((prev) => ({ ...prev, [post.id]: e.target.value }))}
                                                     placeholder="Write a Facebook comment..."
-                                                    className="px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-caption text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-blue-500"
+                                                    className="px-3 py-2"
                                                 />
                                                 <button
                                                     onClick={() => handleFacebookComment(post)}
@@ -1507,11 +1512,11 @@ Return only the comment text.`;
                                                 <ExternalLink className="w-3 h-3" /> View on LinkedIn
                                             </a>
                                             <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-2">
-                                                <input
+                                                <AlphaCloneInput
                                                     value={linkedinCommentByPost[post.id] || ''}
                                                     onChange={(e) => setLinkedinCommentByPost((prev) => ({ ...prev, [post.id]: e.target.value }))}
                                                     placeholder="Write a LinkedIn comment..."
-                                                    className="px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-caption text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-sky-500"
+                                                    className="px-3 py-2"
                                                 />
                                                 <button
                                                     onClick={() => handleLinkedInComment(post)}
@@ -1528,15 +1533,15 @@ Return only the comment text.`;
                                                     {aiQuickReplyLoading[`linkedin-${post.id}`] ? 'Generating...' : 'AI Quick Reply'}
                                                 </button>
                                                 <div className="flex gap-2">
-                                                    <select
+                                                    <AlphaCloneSelect
                                                         value={linkedinReactionByPost[post.id] || 'LIKE'}
                                                         onChange={(e) => setLinkedinReactionByPost((prev) => ({ ...prev, [post.id]: e.target.value }))}
-                                                        className="px-2 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-caption text-[var(--ws-text-primary)] focus:outline-none focus:border-sky-500"
+                                                        className="px-2 py-2"
                                                     >
                                                         {['LIKE', 'PRAISE', 'APPRECIATION', 'EMPATHY', 'INTEREST', 'MAYBE'].map((value) => (
                                                             <option key={value} value={value}>{value}</option>
                                                         ))}
-                                                    </select>
+                                                    </AlphaCloneSelect>
                                                     <button
                                                         onClick={() => handleLinkedInReaction(post)}
                                                         disabled={!isSelectedLinkedInActive || !hasSelectedLinkedInWriteScope || !!linkedinActionLoading[`reaction-${post.id}`]}

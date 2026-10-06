@@ -225,7 +225,7 @@ const ProductTour: React.FC<ProductTourProps> = ({
             {
                 target: '[data-tour="business-setup-checklist"], [data-tour="business-home"], [data-tour="navigation"]',
                 title: t('Setup Checklist'),
-                content: t('New here? Follow these three steps first — add a client, invoice, then connect inbox.'),
+                content: t('Use Getting started to complete your business profile, add a client, and create a project. Completed steps stay completed.'),
                 placement: 'bottom',
             },
             {
@@ -439,24 +439,24 @@ const ProductTour: React.FC<ProductTourProps> = ({
             styles={{
                 options: {
                     primaryColor: 'var(--brand-teal)',
-                    textColor: isDark ? 'var(--ws-surface-secondary)' : 'var(--ws-canvas)',
-                    backgroundColor: isDark ? 'var(--brand-violet-950)' : 'var(--color-white)',
+                    textColor: 'var(--ws-text-primary)',
+                    backgroundColor: 'var(--ws-panel)',
                     overlayColor: isDark ? 'rgba(2, 13, 26, 0.78)' : 'rgba(15, 23, 42, 0.55)',
-                    arrowColor: isDark ? 'var(--brand-violet-950)' : 'var(--color-white)',
+                    arrowColor: 'var(--ws-panel)',
                     zIndex: 10000,
                 },
                 spotlight: {
                     borderRadius: '12px',
                 },
                 tooltip: {
-                    borderRadius: '14px',
-                    padding: '22px 24px',
-                    backgroundColor: isDark ? 'var(--brand-violet-950)' : 'var(--color-white)',
+                    borderRadius: 'var(--ws-radius-lg)',
+                    padding: '16px',
+                    backgroundColor: 'var(--ws-panel)',
                     border: isDark ? '1px solid rgba(65, 153, 164, 0.25)' : '1px solid rgba(33, 36, 70, 0.14)',
                     boxShadow: isDark
                         ? '0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5)'
                         : '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
-                    maxWidth: '420px',
+                    maxWidth: 'min(420px, calc(100vw - 24px))',
                     pointerEvents: 'auto',
                 },
                 tooltipContainer: {
@@ -466,7 +466,7 @@ const ProductTour: React.FC<ProductTourProps> = ({
                     fontSize: '15px',
                     fontWeight: 700,
                     letterSpacing: '-0.01em',
-                    color: isDark ? 'var(--color-white)' : 'var(--ws-canvas)',
+                    color: 'var(--ws-text-primary)',
                     marginBottom: '8px',
                 },
                 tooltipContent: {

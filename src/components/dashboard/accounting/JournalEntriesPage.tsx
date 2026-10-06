@@ -1,5 +1,8 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import {
@@ -139,16 +142,16 @@ export function JournalEntriesPage() {
                     </div>
                 )}
                 toolbar={(
-                    <select
+                    <AlphaCloneSelect
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value as JournalStatus | 'all')}
-                        className="px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-500/50"
+                        className="px-3 py-2"
                     >
                         <option value="all">All statuses</option>
                         <option value="draft">Draft</option>
                         <option value="posted">Posted</option>
                         <option value="void">Voided</option>
-                    </select>
+                    </AlphaCloneSelect>
                 )}
             >
                 {error && (

@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Mail, Plus, Send, Trash2, Users, Loader2, CheckSquare, Square } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -213,11 +217,11 @@ export function EmailOutreachComposer() {
           )}
         </div>
         <div className="p-2 border-b border-[var(--ws-border)]">
-          <input
+          <AlphaCloneInput
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search name or email…"
-            className="w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
+            className="w-full px-3 py-2"
           />
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto p-1.5 space-y-0.5">
@@ -309,11 +313,11 @@ export function EmailOutreachComposer() {
             <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] block mb-1.5">
               Direct Recipients (Optional Manual Emails)
             </label>
-            <input
+            <AlphaCloneInput
               value={manualEmailsInput}
               onChange={(e) => setManualEmailsInput(e.target.value)}
               placeholder="Or type emails manually: e.g. john@acme.com, sarah@company.org"
-              className="w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40 placeholder:text-slate-600"
+              className="w-full px-3 py-2"
             />
           </div>
 
@@ -321,22 +325,22 @@ export function EmailOutreachComposer() {
             <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] block mb-1.5">
               Subject
             </label>
-            <input
+            <AlphaCloneInput
               value={activeStep.subject}
               onChange={(e) => updateActiveStep({ subject: e.target.value })}
               placeholder="Outreach subject"
-              className="w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
+              className="w-full px-3 py-2.5"
             />
           </div>
           <div>
             <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] block mb-1.5">
               Message
             </label>
-            <textarea
+            <AlphaCloneTextarea
               value={activeStep.body}
               onChange={(e) => updateActiveStep({ body: e.target.value })}
               placeholder="Write this outreach… (no auto greeting)"
-              className="w-full h-[180px] max-h-[220px] rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40 resize-none overflow-y-auto"
+              className="w-full h-[180px] max-h-[220px] px-3 py-2.5 resize-none overflow-y-auto"
             />
           </div>
           <p className="type-card-description text-[var(--ws-text-muted)]">

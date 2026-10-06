@@ -1,5 +1,10 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Users, Plus, Trash2, CheckCircle2, AlertCircle, 
@@ -257,17 +262,17 @@ export default function ClientOnboardingTab() {
             </div>
 
             <div className="flex gap-3 items-center">
-              <select
+              <AlphaCloneSelect
                 value={vertical}
                 onChange={e => setVertical(e.target.value)}
-                className="px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
+                className="px-3 py-2"
               >
                 <option value="Consulting">Consulting Business</option>
                 <option value="SaaS / Software">SaaS Product</option>
                 <option value="Creative Agency">Creative Agency</option>
                 <option value="Interior Design">Interior Design</option>
                 <option value="Freelance Development">Freelance Developer</option>
-              </select>
+              </AlphaCloneSelect>
 
               <button
                 onClick={handleAiSeed}
@@ -357,23 +362,23 @@ export default function ClientOnboardingTab() {
             <form onSubmit={handleCreateStep} className="p-5 space-y-4">
               <div>
                 <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Step Title</label>
-                <input
+                <AlphaCloneInput
                   type="text"
                   required
                   placeholder="e.g. Schedule Kickoff Call"
                   value={stepForm.step_name}
                   onChange={e => setStepForm(f => ({ ...f, step_name: e.target.value }))}
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2"
                 />
               </div>
 
               <div>
                 <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Description</label>
-                <textarea
+                <AlphaCloneTextarea
                   placeholder="Tell the client what they need to do for this step"
                   value={stepForm.step_description}
                   onChange={e => setStepForm(f => ({ ...f, step_description: e.target.value }))}
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500 resize-none"
+                  className="w-full px-3 py-2 resize-none"
                   rows={3}
                 />
               </div>
@@ -381,13 +386,13 @@ export default function ClientOnboardingTab() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Order Index</label>
-                  <input
+                  <AlphaCloneInput
                     type="number"
                     required
                     min="1"
                     value={stepForm.step_order}
                     onChange={e => setStepForm(f => ({ ...f, step_order: parseInt(e.target.value) || 1 }))}
-                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
+                    className="w-full px-3 py-2"
                   />
                 </div>
 

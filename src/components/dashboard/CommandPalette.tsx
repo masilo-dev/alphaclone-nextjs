@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -256,7 +259,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     >
                         <div className="p-4 border-b border-[var(--border-default)] flex items-center gap-4">
                             <Search className="w-5 h-5 text-[var(--interactive-secondary)]" aria-hidden="true" />
-                            <input
+                            <AlphaCloneInput
                                 autoFocus
                                 role="combobox"
                                 aria-expanded={true}
@@ -270,7 +273,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                 onChange={(e) => setSearch(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 placeholder="Search commands, tools, and sections..."
-                                className="w-full bg-transparent border-none focus:ring-0 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] text-lg font-medium"
+                                className="w-full font-medium"
                             />
                             <div className="flex items-center gap-1.5 px-2 py-1 bg-[var(--ws-surface-secondary)] rounded-lg border border-[var(--ws-border)]">
                                 <span className="type-caption font-black text-[var(--ws-text-muted)]">ESC</span>

@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { Plus, Webhook as WebhookIcon, Trash2 } from 'lucide-react';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
@@ -69,21 +73,21 @@ export default function WebhooksTab() {
       header={<EnterprisePageHeader moduleKey="webhooks" />}
     >
       <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 mb-4 flex flex-wrap gap-2">
-        <input
+        <AlphaCloneInput
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://your-app.com/webhooks/alphaclone"
-          className="flex-1 min-w-[220px] bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)]"
+          className="flex-1 min-w-[220px] px-3 py-2"
         />
-        <select
+        <AlphaCloneSelect
           value={event}
           onChange={(e) => setEvent(e.target.value)}
-          className="bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)]"
+          className="px-3 py-2"
         >
           {EVENT_OPTIONS.map((e) => (
             <option key={e} value={e}>{e}</option>
           ))}
-        </select>
+        </AlphaCloneSelect>
         <button
           onClick={() => void handleAdd()}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 text-[var(--text-inverse)] type-ui font-semibold"

@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Bot,
@@ -797,11 +800,11 @@ export default function LeadFinderChat({ onActivity }: Props) {
           }}
           className="flex gap-2"
         >
-          <input
+          <AlphaCloneInput
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="e.g. Find owner-operated yoga studios in Denver — SMB only, no chains"
-            className="flex-1 rounded-xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-4 py-3 type-ui text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)] focus:outline-none focus:border-emerald-500/50"
+            className="flex-1 px-4 py-3"
             disabled={loading}
           />
           <button

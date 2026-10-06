@@ -1,5 +1,10 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -970,30 +975,30 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
             {/* ── Search & Shortcuts ── */}
             <label className="block xl:hidden type-caption text-[var(--ws-text-secondary)]">
               Mail folder
-              <select
+              <AlphaCloneSelect
                 value={folder}
                 onChange={(event) => {
                   setFolder(event.target.value as InboxFolder);
                   setSelectedId(null);
                   setThreadMessages([]);
                 }}
-                className="mt-1 w-full min-h-10 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] px-3 text-[var(--ws-text-primary)]"
+                className="mt-1 w-full min-h-10 px-3"
               >
                 {(['inbox', 'sent', 'drafts', 'spam', 'trash'] as InboxFolder[]).map((item) => (
                   <option key={item} value={item}>{t(FOLDER_LABELS[item])}</option>
                 ))}
-              </select>
+              </AlphaCloneSelect>
             </label>
             <div className="flex items-center gap-1.5">
               <div className="relative flex-1 min-w-0">
                 <Search className="w-3.5 h-3.5 text-[var(--ws-text-muted)] absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
-                <input
+                <AlphaCloneInput
                   type="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('Search mail (press / to focus)…')}
                   aria-label="Search mail"
-                  className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-full pl-8 pr-3 py-1.5 type-caption text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)] focus:outline-none focus:border-[var(--brand-blue-500)] focus:ring-1 focus:ring-[var(--brand-blue-500)]/20"
+                  className="w-full pl-8 pr-3 py-1.5"
                 />
               </div>
               <button
@@ -1415,14 +1420,14 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                           </div>
                         )}
 
-                        <textarea
+                        <AlphaCloneTextarea
                           value={inlineReply}
                           onChange={(e) => setInlineReply(e.target.value)}
                           placeholder={t('Type your reply…')}
                           rows={3}
                           aria-label="Quick reply message"
                           autoFocus
-                          className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-caption text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)] focus:outline-none focus:border-[var(--brand-blue-500)] resize-y"
+                          className="w-full px-3 py-2 resize-y"
                         />
                         <div className="flex items-center justify-end gap-2 flex-wrap">
                           {provider === 'microsoft' && deliveryProvider === 'microsoft' && (

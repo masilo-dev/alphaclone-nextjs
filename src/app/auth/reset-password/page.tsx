@@ -220,7 +220,7 @@ export default function ResetPasswordPage() {
                     </div>
 
                     {error && (
-                        <div className="bg-[var(--error-500)]/10 border border-red-500/20 rounded-lg p-3 text-red-400 type-ui flex items-start gap-2">
+                        <div role="alert" className="bg-[var(--error-500)]/10 border border-red-500/20 rounded-lg p-3 text-[var(--color-text-error-primary)] type-ui flex items-start gap-2">
                             <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                             <span>{error}</span>
                         </div>

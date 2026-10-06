@@ -1,5 +1,9 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Users,
@@ -199,7 +203,7 @@ export const SuperAdminUsersTab: React.FC = () => {
         id: 'role',
         header: 'Role',
         accessor: (u) => (
-          <select
+          <AlphaCloneSelect
             value={u.role}
             onChange={(e) => {
               setSelectedUser(u);
@@ -229,7 +233,7 @@ export const SuperAdminUsersTab: React.FC = () => {
             <option value="admin">Admin</option>
             <option value="super_admin">Super Admin</option>
             <option value="client">Client</option>
-          </select>
+          </AlphaCloneSelect>
         ),
       },
       {
@@ -400,12 +404,12 @@ export const SuperAdminUsersTab: React.FC = () => {
 
             <div>
               <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1">Reason for Promotion (Optional)</label>
-              <input
+              <AlphaCloneInput
                 type="text"
                 value={roleReason}
                 onChange={(e) => setRoleReason(e.target.value)}
                 placeholder="e.g. Assigned as Platform Operations Admin"
-                className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)]"
+                className="w-full px-3 py-2"
               />
             </div>
 
@@ -511,11 +515,11 @@ export const SuperAdminUsersTab: React.FC = () => {
             <form onSubmit={handleTransferSubmit} className="space-y-4">
               <div>
                 <label className="block type-label font-semibold text-[var(--ws-text-secondary)] mb-1">Select New Owner</label>
-                <select
+                <AlphaCloneSelect
                   required
                   value={newOwnerId}
                   onChange={(e) => setNewOwnerId(e.target.value)}
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)]"
+                  className="w-full px-3 py-2"
                 >
                   <option value="">-- Choose active platform user --</option>
                   {users
@@ -525,7 +529,7 @@ export const SuperAdminUsersTab: React.FC = () => {
                         {u.name} ({u.email})
                       </option>
                     ))}
-                </select>
+                </AlphaCloneSelect>
               </div>
 
               <div className="flex justify-end gap-3">

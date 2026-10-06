@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect } from 'react';
 import { generalLedgerService, TrialBalance, FinancialStatement } from '../../../services/accounting/generalLedgerService';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -124,11 +127,11 @@ export function FinancialReportsPage() {
                             <p className="text-[var(--ws-text-secondary)] mt-1">As of {new Date(tbAsOfDate).toLocaleDateString()}</p>
                         </div>
                         <div className="flex flex-wrap gap-3">
-                            <input
+                            <AlphaCloneInput
                                 type="date"
                                 value={tbAsOfDate}
                                 onChange={(e) => setTbAsOfDate(e.target.value)}
-                                className="px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 text-[var(--ws-text-primary)] rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="px-3 py-2"
                             />
                             <button
                                 onClick={loadReport}
@@ -255,11 +258,11 @@ export function FinancialReportsPage() {
                             <p className="text-[var(--ws-text-secondary)] mt-1">As of {new Date(bsAsOfDate).toLocaleDateString()}</p>
                         </div>
                         <div className="flex flex-wrap gap-3">
-                            <input
+                            <AlphaCloneInput
                                 type="date"
                                 value={bsAsOfDate}
                                 onChange={(e) => setBsAsOfDate(e.target.value)}
-                                className="px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 text-[var(--ws-text-primary)] rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="px-3 py-2"
                             />
                             <button
                                 onClick={loadReport}
@@ -355,20 +358,20 @@ export function FinancialReportsPage() {
                         <div className="flex flex-wrap gap-3">
                             <div>
                                 <label className="block type-label text-[var(--ws-text-muted)] mb-1">Start Date</label>
-                                <input
+                                <AlphaCloneInput
                                     type="date"
                                     value={plStartDate}
                                     onChange={(e) => setPlStartDate(e.target.value)}
-                                    className="px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 text-[var(--ws-text-primary)] rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="px-3 py-2"
                                 />
                             </div>
                             <div>
                                 <label className="block type-label text-[var(--ws-text-muted)] mb-1">End Date</label>
-                                <input
+                                <AlphaCloneInput
                                     type="date"
                                     value={plEndDate}
                                     onChange={(e) => setPlEndDate(e.target.value)}
-                                    className="px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 text-[var(--ws-text-primary)] rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="px-3 py-2"
                                 />
                             </div>
                             <button

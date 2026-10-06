@@ -1,5 +1,10 @@
 "use client";
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { ExternalLink, Globe, Calendar, Tag, Search, Plus, Edit, Trash2, Upload, Image as ImageIcon, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
@@ -364,12 +369,12 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                 {/* Search */}
                 <div className="relative w-full md:w-96">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--ws-text-muted)]" />
-                    <input
+                    <AlphaCloneInput
                         type="text"
                         placeholder="Search projects..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-slate-400 focus:outline-none focus:border-teal-500 transition-colors"
+                        className="w-full pl-10 pr-4 py-3 transition-colors"
                     />
                 </div>
 
@@ -551,17 +556,17 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                             <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                                 Category *
                             </label>
-                            <select
+                            <AlphaCloneSelect
                                 value={formData.category || 'Website'}
                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
+                                className="w-full px-4 py-3"
                             >
                                 <option value="Website">Website</option>
                                 <option value="Mobile App">Mobile App</option>
                                 <option value="AI Solution">AI Solution</option>
                                 <option value="Web App">Web App</option>
                                 <option value="E-Commerce">E-Commerce</option>
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
 
                         {/* Description */}
@@ -569,12 +574,12 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                             <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                                 Description
                             </label>
-                            <textarea
+                            <AlphaCloneTextarea
                                 value={formData.description || ''}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 placeholder="Brief description of the project..."
                                 rows={4}
-                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 resize-none"
+                                className="w-full px-4 py-3 resize-none"
                             />
                         </div>
 

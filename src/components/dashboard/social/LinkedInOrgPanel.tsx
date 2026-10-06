@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import { useState } from 'react';
 import { AlertTriangle, Building2, Linkedin, RefreshCw, User } from 'lucide-react';
 import { WORKSPACE } from '@/constants/design';
@@ -182,11 +185,11 @@ export function LinkedInOrgPanel({
                 Paste your company URL (for example linkedin.com/company/your-page) if you already manage the Page.
               </p>
               <div className="flex flex-col sm:flex-row gap-2">
-                <input
+                <AlphaCloneInput
                   value={manualInput}
                   onChange={(e) => setManualInput(e.target.value)}
                   placeholder="linkedin.com/company/your-page"
-                  className="flex-1 h-11 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 text-base text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
+                  className="flex-1 h-11 px-3"
                 />
                 <button
                   type="button"

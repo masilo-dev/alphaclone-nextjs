@@ -1,3 +1,6 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
 import Link from 'next/link';
 import { offlineService } from '@/services/offlineService';
@@ -1162,19 +1165,19 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     <div className="flex flex-col sm:flex-row gap-3">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
-                            <input type="text" placeholder="Search contacts..."
+                            <AlphaCloneInput type="text" placeholder="Search contacts..."
                                 value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] transition-all type-ui"
+                                className="w-full pl-9 pr-4 py-2 transition-all"
                             />
                         </div>
-                        <select value={selectedStage} onChange={e => setSelectedStage(e.target.value)}
-                            className="px-3 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)]">
+                        <AlphaCloneSelect value={selectedStage} onChange={e => setSelectedStage(e.target.value)}
+                            className="px-3 py-2">
                             <option value="all">All Stages</option>
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
                             <option value="customer">Customer</option>
                             <option value="lost">Lost</option>
-                        </select>
+                        </AlphaCloneSelect>
                     </div>
 
                     {renderBulkSelectRow()}
@@ -1257,25 +1260,25 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     <div className="flex flex-col sm:flex-row gap-3">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
-                            <input
+                            <AlphaCloneInput
                                 type="text"
                                 placeholder="Search contacts..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] transition-all type-ui"
+                                className="w-full pl-9 pr-4 py-2 transition-all"
                             />
                         </div>
-                        <select
+                        <AlphaCloneSelect
                             value={selectedStage}
                             onChange={(e) => setSelectedStage(e.target.value)}
-                            className="px-3 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] transition-all type-ui"
+                            className="px-3 py-2 transition-all"
                         >
                             <option value="all">All Stages</option>
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
                             <option value="customer">Customer</option>
                             <option value="lost">Lost</option>
-                        </select>
+                        </AlphaCloneSelect>
                     </div>
                     {renderBulkSelectRow()}
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
@@ -1316,12 +1319,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         <div className="flex flex-col gap-4 shrink-0">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--ws-text-muted)]" />
-                                <input
+                                <AlphaCloneInput
                                     type="text"
                                     placeholder="Search clients..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 sm:py-2.5 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] transition-all type-ui font-medium"
+                                    className="w-full pl-10 pr-4 py-2 sm:py-2.5 transition-all font-medium"
                                 />
                             </div>
                             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none h-8 shrink-0">
@@ -1637,7 +1640,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                 </div>
                                                 <form onSubmit={sendClientMessage} className="space-y-3">
                                                     <label htmlFor="client-message-draft" className="type-caption font-semibold text-[var(--ws-text-primary)]">Write to the client</label>
-                                                    <textarea id="client-message-draft" rows={4} maxLength={10000} value={clientMessageDraft} onChange={(event) => setClientMessageDraft(event.target.value)} placeholder="Write a message…" className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-3 type-card-description text-[var(--ws-text-primary)]" />
+                                                    <AlphaCloneTextarea id="client-message-draft" rows={4} maxLength={10000} value={clientMessageDraft} onChange={(event) => setClientMessageDraft(event.target.value)} placeholder="Write a message…" className="w-full p-3 type-card-description" />
                                                     <Button type="submit" size="sm" variant="primary" disabled={!clientMessageDraft.trim() || clientMessageSending} icon={<Send className="h-4 w-4" />}>{clientMessageSending ? 'Sending…' : 'Send message'}</Button>
                                                 </form>
                                             </section>
@@ -1665,11 +1668,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         />
                                                     </div>
                                                     <div>
-                                                        <textarea
+                                                        <AlphaCloneTextarea
                                                             placeholder="Detailed notes of what you discussed, client sentiment, or action items..."
                                                             value={newNoteDescription}
                                                             onChange={(e) => setNewNoteDescription(e.target.value)}
-                                                            className="w-full bg-[var(--ws-toolbar)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] rounded-lg p-3 type-ui focus:outline-none focus:border-[var(--brand-blue-500)] min-h-[80px]"
+                                                            className="w-full p-3 min-h-[80px]"
                                                             required
                                                         />
                                                     </div>
@@ -1933,11 +1936,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                     Direct Portal Link
                                                                 </label>
                                                                 <div className="flex items-center gap-2">
-                                                                    <input
+                                                                    <AlphaCloneInput
                                                                         type="text"
                                                                         readOnly
                                                                         value={portalUrl}
-                                                                        className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 py-2 text-sm text-[var(--ws-text-secondary)] font-mono focus:outline-none"
+                                                                        className="w-full px-3 py-2 font-mono"
                                                                     />
                                                                     <Button
                                                                         size="sm"
@@ -2458,15 +2461,15 @@ const AddClientModal = ({ onClose, onAdd }: any) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
                         <label className="block type-label font-medium text-[var(--ws-text-secondary)]">Target Stage</label>
-                        <select
+                        <AlphaCloneSelect
                             value={formData.salesStage}
                             onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
-                            className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-md text-[var(--ws-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all font-medium"
+                            className="w-full px-4 py-3 text-md transition-all font-medium"
                         >
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
                             <option value="customer">Customer</option>
-                        </select>
+                        </AlphaCloneSelect>
                     </div>
                     <Input
                         label="Potential Value ($)"
@@ -2554,16 +2557,16 @@ const EditClientModal = ({ client, onClose, onSave }: { client: BusinessClient; 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
                         <label className="block type-label font-medium text-[var(--ws-text-secondary)]">Sales Stage</label>
-                        <select
+                        <AlphaCloneSelect
                             value={formData.salesStage}
                             onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
-                            className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-md text-[var(--ws-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all"
+                            className="w-full px-4 py-3 text-md transition-all"
                         >
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
                             <option value="customer">Customer</option>
                             <option value="lost">Lost</option>
-                        </select>
+                        </AlphaCloneSelect>
                     </div>
                     <Input
                         label="Potential Value ($)"
@@ -2653,7 +2656,7 @@ const ImportClientsModal = ({ onClose, onImport }: any) => {
                             : 'border-[var(--ws-border)] hover:border-slate-600'
                             }`}
                     >
-                        <input {...getInputProps()} />
+                        <AlphaCloneInput {...getInputProps()} />
                         <Upload className="w-12 h-12 mx-auto mb-4 text-[var(--ws-text-muted)]" />
                         <p className="text-lg font-medium mb-2">
                             {isDragActive ? 'Drop file here' : 'Drag & drop file here'}
@@ -2774,17 +2777,17 @@ const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: Bus
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <label className="block type-label font-medium text-[var(--ws-text-secondary)]">Project Category</label>
-                        <select
+                        <AlphaCloneSelect
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                            className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-md text-[var(--ws-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all"
+                            className="w-full px-4 py-3 text-md transition-all"
                         >
                             <option value="Web">Web Development</option>
                             <option value="Mobile">Mobile App</option>
                             <option value="AI">AI / Automation</option>
                             <option value="Consulting">Strategic Consulting</option>
                             <option value="Design">UI/UX Design</option>
-                        </select>
+                        </AlphaCloneSelect>
                     </div>
                     <Input
                         label="Projected Budget ($)"

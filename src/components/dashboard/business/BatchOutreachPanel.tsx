@@ -1,5 +1,9 @@
 "use client";
 
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowLeft, CheckCircle2, Eye, Send, ShieldCheck, Target, X, Zap } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
@@ -149,11 +153,11 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                                 <Target className="h-4 w-4 text-teal-400" />
                                 Helpful context for the draft
                             </label>
-                            <textarea
+                            <AlphaCloneTextarea
                                 value={context}
                                 onChange={(event) => setContext(event.target.value)}
                                 placeholder="For example: mention our recent industry report on Q3 growth."
-                                className="h-28 w-full resize-none rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/50 px-4 py-3 type-ui text-[var(--ws-text-primary)] transition-all placeholder:text-slate-600 focus:border-teal-500 focus:outline-none"
+                                className="h-28 w-full resize-none px-4 py-3 transition-all"
                             />
                         </div>
 
@@ -162,15 +166,15 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                                 <ShieldCheck className="h-4 w-4 text-blue-400" />
                                 Delivery channel
                             </label>
-                            <select
+                            <AlphaCloneSelect
                                 value={provider}
                                 onChange={(event) => setProvider(event.target.value)}
-                                className="w-full rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/50 px-4 py-3 type-ui text-[var(--ws-text-primary)] transition-all focus:border-teal-500 focus:outline-none"
+                                className="w-full px-4 py-3 transition-all"
                             >
                                 <option value="sendgrid">SendGrid</option>
                                 <option value="resend">Resend</option>
                                 <option value="zoho">Zoho Mail</option>
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
 
                         <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-4 type-ui leading-6 text-blue-100">

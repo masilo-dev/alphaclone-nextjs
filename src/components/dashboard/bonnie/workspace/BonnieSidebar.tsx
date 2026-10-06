@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useMemo, useState } from 'react';
 import {
   Archive,
@@ -121,14 +124,14 @@ export default function BonnieSidebar({
           <label className="relative block">
             <span className="sr-only">Search conversations</span>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ws-text-tertiary)]" aria-hidden="true" />
-            <input
+            <AlphaCloneInput
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
                 onSearch(e.target.value);
               }}
               placeholder="Search conversations"
-              className="min-h-11 w-full rounded-[var(--ws-radius-control,8px)] border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] py-2 pl-9 pr-3 type-caption text-[var(--ws-text-primary)] outline-none placeholder:text-[var(--ws-text-tertiary)] focus:border-[var(--ac-bonnie)] focus:ring-2 focus:ring-[var(--focus-ring)]"
+              className="min-h-11 w-full py-2 pl-9 pr-3"
             />
           </label>
         ) : null}

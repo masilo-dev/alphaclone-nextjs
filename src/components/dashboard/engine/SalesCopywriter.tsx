@@ -1,5 +1,9 @@
 'use client';
 
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState } from 'react';
 import { 
     Sparkles, Send, Copy, RefreshCw, 
@@ -91,11 +95,11 @@ export default function SalesCopywriter() {
                             Original Draft or Copied Message
                         </label>
                         
-                        <textarea
+                        <AlphaCloneTextarea
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             placeholder="Paste the message you want to improve here..."
-                            className="w-full h-64 bg-black/40 border border-[var(--ws-border)] rounded-2xl p-5 text-gray-200 focus:ring-2 focus:ring-indigo-500/30 focus:outline-none transition-all resize-none placeholder:text-gray-700 leading-relaxed"
+                            className="w-full h-64 p-5 transition-all resize-none leading-relaxed"
                         />
 
                         <div className="mt-6 space-y-4">
@@ -103,12 +107,12 @@ export default function SalesCopywriter() {
                                 <Sparkles size={12} className="text-amber-400" />
                                 Add Context (Industry, Pain Points, Recipient)
                             </label>
-                            <input
+                            <AlphaCloneInput
                                 type="text"
                                 value={context}
                                 onChange={(e) => setContext(e.target.value)}
                                 placeholder="e.g. SaaS Founders, high churn rates, early morning outreach"
-                                className="w-full bg-black/40 border border-[var(--ws-border)] rounded-xl px-5 py-3 type-ui text-gray-300 focus:ring-2 focus:ring-indigo-500/30 focus:outline-none transition-all placeholder:text-gray-700"
+                                className="w-full px-5 py-3 transition-all"
                             />
                         </div>
 

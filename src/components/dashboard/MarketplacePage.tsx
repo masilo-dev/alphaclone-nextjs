@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -531,12 +534,12 @@ const MarketplacePage: React.FC = () => {
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
-          <input
+          <AlphaCloneInput
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search integrations, tools, templates…"
-            className="w-full pl-9 pr-4 py-2.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] type-ui focus:outline-none focus:border-teal-500 transition-colors"
+            className="w-full pl-9 pr-4 py-2.5 transition-colors"
           />
         </div>
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">

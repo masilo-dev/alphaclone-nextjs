@@ -1,5 +1,8 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect } from 'react';
 import { User, ProjectStage } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -235,25 +238,25 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
         <div className="space-y-6 ac-scroll-full ac-enterprise-module">
             <EnterprisePageHeader moduleKey="reports">
                 <div className="flex flex-wrap gap-3">
-                    <select
+                    <AlphaCloneSelect
                         value={exportCategory}
                         onChange={(e) => setExportCategory(e.target.value as any)}
-                        className="px-4 py-2 bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-lg focus:outline-none focus:border-teal-500/50 text-[var(--ws-text-primary)]"
+                        className="px-4 py-2"
                     >
                         <option value="revenue">Revenue Data</option>
                         <option value="clients">Client List</option>
                         <option value="activity">Activity Logs</option>
-                    </select>
-                    <select
+                    </AlphaCloneSelect>
+                    <AlphaCloneSelect
                         value={dateRange}
                         onChange={(e) => setDateRange(e.target.value)}
-                        className="px-4 py-2 bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-lg focus:outline-none focus:border-teal-500/50 text-[var(--ws-text-primary)]"
+                        className="px-4 py-2"
                     >
                         <option value="7">Last 7 days</option>
                         <option value="30">Last 30 days</option>
                         <option value="90">Last 90 days</option>
                         <option value="365">Last year</option>
-                    </select>
+                    </AlphaCloneSelect>
                     <button
                         onClick={() => handleExport('pdf', exportCategory)}
                         className="flex items-center gap-2 px-4 py-2 bg-[var(--ws-hover)] hover:bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-lg transition-colors disabled:opacity-50"
@@ -316,10 +319,10 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                         </h3>
                         <p className="type-card-description text-[var(--border-default)]">Module-level trend and drilldown actions for operators</p>
                     </div>
-                    <select
+                    <AlphaCloneSelect
                         value={intelligenceModule}
                         onChange={(e) => setIntelligenceModule(e.target.value)}
-                        className="px-4 py-2 bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-lg focus:outline-none focus:border-[var(--success-500)]"
+                        className="px-4 py-2"
                     >
                         <option value="overall">Overall system</option>
                         <option value="crm">CRM</option>
@@ -332,7 +335,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                         <option value="teamCollaboration">Team Collaboration</option>
                         <option value="automationWorkflows">Automation and Workflows</option>
                         <option value="customerSuccess">Customer Success</option>
-                    </select>
+                    </AlphaCloneSelect>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

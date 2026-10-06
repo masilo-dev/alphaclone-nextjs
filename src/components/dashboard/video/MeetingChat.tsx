@@ -1,3 +1,4 @@
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, X, MessageCircle } from 'lucide-react';
 import { User } from '../../../types';
@@ -141,12 +142,12 @@ const MeetingChat: React.FC<MeetingChatProps> = ({
             {/* Input area */}
             <div className="p-4 border-t border-[var(--ws-border)]/50 bg-[var(--ws-surface-secondary)]/30 backdrop-blur-md">
                 <div className="flex items-end space-x-2 bg-[var(--ws-panel)] border border-[var(--ws-border)]/50 rounded-xl p-1 shadow-inner focus-within:border-teal-500/50 focus-within:ring-1 focus-within:ring-teal-500/50 transition-all">
-                    <textarea
+                    <AlphaCloneTextarea
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
                         onKeyPress={handleKeyPress}
                         placeholder="Type your message..."
-                        className="flex-1 bg-transparent text-[var(--ws-text-primary)] px-3 py-2 type-ui resize-none focus:outline-none max-h-24 min-h-[40px] scrollbar-hide"
+                        className="flex-1 px-3 py-2 resize-none max-h-24 min-h-[40px] scrollbar-hide"
                         rows={1}
                     />
                     <button

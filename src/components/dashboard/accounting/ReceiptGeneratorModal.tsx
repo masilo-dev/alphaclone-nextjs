@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Input } from '../../ui/UIComponents';
 import { Download, Plus, Trash2, User, Save } from 'lucide-react';
@@ -161,10 +164,10 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                     <div className="space-y-3">
                         {receiptData.items.map((item, i) => (
                             <div key={i} className="dashboard-panel-soft p-4 space-y-3">
-                                <input placeholder="Description" value={item.description} onChange={e => handleItemChange(i, 'description', e.target.value)} className="w-full bg-black/40 border border-[var(--ws-border)] rounded-xl px-4 py-3 type-ui text-[var(--ws-text-primary)]" />
+                                <AlphaCloneInput placeholder="Description" value={item.description} onChange={e => handleItemChange(i, 'description', e.target.value)} className="w-full px-4 py-3" />
                                 <div className="flex gap-3">
-                                    <input type="number" placeholder="Qty" value={item.quantity} onChange={e => handleItemChange(i, 'quantity', parseInt(e.target.value) || 1)} className="w-20 bg-black/40 border border-[var(--ws-border)] rounded-xl px-4 py-3 type-ui text-center text-[var(--ws-text-primary)]" />
-                                    <input type="number" placeholder="Price" value={item.price} onChange={e => handleItemChange(i, 'price', parseFloat(e.target.value) || 0)} className="flex-1 bg-black/40 border border-[var(--ws-border)] rounded-xl px-4 py-3 type-ui text-[var(--ws-text-primary)]" />
+                                    <AlphaCloneInput type="number" placeholder="Qty" value={item.quantity} onChange={e => handleItemChange(i, 'quantity', parseInt(e.target.value) || 1)} className="w-20 px-4 py-3 text-center" />
+                                    <AlphaCloneInput type="number" placeholder="Price" value={item.price} onChange={e => handleItemChange(i, 'price', parseFloat(e.target.value) || 0)} className="flex-1 px-4 py-3" />
                                     {receiptData.items.length > 1 && <button onClick={() => handleRemoveItem(i)} className="p-3 text-rose-400"><Trash2 size={18} /></button>}
                                 </div>
                             </div>

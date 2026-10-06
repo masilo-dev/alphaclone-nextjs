@@ -1,3 +1,5 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, Eye, EyeOff, Save, X, Loader2 } from 'lucide-react';
 import { TabSkeleton } from '../ui/TabSkeleton';
@@ -135,11 +137,11 @@ const ArticleEditor: React.FC = () => {
                         <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                             Title *
                         </label>
-                        <input
+                        <AlphaCloneInput
                             type="text"
                             value={editing.title}
                             onChange={(e) => setEditing({ ...editing, title: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2"
                             placeholder="Article title"
                         />
                     </div>
@@ -149,11 +151,11 @@ const ArticleEditor: React.FC = () => {
                         <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                             URL Slug *
                         </label>
-                        <input
+                        <AlphaCloneInput
                             type="text"
                             value={editing.slug}
                             onChange={(e) => setEditing({ ...editing, slug: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2"
                             placeholder="article-url-slug"
                         />
                         <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
@@ -166,10 +168,10 @@ const ArticleEditor: React.FC = () => {
                         <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                             Meta Description * (150-160 characters)
                         </label>
-                        <textarea
+                        <AlphaCloneTextarea
                             value={editing.meta_description}
                             onChange={(e) => setEditing({ ...editing, meta_description: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2"
                             rows={2}
                             placeholder="Brief description for search engines"
                         />
@@ -183,11 +185,11 @@ const ArticleEditor: React.FC = () => {
                         <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                             Category *
                         </label>
-                        <input
+                        <AlphaCloneInput
                             type="text"
                             value={editing.category}
                             onChange={(e) => setEditing({ ...editing, category: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2"
                             placeholder="e.g., Web Development, AI, Software"
                         />
                     </div>
@@ -197,14 +199,14 @@ const ArticleEditor: React.FC = () => {
                         <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                             Keywords (comma-separated)
                         </label>
-                        <input
+                        <AlphaCloneInput
                             type="text"
                             value={editing.meta_keywords?.join(', ')}
                             onChange={(e) => setEditing({
                                 ...editing,
                                 meta_keywords: e.target.value.split(',').map(k => k.trim())
                             })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2"
                             placeholder="keyword1, keyword2, keyword3"
                         />
                     </div>
@@ -214,14 +216,14 @@ const ArticleEditor: React.FC = () => {
                         <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                             Tags (comma-separated)
                         </label>
-                        <input
+                        <AlphaCloneInput
                             type="text"
                             value={editing.tags?.join(', ')}
                             onChange={(e) => setEditing({
                                 ...editing,
                                 tags: e.target.value.split(',').map(t => t.trim())
                             })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2"
                             placeholder="tag1, tag2, tag3"
                         />
                     </div>
@@ -231,10 +233,10 @@ const ArticleEditor: React.FC = () => {
                         <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                             Content * (Markdown supported)
                         </label>
-                        <textarea
+                        <AlphaCloneTextarea
                             value={editing.content}
                             onChange={(e) => setEditing({ ...editing, content: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded border border-slate-600 focus:border-teal-500 focus:outline-none font-mono type-ui"
+                            className="w-full px-4 py-2 font-mono"
                             rows={20}
                             placeholder="Write your article content here... Use markdown for formatting."
                         />

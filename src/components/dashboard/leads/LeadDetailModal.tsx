@@ -1,3 +1,5 @@
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 import React, { useState, useEffect } from 'react';
 import { 
     X, 
@@ -1038,10 +1040,10 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                 />
                                 <div className="space-y-1.5">
                                     <label className="block type-label font-medium text-[var(--ws-text-secondary)]">Pipeline stage</label>
-                                    <select
+                                    <AlphaCloneSelect
                                         value={editForm.stage}
                                         onChange={(e) => setEditForm((f) => ({ ...f, stage: e.target.value }))}
-                                        className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 text-[var(--ws-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all"
+                                        className="w-full px-4 py-3 transition-all"
                                     >
                                         <option value="lead">Lead</option>
                                         <option value="qualified">Qualified</option>
@@ -1049,13 +1051,13 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                         <option value="negotiation">Negotiation</option>
                                         <option value="won">Won</option>
                                         <option value="lost">Lost</option>
-                                    </select>
+                                    </AlphaCloneSelect>
                                     <label className="block type-label font-medium text-[var(--ws-text-secondary)] mt-3">Reason for change</label>
-                                    <textarea
+                                    <AlphaCloneTextarea
                                         value={stageChangeReason}
                                         onChange={(e) => setStageChangeReason(e.target.value)}
                                         placeholder="Optional, but helpful when moving the lead backward for re-qualification."
-                                        className="w-full min-h-[92px] bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 text-[var(--ws-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all resize-y"
+                                        className="w-full min-h-[92px] px-4 py-3 transition-all resize-y"
                                     />
                                 </div>
                             </div>
@@ -1491,8 +1493,8 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                     Save Changes
                                 </Button>
                             </div>
-                            <textarea
-                                className="w-full h-[300px] bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 text-[var(--ws-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all font-mono type-ui leading-relaxed"
+                            <AlphaCloneTextarea
+                                className="w-full h-[300px] p-4 transition-all font-mono leading-relaxed"
                                 placeholder="Record meeting outcomes, strategic observations, or lead requirements here..."
                                 value={leadNotes}
                                 onChange={(e) => setLeadNotes(e.target.value)}

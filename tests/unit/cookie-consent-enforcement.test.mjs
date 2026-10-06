@@ -7,13 +7,13 @@ import ts from 'typescript';
 import { JSDOM } from 'jsdom';
 const require = createRequire(import.meta.url);
 function load(file, mocks = {}, globals = {}) {
-  const module = { exports: {} };
+  const loadedModule = { exports: {} };
   const code = ts.transpileModule(readFileSync(file, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
   }).outputText;
   vm.runInNewContext(`(function(require,module,exports){${code}\n})`, { process, console, URL, Date, ...globals })(
-    id => id in mocks ? mocks[id] : require(id), module, module.exports);
-  return module.exports;
+    id => id in mocks ? mocks[id] : require(id), loadedModule, loadedModule.exports);
+  return loadedModule.exports;
 }
 function fixture() {
   const dom = new JSDOM('<!doctype html>', { url: 'https://alphaclonesystems.com', runScripts: 'outside-only' });

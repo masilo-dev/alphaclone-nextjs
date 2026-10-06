@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Calendar, Flag, User as UserIcon, X, Check, Loader2, Sparkles } from 'lucide-react';
@@ -100,19 +104,19 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
 
                             <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-4">
                                 <div className="space-y-1">
-                                    <input
+                                    <AlphaCloneInput
                                         ref={inputRef}
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
                                         placeholder="What needs to be done?"
-                                        className="w-full bg-transparent border-none focus:ring-0 text-xl font-bold text-[var(--ws-text-primary)] placeholder-slate-600 p-0"
+                                        className="w-full text-xl font-bold p-0"
                                     />
-                                    <textarea
+                                    <AlphaCloneTextarea
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
                                         placeholder="Add details (optional)..."
                                         rows={2}
-                                        className="w-full bg-transparent border-none focus:ring-0 type-ui text-[var(--ws-text-muted)] placeholder-slate-700 p-0 resize-none"
+                                        className="w-full p-0 resize-none"
                                     />
                                 </div>
 
@@ -138,11 +142,11 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                     {/* Due Date */}
                                     <div className="flex items-center gap-2 px-3 py-2 bg-[var(--ws-canvas)]/50 rounded-xl border border-[var(--ws-border)] group hover:border-teal-500/30 transition-all">
                                         <Calendar className="w-3.5 h-3.5 text-[var(--ws-text-muted)] group-hover:text-teal-400" />
-                                        <input
+                                        <AlphaCloneInput
                                             type="date"
                                             value={dueDate}
                                             onChange={(e) => setDueDate(e.target.value)}
-                                            className="bg-transparent border-none focus:ring-0 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] placeholder-slate-700 p-0 cursor-pointer"
+                                            className="font-black uppercase tracking-widest p-0 cursor-pointer"
                                         />
                                     </div>
                                 </div>

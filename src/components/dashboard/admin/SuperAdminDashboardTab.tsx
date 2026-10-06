@@ -1,5 +1,10 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
@@ -241,18 +246,18 @@ export const SuperAdminDashboardTab: React.FC = () => {
             {audience === 'tenant' ? (
               <label className="block type-caption font-medium text-[var(--ws-text-secondary)]">
                 Tenant
-                <select value={tenantId} onChange={(e) => setTenantId(e.target.value)} className="mt-1.5 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 type-caption text-[var(--ws-text-primary)]">
+                <AlphaCloneSelect value={tenantId} onChange={(e) => setTenantId(e.target.value)} className="mt-1.5 w-full px-3 py-2.5">
                   {(data?.tenants || []).map((tenant) => (
                     <option key={tenant.id} value={tenant.id}>{tenant.name} · {tenant.plan || 'free'}</option>
                   ))}
-                </select>
+                </AlphaCloneSelect>
               </label>
             ) : null}
 
             {audience === 'user' ? (
               <label className="block type-caption font-medium text-[var(--ws-text-secondary)]">
                 Registered user email
-                <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="user@example.com" className="mt-1.5 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 type-caption text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)]" />
+                <AlphaCloneInput value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="user@example.com" className="mt-1.5 w-full px-3 py-2.5" />
               </label>
             ) : null}
 
@@ -262,8 +267,8 @@ export const SuperAdminDashboardTab: React.FC = () => {
               </div>
             ) : null}
 
-            <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Email subject" className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 type-caption text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)]" />
-            <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={8} placeholder="Write the platform message…" className="w-full resize-y rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 type-caption leading-6 text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)]" />
+            <AlphaCloneInput value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Email subject" className="w-full px-3 py-2.5" />
+            <AlphaCloneTextarea value={message} onChange={(e) => setMessage(e.target.value)} rows={8} placeholder="Write the platform message…" className="w-full resize-y px-3 py-2.5 leading-6" />
             <div className="flex justify-end">
               <button type="button" onClick={() => void handleSend()} disabled={sending} className="ac-workspace-action-btn ac-workspace-action-btn--primary inline-flex min-h-11 items-center gap-2 disabled:opacity-50">
                 <Send className="h-4 w-4" />

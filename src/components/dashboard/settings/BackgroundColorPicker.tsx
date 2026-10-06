@@ -1,3 +1,4 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
 import React, { useState } from 'react';
 import { Palette, X, Check } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
@@ -87,12 +88,12 @@ export const BackgroundColorPicker: React.FC<BackgroundColorPickerProps> = ({ is
                 onChange={(e) => setCustomColor(e.target.value)}
                 className="w-12 h-10 rounded-lg border border-slate-600 bg-[var(--ws-surface-tertiary)] cursor-pointer"
               />
-              <input
+              <AlphaCloneInput
                 type="text"
                 value={customColor}
                 onChange={(e) => setCustomColor(e.target.value)}
                 placeholder="#123ABC"
-                className="flex-1 px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 rounded-lg text-[var(--ws-text-primary)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                className="flex-1 px-3 py-2"
               />
               <button
                 onClick={handleCustomColorSubmit}

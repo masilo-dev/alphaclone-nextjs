@@ -1,5 +1,10 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     MessageSquare, Plus, Play, Pause, Send, Users, CheckCircle2, XCircle,
@@ -320,27 +325,27 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Campaign Name *</label>
-                            <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                            <AlphaCloneInput value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                                 placeholder="e.g. Summer Promo 2025"
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2" />
                         </div>
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Recipients</label>
-                            <select value={form.recipient_source} onChange={e => setForm(f => ({ ...f, recipient_source: e.target.value }))}
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui">
+                            <AlphaCloneSelect value={form.recipient_source} onChange={e => setForm(f => ({ ...f, recipient_source: e.target.value }))}
+                                className="w-full px-3 py-2">
                                 <option value="leads">All Leads (with phone)</option>
                                 <option value="clients">All Clients (with phone)</option>
                                 <option value="manual">Manual Numbers</option>
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
                     </div>
 
                     {form.recipient_source === 'manual' && (
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Phone Numbers (one per line)</label>
-                            <textarea value={form.manual_numbers} onChange={e => setForm(f => ({ ...f, manual_numbers: e.target.value }))}
+                            <AlphaCloneTextarea value={form.manual_numbers} onChange={e => setForm(f => ({ ...f, manual_numbers: e.target.value }))}
                                 rows={4} placeholder="+12125550100&#10;+447700900461&#10;+34612345678"
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui font-mono resize-none" />
+                                className="w-full px-3 py-2 font-mono resize-none" />
                         </div>
                     )}
 
@@ -357,11 +362,11 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                         {showAiInput && (
                             <div className="mb-2 p-3 bg-violet-500/10 border border-violet-500/20 rounded-xl space-y-2">
                                 <p className="type-card-description font-semibold text-violet-300">AI SMS Generator</p>
-                                <input
+                                <AlphaCloneInput
                                     value={aiContext}
                                     onChange={e => setAiContext(e.target.value)}
                                     placeholder="e.g. '20% off this weekend only, book now'"
-                                    className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-violet-500 type-ui"
+                                    className="w-full px-3 py-2"
                                 />
                                 <button
                                     onClick={generateSMSWithAI}
@@ -373,9 +378,9 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                                 </button>
                             </div>
                         )}
-                        <textarea value={form.message_body} onChange={e => setForm(f => ({ ...f, message_body: e.target.value }))}
+                        <AlphaCloneTextarea value={form.message_body} onChange={e => setForm(f => ({ ...f, message_body: e.target.value }))}
                             rows={4} placeholder="Write your SMS message here, or use AI Write above."
-                            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui resize-none" />
+                            className="w-full px-3 py-2 resize-none" />
                         <div className="flex justify-between mt-1">
                             <p className="type-card-description text-slate-600">Keep under 160 chars for 1 SMS segment</p>
                             <p className={`type-card-description font-medium ${form.message_body.length > 160 ? 'text-amber-400' : 'text-[var(--ws-text-muted)]'}`}>
@@ -387,14 +392,14 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">From Number (optional)</label>
-                            <input value={form.from_number} onChange={e => setForm(f => ({ ...f, from_number: e.target.value }))}
+                            <AlphaCloneInput value={form.from_number} onChange={e => setForm(f => ({ ...f, from_number: e.target.value }))}
                                 placeholder="Uses TWILIO_PHONE_NUMBER if empty"
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2" />
                         </div>
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Schedule (optional)</label>
-                            <input type="datetime-local" value={form.scheduled_at} onChange={e => setForm(f => ({ ...f, scheduled_at: e.target.value }))}
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui" />
+                            <AlphaCloneInput type="datetime-local" value={form.scheduled_at} onChange={e => setForm(f => ({ ...f, scheduled_at: e.target.value }))}
+                                className="w-full px-3 py-2" />
                         </div>
                     </div>
 
@@ -562,9 +567,9 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                         <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">To Number</label>
                         <div className="relative">
                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
-                            <input value={quickTo} onChange={e => setQuickTo(e.target.value)}
+                            <AlphaCloneInput value={quickTo} onChange={e => setQuickTo(e.target.value)}
                                 placeholder="+12125550100"
-                                className="w-full pl-9 pr-4 py-2.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui font-mono" />
+                                className="w-full pl-9 pr-4 py-2.5 font-mono" />
                         </div>
                     </div>
                     <div>
@@ -580,11 +585,11 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                         {showAiInput && (
                             <div className="mb-2 p-3 bg-violet-500/10 border border-violet-500/20 rounded-xl space-y-2">
                                 <p className="type-card-description font-semibold text-violet-300">AI SMS Generator</p>
-                                <input
+                                <AlphaCloneInput
                                     value={aiContext}
                                     onChange={e => setAiContext(e.target.value)}
                                     placeholder="e.g. 'follow up with client about their project quote'"
-                                    className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-violet-500 type-ui"
+                                    className="w-full px-3 py-2"
                                 />
                                 <button
                                     onClick={async () => {
@@ -621,9 +626,9 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                                 </button>
                             </div>
                         )}
-                        <textarea value={quickMsg} onChange={e => setQuickMsg(e.target.value)}
+                        <AlphaCloneTextarea value={quickMsg} onChange={e => setQuickMsg(e.target.value)}
                             rows={4} placeholder="Type your message, or use AI Write above..."
-                            className="w-full px-3 py-2.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui resize-none" />
+                            className="w-full px-3 py-2.5 resize-none" />
                         <p className="type-card-description text-right text-slate-600 mt-1">{quickMsg.length} chars</p>
                     </div>
                     <button onClick={handleQuickSend} disabled={sending}

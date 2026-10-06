@@ -1,5 +1,8 @@
 'use client';
 
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
@@ -917,7 +920,7 @@ export default function BonnieChatPanel({
           >
             {uploadingAttachment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
           </button>
-          <textarea
+          <AlphaCloneTextarea
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}

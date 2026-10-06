@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { generalLedgerService } from '@/services/accounting/generalLedgerService';
@@ -148,13 +151,13 @@ export function TaxSummaryPanel() {
           </div>
           {selectedPreset === PRESET_RATES.length - 1 && (
             <div className="flex items-center gap-2 mt-1">
-              <input
+              <AlphaCloneInput
                 type="number"
                 min="0"
                 max="99"
                 value={customRate}
                 onChange={e => setCustomRate(e.target.value)}
-                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-500/40"
+                className="w-full px-3 py-2"
                 placeholder="Rate %"
               />
               <span className="text-[var(--ws-text-muted)] type-ui font-bold">%</span>

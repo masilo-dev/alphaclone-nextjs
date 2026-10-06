@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState } from 'react';
 import { 
     Search, Sparkles, UserPlus, Send, X, Loader2, 
@@ -142,12 +145,12 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                         <div className="absolute inset-y-0 left-5 flex items-center text-gray-500 group-focus-within:text-teal-400 transition-colors pointer-events-none">
                             <Search size={20} />
                         </div>
-                        <input 
+                        <AlphaCloneInput
                             type="text"
                             placeholder="Identify companies in [Industry] located in [Location]..."
                             value={query}
                             onChange={e => setQuery(e.target.value)}
-                            className="w-full bg-gray-950/50 border border-[var(--ws-border)] rounded-2xl pl-14 pr-32 py-5 text-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50 focus:outline-none transition-all placeholder:text-gray-700 font-medium"
+                            className="w-full pl-14 pr-32 py-5 transition-all font-medium"
                         />
                         <button 
                             type="submit"

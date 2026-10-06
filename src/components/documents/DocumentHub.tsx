@@ -1,3 +1,5 @@
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
     Upload, Search, Trash2, FolderOpen, FileText, File as FileIcon, X,
@@ -1190,10 +1192,10 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 {!viewTrash ? (
                                     <div className="relative">
                                         <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" aria-hidden="true" />
-                                        <select
+                                        <AlphaCloneSelect
                                             value={documentFilter}
                                             onChange={(e) => setDocumentFilter(e.target.value)}
-                                            className="min-h-11 rounded-[10px] bg-[var(--surface-primary)] border border-[var(--border-default)] type-ui text-[var(--text-primary)] pl-10 pr-9 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+                                            className="min-h-11 pl-10 pr-9 py-2"
                                         >
                                             <option value="all">All files</option>
                                             <option value="contracts">Contracts</option>
@@ -1203,7 +1205,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                             <option value="pdf">PDFs</option>
                                             <option value="word">Word docs</option>
                                             <option value="image">Images</option>
-                                        </select>
+                                        </AlphaCloneSelect>
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-muted)]" aria-hidden="true">
                                             <ChevronLeft className="w-4 h-4 -rotate-90" />
                                         </div>
@@ -1211,10 +1213,10 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 ) : null}
 
                                 <div className="relative">
-                                    <select
+                                    <AlphaCloneSelect
                                         value={sortMode}
                                         onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
-                                        className="min-h-11 rounded-[10px] bg-[var(--surface-primary)] border border-[var(--border-default)] type-ui text-[var(--text-primary)] px-3 pr-9 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+                                        className="min-h-11 px-3 pr-9 py-2"
                                         aria-label="Sort documents"
                                     >
                                         <option value="newest">Newest</option>
@@ -1223,24 +1225,24 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                         <option value="name_desc">Name Z–A</option>
                                         <option value="size_desc">Largest</option>
                                         <option value="size_asc">Smallest</option>
-                                    </select>
+                                    </AlphaCloneSelect>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-muted)]" aria-hidden="true">
                                         <ChevronLeft className="w-4 h-4 -rotate-90" />
                                     </div>
                                 </div>
 
                                 <div className="relative">
-                                    <select
+                                    <AlphaCloneSelect
                                         value={String(pageSize)}
                                         onChange={(e) => setPageSize(Number(e.target.value))}
-                                        className="min-h-11 rounded-[10px] bg-[var(--surface-primary)] border border-[var(--border-default)] type-ui text-[var(--text-primary)] px-3 pr-9 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+                                        className="min-h-11 px-3 pr-9 py-2"
                                         aria-label="Items per page"
                                     >
                                         <option value="10">10 / page</option>
                                         <option value="25">25 / page</option>
                                         <option value="50">50 / page</option>
                                         <option value="100">100 / page</option>
-                                    </select>
+                                    </AlphaCloneSelect>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-muted)]" aria-hidden="true">
                                         <ChevronLeft className="w-4 h-4 -rotate-90" />
                                     </div>
@@ -1695,11 +1697,11 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest ml-1">Creation Intent</label>
-                                <textarea
+                                <AlphaCloneTextarea
                                     value={aiPrompt}
                                     onChange={(e) => setAiPrompt(e.target.value)}
                                     placeholder="Describe the document you want... e.g., 'A professional project proposal for a tech company with a clear timeline and budget section, using a teal and slate color palette.'"
-                                    className="w-full bg-[var(--ws-canvas)]/50 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/50 min-h-[160px] resize-none transition-all type-ui leading-relaxed"
+                                    className="w-full px-5 py-4 min-h-[160px] resize-none transition-all leading-relaxed"
                                 />
                             </div>
 

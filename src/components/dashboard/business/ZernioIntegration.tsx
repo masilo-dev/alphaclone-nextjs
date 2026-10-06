@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Instagram, Linkedin, Loader2, Save, Share2 } from 'lucide-react';
@@ -63,12 +66,12 @@ export default function ZernioIntegration() {
           <label className="flex items-center gap-2 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">
             <Instagram className="w-3.5 h-3.5" /> Instagram Account ID
           </label>
-          <input
+          <AlphaCloneInput
             type="text"
             value={instagramAccountId}
             onChange={(e) => setInstagramAccountId(e.target.value)}
             placeholder="From Zernio → Instagram channel"
-            className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-violet-500/40"
+            className="w-full px-4 py-2.5"
           />
           <p className="type-card-description text-slate-600">Scheduled Instagram posts publish through Zernio.</p>
         </div>
@@ -77,12 +80,12 @@ export default function ZernioIntegration() {
           <label className="flex items-center gap-2 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">
             <Linkedin className="w-3.5 h-3.5" /> LinkedIn Company Page Account ID
           </label>
-          <input
+          <AlphaCloneInput
             type="text"
             value={linkedinOrgAccountId}
             onChange={(e) => setLinkedinOrgAccountId(e.target.value)}
             placeholder="From Zernio → LinkedIn org channel"
-            className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-violet-500/40"
+            className="w-full px-4 py-2.5"
           />
           <p className="type-card-description text-slate-600">Company page posts route through Zernio when an org is selected.</p>
         </div>

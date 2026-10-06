@@ -1,5 +1,10 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -195,91 +200,91 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
         <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
           <div className="space-y-1">
             <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Deal Name *</label>
-            <input
+            <AlphaCloneInput
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="e.g. Acme Corp - Q4 Contract"
-              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
+              className="w-full px-3 py-2"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Value ($)</label>
-              <input
+              <AlphaCloneInput
                 type="number"
                 value={value}
                 onChange={e => setValue(e.target.value)}
                 placeholder="25000"
-                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
+                className="w-full px-3 py-2"
               />
             </div>
             <div className="space-y-1">
               <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Probability (%)</label>
-              <input
+              <AlphaCloneInput
                 type="number"
                 min="0"
                 max="100"
                 value={probability}
                 onChange={e => setProbability(e.target.value)}
                 placeholder="50"
-                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
+                className="w-full px-3 py-2"
               />
             </div>
           </div>
 
           <div className="space-y-1">
             <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Stage</label>
-            <select
+            <AlphaCloneSelect
               value={stage}
               onChange={e => setStage(e.target.value as Deal['stage'])}
-              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500/50"
+              className="w-full px-3 py-2"
             >
               {STAGES.map(s => (
                 <option key={s.key} value={s.key}>{s.label}</option>
               ))}
-            </select>
+            </AlphaCloneSelect>
           </div>
 
           <div className="space-y-1">
             <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Expected Close Date</label>
-            <input
+            <AlphaCloneInput
               type="date"
               value={expectedCloseDate}
               onChange={e => setExpectedCloseDate(e.target.value)}
-              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
+              className="w-full px-3 py-2"
             />
           </div>
 
           <div className="space-y-1">
             <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Contact Name</label>
-            <input
+            <AlphaCloneInput
               value={contactName}
               onChange={e => setContactName(e.target.value)}
               placeholder="e.g. John Smith"
-              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
+              className="w-full px-3 py-2"
             />
           </div>
 
           <div className="space-y-1">
             <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Contact Email</label>
-            <input
+            <AlphaCloneInput
               type="email"
               value={contactEmail}
               onChange={e => setContactEmail(e.target.value)}
               placeholder="john@acme.com"
-              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
+              className="w-full px-3 py-2"
             />
           </div>
 
           <div className="space-y-1">
             <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Notes</label>
-            <textarea
+            <AlphaCloneTextarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Any additional context..."
               rows={3}
-              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50 resize-none"
+              className="w-full px-3 py-2 resize-none"
             />
           </div>
         </div>
@@ -452,12 +457,12 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
 
       {/* Search */}
       <div className="relative">
-        <input
+        <AlphaCloneInput
           type="text"
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           placeholder="Search deals..."
-          className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-2.5 type-ui text-[var(--ws-text-primary)] placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50"
+          className="w-full px-4 py-2.5"
         />
       </div>
 

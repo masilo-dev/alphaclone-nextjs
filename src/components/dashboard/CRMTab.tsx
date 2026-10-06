@@ -1,5 +1,10 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   UserPlus, Search, X, Phone, Mail, Building,
@@ -869,24 +874,24 @@ const Client360Detail: React.FC<{
           />
           <div>
             <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Sales stage</label>
-            <select
+            <AlphaCloneSelect
               value={salesStage}
               onChange={(e) => setSalesStage(e.target.value as BusinessClient['sales_stage'])}
-              className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)]/50 capitalize"
+              className="w-full px-3 py-2 capitalize"
             >
               {(['lead', 'prospect', 'customer', 'lost'] as const).map((stage) => (
                 <option key={stage} value={stage}>{stage}</option>
               ))}
-            </select>
+            </AlphaCloneSelect>
           </div>
           <div>
             <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Notes</label>
-            <textarea
+            <AlphaCloneTextarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               placeholder="Account notes…"
-              className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)] placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50 resize-none"
+              className="w-full px-3 py-2 resize-none"
             />
           </div>
           <button
@@ -1132,22 +1137,22 @@ const QualifyModal: React.FC<QualifyModalProps> = ({ isOpen, onClose, lead, onCo
         <div className="space-y-4 pt-2">
           <div className="space-y-1">
             <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Industry</label>
-            <input
+            <AlphaCloneInput
               value={industry}
               onChange={e => setIndustry(e.target.value)}
               placeholder="e.g. Technology, Finance, E-commerce"
-              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+              className="w-full px-3 py-2"
             />
           </div>
 
           <div className="space-y-1">
             <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Deal Target Value ($)</label>
-            <input
+            <AlphaCloneInput
               type="number"
               value={value}
               onChange={e => setValue(e.target.value)}
               placeholder="Target contract value"
-              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+              className="w-full px-3 py-2"
             />
           </div>
 
@@ -1275,36 +1280,36 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
         {type === 'lead' ? (
           <div className="space-y-1">
             <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Lead Source</label>
-            <select
+            <AlphaCloneSelect
               value={source}
               onChange={e => setSource(e.target.value)}
-              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+              className="w-full px-3 py-2"
             >
               {['LinkedIn', 'WhatsApp', 'Referral', 'Website', 'Manual'].map(src => (
                 <option key={src} value={src}>{src}</option>
               ))}
-            </select>
+            </AlphaCloneSelect>
           </div>
         ) : (
           <>
             <div className="space-y-1">
               <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Industry</label>
-              <input
+              <AlphaCloneInput
                 value={industry}
                 onChange={e => setIndustry(e.target.value)}
                 placeholder="e.g. Real Estate"
-                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+                className="w-full px-3 py-2"
               />
             </div>
 
             <div className="space-y-1">
               <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Target Portfolio Value ($)</label>
-              <input
+              <AlphaCloneInput
                 type="number"
                 value={value}
                 onChange={e => setValue(e.target.value)}
                 placeholder="e.g. 5000"
-                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+                className="w-full px-3 py-2"
               />
             </div>
           </>
@@ -2339,11 +2344,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         )}
         <div className="flex items-center gap-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl px-3 h-10">
           <Search className="w-4 h-4 text-[var(--ws-text-muted)] flex-shrink-0" />
-          <input
+          <AlphaCloneInput
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={`Search ${subView}...`}
-            className="flex-1 bg-transparent type-ui text-[var(--ws-text-primary)] outline-none placeholder:text-[var(--ws-text-muted)]"
+            className="flex-1"
           />
           {search && (
             <button onClick={() => setSearch('')} className="p-1 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">

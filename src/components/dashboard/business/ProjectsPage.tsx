@@ -1,5 +1,10 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useRelationship } from '@/contexts/RelationshipContext';
@@ -366,12 +371,12 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
                     <label className="relative flex-1 lg:w-52">
                         <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--ws-text-muted)]" />
-                        <input
+                        <AlphaCloneInput
                             value={searchQuery}
                             onChange={(event) => setSearchQuery(event.target.value)}
                             placeholder="Search projects…"
                             aria-label="Search projects"
-                            className="h-8 w-full rounded-full border border-[var(--ws-border)] bg-[var(--ws-panel)] pl-9 pr-3 text-xs sm:text-sm text-[var(--ws-text-primary)] placeholder:text-slate-600 outline-none focus:border-[var(--brand-blue-500)]"
+                            className="h-8 w-full pl-9 pr-3 sm:text-sm"
                         />
                     </label>
                     <div className="flex p-0.5 sm:p-1 bg-[var(--ws-panel)] shadow-inner rounded-full border border-[var(--ws-border)]">
@@ -600,7 +605,7 @@ const ProjectListRow = ({
                             })}
                         </div>
                         <div className="flex justify-between items-center type-caption text-[var(--ws-text-muted)]">
-                            <select
+                            <AlphaCloneSelect
                                 value={getNormalizedStage(project.currentStage)}
                                 onChange={(e) => onStageChange(project.id, e.target.value as ProjectStage)}
                                 className={`bg-transparent ${project.currentStage ? 'text-[var(--brand-blue-400)]' : ''} font-medium hover:text-[var(--ws-text-primary)] cursor-pointer outline-none appearance-none`}
@@ -614,7 +619,7 @@ const ProjectListRow = ({
                                         </option>
                                     );
                                 })}
-                            </select>
+                            </AlphaCloneSelect>
                             <span>Step {PROJECT_STAGES_ORDER.indexOf(getNormalizedStage(project.currentStage)) + 1}/5</span>
                         </div>
                     </div>
@@ -890,38 +895,38 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
                 <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-5">
                     <div className="space-y-1.5">
                         <label className="type-label font-semibold text-[var(--ws-text-secondary)] ml-1">Project Name *</label>
-                        <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-5 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] font-medium focus:border-[var(--brand-blue-500)] outline-none transition-all shadow-inner" placeholder="Website Redesign..." />
+                        <AlphaCloneInput type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="w-full px-5 py-3 font-medium transition-all" placeholder="Website Redesign..." />
                     </div>
                     <div className="space-y-1.5">
                         <label className="type-label font-semibold text-[var(--ws-text-secondary)] ml-1">Briefing</label>
-                        <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3}
-                            className="w-full px-5 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] font-normal focus:border-[var(--brand-blue-500)] outline-none transition-all resize-none shadow-inner" placeholder="Project details..." />
+                        <AlphaCloneTextarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3}
+                            className="w-full px-5 py-3 font-normal transition-all resize-none" placeholder="Project details..." />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="type-label font-semibold text-[var(--ws-text-secondary)] ml-1">Due Date</label>
-                            <input type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] font-bold focus:border-[var(--brand-blue-500)] outline-none" />
+                            <AlphaCloneInput type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                                className="w-full px-4 py-3 font-bold" />
                         </div>
                         <div className="space-y-1.5">
                             <label className="type-label font-semibold text-[var(--ws-text-secondary)] ml-1">Client</label>
-                            <select value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] font-bold focus:border-[var(--brand-blue-500)] outline-none appearance-none">
+                            <AlphaCloneSelect value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                                className="w-full px-4 py-3 font-bold appearance-none">
                                 <option value="">Internal</option>
                                 {clients.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="type-label font-semibold text-[var(--ws-text-secondary)] ml-1">Live Stage</label>
-                            <select
+                            <AlphaCloneSelect
                                 value={formData.currentStage}
                                 onChange={(e) => setFormData({ ...formData, currentStage: e.target.value as any })}
-                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] font-bold focus:border-[var(--brand-blue-500)] outline-none appearance-none"
+                                className="w-full px-4 py-3 font-bold appearance-none"
                             >
                                 {PROJECT_STAGES_ORDER.map((stage, idx) => {
                                     const currentIdx = initialData ? PROJECT_STAGES_ORDER.indexOf(getNormalizedStage(initialData.currentStage)) : 0;
@@ -929,29 +934,29 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
                                         <option key={stage} value={stage} disabled={idx < currentIdx}>{stage}</option>
                                     );
                                 })}
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
                         <div className="space-y-1.5">
                             <label className="type-caption font-semibold text-[var(--ws-text-secondary)] ml-1">Health Status</label>
-                            <select
+                            <AlphaCloneSelect
                                 value={formData.health}
                                 onChange={(e) => setFormData({ ...formData, health: e.target.value as any })}
-                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] font-bold focus:border-[var(--brand-blue-500)] outline-none appearance-none"
+                                className="w-full px-4 py-3 font-bold appearance-none"
                             >
                                 <option value="On Track">On Track</option>
                                 <option value="At Risk">At Risk</option>
                                 <option value="Delayed">Delayed</option>
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
                     </div>
 
                     <div className="space-y-1.5">
                         <label className="type-label font-semibold text-[var(--ws-text-secondary)] ml-1">Budget</label>
-                        <input
+                        <AlphaCloneInput
                             type="number"
                             value={formData.budget}
                             onChange={(e) => setFormData({ ...formData, budget: parseFloat(e.target.value) || 0 })}
-                            className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] font-bold focus:border-[var(--brand-blue-500)] outline-none shadow-inner"
+                            className="w-full px-4 py-3 font-bold"
                             placeholder="0.00"
                         />
                     </div>

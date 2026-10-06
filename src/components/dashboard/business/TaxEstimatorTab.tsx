@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Receipt, DollarSign, Calendar, Plus, Trash2, 
@@ -307,69 +311,69 @@ export default function TaxEstimatorTab() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Tax Year</label>
-                  <input
+                  <AlphaCloneInput
                     type="number"
                     required
                     value={form.tax_year}
                     onChange={e => setForm(f => ({ ...f, tax_year: parseInt(e.target.value) || 2026 }))}
-                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
+                    className="w-full px-3 py-2"
                   />
                 </div>
 
                 <div>
                   <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Quarter</label>
-                  <select
+                  <AlphaCloneSelect
                     value={form.quarter}
                     onChange={e => setForm(f => ({ ...f, quarter: parseInt(e.target.value) || 1 }))}
-                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
+                    className="w-full px-3 py-2"
                   >
                     <option value={1}>Quarter 1 (Jan - Mar)</option>
                     <option value={2}>Quarter 2 (Apr - Jun)</option>
                     <option value={3}>Quarter 3 (Jul - Sep)</option>
                     <option value={4}>Quarter 4 (Oct - Dec)</option>
-                  </select>
+                  </AlphaCloneSelect>
                 </div>
               </div>
 
               <div>
                 <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Estimated Income (USD)</label>
-                <input
+                <AlphaCloneInput
                   type="number"
                   required
                   placeholder="e.g. 15000"
                   value={form.estimated_income}
                   onChange={e => setForm(f => ({ ...f, estimated_income: e.target.value }))}
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500 font-mono"
+                  className="w-full px-3 py-2 font-mono"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Quarterly Expenses</label>
-                  <input
+                  <AlphaCloneInput
                     type="number"
                     placeholder="e.g. 2400"
                     value={form.estimated_expenses}
                     onChange={e => setForm(f => ({ ...f, estimated_expenses: e.target.value }))}
-                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500 font-mono"
+                    className="w-full px-3 py-2 font-mono"
                   />
                 </div>
 
                 <div>
                   <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Deductions</label>
-                  <input
+                  <AlphaCloneInput
                     type="number"
                     placeholder="e.g. 1000"
                     value={form.deduction_amount}
                     onChange={e => setForm(f => ({ ...f, deduction_amount: e.target.value }))}
-                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500 font-mono"
+                    className="w-full px-3 py-2 font-mono"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Estimated Tax Rate (%)</label>
-                <input
+                <AlphaCloneInput
                   type="number"
                   required
                   min="0"
@@ -378,21 +382,21 @@ export default function TaxEstimatorTab() {
                   placeholder="Use a rate supplied by your tax authority or adviser"
                   value={form.tax_rate}
                   onChange={e => setForm(f => ({ ...f, tax_rate: e.target.value }))}
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500 font-mono"
+                  className="w-full px-3 py-2 font-mono"
                 />
                 <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">AlphaClone does not infer jurisdiction-specific tax rates.</p>
               </div>
 
               <div>
                 <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Filing Status</label>
-                <select
+                <AlphaCloneSelect
                   value={form.status}
                   onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))}
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2"
                 >
                   <option value="draft">Unpaid (Draft Estimate)</option>
                   <option value="paid">Paid Estimated Tax</option>
-                </select>
+                </AlphaCloneSelect>
               </div>
 
               <div className="flex gap-3 pt-2">

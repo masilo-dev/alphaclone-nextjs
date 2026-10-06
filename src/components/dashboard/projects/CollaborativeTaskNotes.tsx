@@ -1,5 +1,8 @@
 'use client';
 
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import { collaborationService, CollaborationDocument, CursorPosition } from '@/services/collaborationService';
 import { Loader2, Users, Save, X, Maximize2, Minimize2 } from 'lucide-react';
@@ -187,11 +190,11 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
 
             {/* Editor Area */}
             <div className="flex-1 relative bg-[var(--ws-canvas)] group">
-                <textarea
+                <AlphaCloneTextarea
                     ref={editorRef}
                     defaultValue={document?.content}
                     onChange={handleContentChange}
-                    className="w-full h-full p-8 bg-transparent text-[var(--ws-text-secondary)] font-mono type-ui leading-relaxed focus:outline-none resize-none placeholder:text-slate-800"
+                    className="w-full h-full p-8 font-mono leading-relaxed resize-none"
                     placeholder="Start typing your notes..."
                 />
 

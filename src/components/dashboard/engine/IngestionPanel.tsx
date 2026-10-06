@@ -1,5 +1,10 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Database, Plus, RefreshCw, Loader2, X, Send, TrendingUp,
@@ -197,8 +202,8 @@ export default function IngestionPanel() {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Source</label>
-                            <select value={form.source} onChange={e => setForm(f => ({ ...f, source: e.target.value }))}
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui">
+                            <AlphaCloneSelect value={form.source} onChange={e => setForm(f => ({ ...f, source: e.target.value }))}
+                                className="w-full px-3 py-2">
                                 <option value="manual">Manual</option>
                                 <option value="facebook_group">Facebook Group</option>
                                 <option value="facebook_lead">Facebook Lead</option>
@@ -206,35 +211,35 @@ export default function IngestionPanel() {
                                 <option value="sms">SMS</option>
                                 <option value="webhook">Webhook</option>
                                 <option value="other">Other</option>
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Author / Name</label>
-                            <input value={form.author_name} onChange={e => setForm(f => ({ ...f, author_name: e.target.value }))}
+                            <AlphaCloneInput value={form.author_name} onChange={e => setForm(f => ({ ...f, author_name: e.target.value }))}
                                 placeholder="John Doe"
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2" />
                         </div>
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Contact (email/phone)</label>
-                            <input value={form.author_contact} onChange={e => setForm(f => ({ ...f, author_contact: e.target.value }))}
+                            <AlphaCloneInput value={form.author_contact} onChange={e => setForm(f => ({ ...f, author_contact: e.target.value }))}
                                 placeholder="john@example.com"
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2" />
                         </div>
                     </div>
 
                     <div>
                         <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Content *</label>
-                        <textarea value={form.raw_content} onChange={e => setForm(f => ({ ...f, raw_content: e.target.value }))}
+                        <AlphaCloneTextarea value={form.raw_content} onChange={e => setForm(f => ({ ...f, raw_content: e.target.value }))}
                             rows={5}
                             placeholder="Paste content here — Facebook post, message, comment, ad response, etc.&#10;&#10;Example: 'Hi, I'm looking for a web developer urgently. Need a website for my restaurant. Budget $2000. DM me.'"
-                            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui resize-none font-mono" />
+                            className="w-full px-3 py-2 resize-none font-mono" />
                     </div>
 
                     <div>
                         <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Source URL (optional)</label>
-                        <input value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
+                        <AlphaCloneInput value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
                             placeholder="https://facebook.com/groups/..."
-                            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui" />
+                            className="w-full px-3 py-2" />
                     </div>
 
                     <div className="flex gap-3">
@@ -250,20 +255,20 @@ export default function IngestionPanel() {
 
             {/* Filters */}
             <div className="flex flex-wrap gap-3 items-center">
-                <select value={intentFilter} onChange={e => setIntentFilter(e.target.value)}
-                    className="px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500">
+                <AlphaCloneSelect value={intentFilter} onChange={e => setIntentFilter(e.target.value)}
+                    className="px-3 py-1.5">
                     <option value="all">All Intents</option>
                     <option value="urgent">Urgent</option>
                     <option value="high">High</option>
                     <option value="medium">Medium</option>
                     <option value="low">Low</option>
                     <option value="unknown">Unknown</option>
-                </select>
-                <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value)}
-                    className="px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500">
+                </AlphaCloneSelect>
+                <AlphaCloneSelect value={sourceFilter} onChange={e => setSourceFilter(e.target.value)}
+                    className="px-3 py-1.5">
                     <option value="all">All Sources</option>
                     {sources.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+                </AlphaCloneSelect>
                 {(intentFilter !== 'all' || sourceFilter !== 'all') && (
                     <button onClick={() => { setIntentFilter('all'); setSourceFilter('all'); }}
                         className="flex items-center gap-1 px-3 py-1.5 bg-[var(--error-500)]/10 border border-red-500/20 rounded-lg type-caption text-red-400 hover:bg-[var(--error-500)]/20">

@@ -1,5 +1,9 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState } from 'react';
 import { Users, Filter, Check } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -97,27 +101,27 @@ export default function SegmentBuilder({ onCount, onApply }: SegmentBuilderProps
       ) : null}
       {rules.map((r, i) => (
         <div key={i} className="flex gap-2 flex-wrap">
-          <select
+          <AlphaCloneSelect
             value={r.field}
             onChange={(e) => {
               const next = [...rules];
               next[i].field = e.target.value;
               setRules(next);
             }}
-            className="h-9 px-2 rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] type-caption text-[var(--ws-text-primary)]"
+            className="h-9 px-2"
           >
             {FIELDS.map((f) => (
               <option key={f.id} value={f.id}>{f.label}</option>
             ))}
-          </select>
-          <input
+          </AlphaCloneSelect>
+          <AlphaCloneInput
             value={r.value}
             onChange={(e) => {
               const next = [...rules];
               next[i].value = e.target.value;
               setRules(next);
             }}
-            className="flex-1 min-w-[120px] h-9 px-3 rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] type-caption text-[var(--ws-text-primary)]"
+            className="flex-1 min-w-[120px] h-9 px-3"
             placeholder="Value"
           />
           <button type="button" onClick={() => setRules(rules.filter((_, j) => j !== i))} className="type-ui text-red-400">Remove</button>

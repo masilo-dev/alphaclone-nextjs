@@ -1,4 +1,9 @@
 'use client';
+
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages, Scale, Send, MessageSquare, Sparkles, Trash2, CheckSquare, Square, PenTool, Upload } from 'lucide-react';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
@@ -1239,7 +1244,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 <label className="block type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)] mb-1.5">
                                     Search
                                 </label>
-                                <input
+                                <AlphaCloneInput
                                     className={inputCls}
                                     value={listQuery}
                                     onChange={(e) => setListQuery(e.target.value)}
@@ -1251,7 +1256,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     <label className="block type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)] mb-1.5">
                                         Status
                                     </label>
-                                    <select
+                                    <AlphaCloneSelect
                                         className={inputCls}
                                         value={listStatusFilter}
                                         onChange={(e) => setListStatusFilter(e.target.value as any)}
@@ -1263,13 +1268,13 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         <option value="active">Active</option>
                                         <option value="expiring">Expiring</option>
                                         <option value="archived">Archived</option>
-                                    </select>
+                                    </AlphaCloneSelect>
                                 </div>
                                 <div>
                                     <label className="block type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)] mb-1.5">
                                         Sort
                                     </label>
-                                    <select
+                                    <AlphaCloneSelect
                                         className={inputCls}
                                         value={listSort}
                                         onChange={(e) => setListSort(e.target.value as any)}
@@ -1280,7 +1285,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         <option value="title_desc">Title Z–A</option>
                                         <option value="value_desc">Value high–low</option>
                                         <option value="value_asc">Value low–high</option>
-                                    </select>
+                                    </AlphaCloneSelect>
                                 </div>
                             </div>
                         </div>
@@ -1560,23 +1565,23 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className={labelCls}>Full Legal Name / Company Name *</label>
-                                        <input className={inputCls} value={form.providerName} onChange={e => set('providerName', e.target.value)} placeholder="e.g. Acme Solutions Ltd." />
+                                        <AlphaCloneInput className={inputCls} value={form.providerName} onChange={e => set('providerName', e.target.value)} placeholder="e.g. Acme Solutions Ltd." />
                                     </div>
                                     <div>
                                         <label className={labelCls}>Email Address</label>
-                                        <input className={inputCls} value={form.providerEmail} onChange={e => set('providerEmail', e.target.value)} placeholder="you@company.com" />
+                                        <AlphaCloneInput className={inputCls} value={form.providerEmail} onChange={e => set('providerEmail', e.target.value)} placeholder="you@company.com" />
                                     </div>
                                     <div>
                                         <label className={labelCls}>Business Address</label>
-                                        <input className={inputCls} value={form.providerAddress} onChange={e => set('providerAddress', e.target.value)} placeholder="123 Business Ave, City, State" />
+                                        <AlphaCloneInput className={inputCls} value={form.providerAddress} onChange={e => set('providerAddress', e.target.value)} placeholder="123 Business Ave, City, State" />
                                     </div>
                                     <div>
                                         <label className={labelCls}>Phone Number</label>
-                                        <input className={inputCls} value={form.providerPhone} onChange={e => set('providerPhone', e.target.value)} placeholder="+1 (555) 000-0000" />
+                                        <AlphaCloneInput className={inputCls} value={form.providerPhone} onChange={e => set('providerPhone', e.target.value)} placeholder="+1 (555) 000-0000" />
                                     </div>
                                     <div className="md:col-span-2">
                                         <label className={labelCls}>Business Registration Number (optional)</label>
-                                        <input className={inputCls} value={form.providerRegistration} onChange={e => set('providerRegistration', e.target.value)} placeholder="e.g. LLC-123456 or Company No. 12345678" />
+                                        <AlphaCloneInput className={inputCls} value={form.providerRegistration} onChange={e => set('providerRegistration', e.target.value)} placeholder="e.g. LLC-123456 or Company No. 12345678" />
                                     </div>
                                 </div>
                             </div>
@@ -1590,32 +1595,32 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 {clients.length > 0 && (
                                     <div>
                                         <label className={labelCls}>Select from CRM (optional)</label>
-                                        <select className={inputCls} value={form.clientId} onChange={e => set('clientId', e.target.value)}>
+                                        <AlphaCloneSelect className={inputCls} value={form.clientId} onChange={e => set('clientId', e.target.value)}>
                                             <option value="">— Select a client —</option>
                                             {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                        </select>
+                                        </AlphaCloneSelect>
                                     </div>
                                 )}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className={labelCls}>Client Full Name *</label>
-                                        <input className={inputCls} value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder="e.g. Jonathan Williams" />
+                                        <AlphaCloneInput className={inputCls} value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder="e.g. Jonathan Williams" />
                                     </div>
                                     <div>
                                         <label className={labelCls}>Company / Organization</label>
-                                        <input className={inputCls} value={form.clientCompany} onChange={e => set('clientCompany', e.target.value)} placeholder="e.g. Williams Enterprises Inc." />
+                                        <AlphaCloneInput className={inputCls} value={form.clientCompany} onChange={e => set('clientCompany', e.target.value)} placeholder="e.g. Williams Enterprises Inc." />
                                     </div>
                                     <div>
                                         <label className={labelCls}>Email Address</label>
-                                        <input className={inputCls} value={form.clientEmail} onChange={e => set('clientEmail', e.target.value)} placeholder="client@email.com" />
+                                        <AlphaCloneInput className={inputCls} value={form.clientEmail} onChange={e => set('clientEmail', e.target.value)} placeholder="client@email.com" />
                                     </div>
                                     <div>
                                         <label className={labelCls}>Phone Number</label>
-                                        <input className={inputCls} value={form.clientPhone} onChange={e => set('clientPhone', e.target.value)} placeholder="+1 (555) 000-0000" />
+                                        <AlphaCloneInput className={inputCls} value={form.clientPhone} onChange={e => set('clientPhone', e.target.value)} placeholder="+1 (555) 000-0000" />
                                     </div>
                                     <div className="md:col-span-2">
                                         <label className={labelCls}>Client Address</label>
-                                        <input className={inputCls} value={form.clientAddress} onChange={e => set('clientAddress', e.target.value)} placeholder="456 Client Street, City, State, ZIP" />
+                                        <AlphaCloneInput className={inputCls} value={form.clientAddress} onChange={e => set('clientAddress', e.target.value)} placeholder="456 Client Street, City, State, ZIP" />
                                     </div>
                                 </div>
                             </div>
@@ -1629,24 +1634,24 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className={labelCls}>Project Name *</label>
-                                        <input className={inputCls} value={form.projectName} onChange={e => set('projectName', e.target.value)} placeholder="e.g. E-Commerce Platform Redesign" />
+                                        <AlphaCloneInput className={inputCls} value={form.projectName} onChange={e => set('projectName', e.target.value)} placeholder="e.g. E-Commerce Platform Redesign" />
                                     </div>
                                     <div>
                                         <label className={labelCls}>Project type</label>
                                         <p className="text-[var(--ws-text-muted)] type-card-description mb-2 leading-relaxed">
                                             Options come from the universal service catalog (50+ lines of business). Categories you enable under Settings → Business Profile are listed first.
                                         </p>
-                                        <select className={inputCls} value={form.projectType} onChange={e => set('projectType', e.target.value)}>
+                                        <AlphaCloneSelect className={inputCls} value={form.projectType} onChange={e => set('projectType', e.target.value)}>
                                             {projectTypeOptions.map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
+                                        </AlphaCloneSelect>
                                     </div>
                                     <div className="md:col-span-2">
                                         <label className={labelCls}>Scope of Work *</label>
-                                        <textarea className={`${inputCls} min-h-[100px] resize-y`} value={form.projectScope} onChange={e => set('projectScope', e.target.value)} placeholder="Describe what you will do in detail. E.g. Design and develop a full-stack e-commerce platform with product catalog, shopping cart, Stripe payments, admin dashboard, and mobile-responsive design." />
+                                        <AlphaCloneTextarea className={`${inputCls} min-h-[100px] resize-y`} value={form.projectScope} onChange={e => set('projectScope', e.target.value)} placeholder="Describe what you will do in detail. E.g. Design and develop a full-stack e-commerce platform with product catalog, shopping cart, Stripe payments, admin dashboard, and mobile-responsive design." />
                                     </div>
                                     <div className="md:col-span-2">
                                         <label className={labelCls}>Deliverables</label>
-                                        <textarea className={`${inputCls} min-h-[80px] resize-y`} value={form.deliverables} onChange={e => set('deliverables', e.target.value)} placeholder="List specific deliverables. E.g. Fully functional web app, source code, deployment, 30-day support, documentation." />
+                                        <AlphaCloneTextarea className={`${inputCls} min-h-[80px] resize-y`} value={form.deliverables} onChange={e => set('deliverables', e.target.value)} placeholder="List specific deliverables. E.g. Fully functional web app, source code, deployment, 30-day support, documentation." />
                                     </div>
                                 </div>
                             </div>
@@ -1660,23 +1665,23 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
                                         <label className={labelCls}>Total Contract Value *</label>
-                                        <input className={inputCls} type="number" value={form.totalAmount} onChange={e => set('totalAmount', e.target.value)} placeholder="10000" />
+                                        <AlphaCloneInput className={inputCls} type="number" value={form.totalAmount} onChange={e => set('totalAmount', e.target.value)} placeholder="10000" />
                                     </div>
                                     <div>
                                         <label className={labelCls}>Currency</label>
-                                        <select className={inputCls} value={form.currency} onChange={e => set('currency', e.target.value)}>
+                                        <AlphaCloneSelect className={inputCls} value={form.currency} onChange={e => set('currency', e.target.value)}>
                                             {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
-                                        </select>
+                                        </AlphaCloneSelect>
                                     </div>
                                     <div>
                                         <label className={labelCls}>Deposit %</label>
-                                        <input className={inputCls} type="number" min="0" max="100" value={form.depositPercent} onChange={e => set('depositPercent', e.target.value)} placeholder="50" />
+                                        <AlphaCloneInput className={inputCls} type="number" min="0" max="100" value={form.depositPercent} onChange={e => set('depositPercent', e.target.value)} placeholder="50" />
                                     </div>
                                     <div className="md:col-span-3">
                                         <label className={labelCls}>Payment Schedule</label>
-                                        <select className={inputCls} value={form.paymentSchedule} onChange={e => set('paymentSchedule', e.target.value)}>
+                                        <AlphaCloneSelect className={inputCls} value={form.paymentSchedule} onChange={e => set('paymentSchedule', e.target.value)}>
                                             {PAYMENT_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                                        </select>
+                                        </AlphaCloneSelect>
                                     </div>
                                 </div>
                             </div>
@@ -1693,7 +1698,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className={labelCls}>Output language</label>
-                                        <select
+                                        <AlphaCloneSelect
                                             className={inputCls}
                                             value={form.outputLanguage}
                                             onChange={e => set('outputLanguage', e.target.value)}
@@ -1701,7 +1706,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                             {OUTPUT_LANGUAGES.map(({ code, label }) => (
                                                 <option key={code} value={code}>{label}</option>
                                             ))}
-                                        </select>
+                                        </AlphaCloneSelect>
                                     </div>
                                     <div className="md:col-span-2">
                                         <label className={labelCls}>Target length (AI)</label>
@@ -1742,11 +1747,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className={labelCls}>Start Date</label>
-                                        <input className={inputCls} value={form.startDate} onChange={e => set('startDate', e.target.value)} placeholder="e.g. March 1, 2026" />
+                                        <AlphaCloneInput className={inputCls} value={form.startDate} onChange={e => set('startDate', e.target.value)} placeholder="e.g. March 1, 2026" />
                                     </div>
                                     <div>
                                         <label className={labelCls}>Estimated Completion Date</label>
-                                        <input className={inputCls} value={form.endDate} onChange={e => set('endDate', e.target.value)} placeholder="e.g. June 1, 2026" />
+                                        <AlphaCloneInput className={inputCls} value={form.endDate} onChange={e => set('endDate', e.target.value)} placeholder="e.g. June 1, 2026" />
                                     </div>
                                     <JurisdictionFields
                                         jurisdiction={form.jurisdiction}
@@ -1757,7 +1762,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     />
                                     <div className="md:col-span-2">
                                         <label className={labelCls}>Additional Terms (optional)</label>
-                                        <textarea className={`${inputCls} min-h-[80px] resize-y`} value={form.additionalTerms} onChange={e => set('additionalTerms', e.target.value)} placeholder="Any special clauses, NDA requirements, exclusivity terms, etc." />
+                                        <AlphaCloneTextarea className={`${inputCls} min-h-[80px] resize-y`} value={form.additionalTerms} onChange={e => set('additionalTerms', e.target.value)} placeholder="Any special clauses, NDA requirements, exclusivity terms, etc." />
                                     </div>
                                 </div>
                             </div>
@@ -2037,10 +2042,10 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 Select a contract from your account to ask questions or draft modifications for that specific document.
                             </p>
                             
-                            <select
+                            <AlphaCloneSelect
                                 value={selectedContractIdForChat}
                                 onChange={(e) => setSelectedContractIdForChat(e.target.value)}
-                                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-caption text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                className="w-full px-3 py-2 transition-colors"
                             >
                                 <option value="">No context (General AI Lawyer)</option>
                                 {savedContracts.map((c) => (
@@ -2048,7 +2053,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         {c.title || 'Untitled Contract'}
                                     </option>
                                 ))}
-                            </select>
+                            </AlphaCloneSelect>
                             
                             {selectedContractIdForChat && (
                                 <div className="type-ui text-teal-400/80 bg-teal-950/40 border border-teal-900/30 rounded-lg p-2 flex items-center gap-1.5">
@@ -2058,7 +2063,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             )}
 
                             <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mt-2">Client from CRM</label>
-                            <select
+                            <AlphaCloneSelect
                                 value={selectedClientIdForLawyer}
                                 onChange={(e) => {
                                     const id = e.target.value;
@@ -2076,7 +2081,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         }));
                                     }
                                 }}
-                                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-caption text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                className="w-full px-3 py-2 transition-colors"
                             >
                                 <option value="">Who is the client? (select from CRM)</option>
                                 {clients.map((c) => (
@@ -2084,7 +2089,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         {c.name}{c.customFields?.company ? ` — ${c.customFields.company}` : ''}
                                     </option>
                                 ))}
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
 
                         <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-2xl p-4 flex flex-col gap-2.5">
@@ -2225,7 +2230,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             }}
                             className="p-4 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/30 flex gap-2"
                         >
-                            <input
+                            <AlphaCloneInput
                                 type="text"
                                 value={chatInput}
                                 onChange={(e) => setChatInput(e.target.value)}
@@ -2235,7 +2240,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         ? "Ask a question about the selected contract..."
                                         : "Ask a general legal question or request a clause..."
                                 }
-                                className="flex-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] focus:border-teal-500 focus:outline-none rounded-xl px-4 py-2 type-caption text-white placeholder-slate-500 transition-colors"
+                                className="flex-1 px-4 py-2 transition-colors"
                             />
                             <button
                                 type="submit"
@@ -2271,7 +2276,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                         <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4">
                             <div>
                                 <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">Recipient Email</label>
-                                <input
+                                <AlphaCloneInput
                                     className={inputCls}
                                     value={sendForm.recipientEmail}
                                     onChange={(e) => setSendForm(prev => ({ ...prev, recipientEmail: e.target.value }))}
@@ -2284,7 +2289,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             </div>
                             <div>
                                 <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">Subject</label>
-                                <input
+                                <AlphaCloneInput
                                     className={inputCls}
                                     value={sendForm.subject}
                                     onChange={(e) => setSendForm(prev => ({ ...prev, subject: e.target.value }))}
@@ -2292,7 +2297,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             </div>
                             <div>
                                 <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">Service provider copy (optional)</label>
-                                <input
+                                <AlphaCloneInput
                                     type="email"
                                     className={inputCls}
                                     value={sendForm.providerCopyEmail}
@@ -2351,7 +2356,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             </div>
                             <div>
                                 <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">AI Instructions (What to write)</label>
-                                <textarea
+                                <AlphaCloneTextarea
                                     className={`${inputCls} min-h-[110px]`}
                                     value={aiSendInstructions}
                                     onChange={(e) => setAiSendInstructions(e.target.value)}
@@ -2360,7 +2365,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             </div>
                             <div>
                                 <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">Message</label>
-                                <textarea
+                                <AlphaCloneTextarea
                                     className={`${inputCls} min-h-[180px]`}
                                     value={sendForm.message}
                                     onChange={(e) => setSendForm(prev => ({ ...prev, message: e.target.value }))}

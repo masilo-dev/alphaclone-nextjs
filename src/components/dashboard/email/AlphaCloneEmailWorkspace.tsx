@@ -1,5 +1,10 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Search, Plus, Inbox, Star, Clock, Send, FileText, Archive, Trash2,
@@ -643,13 +648,13 @@ export default function AlphaCloneEmailWorkspace() {
         <div className="flex min-w-[260px] flex-1 items-center gap-2 md:max-w-xl">
           <div className="relative w-full">
             <Search className="w-4 h-4 text-[var(--ws-text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
+            <AlphaCloneInput
               id="universal-email-search"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Universal Search (Emails, CRM, Deals, Docs, Meetings...)"
-              className="w-full bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)] rounded-xl pl-9 pr-9 py-2 type-caption text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+              className="w-full pl-9 pr-9 py-2 transition-all"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 type-ui font-mono text-[var(--ws-text-muted)] bg-[var(--ws-panel)] px-1.5 py-0.5 rounded border border-[var(--ws-border)]">
               /
@@ -660,12 +665,12 @@ export default function AlphaCloneEmailWorkspace() {
           <form onSubmit={handleExecuteAiCommand} className="hidden sm:flex items-center gap-1.5">
             <div className="relative">
               <Bot className="w-3.5 h-3.5 text-emerald-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-              <input
+              <AlphaCloneInput
                 type="text"
                 value={aiCommandInput}
                 onChange={(e) => setAiCommandInput(e.target.value)}
                 placeholder="Bonnie AI: 'Draft SOW'..."
-                className="w-44 bg-emerald-950/30 border border-emerald-500/30 rounded-xl pl-8 pr-2 py-2 type-caption text-[var(--success-text,var(--success-500))] placeholder-emerald-500/60 focus:outline-none focus:w-60 transition-all"
+                className="w-44 pl-8 pr-2 py-2 transition-all"
               />
             </div>
             <button
@@ -1353,11 +1358,11 @@ export default function AlphaCloneEmailWorkspace() {
                           </button>
                         </div>
                       </div>
-                      <textarea
+                      <AlphaCloneTextarea
                         value={inlineReplyBody}
                         onChange={(e) => setInlineReplyBody(e.target.value)}
                         placeholder="Type your response or use Bonnie AI..."
-                        className="w-full h-24 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-3 type-caption text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-emerald-500/50"
+                        className="w-full h-24 p-3"
                       />
                       <div className="flex justify-end gap-2">
                         <button
@@ -1719,23 +1724,23 @@ export default function AlphaCloneEmailWorkspace() {
             <div className="p-4 space-y-3 overflow-y-auto flex-1 type-caption">
               <div className="flex items-center gap-2 border-b border-[var(--ws-border)] pb-2">
                 <span className="w-12 text-[var(--ws-text-muted)] font-bold">To:</span>
-                <input
+                <AlphaCloneInput
                   type="text"
                   value={composeTo}
                   onChange={(e) => setComposeTo(e.target.value)}
                   placeholder="recipient@company.com"
-                  className="flex-1 bg-transparent border-none focus:outline-none text-[var(--ws-text-primary)] placeholder-slate-600"
+                  className="flex-1"
                 />
               </div>
 
               <div className="flex items-center gap-2 border-b border-[var(--ws-border)] pb-2">
                 <span className="w-12 text-[var(--ws-text-muted)] font-bold">Subject:</span>
-                <input
+                <AlphaCloneInput
                   type="text"
                   value={composeSubject}
                   onChange={(e) => setComposeSubject(e.target.value)}
                   placeholder="Enter message subject..."
-                  className="flex-1 bg-transparent border-none focus:outline-none text-[var(--ws-text-primary)] font-bold placeholder-slate-600"
+                  className="flex-1 font-bold"
                 />
               </div>
 
@@ -1762,27 +1767,27 @@ export default function AlphaCloneEmailWorkspace() {
                 </button>
               </div>
 
-              <textarea
+              <AlphaCloneTextarea
                 value={composeBody}
                 onChange={(e) => setComposeBody(e.target.value)}
                 placeholder="Write your email body..."
-                className="w-full h-56 bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)] rounded-xl p-3 type-caption text-[var(--ws-text-primary)] placeholder-slate-600 focus:outline-none focus:border-emerald-500/50"
+                className="w-full h-56 p-3"
               />
             </div>
 
             <div className="p-4 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/60 flex items-center justify-between">
               <div className="flex items-center gap-2 type-caption text-[var(--ws-text-muted)]">
                 <span>Dispatch:</span>
-                <select
+                <AlphaCloneSelect
                   value={composeProvider}
                   onChange={(e) => setComposeProvider(normalizeDeliveryProvider(e.target.value))}
-                  className="bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-2 py-1 type-caption text-[var(--ws-text-primary)] focus:outline-none"
+                  className="px-2 py-1"
                 >
                   <option value="auto">Auto (Best Deliverability)</option>
                   <option value="outlook">Microsoft Outlook 365</option>
                   <option value="zoho">Zoho Mail Enterprise</option>
                   <option value="sendgrid">SendGrid Engine</option>
-                </select>
+                </AlphaCloneSelect>
               </div>
 
               <button

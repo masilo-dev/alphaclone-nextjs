@@ -33,7 +33,7 @@ import { projectService } from '../../../services/projectService';
 import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
 import { resolveOnboardingGate } from '@/lib/onboarding/resolveOnboardingGate';
-import { canAutoStartWalkthrough, markAutoStartEvaluated, setWalkthroughState } from '@/lib/onboarding/walkthroughService';
+import { markAutoStartEvaluated, setWalkthroughState } from '@/lib/onboarding/walkthroughService';
 import toast from 'react-hot-toast';
 import { useBackgroundTasks } from '../../../contexts/BackgroundTaskContext';
 import { useMeetingSession } from '@/hooks/useMeetingSession';
@@ -161,7 +161,6 @@ import EnhancedGlobalSearch from '../EnhancedGlobalSearch';
 import ProductTour from '../../onboarding/ProductTour';
 import { PLATFORM_TOUR_EVENT } from '../PlatformExecutionWelcome';
 import OnboardingFlow from '../../onboarding/OnboardingFlow';
-import { BusinessWelcomeModal } from './BusinessWelcomeModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { normalizeBusinessRoute } from '@/lib/normalizeDashboardRoute';
 import { bootstrapTenantViaApi } from '@/lib/tenant/bootstrapTenantClient';
@@ -223,7 +222,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const isMailWorkspace = route === '/dashboard/mail' || route === '/dashboard/comms' || route === '/dashboard/zoho/mail' || route === '/dashboard/business/unified-inbox';
     const [todayOpen, setTodayOpen] = useState(false);
     const [showProductTour, setShowProductTour] = useState(false);
-    const [showBusinessWelcome, setShowBusinessWelcome] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [unreadMessageCount, setUnreadMessageCount] = useState(0);
     const hideBonnieWidget =
@@ -279,42 +277,17 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
             if (cancelled) return;
 
-            if (!gate.welcomeSeen && !gate.establishedWorkspace) {
-                setShowBusinessWelcome(true);
-                return;
-            }
+            // One proactive surface: the short first-run outcome picker.
+            // Full guidance is replayed deliberately from Help.
+            setShowOnboarding(gate.firstRunEligible);
 
-            if (!gate.onboardingCompleted) {
-                setShowOnboarding(true);
-                return;
-            }
-
-            // Only auto-start once per browser session for brand-new users who haven't dismissed or completed
-            if (route === '/dashboard' && canAutoStartWalkthrough(user.id, gate.establishedWorkspace)) {
-                markAutoStartEvaluated(user.id);
-                const timer = window.setTimeout(() => setShowProductTour(true), 1500);
-                return () => window.clearTimeout(timer);
-            }
         };
 
         resolveGates();
         return () => {
             cancelled = true;
         };
-    }, [user?.id, currentTenant?.id, route]);
-
-    const handleBusinessWelcomeClose = () => {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem(`business_welcome_seen_${user.id}`, '1');
-            localStorage.setItem(`welcome_seen_${user.id}`, 'true');
-            window.dispatchEvent(new CustomEvent('alphaclone:onboarding-updated'));
-        }
-        setShowBusinessWelcome(false);
-        if (typeof window !== 'undefined' && !localStorage.getItem(`onboarding_completed_${user.id}`)) {
-            setShowOnboarding(true);
-            return;
-        }
-    };
+    }, [user?.id, currentTenant?.id]);
 
     const handleOnboardingComplete = (nextPath?: string) => {
         setShowOnboarding(false);
@@ -354,6 +327,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     // restarts from step 1 even if a previous run is mid-way or got stuck open.
     const [tourRunId, setTourRunId] = useState(0);
     const requestProductTour = React.useCallback(() => {
+        setShowOnboarding(false);
         if (route !== '/dashboard') {
             setActiveTab('/dashboard');
             window.setTimeout(() => {
@@ -1543,12 +1517,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             />
 
             <IncomingCallModal userId={user.id} userName={user.name} />
-
-            <BusinessWelcomeModal
-                isOpen={showBusinessWelcome}
-                onClose={handleBusinessWelcomeClose}
-                userName={user.name || user.email || 'there'}
-            />
 
             {showOnboarding ? <OnboardingFlow user={user} onComplete={handleOnboardingComplete} /> : null}
 

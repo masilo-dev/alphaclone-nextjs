@@ -1,5 +1,9 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { chartOfAccountsService, ChartOfAccount } from '../../../services/accounting/chartOfAccountsService';
@@ -285,10 +289,10 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                         <label className="block type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest mb-2">
                             {transactionType === 'spent' ? 'Paid from account' : 'Deposit to account'} *
                         </label>
-                        <select
+                        <AlphaCloneSelect
                             value={selectedAssetAccountId}
                             onChange={(e) => setSelectedAssetAccountId(e.target.value)}
-                            className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
+                            className="w-full px-3 py-2 transition-all cursor-pointer"
                         >
                             <option value="">Select cash/bank account...</option>
                             {accounts
@@ -299,14 +303,14 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                 </option>
                             ))}
                             <option value="ADD_NEW_ASSET" className="text-teal-400 font-bold">+ Add new bank/cash account...</option>
-                        </select>
+                        </AlphaCloneSelect>
                         
                         {selectedAssetAccountId === 'ADD_NEW_ASSET' && (
                             <div className="mt-3 p-3 bg-[var(--ws-surface-secondary)] rounded-xl border border-teal-500/30 flex gap-2">
-                                <input 
+                                <AlphaCloneInput
                                     autoFocus
                                     placeholder="Bank/Cash Account Name (e.g. Chase Business)"
-                                    className="flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg px-2.5 py-1.5 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500"
+                                    className="flex-1 px-2.5 py-1.5"
                                     value={newAssetAccountName}
                                     onChange={(e) => setNewAssetAccountName(e.target.value)}
                                 />
@@ -335,10 +339,10 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                         {formData.lines.map((line, index) => (
                             <div key={index} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center bg-[var(--ws-panel)]/50 p-3 rounded-xl border border-[var(--ws-border)] group hover:border-[var(--ws-border)] transition-all">
                                 <div className="flex-[2] w-full">
-                                    <select
+                                    <AlphaCloneSelect
                                         value={line.accountId}
                                         onChange={(e) => updateLine(index, 'accountId', e.target.value)}
-                                        className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
+                                        className="w-full px-3 py-2 transition-all cursor-pointer"
                                     >
                                         <option value="">Select category...</option>
                                         {accounts
@@ -352,14 +356,14 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                         {accounts.filter(a => transactionType === 'received' ? (a.accountType === 'revenue' || a.accountType === 'other_income') : (a.accountType === 'expense' || a.accountType === 'other_expense')).length === 0 && (
                                             <option disabled>No {transactionType === 'received' ? 'revenue' : 'expense'} accounts found.</option>
                                         )}
-                                    </select>
+                                    </AlphaCloneSelect>
                                     
                                     {line.accountId === 'ADD_NEW' && (
                                         <div className="mt-2 p-3 bg-[var(--ws-surface-secondary)] rounded-lg border border-teal-500/30 flex gap-2">
-                                            <input 
+                                            <AlphaCloneInput
                                                 autoFocus
                                                 placeholder="Category Name"
-                                                className="flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-md px-2 py-1 type-caption text-[var(--ws-text-primary)]"
+                                                className="flex-1 px-2 py-1"
                                                 value={newAccountName}
                                                 onChange={(e) => setNewAccountName(e.target.value)}
                                             />
@@ -369,23 +373,23 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                     )}
                                 </div>
                                 <div className="flex-[2] w-full">
-                                    <input
+                                    <AlphaCloneInput
                                         type="text"
                                         value={line.description}
                                         onChange={(e) => updateLine(index, 'description', e.target.value)}
-                                        className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-secondary)] placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all"
+                                        className="w-full px-3 py-2 transition-all"
                                         placeholder="Note (optional)..."
                                     />
                                 </div>
                                 <div className="flex-1 w-full flex items-center gap-2">
                                     <div className="relative flex-1">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 type-ui font-mono">$</span>
-                                        <input
+                                        <AlphaCloneInput
                                             type="number"
                                             step="0.01"
                                             value={line.amount || ''}
                                             onChange={(e) => updateLine(index, 'amount', parseFloat(e.target.value) || 0)}
-                                            className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg pl-7 pr-3 py-2 type-ui text-[var(--ws-text-secondary)] placeholder-slate-600 text-right focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all font-mono"
+                                            className="w-full pl-7 pr-3 py-2 text-right transition-all font-mono"
                                             placeholder="0.00"
                                         />
                                     </div>

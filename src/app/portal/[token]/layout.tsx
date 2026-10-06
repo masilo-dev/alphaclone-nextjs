@@ -1,3 +1,4 @@
+import '@/styles/product-system.css';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
@@ -53,7 +54,7 @@ async function ClientFinancePortalLayoutInner({
     }
 
     return (
-        <div className="ac-client-portal-root ac-business-root min-h-screen w-full bg-[color:var(--background-app)] text-[color:var(--text-primary)]">
+        <div className="ac-product-system ac-client-portal-root ac-business-root min-h-screen w-full bg-[color:var(--background-app)] text-[color:var(--text-primary)]">
             {children}
         </div>
     );

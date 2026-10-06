@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { Plus, Trash2, Loader2, Mail } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
@@ -105,16 +109,16 @@ export default function SequenceBuilder() {
     <div className="p-4 space-y-5 overflow-y-auto pb-24">
       <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 space-y-3">
         <h3 className="type-ui font-bold text-[var(--ws-text-primary)]">New sequence</h3>
-        <input
+        <AlphaCloneInput
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Sequence name"
-          className="w-full h-10 px-3 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] type-ui text-[var(--ws-text-primary)]"
+          className="w-full h-10 px-3"
         />
         {steps.map((step, i) => (
           <div key={i} className="space-y-2 p-3 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)]">
             <div className="flex gap-2">
-              <input
+              <AlphaCloneInput
                 type="number"
                 min={0}
                 value={step.delay_days}
@@ -123,17 +127,17 @@ export default function SequenceBuilder() {
                   next[i].delay_days = Number(e.target.value);
                   setSteps(next);
                 }}
-                className="w-20 h-9 px-2 rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] type-ui text-[var(--ws-text-primary)]"
+                className="w-20 h-9 px-2"
                 placeholder="Day"
               />
-              <input
+              <AlphaCloneInput
                 value={step.subject}
                 onChange={(e) => {
                   const next = [...steps];
                   next[i].subject = e.target.value;
                   setSteps(next);
                 }}
-                className="flex-1 h-9 px-3 rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] type-ui text-[var(--ws-text-primary)]"
+                className="flex-1 h-9 px-3"
                 placeholder="Subject"
               />
               {steps.length > 1 && (
@@ -142,7 +146,7 @@ export default function SequenceBuilder() {
                 </button>
               )}
             </div>
-            <textarea
+            <AlphaCloneTextarea
               value={step.body}
               onChange={(e) => {
                 const next = [...steps];
@@ -150,7 +154,7 @@ export default function SequenceBuilder() {
                 setSteps(next);
               }}
               rows={2}
-              className="w-full px-3 py-2 rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] type-ui text-[var(--ws-text-primary)]"
+              className="w-full px-3 py-2"
               placeholder="Email body"
             />
           </div>

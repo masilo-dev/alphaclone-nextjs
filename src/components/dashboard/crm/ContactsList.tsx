@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -271,32 +275,32 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
             <div className="flex flex-wrap gap-4 items-center">
                 <div className="flex-1 min-w-[200px] relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
-                    <input
+                    <AlphaCloneInput
                         type="text"
                         placeholder="Search contacts..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-emerald-500/50"
+                        className="w-full pl-10 pr-4 py-2"
                     />
                 </div>
-                <select
+                <AlphaCloneSelect
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as ContactStatus | 'all')}
-                    className="px-4 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-500/50"
+                    className="px-4 py-2"
                 >
                     <option value="all">All Status</option>
                     {Object.entries(STATUS_CONFIG).map(([status, config]) => (
                         <option key={status} value={status}>{config.label}</option>
                     ))}
-                </select>
-                <select
+                </AlphaCloneSelect>
+                <AlphaCloneSelect
                     value={sortField}
                     onChange={(e) => setSortField(e.target.value as typeof sortField)}
-                    className="px-4 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-500/50"
+                    className="px-4 py-2"
                 >
                     <option value="createdAt">Sort by Date</option>
                     <option value="name">Sort by Name</option>
-                </select>
+                </AlphaCloneSelect>
                 <button
                     onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
                     className="p-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
@@ -526,17 +530,17 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                             Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}
                         </p>
                         <div className="flex items-center gap-2">
-                            <select
+                            <AlphaCloneSelect
                                 value={String(pageSize)}
                                 onChange={(e) => setPageSize(Number(e.target.value))}
-                                className="px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-ui focus:outline-none focus:border-emerald-500/50"
+                                className="px-3 py-2"
                                 aria-label="Contacts per page"
                             >
                                 <option value="10">10 / page</option>
                                 <option value="25">25 / page</option>
                                 <option value="50">50 / page</option>
                                 <option value="100">100 / page</option>
-                            </select>
+                            </AlphaCloneSelect>
                             <button
                                 type="button"
                                 onClick={() => setPage((p) => Math.max(1, p - 1))}

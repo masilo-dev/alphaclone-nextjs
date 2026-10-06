@@ -1,5 +1,10 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Plus, Copy, ExternalLink, Loader2, Save, Trash2, GripVertical, Link2, FileText, CheckSquare,
@@ -61,18 +66,18 @@ function SortableFieldRow({
       <button type="button" className="mt-2 shrink-0 cursor-grab text-slate-600" {...attributes} {...listeners}>
         <GripVertical className="w-4 h-4" />
       </button>
-      <select
+      <AlphaCloneSelect
         value={field.type}
         onChange={(e) => onUpdate(idx, { ...field, type: e.target.value as FormFieldType })}
-        className="rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-2 py-1.5 type-caption text-[var(--ws-text-primary)]"
+        className="px-2 py-1.5"
       >
         {FIELD_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-      </select>
-      <input
+      </AlphaCloneSelect>
+      <AlphaCloneInput
         value={field.label}
         onChange={(e) => onUpdate(idx, { ...field, label: e.target.value })}
         placeholder="Label"
-        className="flex-1 min-w-[120px] rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-2 py-1.5 type-caption text-[var(--ws-text-primary)]"
+        className="flex-1 min-w-[120px] px-2 py-1.5"
       />
       <label className="flex items-center gap-1 type-label text-[var(--ws-text-muted)]">
         <input type="checkbox" checked={!!field.required} onChange={(e) => onUpdate(idx, { ...field, required: e.target.checked })} />
@@ -84,7 +89,7 @@ function SortableFieldRow({
       {field.type === 'select' && (
         <div className="w-full basis-full space-y-1 mt-1">
           <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Dropdown options (one per line)</label>
-          <textarea
+          <AlphaCloneTextarea
             value={(field.options || []).join('\n')}
             onChange={(e) => {
               const options = e.target.value.split('\n').map((s) => s.trim()).filter(Boolean);
@@ -92,7 +97,7 @@ function SortableFieldRow({
             }}
             rows={3}
             placeholder={'Option 1\nOption 2'}
-            className="w-full rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-2 py-1.5 type-caption text-[var(--ws-text-primary)] font-mono"
+            className="w-full px-2 py-1.5 font-mono"
           />
         </div>
       )}
@@ -492,17 +497,17 @@ export default function FormsHub() {
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Form title</label>
-              <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]" />
+              <AlphaCloneInput value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-3 py-2" />
             </div>
             <div className="space-y-1">
               <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">URL slug</label>
-              <input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} className="w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)] font-mono" />
+              <AlphaCloneInput value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} className="w-full px-3 py-2 font-mono" />
             </div>
           </div>
 
           <div className="space-y-1">
             <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Description</label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)] resize-none" />
+            <AlphaCloneTextarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="w-full px-3 py-2 resize-none" />
           </div>
 
           <div className="flex gap-2 border-b border-[var(--ws-border)] pb-2">
@@ -523,7 +528,7 @@ export default function FormsHub() {
           {editorTab === 'embed' && (
             <div className="space-y-2 p-3 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)]">
               <div className="flex items-center gap-2 text-teal-400 type-caption font-bold"><Code2 className="w-4 h-4" /> Embed snippet</div>
-              <textarea readOnly value={embedSnippet} rows={4} className="w-full rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-2 py-2 type-ui text-[var(--ws-text-secondary)] font-mono" />
+              <AlphaCloneTextarea readOnly value={embedSnippet} rows={4} className="w-full px-2 py-2 font-mono" />
               <button
                 type="button"
                 onClick={async () => { await navigator.clipboard.writeText(embedSnippet); toast.success('Embed code copied'); }}
@@ -537,15 +542,15 @@ export default function FormsHub() {
           {editorTab === 'external' && (
             <div className="space-y-3 p-3 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] type-caption">
               <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Provider</label>
-              <select value={formProvider} onChange={(e) => setFormProvider(e.target.value as 'native' | 'typeform' | 'tally')} className="w-full rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-2 py-2 text-[var(--ws-text-primary)]">
+              <AlphaCloneSelect value={formProvider} onChange={(e) => setFormProvider(e.target.value as 'native' | 'typeform' | 'tally')} className="w-full px-2 py-2">
                 <option value="native">Native AlphaClone form</option>
                 <option value="typeform">Typeform embed + webhook</option>
                 <option value="tally">Tally embed + webhook</option>
-              </select>
+              </AlphaCloneSelect>
               {(formProvider === 'typeform' || formProvider === 'tally') && (
                 <>
-                  <input value={embedUrl} onChange={(e) => setEmbedUrl(e.target.value)} placeholder="https://form.typeform.com/to/..." className="w-full rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-2 py-2 text-[var(--ws-text-primary)]" />
-                  <input value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} placeholder="Webhook secret (optional)" className="w-full rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-2 py-2 text-[var(--ws-text-primary)]" />
+                  <AlphaCloneInput value={embedUrl} onChange={(e) => setEmbedUrl(e.target.value)} placeholder="https://form.typeform.com/to/..." className="w-full px-2 py-2" />
+                  <AlphaCloneInput value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} placeholder="Webhook secret (optional)" className="w-full px-2 py-2" />
                   <div className="space-y-1">
                     <p className="text-[var(--ws-text-muted)]">Typeform webhook URL</p>
                     <code className="block type-ui text-[var(--ws-text-secondary)] break-all">{typeformWebhookUrl}</code>
@@ -581,7 +586,7 @@ export default function FormsHub() {
 
           <div className="space-y-1">
             <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Thank-you message</label>
-            <input value={thankYou} onChange={(e) => setThankYou(e.target.value)} className="w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]" />
+            <AlphaCloneInput value={thankYou} onChange={(e) => setThankYou(e.target.value)} className="w-full px-3 py-2" />
           </div>
 
           <label className="flex items-center gap-2 type-label text-[var(--ws-text-secondary)]">

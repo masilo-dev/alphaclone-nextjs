@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   CreditCard,
@@ -289,12 +292,12 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
         toolbar={
           <div className="relative px-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
-            <input
+            <AlphaCloneInput
               type="text"
               placeholder="Search tenant, plan, or status…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
+              className="w-full pl-10 pr-4 py-2"
             />
           </div>
         }

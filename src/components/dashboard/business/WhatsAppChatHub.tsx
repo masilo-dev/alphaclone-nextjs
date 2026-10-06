@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
     MessageCircle, Send, Search, Loader2, User, Sparkles, 
@@ -395,12 +398,12 @@ export default function WhatsAppChatHub() {
 
                     <div className="relative group">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted)] group-focus-within:text-teal-400 transition-colors pointer-events-none" size={15} />
-                        <input
+                        <AlphaCloneInput
                             type="text"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             placeholder="Search chats or phone..."
-                            className="w-full bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-xl pl-10 pr-4 py-2.5 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40 transition-all placeholder:text-slate-600"
+                            className="w-full pl-10 pr-4 py-2.5 transition-all"
                         />
                     </div>
 
@@ -416,13 +419,13 @@ export default function WhatsAppChatHub() {
                     {showFbSearch && (
                         <div className="space-y-2 p-2.5 rounded-xl border border-blue-500/20 bg-blue-500/5">
                             <div className="flex gap-2">
-                                <input
+                                <AlphaCloneInput
                                     type="text"
                                     value={fbLeadQuery}
                                     onChange={(e) => setFbLeadQuery(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleFacebookLeadSearch()}
                                     placeholder="Name, email, campaign..."
-                                    className="flex-1 px-3 py-1.5 type-caption bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)]"
+                                    className="flex-1 px-3 py-1.5"
                                 />
                                 <button
                                     type="button"
@@ -582,13 +585,13 @@ export default function WhatsAppChatHub() {
                             </div>
 
                             <form onSubmit={handleSend} className="flex gap-2">
-                                <input
+                                <AlphaCloneInput
                                     type="text"
                                     value={replyText}
                                     onChange={e => setReplyText(e.target.value)}
                                     placeholder={metaConnected ? 'Type a WhatsApp message...' : 'Configure WhatsApp to send messages'}
                                     disabled={!metaConnected}
-                                    className="flex-1 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-3 type-caption text-[var(--ws-text-primary)] outline-none transition-all placeholder:text-slate-600 focus:border-emerald-500/40 disabled:opacity-50"
+                                    className="flex-1 px-4 py-3 transition-all disabled:opacity-50"
                                 />
                                 <button
                                     type="submit"

@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useMemo, useState } from 'react';
 import { Search, UserPlus, X } from 'lucide-react';
 import { useClients } from '@/hooks/useClients';
@@ -46,12 +49,12 @@ export function ComposeContactPicker({ tenantId, onSelect, className = '' }: Com
         <div className="absolute z-50 mt-2 w-full min-w-[280px] max-w-md rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] shadow-2xl overflow-hidden">
           <div className="p-2 border-b border-[var(--ws-border)] flex items-center gap-2">
             <Search className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" />
-            <input
+            <AlphaCloneInput
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search CRM contacts..."
-              className="flex-1 bg-transparent type-ui text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)] focus:outline-none"
+              className="flex-1"
               autoFocus
             />
             <button type="button" onClick={() => setOpen(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">

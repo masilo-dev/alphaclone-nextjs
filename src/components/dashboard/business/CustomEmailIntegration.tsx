@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Unplug, Save, Lock, Loader2, Mail, Server } from 'lucide-react';
@@ -207,21 +210,21 @@ export default function CustomEmailIntegration() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">From Email</label>
-                                <input
+                                <AlphaCloneInput
                                     type="email"
                                     required
                                     value={config.fromEmail}
                                     onChange={(e) => setConfig({ ...config, fromEmail: e.target.value })}
-                                    className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
+                                    className="w-full px-4 py-2"
                                 />
                             </div>
                             <div>
                                 <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">From Name</label>
-                                <input
+                                <AlphaCloneInput
                                     type="text"
                                     value={config.fromName}
                                     onChange={(e) => setConfig({ ...config, fromName: e.target.value })}
-                                    className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
+                                    className="w-full px-4 py-2"
                                 />
                             </div>
                         </div>
@@ -233,43 +236,43 @@ export default function CustomEmailIntegration() {
                         </h4>
                         <div>
                             <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">SMTP Host</label>
-                            <input
+                            <AlphaCloneInput
                                 type="text"
                                 required
                                 value={config.smtpHost}
                                 onChange={(e) => setConfig({ ...config, smtpHost: e.target.value })}
                                 placeholder="smtp.example.com"
-                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
+                                className="w-full px-4 py-2"
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Port</label>
-                                <input
+                                <AlphaCloneInput
                                     type="text"
                                     value={config.smtpPort}
                                     onChange={(e) => setConfig({ ...config, smtpPort: e.target.value })}
                                     placeholder="465 or 587"
-                                    className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
+                                    className="w-full px-4 py-2"
                                 />
                             </div>
                         </div>
                         <div>
                             <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Username</label>
-                            <input
+                            <AlphaCloneInput
                                 type="text"
                                 value={config.smtpUser}
                                 onChange={(e) => setConfig({ ...config, smtpUser: e.target.value })}
-                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
+                                className="w-full px-4 py-2"
                             />
                         </div>
                         <div>
                             <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Password</label>
-                            <input
+                            <AlphaCloneInput
                                 type="password"
                                 value={config.smtpPass}
                                 onChange={(e) => setConfig({ ...config, smtpPass: e.target.value })}
-                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
+                                className="w-full px-4 py-2"
                             />
                         </div>
                     </div>
@@ -280,42 +283,42 @@ export default function CustomEmailIntegration() {
                         </h4>
                         <div>
                             <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">IMAP Host</label>
-                            <input
+                            <AlphaCloneInput
                                 type="text"
                                 value={config.imapHost}
                                 onChange={(e) => setConfig({ ...config, imapHost: e.target.value })}
                                 placeholder="imap.example.com"
-                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
+                                className="w-full px-4 py-2"
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Port</label>
-                                <input
+                                <AlphaCloneInput
                                     type="text"
                                     value={config.imapPort}
                                     onChange={(e) => setConfig({ ...config, imapPort: e.target.value })}
                                     placeholder="993"
-                                    className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
+                                    className="w-full px-4 py-2"
                                 />
                             </div>
                         </div>
                         <div>
                             <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Username</label>
-                            <input
+                            <AlphaCloneInput
                                 type="text"
                                 value={config.imapUser}
                                 onChange={(e) => setConfig({ ...config, imapUser: e.target.value })}
-                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
+                                className="w-full px-4 py-2"
                             />
                         </div>
                         <div>
                             <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Password</label>
-                            <input
+                            <AlphaCloneInput
                                 type="password"
                                 value={config.imapPass}
                                 onChange={(e) => setConfig({ ...config, imapPass: e.target.value })}
-                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
+                                className="w-full px-4 py-2"
                             />
                         </div>
                     </div>

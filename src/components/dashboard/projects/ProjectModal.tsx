@@ -1,5 +1,8 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal, Input, Button } from '../../ui/UIComponents';
@@ -114,17 +117,17 @@ export default function ProjectModal({ isOpen, onClose, clientId, ownerId, owner
                     />
                     <div>
                         <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1">Category</label>
-                        <select
+                        <AlphaCloneSelect
                             value={formData.category}
                             onChange={(e: any) => setFormData({ ...formData, category: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-2"
                         >
                             <option value="Consulting">Consulting</option>
                             <option value="Development">Development</option>
                             <option value="Design">Design</option>
                             <option value="Marketing">Marketing</option>
                             <option value="Other">Other</option>
-                        </select>
+                        </AlphaCloneSelect>
                     </div>
                 </div>
 

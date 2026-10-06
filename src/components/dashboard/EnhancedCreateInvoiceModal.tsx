@@ -1,5 +1,10 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -533,7 +538,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted)]">
                                             <Users size={16} />
                                         </div>
-                                        <input
+                                        <AlphaCloneInput
                                             type="text"
                                             value={selectedClientId ? clients.find(c => c.id === selectedClientId)?.name || '' : searchQuery}
                                             onChange={(e) => {
@@ -543,7 +548,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                             }}
                                             onFocus={() => setShowContactDropdown(true)}
                                             placeholder="Search existing contacts..."
-                                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] rounded-lg pl-10 pr-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 type-ui outline-none"
+                                            className="w-full pl-10 pr-3 py-2"
                                         />
                                         {selectedClientId && (
                                             <button 
@@ -613,10 +618,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
                                 <div>
                                     <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Project (Optional)</label>
-                                    <select
+                                    <AlphaCloneSelect
                                         value={selectedProjectId}
                                         onChange={(e) => setSelectedProjectId(e.target.value)}
-                                        className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                        className="w-full px-3 py-2"
                                     >
                                         <option value="">Select a project</option>
                                         {projects.map((project) => (
@@ -624,18 +629,18 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                 {project.name}
                                             </option>
                                         ))}
-                                    </select>
+                                    </AlphaCloneSelect>
                                 </div>
                             </div>
 
                             {/* Due Date */}
                             <div>
                                 <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Due Date *</label>
-                                <input
+                                <AlphaCloneInput
                                     type="date"
                                     value={dueDate}
                                     onChange={(e) => setDueDate(e.target.value)}
-                                    className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                    className="w-full px-3 py-2"
                                 />
                             </div>
 
@@ -667,11 +672,11 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             {paymentMethod === 'bank' && (
                                 <div>
                                     <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Bank Details *</label>
-                                    <textarea
+                                    <AlphaCloneTextarea
                                         value={bankDetails}
                                         onChange={(e) => setBankDetails(e.target.value)}
                                         placeholder="Bank Name\nAccount Number\nBranch Code\nAccount Holder Name"
-                                        className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                        className="w-full px-3 py-2"
                                         rows={4}
                                     />
                                 </div>
@@ -749,8 +754,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                                 </button>
                                                             ))}
 
-                                                        <select
-                                                            className="px-3 py-1.5 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg type-caption text-[var(--ws-text-secondary)] focus:outline-none focus:ring-1 focus:ring-teal-500"
+                                                        <AlphaCloneSelect
+                                                            className="px-3 py-1.5"
                                                             onChange={(e) => {
                                                                 if (!e.target.value) return;
                                                                 const service = UNIVERSAL_SERVICE_CATALOG
@@ -778,7 +783,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                                         ))}
                                                                     </optgroup>
                                                                 ))}
-                                                        </select>
+                                                        </AlphaCloneSelect>
                                                     </div>
                                                 </div>
                                             )}
@@ -846,7 +851,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
                                     <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Tax country</label>
-                                    <select
+                                    <AlphaCloneSelect
                                         value={taxCountry}
                                         onChange={(e) => {
                                             const code = e.target.value;
@@ -863,7 +868,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                         <option value="NG">Nigeria</option>
                                         <option value="GB">United Kingdom</option>
                                         <option value="US">United States</option>
-                                    </select>
+                                    </AlphaCloneSelect>
                                 </div>
                                 <div>
                                     <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Tax Rate (%)</label>

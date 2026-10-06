@@ -1,3 +1,5 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Input } from '../ui/UIComponents';
 import { User } from '../../types';
@@ -134,12 +136,12 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                     <label className="block type-label font-bold text-[var(--ws-text-primary)] mb-2">
                         {isAdmin ? 'Meeting Title' : 'What do you need help with?'}
                     </label>
-                    <input
+                    <AlphaCloneInput
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder={isAdmin ? "e.g. Project Review" : "e.g. Project Discussion"}
-                        className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                        className="w-full px-4 py-3"
                         required
                     />
                 </div>
@@ -153,22 +155,22 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="block type-label text-[var(--ws-text-muted)] mb-1">Date</label>
-                            <input
+                            <AlphaCloneInput
                                 type="date"
                                 value={date}
                                 onChange={(e) => setDate(e.target.value)}
                                 min={new Date().toISOString().split('T')[0]}
-                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                                className="w-full px-4 py-3"
                                 required
                             />
                         </div>
                         <div>
                             <label className="block type-caption text-[var(--ws-text-muted)] mb-1">Time</label>
-                            <input
+                            <AlphaCloneInput
                                 type="time"
                                 value={time}
                                 onChange={(e) => setTime(e.target.value)}
-                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                                className="w-full px-4 py-3"
                                 required
                             />
                         </div>
@@ -209,10 +211,10 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                             ))}
                         </div>
                     ) : (
-                        <select
+                        <AlphaCloneSelect
                             value={attendees[0] || ''}
                             onChange={(e) => setAttendees([e.target.value])}
-                            className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                            className="w-full px-4 py-3"
                         >
                             <option value="">Choose an admin...</option>
                             {profiles.map(p => (
@@ -220,7 +222,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                     {p.name}
                                 </option>
                             ))}
-                        </select>
+                        </AlphaCloneSelect>
                     )}
                 </div>
 
@@ -241,13 +243,13 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                     <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                                         Max Participants
                                     </label>
-                                    <input
+                                    <AlphaCloneInput
                                         type="number"
                                         value={maxParticipants}
                                         onChange={(e) => setMaxParticipants(parseInt(e.target.value) || 10)}
                                         min="2"
                                         max="50"
-                                        className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:ring-2 focus:ring-teal-500"
+                                        className="w-full px-3 py-2"
                                     />
                                 </div>
 
@@ -255,13 +257,13 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                     <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                                         Cancellation Policy (hours before meeting)
                                     </label>
-                                    <input
+                                    <AlphaCloneInput
                                         type="number"
                                         value={cancellationPolicyHours}
                                         onChange={(e) => setCancellationPolicyHours(parseInt(e.target.value) || 3)}
                                         min="0"
                                         max="72"
-                                        className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:ring-2 focus:ring-teal-500"
+                                        className="w-full px-3 py-2"
                                     />
                                     <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                                         Clients can cancel up to this many hours before the meeting

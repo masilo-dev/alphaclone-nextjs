@@ -1,3 +1,4 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
 import React, { useState, useEffect } from 'react';
 import { Search, Loader2, UserPlus, X, Filter, CheckSquare, Square } from 'lucide-react';
 import { Button, Modal, Input } from '../../ui/UIComponents';
@@ -108,12 +109,12 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
                 <div className="flex gap-4">
                     <div className="relative flex-1">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted)]" />
-                        <input
+                        <AlphaCloneInput
                             type="text"
                             placeholder="Search growth leads..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
+                            className="w-full pl-9 pr-4 py-2"
                         />
                     </div>
                     <Button

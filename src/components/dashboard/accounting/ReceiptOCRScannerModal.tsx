@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useRef } from 'react';
 import { ocrReceiptService, ParsedReceipt } from '@/services/ocrReceiptService';
 import { X, Upload, Scan, Check, FileText, Sparkles, AlertCircle } from 'lucide-react';
@@ -126,11 +130,11 @@ export function ReceiptOCRScannerModal({
                       <label className="block type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1">
                         Vendor Name
                       </label>
-                      <input
+                      <AlphaCloneInput
                         type="text"
                         value={parsedData.vendorName}
                         onChange={(e) => setParsedData({ ...parsedData, vendorName: e.target.value })}
-                        className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-teal-500/50"
+                        className="w-full px-3 py-2 font-bold"
                       />
                     </div>
 
@@ -139,22 +143,22 @@ export function ReceiptOCRScannerModal({
                         <label className="block type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1">
                           Amount ($)
                         </label>
-                        <input
+                        <AlphaCloneInput
                           type="number"
                           value={parsedData.totalAmount}
                           onChange={(e) => setParsedData({ ...parsedData, totalAmount: Number(e.target.value) })}
-                          className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-teal-500/50"
+                          className="w-full px-3 py-2 font-bold"
                         />
                       </div>
                       <div>
                         <label className="block type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1">
                           Date
                         </label>
-                        <input
+                        <AlphaCloneInput
                           type="date"
                           value={parsedData.date}
                           onChange={(e) => setParsedData({ ...parsedData, date: e.target.value })}
-                          className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-teal-500/50"
+                          className="w-full px-3 py-2 font-bold"
                         />
                       </div>
                     </div>
@@ -163,10 +167,10 @@ export function ReceiptOCRScannerModal({
                       <label className="block type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1">
                         Expense Category
                       </label>
-                      <select
+                      <AlphaCloneSelect
                         value={parsedData.category}
                         onChange={(e) => setParsedData({ ...parsedData, category: e.target.value as any })}
-                        className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-teal-500/50"
+                        className="w-full px-3 py-2 font-bold"
                       >
                         <option value="Software & Tools">Software & Tools</option>
                         <option value="Office & Supplies">Office & Supplies</option>
@@ -174,7 +178,7 @@ export function ReceiptOCRScannerModal({
                         <option value="Meals & Entertainment">Meals & Entertainment</option>
                         <option value="Utilities">Utilities</option>
                         <option value="General Expense">General Expense</option>
-                      </select>
+                      </AlphaCloneSelect>
                     </div>
                   </>
                 ) : (

@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { ChartOfAccount, chartOfAccountsService, AccountType } from '../../../services/accounting/chartOfAccountsService';
@@ -214,23 +218,23 @@ export function ChartOfAccountsPage() {
                 )}
                 toolbar={(
                     <div className="flex flex-wrap gap-3 items-center px-1 py-2">
-                        <input
+                        <AlphaCloneInput
                             type="text"
                             placeholder="Search accounts..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="flex-1 min-w-[180px] px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-emerald-500/50"
+                            className="flex-1 min-w-[180px] px-3 py-2"
                         />
-                        <select
+                        <AlphaCloneSelect
                             value={filterType}
                             onChange={(e) => setFilterType(e.target.value as AccountType | 'all')}
-                            className="px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-500/50"
+                            className="px-3 py-2"
                         >
                             <option value="all">All types</option>
                             {Object.entries(accountTypeLabels).map(([value, label]) => (
                                 <option key={value} value={value}>{label}</option>
                             ))}
-                        </select>
+                        </AlphaCloneSelect>
                         <label className="flex items-center gap-2 type-label text-[var(--ws-text-secondary)]">
                             <input
                                 type="checkbox"
@@ -300,26 +304,26 @@ export function ChartOfAccountsPage() {
                     />
                     <div>
                         <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Account type</label>
-                        <select
+                        <AlphaCloneSelect
                             value={formData.accountType}
                             onChange={(e) => setFormData({ ...formData, accountType: e.target.value as AccountType })}
-                            className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-500/50"
+                            className="w-full px-3 py-2"
                         >
                             {Object.entries(accountTypeLabels).map(([value, label]) => (
                                 <option key={value} value={value}>{label}</option>
                             ))}
-                        </select>
+                        </AlphaCloneSelect>
                     </div>
                     <div>
                         <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Normal balance</label>
-                        <select
+                        <AlphaCloneSelect
                             value={formData.normalBalance}
                             onChange={(e) => setFormData({ ...formData, normalBalance: e.target.value as 'debit' | 'credit' })}
-                            className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-500/50"
+                            className="w-full px-3 py-2"
                         >
                             <option value="debit">Debit</option>
                             <option value="credit">Credit</option>
-                        </select>
+                        </AlphaCloneSelect>
                     </div>
                     <Input
                         label="Description"

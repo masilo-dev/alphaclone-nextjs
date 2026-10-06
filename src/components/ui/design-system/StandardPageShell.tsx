@@ -21,9 +21,9 @@ export function StandardPageShell({
   className?: string;
 }) {
   return (
-    <div className={cn('ac-untitled-page flex min-h-0 flex-1 flex-col gap-5', className)}>
+    <div className={cn('ac-untitled-page flex min-h-0 flex-1 flex-col gap-4', className)}>
       {(title || description || actions) && (
-        <header className="ac-untitled-page__header flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <header data-ac-page-header className="ac-untitled-page__header flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 space-y-1">
             {title ? (
               <h1 className="truncate text-[length:var(--type-page-title-size,1.5rem)] font-semibold tracking-tight text-[var(--ws-text-primary)]">
@@ -64,7 +64,7 @@ export function StandardPanel({
         ? 'p-3'
         : padding === 'lg'
           ? 'p-6'
-          : 'p-4 md:p-5';
+          : 'p-3 md:p-4';
 
   return (
     <Comp

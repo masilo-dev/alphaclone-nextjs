@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     X, Receipt, CheckCircle, Save, Users, Loader2, Search, Plus, 
@@ -327,21 +331,21 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                             <div className="space-y-2">
                                                 <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black tracking-caps block px-1">Effective Date</label>
-                                                <input
+                                                <AlphaCloneInput
                                                     type="date"
                                                     value={formData.date}
                                                     onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-2xl px-5 py-4 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/40 outline-none transition-all shadow-inner"
+                                                    className="w-full px-5 py-4 transition-all"
                                                 />
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black tracking-caps block px-1">Amount ({currencyCode})</label>
-                                                <input
+                                                <AlphaCloneInput
                                                     type="number"
                                                     value={formData.amount}
                                                     onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
                                                     placeholder="0.00"
-                                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-2xl px-5 py-4 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700 font-mono"
+                                                    className="w-full px-5 py-4 transition-all font-mono"
                                                 />
                                             </div>
                                         </div>
@@ -375,7 +379,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                             <div className="space-y-2">
                                                 <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black tracking-caps block px-1">Expense Account (Category)</label>
-                                                <select
+                                                <AlphaCloneSelect
                                                     value={formData.expenseAccountId}
                                                     onChange={(e) => {
                                                         setFormData(prev => ({ ...prev, expenseAccountId: e.target.value }));
@@ -386,26 +390,26 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                             setSelectedCategoryPreset(preset ? preset.label : 'Other');
                                                         }
                                                     }}
-                                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-2xl px-5 py-4 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/40 outline-none transition-all shadow-inner appearance-none"
+                                                    className="w-full px-5 py-4 transition-all appearance-none"
                                                 >
                                                     <option value="">Select Category</option>
                                                     {expenseAccounts.map(acc => (
                                                         <option key={acc.id} value={acc.id}>{acc.name} ({acc.code})</option>
                                                     ))}
-                                                </select>
+                                                </AlphaCloneSelect>
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black tracking-caps block px-1">Paid From (Asset Account)</label>
-                                                <select
+                                                <AlphaCloneSelect
                                                     value={formData.assetAccountId}
                                                     onChange={(e) => setFormData(prev => ({ ...prev, assetAccountId: e.target.value }))}
-                                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-2xl px-5 py-4 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/40 outline-none transition-all shadow-inner appearance-none"
+                                                    className="w-full px-5 py-4 transition-all appearance-none"
                                                 >
                                                     <option value="">Select Asset</option>
                                                     {assetAccounts.map(acc => (
                                                         <option key={acc.id} value={acc.id}>{acc.name} ({acc.code})</option>
                                                     ))}
-                                                </select>
+                                                </AlphaCloneSelect>
                                             </div>
                                         </div>
 
@@ -415,7 +419,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 bg-[var(--ws-hover)] rounded-lg group-focus-within:bg-teal-500/10 transition-colors">
                                                     <Users className="w-3.5 h-3.5 text-[var(--ws-text-muted)] group-focus-within:text-teal-500" />
                                                 </div>
-                                                <input
+                                                <AlphaCloneInput
                                                     type="text"
                                                     value={formData.vendorName}
                                                     onChange={e => {
@@ -425,7 +429,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                     }}
                                                     onFocus={() => setShowContactDropdown(true)}
                                                     placeholder="Search entity or enter manual name..."
-                                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-2xl px-12 py-4 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700 font-medium"
+                                                    className="w-full px-12 py-4 transition-all font-medium"
                                                 />
                                             </div>
 
@@ -484,12 +488,12 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
 
                                         <div className="space-y-2">
                                             <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black tracking-caps block px-1">Description</label>
-                                            <input
+                                            <AlphaCloneInput
                                                 type="text"
                                                 value={formData.description}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                                                 placeholder="What was this expense for?"
-                                                className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-2xl px-5 py-4 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700 font-medium"
+                                                className="w-full px-5 py-4 transition-all font-medium"
                                             />
                                         </div>
 

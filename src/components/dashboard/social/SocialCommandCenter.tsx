@@ -1,5 +1,10 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
     Bookmark, Link2, Plus, Trash2, ExternalLink, Facebook, Linkedin, Globe, 
@@ -1145,20 +1150,20 @@ export default function SocialCommandCenter() {
 
                         {isAddingBookmark && (
                             <form onSubmit={handleAddBookmark} className={`space-y-3 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-                                <input 
+                                <AlphaCloneInput
                                     required
                                     value={newBookmark.title}
                                     onChange={e => setNewBookmark({...newBookmark, title: e.target.value})}
                                     placeholder="Title"
-                                    className="w-full px-3 py-2 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg type-caption text-[var(--ws-text-primary)] focus:outline-none"
+                                    className="w-full px-3 py-2"
                                 />
-                                <input 
+                                <AlphaCloneInput
                                     required
                                     type="url"
                                     value={newBookmark.url}
                                     onChange={e => setNewBookmark({...newBookmark, url: e.target.value})}
                                     placeholder="URL Link"
-                                    className="w-full px-3 py-2 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg type-caption text-[var(--ws-text-primary)] focus:outline-none"
+                                    className="w-full px-3 py-2"
                                 />
                                 <button type="submit" className={`${WORKSPACE.action.primary} h-10 w-full type-ui`}>
                                     Save
@@ -1191,11 +1196,11 @@ export default function SocialCommandCenter() {
                         <h3 className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-wider flex items-center gap-1.5">
                             <Video className="w-4 h-4 text-rose-500" /> Viral Hook Generator (Grok)
                         </h3>
-                        <textarea
+                        <AlphaCloneTextarea
                             value={videoTopic}
                             onChange={e => setVideoTopic(e.target.value)}
                             placeholder="Video niche / topic details..."
-                            className="w-full h-20 p-3 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg type-caption text-[var(--ws-text-primary)] focus:outline-none resize-none"
+                            className="w-full h-20 p-3 resize-none"
                         />
                         <button
                             onClick={handleGenerateVideo}
@@ -1319,10 +1324,10 @@ export default function SocialCommandCenter() {
                                     </span>
                                     <div className="space-y-1">
                                         <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black">Publish Target Page</label>
-                                        <select
+                                        <AlphaCloneSelect
                                             value={selectedPageId}
                                             onChange={e => setSelectedPageId(e.target.value)}
-                                            className="w-full h-10 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-3 type-caption text-[var(--ws-text-primary)] outline-none"
+                                            className="w-full h-10 px-3"
                                         >
                                             {fbPages.length === 0 ? (
                                                 <option value="">No pages configured</option>
@@ -1331,7 +1336,7 @@ export default function SocialCommandCenter() {
                                                     <option key={page.page_id} value={page.page_id}>{page.page_name}</option>
                                                 ))
                                             )}
-                                        </select>
+                                        </AlphaCloneSelect>
                                     </div>
 
                                     {composeMediaUrl && (
@@ -1353,7 +1358,7 @@ export default function SocialCommandCenter() {
                                     {xThreadPosts.map((reply, index) => (
                                         <div key={index} className="space-y-1.5 p-3 bg-[var(--ws-canvas)] rounded-xl border border-[var(--ws-border)] relative">
                                             <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Reply Post #{index + 1}</span>
-                                            <textarea
+                                            <AlphaCloneTextarea
                                                 value={reply}
                                                 onChange={e => {
                                                     const updated = [...xThreadPosts];
@@ -1361,7 +1366,7 @@ export default function SocialCommandCenter() {
                                                     setXThreadPosts(updated);
                                                 }}
                                                 placeholder="Thread continuation..."
-                                                className="w-full bg-transparent type-caption text-[var(--ws-text-primary)] outline-none resize-none h-14"
+                                                className="w-full resize-none h-14"
                                             />
                                             <button
                                                 type="button"
@@ -1391,11 +1396,11 @@ export default function SocialCommandCenter() {
                                         {charCount} / {maxChars}
                                     </span>
                                 </div>
-                                <textarea
+                                <AlphaCloneTextarea
                                     value={composeCaption}
                                     onChange={e => setComposeCaption(e.target.value)}
                                     placeholder="What are we sharing today? (Use #hashtags inside caption or bottom bar)"
-                                    className="w-full min-h-[160px] p-4 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-base text-[var(--ws-text-secondary)] outline-none focus:border-teal-500/50 transition-all resize-y placeholder-slate-600"
+                                    className="w-full min-h-[160px] p-4 transition-all resize-y"
                                 />
                             </div>
 
@@ -1409,7 +1414,7 @@ export default function SocialCommandCenter() {
                                     <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase">{composeMedia.length} attached</span>
                                 </div>
                                 <div className="flex gap-2">
-                                    <input
+                                    <AlphaCloneInput
                                         type="url"
                                         value={composeMediaUrl}
                                         onChange={e => setComposeMediaUrl(e.target.value)}
@@ -1420,7 +1425,7 @@ export default function SocialCommandCenter() {
                                             }
                                         }}
                                         placeholder="https://... image, gif, or mp4"
-                                        className="flex-1 h-11 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-4 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/50"
+                                        className="flex-1 h-11 px-4"
                                     />
                                     <button
                                         type="button"
@@ -1476,11 +1481,11 @@ export default function SocialCommandCenter() {
                                 </div>
 
                                 {composeIsScheduled && (
-                                    <input
+                                    <AlphaCloneInput
                                         type="datetime-local"
                                         value={composeScheduledAt}
                                         onChange={e => setComposeScheduledAt(e.target.value)}
-                                        className="w-full h-11 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-4 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/50"
+                                        className="w-full h-11 px-4"
                                     />
                                 )}
                             </div>
@@ -1515,11 +1520,11 @@ export default function SocialCommandCenter() {
                                 <h3 className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-wider">AI Topic prompt</h3>
                                 <button onClick={() => setAiPromptOpen(false)} className="text-[var(--ws-text-muted)]"><X className="w-4 h-4" /></button>
                             </div>
-                            <textarea
+                            <AlphaCloneTextarea
                                 value={aiPromptText}
                                 onChange={e => setAiPromptText(e.target.value)}
                                 placeholder="e.g. A message welcoming new beta testers for our workspace automation application..."
-                                className="w-full h-24 p-3 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg type-caption text-[var(--ws-text-primary)] outline-none resize-none"
+                                className="w-full h-24 p-3 resize-none"
                             />
                             <button
                                 onClick={generateDraftWithAI}

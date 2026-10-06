@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useMemo, useState } from 'react';
 import { Gift, Copy, Check, Share2, Mail, MessageSquare } from 'lucide-react';
 import { User } from '../../../types';
@@ -72,11 +75,11 @@ const ReferralsPage: React.FC<ReferralsPageProps> = ({ user, tenant }) => {
             <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-2xl p-6 space-y-4">
                 <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Your referral link</label>
                 <div className="flex flex-col sm:flex-row gap-2">
-                    <input
+                    <AlphaCloneInput
                         readOnly
                         value={referralLink}
                         onClick={(e) => (e.target as HTMLInputElement).select()}
-                        className="flex-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-3 type-ui text-[var(--ws-text-secondary)] font-mono"
+                        className="flex-1 px-4 py-3 font-mono"
                     />
                     <button
                         onClick={copyLink}

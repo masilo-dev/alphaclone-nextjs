@@ -1,5 +1,10 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -296,39 +301,39 @@ export default function InstagramIntegrationTab() {
         {accounts.length > 1 && (
           <label className="block mb-4">
             <span className="type-caption font-semibold uppercase tracking-wide text-[var(--ws-text-muted)]">Account</span>
-            <select
+            <AlphaCloneSelect
               value={selectedAccountId}
               onChange={(e) => setSelectedAccountId(e.target.value)}
-              className="mt-1 w-full h-11 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 text-[var(--ws-text-primary)]"
+              className="mt-1 w-full h-11 px-3"
             >
               {accounts.map((a) => (
                 <option key={a.instagram_account_id} value={a.instagram_account_id}>
                   @{a.username || a.account_name || a.instagram_account_id}
                 </option>
               ))}
-            </select>
+            </AlphaCloneSelect>
           </label>
         )}
 
         <form onSubmit={handlePost} className="space-y-4">
           <label className="block">
             <span className="type-caption font-semibold uppercase tracking-wide text-[var(--ws-text-muted)]">Caption</span>
-            <textarea
+            <AlphaCloneTextarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               rows={4}
               placeholder="Write your caption..."
-              className="mt-1 w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 py-2 text-[var(--ws-text-primary)] resize-y"
+              className="mt-1 w-full px-3 py-2 resize-y"
             />
           </label>
           <label className="block">
             <span className="type-caption font-semibold uppercase tracking-wide text-[var(--ws-text-muted)]">Image URL</span>
-            <input
+            <AlphaCloneInput
               type="url"
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
               placeholder="https://..."
-              className="mt-1 w-full h-11 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 text-[var(--ws-text-primary)]"
+              className="mt-1 w-full h-11 px-3"
             />
           </label>
           <button

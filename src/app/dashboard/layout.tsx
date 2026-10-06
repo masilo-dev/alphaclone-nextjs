@@ -1,3 +1,4 @@
+import '@/styles/product-system.css';
 import type { Metadata } from 'next';
 
 import '@/styles/alphaclone-os-v3.css';
@@ -13,5 +14,5 @@ export const metadata: Metadata = {
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <div className="ac-product-system contents">{children}</div>;
 }

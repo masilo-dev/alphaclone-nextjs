@@ -11,6 +11,8 @@ export interface WalkthroughRecord {
   updatedAt: string;
 }
 
+const isLegacyDone = (value: string | null) => value === '1' || value === 'true';
+
 const STORAGE_PREFIX = 'alphaclone:tour:v2:';
 const SESSION_CHECK_PREFIX = 'alphaclone:tour:session_checked:';
 
@@ -48,10 +50,10 @@ export function getWalkthroughRecord(userId: string): WalkthroughRecord {
 
     // 2. Check legacy localStorage keys
     const legacyCompleted =
-      localStorage.getItem(`business_tour_completed_${userId}`) === '1' ||
-      localStorage.getItem(`tour_completed_${userId}`) === '1';
+      isLegacyDone(localStorage.getItem(`business_tour_completed_${userId}`)) ||
+      isLegacyDone(localStorage.getItem(`tour_completed_${userId}`));
 
-    const legacyDismissed = localStorage.getItem(`tour_dismissed_${userId}`) === '1';
+    const legacyDismissed = isLegacyDone(localStorage.getItem(`tour_dismissed_${userId}`));
 
     if (legacyCompleted) {
       const record: WalkthroughRecord = {
@@ -84,7 +86,8 @@ export function getWalkthroughRecord(userId: string): WalkthroughRecord {
 export function setWalkthroughState(
   userId: string,
   state: WalkthroughState,
-  stepIndex?: number
+  stepIndex?: number,
+  options: { persistProfile?: boolean } = {}
 ): WalkthroughRecord {
   const now = new Date().toISOString();
   const existing = getWalkthroughRecord(userId);
@@ -122,7 +125,7 @@ export function setWalkthroughState(
     }
 
     // If completed, persist to backend profile
-    if (state === 'completed' && typeof window !== 'undefined' && window.location?.origin) {
+    if (options.persistProfile !== false && state === 'completed' && typeof window !== 'undefined' && window.location?.origin) {
       const endpoint = `${window.location.origin}/api/account/profile`;
       void fetch(endpoint, {
         method: 'PATCH',

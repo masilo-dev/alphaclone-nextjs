@@ -106,6 +106,7 @@ export function PageHeader({
 
   return (
     <header
+      data-ac-page-header
       className={cn(
         'flex-shrink-0 border-b border-[var(--app-border,var(--ws-border))] bg-[var(--app-surface,var(--ws-toolbar))]',
         SHELL.gutter,
@@ -168,7 +169,7 @@ export function PageHeader({
                   {moduleLabel}
                 </p>
               ) : null}
-              <h1 className={cn(WORKSPACE.typography.pageTitle, 'text-[var(--app-text,var(--color-white))] truncate')}>
+              <h1 className={cn(WORKSPACE.typography.pageTitle, 'text-[var(--ws-text-primary)] truncate')}>
                 {title}
               </h1>
               {description ? (

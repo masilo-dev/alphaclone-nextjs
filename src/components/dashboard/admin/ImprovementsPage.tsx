@@ -1,5 +1,9 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Filter,
@@ -167,31 +171,31 @@ const ImprovementsPage: React.FC = () => {
 
                     {/* Status filter */}
                     <div>
-                        <select
+                        <AlphaCloneSelect
                             value={filters.status || ''}
                             onChange={(e) => handleFilterChange('status', e.target.value)}
-                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-2 text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-2"
                         >
                             <option value="">All Statuses</option>
                             <option value="new">New</option>
                             <option value="reviewed">Reviewed</option>
                             <option value="in_progress">In Progress</option>
                             <option value="resolved">Resolved</option>
-                        </select>
+                        </AlphaCloneSelect>
                     </div>
 
                     {/* Severity filter */}
                     <div>
-                        <select
+                        <AlphaCloneSelect
                             value={filters.severity || ''}
                             onChange={(e) => handleFilterChange('severity', e.target.value)}
-                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-2 text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-2"
                         >
                             <option value="">All Priorities</option>
                             <option value="high">High</option>
                             <option value="medium">Medium</option>
                             <option value="low">Low</option>
-                        </select>
+                        </AlphaCloneSelect>
                     </div>
                 </div>
             </Card>
@@ -333,26 +337,26 @@ const ImprovementsPage: React.FC = () => {
                         {/* Status Update */}
                         <div className="mb-6">
                             <h3 className="type-caption font-semibold text-[var(--ws-text-muted)] mb-2">Status</h3>
-                            <select
+                            <AlphaCloneSelect
                                 value={editStatus}
                                 onChange={(e) => setEditStatus(e.target.value as Improvement['status'])}
-                                className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-2 text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
+                                className="w-full px-4 py-2"
                             >
                                 <option value="new">New</option>
                                 <option value="reviewed">Reviewed</option>
                                 <option value="in_progress">In Progress</option>
                                 <option value="resolved">Resolved</option>
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
 
                         {/* Admin Notes */}
                         <div className="mb-6">
                             <h3 className="type-ui font-semibold text-[var(--ws-text-muted)] mb-2">Admin Notes (Internal)</h3>
-                            <textarea
+                            <AlphaCloneTextarea
                                 value={editNotes}
                                 onChange={(e) => setEditNotes(e.target.value)}
                                 placeholder="Add internal notes about this improvement..."
-                                className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 resize-none"
+                                className="w-full px-4 py-3 resize-none"
                                 rows={4}
                             />
                         </div>

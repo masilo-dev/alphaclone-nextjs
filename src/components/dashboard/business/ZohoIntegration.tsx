@@ -1,5 +1,9 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState, useEffect } from 'react';
 import { Database, CheckCircle2, AlertCircle, RefreshCw, XCircle, Globe, ExternalLink, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -189,17 +193,17 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                                 <label className="absolute -top-2 left-3 px-1 bg-[var(--ws-canvas)] type-caption font-black text-teal-500 uppercase tracking-widest z-10 transition-colors group-focus-within:text-teal-400">
                                     Select Region
                                 </label>
-                                <select
+                                <AlphaCloneSelect
                                     value={selectedRegion}
                                     onChange={(e) => setSelectedRegion(e.target.value)}
-                                    className="appearance-none bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-3 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 transition-all min-w-[200px] cursor-pointer"
+                                    className="appearance-none px-4 py-3 transition-all min-w-[200px] cursor-pointer"
                                 >
                                     {ZOHO_REGIONS.map(region => (
                                         <option key={region.id} value={region.id}>
                                             {region.icon} {region.label}
                                         </option>
                                     ))}
-                                </select>
+                                </AlphaCloneSelect>
                                 <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[var(--ws-text-muted)] group-hover:text-teal-500 transition-colors">
                                     <Globe className="w-4 h-4" />
                                 </div>
@@ -256,12 +260,12 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                 <div className="p-5 bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl">
                     <h4 className="type-ui font-semibold text-teal-400 mb-3">Send Test Email</h4>
                     <div className="flex flex-col md:flex-row gap-3">
-                        <input
+                        <AlphaCloneInput
                             type="email"
                             value={testRecipient}
                             onChange={(e) => setTestRecipient(e.target.value)}
                             placeholder="recipient@domain.com"
-                            className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500"
+                            className="w-full px-4 py-3"
                         />
                         <button
                             onClick={handleSendTest}

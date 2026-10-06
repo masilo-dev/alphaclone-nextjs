@@ -1,5 +1,10 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useState } from 'react';
 import { 
     Plus, Search, Edit2, Trash2, Package, DollarSign, 
@@ -110,8 +115,8 @@ export const ServicesCatalog: React.FC = () => {
                                     </div>
                                     <div className="space-y-2">
                                         <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Unit</label>
-                                        <select 
-                                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-4 py-2.5 text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
+                                        <AlphaCloneSelect
+                                            className="w-full px-4 py-2.5"
                                             value={form.unit}
                                             onChange={e => setForm({...form, unit: e.target.value})}
                                         >
@@ -120,14 +125,14 @@ export const ServicesCatalog: React.FC = () => {
                                             <option value="day">Per Day</option>
                                             <option value="month">Per Month</option>
                                             <option value="project">Per Project</option>
-                                        </select>
+                                        </AlphaCloneSelect>
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
                                     <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Description</label>
-                                    <textarea 
-                                        className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-4 py-2.5 text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500 min-h-[100px]"
+                                    <AlphaCloneTextarea
+                                        className="w-full px-4 py-2.5 min-h-[100px]"
                                         value={form.description}
                                         onChange={e => setForm({...form, description: e.target.value})}
                                         placeholder="What does this service include?"
@@ -138,9 +143,9 @@ export const ServicesCatalog: React.FC = () => {
                                     <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Default Price</label>
                                     <div className="relative">
                                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
-                                        <input 
+                                        <AlphaCloneInput
                                             type="number"
-                                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg pl-10 pr-4 py-2.5 text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
+                                            className="w-full pl-10 pr-4 py-2.5"
                                             value={form.defaultPrice}
                                             onChange={e => setForm({...form, defaultPrice: parseFloat(e.target.value) || 0})}
                                         />
@@ -166,10 +171,10 @@ export const ServicesCatalog: React.FC = () => {
                     >
                         <div className="relative">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted)] w-4 h-4" />
-                            <input 
+                            <AlphaCloneInput
                                 type="text"
                                 placeholder="Search services..."
-                                className="w-full bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl pl-12 pr-4 py-4 text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50 transition-all"
+                                className="w-full pl-12 pr-4 py-4 transition-all"
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
                             />

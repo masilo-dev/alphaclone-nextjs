@@ -1,3 +1,5 @@
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import {
@@ -442,9 +444,9 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
                                     <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                             </div>
-                            <textarea
+                            <AlphaCloneTextarea
                                 autoFocus
-                                className="w-full bg-[var(--ws-canvas)]/50 border border-white/5 rounded-xl p-3 type-ui text-[var(--ws-text-secondary)] outline-none focus:border-teal-500/50 min-h-[100px] shadow-inner transition-all placeholder:text-slate-700"
+                                className="w-full p-3 min-h-[100px] transition-all"
                                 value={annotation.text}
                                 onChange={(e) => onUpdate({ text: e.target.value })}
                                 placeholder="Write your comment..."
@@ -465,9 +467,9 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
             {annotation.type === 'text' && (
                 <div className="relative">
                     {isActive ? (
-                        <input
+                        <AlphaCloneInput
                             autoFocus
-                            className="bg-white/95 backdrop-blur-sm text-slate-900 font-serif border-2 border-teal-500 rounded-lg shadow-2xl outline-none p-2 leading-none min-w-[120px] pointer-events-auto ring-4 ring-teal-500/20"
+                            className="backdrop-blur-sm font-serif p-2 leading-none min-w-[120px] pointer-events-auto"
                             value={annotation.text}
                             onChange={(e) => onUpdate({ text: e.target.value })}
                             onBlur={onDeactivate}
@@ -551,10 +553,10 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
                             </div>
 
                             {annotation.signatureType === 'type' ? (
-                                <input
+                                <AlphaCloneInput
                                     autoFocus
                                     placeholder="Enter your full legal name"
-                                    className="w-full bg-[var(--ws-canvas)]/50 border border-white/5 rounded-xl p-4 text-lg text-white outline-none focus:border-teal-500/50 shadow-inner font-signature placeholder:text-slate-700"
+                                    className="w-full p-4 font-signature"
                                     style={{ fontFamily: "'Dancing Script', cursive" }}
                                     value={annotation.text}
                                     onChange={(e) => onUpdate({ text: e.target.value })}

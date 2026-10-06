@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useEffect } from 'react';
 import { Button, Modal } from '../../ui/UIComponents';
 import { toast } from 'react-hot-toast';
@@ -235,18 +239,18 @@ export function SlackIntegration() {
             <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-3">
               <h4 className="type-ui font-medium text-[var(--ws-text-primary)] mb-2">Send Custom Message</h4>
               <div className="space-y-2">
-                <input
+                <AlphaCloneInput
                   type="text"
                   placeholder="Channel (#general)"
                   value={selectedChannel}
                   onChange={(e) => setSelectedChannel(e.target.value)}
-                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)]"
+                  className="w-full px-3 py-2"
                 />
-                <textarea
+                <AlphaCloneTextarea
                   placeholder="Type your message..."
                   value={customMessage}
                   onChange={(e) => setCustomMessage(e.target.value)}
-                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] resize-none"
+                  className="w-full px-3 py-2 resize-none"
                   rows={2}
                 />
                 <Button

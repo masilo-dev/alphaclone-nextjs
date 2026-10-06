@@ -480,9 +480,9 @@ function LoginContent() {
                     </div>
 
                     {error && (
-                        <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl flex items-start gap-3 text-left mb-6 animate-fade-in">
+                        <div role="alert" className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl flex items-start gap-3 text-left mb-6 animate-fade-in">
                             <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
-                            <p className="type-card-description text-rose-200">{error}</p>
+                            <p className="type-card-description text-[var(--color-text-error-primary)]">{error}</p>
                         </div>
                     )}
 
@@ -724,7 +724,7 @@ function LoginContent() {
                     )}
 
                     {error && (
-                        <div className="bg-[var(--error-500)]/10 border border-red-500/20 rounded-lg p-2 text-red-400 type-caption flex items-start gap-2 animate-fade-in">
+                        <div role="alert" className="bg-[var(--error-500)]/10 border border-red-500/20 rounded-lg p-2 text-[var(--color-text-error-primary)] type-caption flex items-start gap-2 animate-fade-in">
                             <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                             <span>{error}</span>
                         </div>

@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Bell, Loader2, ArrowRight, RefreshCw } from 'lucide-react';
@@ -179,11 +182,11 @@ export default function FollowUpQueue() {
           <div className="w-full max-w-md rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-5 space-y-4">
             <h2 className="text-lg font-bold text-[var(--ws-text-primary)]">Schedule follow-up</h2>
             <p className="type-card-description text-[var(--ws-text-muted)] truncate">{scheduleItem.title}</p>
-            <input
+            <AlphaCloneInput
               type="datetime-local"
               value={followUpDate}
               onChange={(e) => setFollowUpDate(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] type-ui"
+              className="w-full px-3 py-2"
             />
             <div className="flex justify-end gap-2">
               <button

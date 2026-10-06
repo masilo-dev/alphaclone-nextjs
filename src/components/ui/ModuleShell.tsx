@@ -37,9 +37,10 @@ export function ModuleShell({
   return (
     <div className={cn('ac-scroll-full', className)}>
       <header
+      data-ac-page-header
         className={cn(
           ENTERPRISE.moduleLayout.stickyHeader,
-          'px-1 py-3 md:py-4 mb-4 md:mb-6',
+          'px-1 py-2 md:py-3 mb-3 md:mb-4',
         )}
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -53,7 +54,7 @@ export function ModuleShell({
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full sm:w-auto">
             {search ? <div className="flex-1 sm:max-w-xs">{search}</div> : null}
-            {actions ? <div className="flex gap-2 shrink-0">{actions}</div> : null}
+            {actions ? <div className="flex flex-wrap gap-2 min-w-0">{actions}</div> : null}
           </div>
         </div>
         {filters ? (
@@ -64,7 +65,7 @@ export function ModuleShell({
       </header>
 
       {summary ? (
-        <section className={cn(ENTERPRISE.moduleLayout.summaryGrid, 'mb-4 md:mb-6')}>
+        <section className={cn(ENTERPRISE.moduleLayout.summaryGrid, 'mb-3 md:mb-4')}>
           {summary}
         </section>
       ) : null}

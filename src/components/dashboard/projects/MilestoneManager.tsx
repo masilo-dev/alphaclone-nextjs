@@ -1,3 +1,4 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, CheckCircle, Clock, Calendar, Save, X } from 'lucide-react';
 import { milestoneService, Milestone } from '../../../services/milestoneService';
@@ -91,32 +92,32 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
                 <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg p-4 space-y-3 animate-fade-in">
                     <div>
                         <label className="type-label text-[var(--ws-text-muted)] block mb-1">Phase Name</label>
-                        <input
+                        <AlphaCloneInput
                             type="text"
                             value={newMilestone.name}
                             onChange={(e) => setNewMilestone({ ...newMilestone, name: e.target.value })}
-                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:border-teal-500 outline-none"
+                            className="w-full px-3 py-2"
                             placeholder="e.g. Design Approval"
                             autoFocus
                         />
                     </div>
                     <div>
                         <label className="type-label text-[var(--ws-text-muted)] block mb-1">Description (Optional)</label>
-                        <input
+                        <AlphaCloneInput
                             type="text"
                             value={newMilestone.description}
                             onChange={(e) => setNewMilestone({ ...newMilestone, description: e.target.value })}
-                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:border-teal-500 outline-none"
+                            className="w-full px-3 py-2"
                             placeholder="Details about this phase..."
                         />
                     </div>
                     <div>
                         <label className="type-label text-[var(--ws-text-muted)] block mb-1">Due Date (Optional)</label>
-                        <input
+                        <AlphaCloneInput
                             type="date"
                             value={newMilestone.dueDate}
                             onChange={(e) => setNewMilestone({ ...newMilestone, dueDate: e.target.value })}
-                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:border-teal-500 outline-none"
+                            className="w-full px-3 py-2"
                         />
                     </div>
                     <div className="flex justify-end gap-2 pt-2">

@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState } from 'react';
 import { Plus, Play, Target } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -85,8 +89,8 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
 
       <div>
         <label className="block type-label text-[var(--ws-text-muted)] mb-1">Campaign name</label>
-        <input
-          className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]"
+        <AlphaCloneInput
+          className="w-full px-3 py-2"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="SaaS CEOs — Austin"
@@ -117,8 +121,8 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block type-label text-[var(--ws-text-muted)] mb-1">Industry (comma-separated)</label>
-          <input
-            className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]"
+          <AlphaCloneInput
+            className="w-full px-3 py-2"
             value={industry}
             onChange={(e) => setIndustry(e.target.value)}
             placeholder="saas, fintech"
@@ -126,8 +130,8 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
         </div>
         <div>
           <label className="block type-label text-[var(--ws-text-muted)] mb-1">Location</label>
-          <input
-            className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]"
+          <AlphaCloneInput
+            className="w-full px-3 py-2"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="Austin, TX"
@@ -137,8 +141,8 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
 
       <div>
         <label className="block type-label text-[var(--ws-text-muted)] mb-1">Title keywords (comma-separated)</label>
-        <input
-          className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]"
+        <AlphaCloneInput
+          className="w-full px-3 py-2"
           value={titleKeywords}
           onChange={(e) => setTitleKeywords(e.target.value)}
           placeholder="CEO, founder, VP Sales"
@@ -148,9 +152,9 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
       <div className="grid grid-cols-3 gap-4">
         <div>
           <label className="block type-label text-[var(--ws-text-muted)] mb-1">Daily limit</label>
-          <input
+          <AlphaCloneInput
             type="number"
-            className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]"
+            className="w-full px-3 py-2"
             value={dailyLimit}
             onChange={(e) => setDailyLimit(Number(e.target.value))}
             min={1}
@@ -159,9 +163,9 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
         </div>
         <div>
           <label className="block type-label text-[var(--ws-text-muted)] mb-1">Min score</label>
-          <input
+          <AlphaCloneInput
             type="number"
-            className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]"
+            className="w-full px-3 py-2"
             value={minScore}
             onChange={(e) => setMinScore(Number(e.target.value))}
             min={0}
@@ -170,14 +174,14 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
         </div>
         <div>
           <label className="block type-label text-[var(--ws-text-muted)] mb-1">Enrichment</label>
-          <select
-            className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]"
+          <AlphaCloneSelect
+            className="w-full px-3 py-2"
             value={enrichmentLevel}
             onChange={(e) => setEnrichmentLevel(e.target.value as 'basic' | 'full')}
           >
             <option value="basic">Basic</option>
             <option value="full">Full</option>
-          </select>
+          </AlphaCloneSelect>
         </div>
       </div>
 

@@ -1,5 +1,9 @@
 'use client';
 
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 /**
  * ApprovalCenter
  * ─────────────────────────────────────────────────────────────────────────────
@@ -100,18 +104,18 @@ function InlineArgEditor({ args, onChange }: InlineEditorProps) {
             {key}
           </label>
           {typeof localArgs[key] === 'string' && String(localArgs[key]).length > 80 ? (
-            <textarea
+            <AlphaCloneTextarea
               rows={3}
               value={String(localArgs[key])}
               onChange={(e) => handleFieldChange(key, e.target.value)}
-              className="w-full resize-none rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-2.5 py-1.5 type-ui text-[var(--ws-text-secondary)] focus:border-teal-500 focus:outline-none"
+              className="w-full resize-none px-2.5 py-1.5"
             />
           ) : (
-            <input
+            <AlphaCloneInput
               type="text"
               value={String(localArgs[key])}
               onChange={(e) => handleFieldChange(key, e.target.value)}
-              className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-2.5 py-1.5 type-ui text-[var(--ws-text-secondary)] focus:border-teal-500 focus:outline-none"
+              className="w-full px-2.5 py-1.5"
             />
           )}
         </div>

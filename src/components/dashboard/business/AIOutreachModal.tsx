@@ -1,5 +1,9 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -347,12 +351,12 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
 
                         <div className="relative mb-6">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
-                            <input
+                            <AlphaCloneInput
                                 type="text"
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
                                 placeholder="Search leads by name or industry..."
-                                className="w-full bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl py-3 pl-12 pr-4 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/40 outline-none transition-all"
+                                className="w-full py-3 pl-12 pr-4 transition-all"
                             />
                         </div>
 
@@ -527,11 +531,11 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                         Step 3: Custom Instructions
                                     </h3>
                                     <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-[2rem] p-4 focus-within:border-teal-500/40 transition-all">
-                                        <textarea
+                                        <AlphaCloneTextarea
                                             value={customPrompt}
                                             onChange={e => setCustomPrompt(e.target.value)}
                                             placeholder="Example: Mention our current promotion and ask for a quick chat."
-                                            className="w-full bg-transparent border-none focus:ring-0 text-[var(--ws-text-primary)] type-ui min-h-[140px] p-2 resize-none"
+                                            className="w-full min-h-[140px] p-2 resize-none"
                                         />
                                     </div>
                                     <p className="type-card-description text-slate-600 mt-3 px-2 italic">

@@ -1,5 +1,10 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { FilePlus, Send, CheckCircle, Trash2, ArrowLeft, ArrowRight, X, Edit3, Plus, Minus, DollarSign, Trophy, Clock, FileText, Mail } from 'lucide-react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
@@ -299,21 +304,21 @@ const CreateQuoteModal: React.FC<{
           placeholder="Client or project name"
           validate={(v) => !v.trim() ? 'Client or quote name is required' : undefined}
         />
-        <input
+        <AlphaCloneInput
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Recipient email (for sending)"
-          className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-[var(--ws-text-primary)] type-ui"
+          className="w-full px-4 py-3"
         />
-        <input
+        <AlphaCloneInput
           type="number"
           min="0"
           step="0.01"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="Amount (USD)"
-          className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-[var(--ws-text-primary)] type-ui"
+          className="w-full px-4 py-3"
         />
         <DocumentThemePicker value={documentTheme} onChange={setDocumentTheme} />
         <DocumentQualityPanel
@@ -562,19 +567,19 @@ const QuoteEditModal: React.FC<{
               </div>
               <div>
                 <label className="mb-2 block type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Status</label>
-                <select value={status} onChange={(e) => setStatus(e.target.value as QuoteStatus)} className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-3 type-caption text-[var(--ws-text-primary)]">
+                <AlphaCloneSelect value={status} onChange={(e) => setStatus(e.target.value as QuoteStatus)} className="w-full px-4 py-3">
                   {(['draft', 'sent', 'accepted', 'rejected', 'expired', 'converted'] as QuoteStatus[]).map((option) => (
                     <option key={option} value={option}>{option}</option>
                   ))}
-                </select>
+                </AlphaCloneSelect>
               </div>
               <div>
                 <label className="mb-2 block type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Currency</label>
-                <input value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-3 type-caption text-[var(--ws-text-primary)]" />
+                <AlphaCloneInput value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} className="w-full px-4 py-3" />
               </div>
               <div>
                 <label className="mb-2 block type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Valid until</label>
-                <input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-3 type-ui text-[var(--ws-text-primary)]" />
+                <AlphaCloneInput type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} className="w-full px-4 py-3" />
               </div>
             </div>
 
@@ -594,13 +599,13 @@ const QuoteEditModal: React.FC<{
                         <Minus className="h-3.5 w-3.5" /> Remove
                       </button>
                     </div>
-                    <input value={item.productName} onChange={(e) => updateItem(index, { productName: e.target.value })} placeholder="Product or service" className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3 type-ui text-[var(--ws-text-primary)]" />
-                    <textarea value={item.description} onChange={(e) => updateItem(index, { description: e.target.value })} placeholder="Description" rows={2} className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3 type-ui text-[var(--ws-text-primary)] resize-none" />
+                    <AlphaCloneInput value={item.productName} onChange={(e) => updateItem(index, { productName: e.target.value })} placeholder="Product or service" className="w-full px-4 py-3" />
+                    <AlphaCloneTextarea value={item.description} onChange={(e) => updateItem(index, { description: e.target.value })} placeholder="Description" rows={2} className="w-full px-4 py-3 resize-none" />
                     <div className="grid gap-3 sm:grid-cols-4">
-                      <input type="number" min="0" step="1" value={item.quantity} onChange={(e) => updateItem(index, { quantity: e.target.value })} placeholder="Qty" className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3 type-ui text-[var(--ws-text-primary)]" />
-                      <input type="number" min="0" step="0.01" value={item.unitPrice} onChange={(e) => updateItem(index, { unitPrice: e.target.value })} placeholder="Unit price" className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3 type-ui text-[var(--ws-text-primary)]" />
-                      <input type="number" min="0" step="0.01" value={item.discountPercent} onChange={(e) => updateItem(index, { discountPercent: e.target.value })} placeholder="Discount %" className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3 type-ui text-[var(--ws-text-primary)]" />
-                      <input type="number" min="0" step="0.01" value={item.taxPercent} onChange={(e) => updateItem(index, { taxPercent: e.target.value })} placeholder="Tax %" className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3 type-ui text-[var(--ws-text-primary)]" />
+                      <AlphaCloneInput type="number" min="0" step="1" value={item.quantity} onChange={(e) => updateItem(index, { quantity: e.target.value })} placeholder="Qty" className="w-full px-4 py-3" />
+                      <AlphaCloneInput type="number" min="0" step="0.01" value={item.unitPrice} onChange={(e) => updateItem(index, { unitPrice: e.target.value })} placeholder="Unit price" className="w-full px-4 py-3" />
+                      <AlphaCloneInput type="number" min="0" step="0.01" value={item.discountPercent} onChange={(e) => updateItem(index, { discountPercent: e.target.value })} placeholder="Discount %" className="w-full px-4 py-3" />
+                      <AlphaCloneInput type="number" min="0" step="0.01" value={item.taxPercent} onChange={(e) => updateItem(index, { taxPercent: e.target.value })} placeholder="Tax %" className="w-full px-4 py-3" />
                     </div>
                   </div>
                 ))}
@@ -613,11 +618,11 @@ const QuoteEditModal: React.FC<{
             {previewInput ? <DocumentPreview input={previewInput} /> : null}
             <div>
               <label className="mb-2 block type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Notes</label>
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={6} className="w-full rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-3 type-ui text-[var(--ws-text-primary)] resize-none" />
+              <AlphaCloneTextarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={6} className="w-full px-4 py-3 resize-none" />
             </div>
             <div>
               <label className="mb-2 block type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Terms & conditions</label>
-              <textarea value={terms} onChange={(e) => setTerms(e.target.value)} rows={8} className="w-full rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-3 type-ui text-[var(--ws-text-primary)] resize-none" />
+              <AlphaCloneTextarea value={terms} onChange={(e) => setTerms(e.target.value)} rows={8} className="w-full px-4 py-3 resize-none" />
             </div>
 
             <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-4 space-y-2">

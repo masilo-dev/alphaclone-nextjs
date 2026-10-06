@@ -25,7 +25,7 @@ export function ResponsiveTableMobile({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={`lg:hidden space-y-3 ${className}`}>{children}</div>;
+  return <div className={`lg:hidden space-y-2 ${className}`}>{children}</div>;
 }
 
 /** Standard mobile data card shell. */
@@ -43,7 +43,7 @@ export function MobileDataCard({
     <Tag
       type={onClick ? 'button' : undefined}
       onClick={onClick}
-      className={`w-full text-left rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4 space-y-3 min-h-11 ${onClick ? 'active:scale-[0.99] transition-transform' : ''} ${className}`}
+      className={`w-full text-left rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-3 space-y-2 min-h-11 ${onClick ? 'active:scale-[0.99] transition-transform' : ''} ${className}`}
     >
       {children}
     </Tag>
@@ -52,4 +52,4 @@ export function MobileDataCard({
 
 /** Row actions visible on touch; hover-only on desktop. */
 export const rowActionsClass =
-  'flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity';
+  'flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity';

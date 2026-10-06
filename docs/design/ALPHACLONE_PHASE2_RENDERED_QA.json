@@ -1,0 +1,437 @@
+{
+  "fixture": "Synthetic isolated tenant, real application rendering, no external provider writes. Browser CSP bypass is fixture-only to reach a local Supabase mock; production CSP was not weakened.",
+  "passed_checks": [
+    {
+      "name": "workspace 320px",
+      "pass": true,
+      "width": 320,
+      "scrollWidth": 320,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/mobile/rendered-results.json",
+      "run_started_at": "2026-10-06T06:58:20.418Z"
+    },
+    {
+      "name": "workspace 360px",
+      "pass": true,
+      "width": 360,
+      "scrollWidth": 360,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/mobile/rendered-results.json",
+      "run_started_at": "2026-10-06T06:58:20.418Z"
+    },
+    {
+      "name": "workspace 375px",
+      "pass": true,
+      "width": 375,
+      "scrollWidth": 375,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/mobile/rendered-results.json",
+      "run_started_at": "2026-10-06T06:58:20.418Z"
+    },
+    {
+      "name": "workspace 390px",
+      "pass": true,
+      "width": 390,
+      "scrollWidth": 390,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/mobile/rendered-results.json",
+      "run_started_at": "2026-10-06T06:58:20.418Z"
+    },
+    {
+      "name": "workspace 412px",
+      "pass": true,
+      "width": 412,
+      "scrollWidth": 412,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/mobile/rendered-results.json",
+      "run_started_at": "2026-10-06T06:58:20.418Z"
+    },
+    {
+      "name": "workspace 430px",
+      "pass": true,
+      "width": 430,
+      "scrollWidth": 430,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/mobile/rendered-results.json",
+      "run_started_at": "2026-10-06T06:58:20.418Z"
+    },
+    {
+      "name": "workspace 768px",
+      "pass": true,
+      "width": 768,
+      "scrollWidth": 768,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/mobile/rendered-results.json",
+      "run_started_at": "2026-10-06T06:58:20.418Z"
+    },
+    {
+      "name": "workspace 1280px",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/mobile/rendered-results.json",
+      "run_started_at": "2026-10-06T06:58:20.418Z"
+    },
+    {
+      "name": "module /dashboard/accounting",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/module-finance/rendered-results.json",
+      "run_started_at": "2026-10-06T06:59:14.025Z"
+    },
+    {
+      "name": "module /dashboard/business/billing/manage",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "Money Hub",
+      "source": "qa/results/phase2/module-finance/rendered-results.json",
+      "run_started_at": "2026-10-06T06:59:14.025Z"
+    },
+    {
+      "name": "module /dashboard/business/quotes",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/module-finance/rendered-results.json",
+      "run_started_at": "2026-10-06T06:59:14.025Z"
+    },
+    {
+      "name": "module /dashboard/business/social",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "module /dashboard/business/contracts",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/module-social-contracts/rendered-results.json",
+      "run_started_at": "2026-10-06T06:59:50.966Z"
+    },
+    {
+      "name": "module /dashboard/calendar",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "Calendar",
+      "source": "qa/results/phase2/module-social-contracts/rendered-results.json",
+      "run_started_at": "2026-10-06T06:59:50.966Z"
+    },
+    {
+      "name": "onboarding existing",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "Dashboard",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "onboarding completed",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "Dashboard",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "onboarding new",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/onboarding/rendered-results.json",
+      "run_started_at": "2026-10-06T06:57:49.724Z"
+    },
+    {
+      "name": "auth 320px dark",
+      "pass": true,
+      "width": 320,
+      "scrollWidth": 320,
+      "dialogs": 0,
+      "heading": "AlphaClone Systems",
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(33, 36, 70)",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "auth 360px light",
+      "pass": true,
+      "width": 360,
+      "scrollWidth": 360,
+      "dialogs": 0,
+      "heading": "AlphaClone Systems",
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(33, 36, 70)",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "auth 360px dark",
+      "pass": true,
+      "width": 360,
+      "scrollWidth": 360,
+      "dialogs": 0,
+      "heading": "AlphaClone Systems",
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(33, 36, 70)",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "auth 375px light",
+      "pass": true,
+      "width": 375,
+      "scrollWidth": 375,
+      "dialogs": 0,
+      "heading": "AlphaClone Systems",
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(33, 36, 70)",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "auth 375px dark",
+      "pass": true,
+      "width": 375,
+      "scrollWidth": 375,
+      "dialogs": 0,
+      "heading": "AlphaClone Systems",
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(33, 36, 70)",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "auth 390px light",
+      "pass": true,
+      "width": 390,
+      "scrollWidth": 390,
+      "dialogs": 0,
+      "heading": "AlphaClone Systems",
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(33, 36, 70)",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "auth 390px dark",
+      "pass": true,
+      "width": 390,
+      "scrollWidth": 390,
+      "dialogs": 0,
+      "heading": "AlphaClone Systems",
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(33, 36, 70)",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "auth 412px light",
+      "pass": true,
+      "width": 412,
+      "scrollWidth": 412,
+      "dialogs": 0,
+      "heading": "AlphaClone Systems",
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(33, 36, 70)",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "auth 412px dark",
+      "pass": true,
+      "width": 412,
+      "scrollWidth": 412,
+      "dialogs": 0,
+      "heading": "AlphaClone Systems",
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(33, 36, 70)",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "auth 430px light",
+      "pass": true,
+      "width": 430,
+      "scrollWidth": 430,
+      "dialogs": 0,
+      "heading": "AlphaClone Systems",
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(33, 36, 70)",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "auth 430px dark",
+      "pass": true,
+      "width": 430,
+      "scrollWidth": 430,
+      "dialogs": 0,
+      "heading": "AlphaClone Systems",
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(33, 36, 70)",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "auth 768px light",
+      "pass": true,
+      "width": 768,
+      "scrollWidth": 768,
+      "dialogs": 0,
+      "heading": "AlphaClone Systems",
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(33, 36, 70)",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "auth 768px dark",
+      "pass": true,
+      "width": 768,
+      "scrollWidth": 768,
+      "dialogs": 0,
+      "heading": "AlphaClone Systems",
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(33, 36, 70)",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "auth 1280px light",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "AlphaClone Systems",
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(33, 36, 70)",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "auth 1280px dark",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "AlphaClone Systems",
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(33, 36, 70)",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "module /dashboard",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "Dashboard",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "module /dashboard/crm/workspace",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "module /dashboard/leads/campaigns",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "Lead Finder",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "module /dashboard/business/projects/manage",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "module /dashboard/business/documents",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "module /dashboard/business/mail",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    },
+    {
+      "name": "module /dashboard/business/campaigns",
+      "pass": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "dialogs": 0,
+      "heading": "",
+      "source": "qa/results/phase2/rendered-results.json",
+      "run_started_at": "2026-10-06T06:54:32.201Z"
+    }
+  ],
+  "passed_count": 39,
+  "blocked_checks": [
+    "Client portal rendered QA",
+    "Intentional Product Tour replay",
+    "Settings/integrations/notifications browser batch",
+    "Booking/analytics browser batch",
+    "Complete live provider/client acceptance"
+  ],
+  "runtime_limits": [
+    "Full dev run exhausted memory",
+    "Later Turbopack batch reached OS file-watch limit"
+  ]
+}

@@ -1,5 +1,6 @@
 'use client';
 
+import { Input } from '@/components/ui/input';
 import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -123,7 +124,7 @@ function SetPasswordContent() {
                         </label>
                         <div className="relative">
                             <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[color:var(--text-tertiary)]" />
-                            <input
+                            <Input
                                 type={showPasswords ? 'text' : 'password'}
                                 autoComplete="new-password"
                                 value={newPassword}
@@ -167,7 +168,7 @@ function SetPasswordContent() {
                         </label>
                         <div className="relative">
                             <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[color:var(--text-tertiary)]" />
-                            <input
+                            <Input
                                 type={showPasswords ? 'text' : 'password'}
                                 autoComplete="new-password"
                                 value={confirmPassword}
@@ -181,7 +182,7 @@ function SetPasswordContent() {
                     </div>
 
                     {error && (
-                        <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-3.5 py-2.5 type-ui text-rose-600 dark:text-rose-400 mb-4 flex items-start gap-2">
+                        <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-3.5 py-2.5 type-ui text-[var(--color-text-error-primary)] mb-4 flex items-start gap-2">
                             <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                             <span>{error}</span>
                         </div>

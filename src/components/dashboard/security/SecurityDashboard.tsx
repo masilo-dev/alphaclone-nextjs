@@ -1,3 +1,4 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
 import React, { useState, useEffect } from 'react';
 import { Shield, Lock, AlertTriangle, CheckCircle, Globe, Download } from 'lucide-react';
 import { securityScannerService, ScanResult } from '../../../services/securityScannerService';
@@ -98,12 +99,12 @@ const SecurityDashboard: React.FC = () => {
                             <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Website URL to Scan</label>
                             <div className="relative">
                                 <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--ws-text-muted)]" />
-                                <input
+                                <AlphaCloneInput
                                     type="text"
                                     value={url}
                                     onChange={(e) => setUrl(e.target.value)}
                                     placeholder="example.com"
-                                    className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg pl-12 pr-4 py-3 text-[var(--ws-text-primary)] focus:outline-none focus:ring-2 focus:ring-teal-500/50 placeholder-slate-600"
+                                    className="w-full pl-12 pr-4 py-3"
                                 />
                             </div>
                         </div>

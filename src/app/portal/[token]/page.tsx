@@ -1,5 +1,9 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -1181,16 +1185,16 @@ export default function ClientPortalPage() {
                             <label className="block type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)] mb-1.5">
                                 Conversation
                             </label>
-                            <select
+                            <AlphaCloneSelect
                                 value={projectId}
                                 onChange={(event) => setProjectId(event.target.value)}
-                                className="w-full max-w-md rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] px-3 py-2 type-ui text-[color:var(--ws-text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--focus-ring)]"
+                                className="w-full max-w-md px-3 py-2"
                             >
                                 <option value="">General conversation</option>
                                 {portal.projects.map((project) => (
                                     <option key={project.id} value={project.id}>{project.name}</option>
                                 ))}
-                            </select>
+                            </AlphaCloneSelect>
                         </div>
 
                         <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-5 space-y-3 min-h-[280px] bg-[color:var(--ws-surface-secondary)]">
@@ -1232,11 +1236,11 @@ export default function ClientPortalPage() {
                         </div>
 
                         <form onSubmit={sendMessage} className="border-t border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] p-4 md:p-5 space-y-3">
-                            <textarea
+                            <AlphaCloneTextarea
                                 value={message}
                                 onChange={(event) => setMessage(event.target.value)}
                                 placeholder="Write a message to the business…"
-                                className="w-full rounded-xl border border-[color:var(--ws-border)] bg-[color:var(--ws-surface-secondary)] px-4 py-3 type-caption text-[color:var(--ws-text-primary)] placeholder:text-[color:var(--ws-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--focus-ring)] resize-none"
+                                className="w-full px-4 py-3 resize-none"
                                 rows={3}
                             />
                             <div className="flex items-center justify-end gap-2">

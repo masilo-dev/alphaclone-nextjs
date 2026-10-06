@@ -1,5 +1,10 @@
 'use client';
 
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Plus, ChevronDown, ChevronRight, Calendar, Briefcase,
@@ -287,12 +292,12 @@ const TaskDetailContent: React.FC<{
       )}
       <div>
         <label className="type-label font-medium text-[var(--ws-text-muted)] block mb-2">Notes</label>
-        <textarea
+        <AlphaCloneTextarea
           value={notes}
           onChange={e => setNotes(e.target.value)}
           placeholder="Add notes..."
           rows={4}
-          className="w-full type-ui text-[var(--ws-text-secondary)] bg-[var(--ws-surface-secondary)] rounded-xl p-3 resize-none outline-none placeholder:text-slate-600 border border-[var(--ws-border)]"
+          className="w-full p-3 resize-none"
         />
       </div>
       <button type="button" onClick={save} className="w-full min-h-11 py-3 bg-[var(--brand-blue-600)] text-[var(--text-inverse)] font-semibold rounded-xl type-ui">Save Changes</button>
@@ -443,33 +448,33 @@ const TaskCreateContent: React.FC<{
           ))}
         </div>
       </div>
-      <input
+      <AlphaCloneInput
         type="date"
         value={dueDate}
         onChange={(e) => setDueDate(e.target.value)}
-        className="w-full px-3 py-2.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-ui outline-none"
+        className="w-full px-3 py-2.5"
       />
       <div className="grid grid-cols-1 gap-2">
         <label className="type-label font-medium text-[var(--ws-text-muted)]">Link to project (optional)</label>
-        <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full px-3 py-2.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-ui">
+        <AlphaCloneSelect value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full px-3 py-2.5">
           <option value="">None</option>
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+        </AlphaCloneSelect>
         <label className="type-label font-medium text-[var(--ws-text-muted)]">Link to deal (optional)</label>
-        <select value={dealId} onChange={(e) => setDealId(e.target.value)} className="w-full px-3 py-2.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-ui">
+        <AlphaCloneSelect value={dealId} onChange={(e) => setDealId(e.target.value)} className="w-full px-3 py-2.5">
           <option value="">None</option>
           {deals.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-        </select>
+        </AlphaCloneSelect>
         <label className="type-label font-medium text-[var(--ws-text-muted)]">Link to contact (optional)</label>
-        <select value={contactId} onChange={(e) => setContactId(e.target.value)} className="w-full px-3 py-2.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-ui">
+        <AlphaCloneSelect value={contactId} onChange={(e) => setContactId(e.target.value)} className="w-full px-3 py-2.5">
           <option value="">None</option>
           {contacts.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+        </AlphaCloneSelect>
         <label className="type-label font-medium text-[var(--ws-text-muted)]">Link to lead (optional)</label>
-        <select value={leadId} onChange={(e) => setLeadId(e.target.value)} className="w-full px-3 py-2.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-ui">
+        <AlphaCloneSelect value={leadId} onChange={(e) => setLeadId(e.target.value)} className="w-full px-3 py-2.5">
           <option value="">None</option>
           {leads.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-        </select>
+        </AlphaCloneSelect>
       </div>
       <button
         type="button"

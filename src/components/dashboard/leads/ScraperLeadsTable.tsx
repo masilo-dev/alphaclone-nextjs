@@ -1,5 +1,9 @@
 'use client';
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   CheckSquare,
@@ -440,7 +444,7 @@ export default function ScraperLeadsTable({
             >
               <Download className="w-4 h-4" />
             </button>
-            <select
+            <AlphaCloneSelect
               className={`${fieldClass} [color-scheme:dark]`}
               value={grade}
               onChange={(e) => setGrade(e.target.value)}
@@ -450,8 +454,8 @@ export default function ScraperLeadsTable({
               <option value="B" style={optionStyle}>B</option>
               <option value="C" style={optionStyle}>C</option>
               <option value="D" style={optionStyle}>D</option>
-            </select>
-            <input
+            </AlphaCloneSelect>
+            <AlphaCloneInput
               type="number"
               placeholder="Min score"
               className={`${fieldClass} w-24`}
@@ -567,7 +571,7 @@ export default function ScraperLeadsTable({
               Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}
             </p>
             <div className="flex items-center gap-2">
-              <select
+              <AlphaCloneSelect
                 value={String(pageSize)}
                 onChange={(e) => setPageSize(Number(e.target.value))}
                 className={`${fieldClass} [color-scheme:dark]`}
@@ -577,7 +581,7 @@ export default function ScraperLeadsTable({
                 <option value="50" style={optionStyle}>50 / page</option>
                 <option value="100" style={optionStyle}>100 / page</option>
                 <option value="200" style={optionStyle}>200 / page</option>
-              </select>
+              </AlphaCloneSelect>
               <button
                 type="button"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}

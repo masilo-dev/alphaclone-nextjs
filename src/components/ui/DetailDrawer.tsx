@@ -64,7 +64,7 @@ export function DetailDrawer({
           size === 'fullscreen' || isInstalledMobileCompanion
             ? 'inset-0 h-[100dvh] !w-screen max-w-none rounded-none border-0'
             : isMobile
-              ? 'max-h-[85vh]'
+              ? 'max-h-[calc(100dvh-env(safe-area-inset-top)-1rem)]'
               : size === 'workspace'
                 ? 'h-full !w-[min(86vw,90rem)] !max-w-none !p-0 !gap-0'
                 : size === 'wide'

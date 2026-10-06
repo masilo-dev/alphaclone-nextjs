@@ -1,5 +1,8 @@
 'use client';
 
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Calendar, ExternalLink, Loader2, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -178,18 +181,18 @@ export function ProjectTasksKanban({ projectId, userId, projectDueDate, onTasksC
       </div>
 
       <form onSubmit={handleCreate} className="flex flex-wrap gap-2">
-        <input
+        <AlphaCloneInput
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Add a delivery task…"
-          className="flex-1 min-w-[140px] px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-ui outline-none focus:border-[var(--brand-blue-500)]"
+          className="flex-1 min-w-[140px] px-3 py-2"
         />
-        <input
+        <AlphaCloneInput
           type="date"
           value={newDueDate}
           onChange={(e) => setNewDueDate(e.target.value)}
           title="Due date — adds to calendar"
-          className="px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-ui outline-none focus:border-[var(--brand-blue-500)]"
+          className="px-3 py-2"
         />
         <button
           type="submit"
@@ -219,11 +222,11 @@ export function ProjectTasksKanban({ projectId, userId, projectDueDate, onTasksC
             <p className="type-card-description font-bold text-[var(--ws-text-primary)] truncate">{editingTask.title}</p>
             <label className="block type-label text-[var(--ws-text-muted)]">
               Due date
-              <input
+              <AlphaCloneInput
                 type="date"
                 value={editDueDate}
                 onChange={(e) => setEditDueDate(e.target.value)}
-                className="mt-1 w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-ui"
+                className="mt-1 w-full px-3 py-2"
               />
             </label>
             <p className="type-card-description text-[var(--ws-text-muted)]">Saving updates your dashboard calendar (and Google Calendar if connected).</p>

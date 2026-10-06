@@ -1,3 +1,4 @@
+import { Input as AlphaCloneInput } from '@/components/ui/input';
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, FileText, MessageSquare, DollarSign } from 'lucide-react';
 import { Project, ChatMessage, Invoice } from '../../types';
@@ -182,14 +183,14 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                             {/* Search Input */}
                             <div className="flex items-center gap-3 p-4 border-b border-[var(--ws-border)]">
                                 <Search className="w-5 h-5 text-[var(--ws-text-muted)]" />
-                                <input
+                                <AlphaCloneInput
                                     ref={inputRef}
                                     type="text"
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
                                     onKeyDown={handleKeyDown}
                                     placeholder="Search projects, messages, invoices..."
-                                    className="flex-1 bg-transparent text-[var(--ws-text-primary)] placeholder-slate-400 outline-none"
+                                    className="flex-1"
                                     autoFocus
                                 />
                                 {query && (

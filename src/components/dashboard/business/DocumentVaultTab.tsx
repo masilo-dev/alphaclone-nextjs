@@ -1,5 +1,8 @@
 "use client";
 
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, {
   useState,
   useEffect,
@@ -760,25 +763,25 @@ export default function DocumentVaultTab() {
               <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">
                 Category
               </label>
-              <select
+              <AlphaCloneSelect
                 value={form.category}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, category: e.target.value }))
                 }
-                className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
+                className="w-full px-3 py-2"
               >
                 <option value="Agreement">Agreement</option>
                 <option value="Financial">Financial</option>
                 <option value="Tax">Tax Form / Return</option>
                 <option value="Identity">Identity (ID/Incorporation)</option>
-              </select>
+              </AlphaCloneSelect>
             </div>
 
             <div>
               <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">
                 Security Tier
               </label>
-              <select
+              <AlphaCloneSelect
                 value={form.security_level}
                 onChange={(e) =>
                   setForm((f) => ({
@@ -786,13 +789,13 @@ export default function DocumentVaultTab() {
                     security_level: e.target.value as any,
                   }))
                 }
-                className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
+                className="w-full px-3 py-2"
               >
                 <option value="public">Public</option>
                 <option value="internal">Internal</option>
                 <option value="confidential">Confidential</option>
                 <option value="restricted">Restricted Access</option>
-              </select>
+              </AlphaCloneSelect>
             </div>
           </div>
 

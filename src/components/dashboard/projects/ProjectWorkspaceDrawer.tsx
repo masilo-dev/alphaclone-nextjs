@@ -1,5 +1,10 @@
 'use client';
 
+import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+import { Input as AlphaCloneInput } from '@/components/ui/input';
+import { Select as AlphaCloneSelect } from '@/components/ui/select';
+
+
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -460,10 +465,10 @@ export function ProjectWorkspaceDrawer({
                   )}
                 </div>
                 <form onSubmit={handleAddComment} className="space-y-2">
-                  <textarea
+                  <AlphaCloneTextarea
                     value={commentDraft}
                     onChange={(e) => setCommentDraft(e.target.value)}
-                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-ui resize-none min-h-[72px]"
+                    className="w-full px-3 py-2 resize-none min-h-[72px]"
                     placeholder="Add a project note…"
                   />
                   <button type="submit" disabled={postingComment || !commentDraft.trim()} className="px-4 py-2 bg-[var(--brand-blue-600)] text-[var(--text-inverse)] rounded-xl type-ui font-bold disabled:opacity-50">
@@ -521,12 +526,12 @@ export function ProjectWorkspaceDrawer({
                         <input type="checkbox" checked={m.checked} readOnly className="mt-1 w-4 h-4 rounded border-slate-600 bg-[var(--ws-surface-secondary)]" />
                         <span className={`type-ui ${m.checked ? 'text-[var(--ws-text-muted)] line-through' : 'text-[var(--ws-text-secondary)]'}`}>{m.label}</span>
                       </div>
-                      <input
+                      <AlphaCloneInput
                         type="date"
                         value={toDateInput(m.dueDate)}
                         onChange={(e) => void updateMilestoneDueDate(m.id, e.target.value)}
                         title="Milestone due date — syncs to calendar"
-                        className="shrink-0 px-2 py-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-caption"
+                        className="shrink-0 px-2 py-1"
                         onClick={(e) => e.stopPropagation()}
                       />
                     </div>
@@ -568,10 +573,10 @@ export function ProjectWorkspaceDrawer({
               <div className="space-y-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 p-4">
                 <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Lifecycle stage</span>
                 <p className="type-card-description text-[var(--ws-text-primary)] font-semibold">{normalizedStage}</p>
-                <select
+                <AlphaCloneSelect
                   value={normalizedStage}
                   onChange={(e) => void handleStageSelect(e.target.value as ProjectStage)}
-                  className="w-full mt-2 px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-primary)]"
+                  className="w-full mt-2 px-3 py-2"
                 >
                   {PROJECT_STAGES_ORDER.map((stage) => (
                     <option key={stage} value={stage} disabled={!availableStages.includes(stage) && stage !== normalizedStage}>
@@ -580,7 +585,7 @@ export function ProjectWorkspaceDrawer({
                     </option>
                   ))}
                   <option value="On Hold">On Hold</option>
-                </select>
+                </AlphaCloneSelect>
                 <p className="type-card-description text-[var(--ws-text-muted)] mt-2">
                   Stage changes are validated — missing requirements block forward moves.
                 </p>
