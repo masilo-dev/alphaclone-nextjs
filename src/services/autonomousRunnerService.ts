@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import Stripe from 'stripe';
+import { stripe as invoiceStripe } from '@/lib/stripe';
+import { requireInvoiceStripeAccount, reconcileInvoiceStripePayment } from '@/lib/stripeInvoiceExecution';
 import { socialPostGenerationService } from '@/services/socialPostGenerationService';
 
 type RunnerActionStatus = 'success' | 'failed' | 'skipped';
@@ -231,7 +232,7 @@ export const autonomousRunnerService = {
   async runForTenant(tenantId: string, options?: { triggerSource?: 'cron' | 'manual' | 'bonnie_chat' }): Promise<{ success: boolean; run: RunnerSummary | null; error?: string }> {
     const admin = createSupabaseAdminClient();
     const stripeSecret = process.env.STRIPE_SECRET_KEY;
-    const stripe = stripeSecret ? new Stripe(stripeSecret, { apiVersion: '2025-12-15.clover' }) : null;
+    const stripe = stripeSecret ? invoiceStripe : null;
 
     try {
       const summary: RunnerSummary = { tenantId, actions: [] };
@@ -587,13 +588,10 @@ export const autonomousRunnerService = {
             const reconcileKey = `reconcile_invoice:${invoice.id}`;
             if (stripe) {
               try {
-                const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+                const accountId = await requireInvoiceStripeAccount(admin, tenantId);
+                const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, { stripeAccount: accountId });
                 if (paymentIntent.status === 'succeeded') {
-                  await admin
-                    .from('business_invoices')
-                    .update({ status: 'paid', updated_at: new Date().toISOString() })
-                    .eq('id', invoice.id)
-                    .eq('tenant_id', tenantId);
+                  await reconcileInvoiceStripePayment(admin, tenantId, invoice.id, paymentIntentId, accountId);
                   reconciledPaid += 1;
                 } else if (!(await autoTaskAlreadyExists(admin, tenantId, reconcileKey))) {
                   const { error: taskError } = await admin.from('tasks').insert({

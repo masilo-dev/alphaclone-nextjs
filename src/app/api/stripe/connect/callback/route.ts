@@ -1,6 +1,6 @@
+import { readConnectedAccount } from '@/lib/stripeConnectAccount';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { stripe } from '@/lib/stripe';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 
@@ -16,8 +16,8 @@ export async function GET(req: NextRequest) {
     if (error || !tenant?.stripe_connect_id) {
       return NextResponse.json({ error: 'Stripe Connect account not found' }, { status: 404 });
     }
-    const account = await stripe.accounts.retrieve(String(tenant.stripe_connect_id));
-    const onboarded = !account.deleted && Boolean(account.details_submitted && account.charges_enabled);
+    const account = await readConnectedAccount(String(tenant.stripe_connect_id));
+    const onboarded = account.chargesEnabled;
     await admin.from('tenants').update({ stripe_connect_onboarded: onboarded }).eq('id', tenantId);
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin).replace(/\/$/, '');
     return NextResponse.redirect(`${appUrl}/dashboard/business/settings?tab=integrations&connect=${onboarded ? 'success' : 'incomplete'}`);

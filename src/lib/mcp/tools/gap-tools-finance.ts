@@ -509,7 +509,7 @@ registerTool('gap-finance', {
 // ── create_subscription_checkout ─────────────────────────────────────
 registerTool('gap-finance', {
   name: 'create_subscription_checkout',
-  description: 'Create a Stripe subscription checkout session for a client.',
+  description: 'AlphaClone platform subscription checkout. Tenant customer subscriptions require connected-account billing.',
   inputSchema: z.object({ tenant_id: tid, client_id: z.string().optional(), price_id: z.string().optional(), plan_name: z.string().optional(), amount_cents: z.number().optional(), success_url: z.string().optional(), cancel_url: z.string().optional() }),
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, client_id: { type: 'string' }, price_id: { type: 'string' }, plan_name: { type: 'string' }, amount_cents: { type: 'number' } }, required: [] },
   handler: async (args) => {

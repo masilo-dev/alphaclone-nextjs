@@ -1,3 +1,4 @@
+import 'server-only';
 import Stripe from 'stripe';
 
 let cachedStripe: ReturnType<typeof createStripeClient> | null = null;
@@ -10,7 +11,7 @@ function createStripeClient() {
     }
 
     return new Stripe(stripeKey, {
-        apiVersion: '2023-10-16' as any,
+        apiVersion: '2026-09-30.endive',
         appInfo: {
             name: 'AlphaClone OS',
             version: '1.0.0',

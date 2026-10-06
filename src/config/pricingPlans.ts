@@ -1,3 +1,4 @@
+import { STARTER_MONTHLY_USD } from '@/config/platformBilling';
 /**
  * Single source of truth for PUBLIC, marketing-facing pricing.
  *
@@ -44,7 +45,7 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
   {
     id: 'starter',
     name: 'Starter',
-    price: 15,
+    price: STARTER_MONTHLY_USD,
     yearly: 144,
     tagline: 'Essential execution capacity for solo founders getting their core workflows connected.',
     features: [
@@ -141,7 +142,7 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
   },
 ];
 
-export const PRICING_FROM = 15;
+export const PRICING_FROM = STARTER_MONTHLY_USD;
 export const PRICING_TO = 80;
 
 /** Reusable marketing copy — import instead of hard-coding prices in pages. */

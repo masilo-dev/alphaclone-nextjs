@@ -1,3 +1,4 @@
+import { STARTER_MONTHLY_USD } from '@/config/platformBilling';
 /**
  * Multi-Tenancy - Core Types
  * Type definitions for the multi-tenant system
@@ -218,11 +219,11 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
         }
     },
     starter: {
-        monthly: 20,
-        yearly: 192,
+        monthly: STARTER_MONTHLY_USD,
+        yearly: 144,
         description: 'For solo founders actively running their business through AlphaClone.',
         isDiscountable: true,
-        stripePriceId: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID || 'price_1T0PCcCCIq5cPz4Hvazdrvtb',
+        stripePriceId: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID,
         featureList: [
             '300 emails / leads / CRM / outreach / social / documents / automations / MCP per day',
             '300 bulk lead import max / day',
@@ -251,7 +252,7 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
         monthly: 45,
         yearly: 432,
         description: 'For founders who want AlphaClone to actively execute sales, marketing and business operations.',
-        stripePriceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || 'price_1T0PChCCIq5cPz4HiD85RMtD',
+        stripePriceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
         featureList: [
             '300 emails / leads / CRM / outreach / social / documents / automations / MCP per day',
             '300 bulk lead import max / day',
@@ -277,10 +278,10 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
         }
     },
     enterprise: {
-        monthly: 89,
-        yearly: 854,
+        monthly: 80,
+        yearly: 768,
         description: 'For businesses that need maximum AlphaClone execution capacity.',
-        stripePriceId: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || 'price_1T0PCqCCIq5cPz4HtjeFQZSG',
+        stripePriceId: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID,
         featureList: [
             'Unlimited emails, leads, CRM, outreach, social & documents*',
             'Unlimited automations, MCP executions & bulk operations*',
@@ -307,8 +308,8 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
         }
     },
     custom: {
-        monthly: 89,
-        yearly: 854,
+        monthly: 80,
+        yearly: 768,
         featureList: [
             'Unrestricted Scale',
             'Custom Storage Tiers',

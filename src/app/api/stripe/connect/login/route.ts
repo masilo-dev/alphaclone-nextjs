@@ -1,3 +1,4 @@
+import { readConnectedAccount } from '@/lib/stripeConnectAccount';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { stripe } from '@/lib/stripe';
@@ -16,7 +17,10 @@ export async function POST(req: Request) {
     if (error || !tenant?.stripe_connect_id) {
       return NextResponse.json({ error: 'Stripe Connect account not found' }, { status: 404 });
     }
-    const loginLink = await stripe.accounts.createLoginLink(String(tenant.stripe_connect_id));
+    const state = await readConnectedAccount(String(tenant.stripe_connect_id));
+    if (state.closed) throw new Error('Stripe reconnection required');
+    if (state.dashboard === 'full') return NextResponse.json({ url: 'https://dashboard.stripe.com' });
+    const loginLink = await stripe.accounts.createLoginLink(state.id);
     return NextResponse.json({ url: loginLink.url });
   } catch (error) {
     return routeErrorResponse(error, 'Stripe dashboard could not be opened', req);

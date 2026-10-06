@@ -1,14 +1,13 @@
+import { verifyStripePlatformIdentity } from '@/lib/stripePlatformIdentity';
+import { redactStripeEvent } from '@/lib/stripePaymentPolicy';
+import { readConnectedAccount } from '@/lib/stripeConnectAccount';
+import { reconcileInvoiceStripePayment } from '@/lib/stripeInvoiceExecution';
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { headers } from 'next/headers';
-import { emailProviderService } from '@/services/EmailProviderService';
-import { invoiceServerService } from '@/services/server/invoiceServerService';
-import { recordInvoicePaymentServer } from '@/lib/invoices/recordInvoicePaymentServer';
-import { escapeHtml } from '@/lib/email/sanitizeEmailHtml';
 import { resolveVerifiedWebhookTenant } from '@/lib/events/webhookTenant';
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
 
 async function claimWebhookEvent(supabaseAdmin: any, event: any): Promise<boolean> {
     const session = event.data.object as any;
@@ -17,7 +16,7 @@ async function claimWebhookEvent(supabaseAdmin: any, event: any): Promise<boolea
         event_type: event.type,
         api_version: event.api_version,
         created_at_stripe: new Date(event.created * 1000).toISOString(),
-        event_data: event,
+        event_data: redactStripeEvent(event),
         status: 'retrying',
         customer_id: session.customer || null,
         subscription_id: session.subscription || session.id || null,
@@ -85,7 +84,7 @@ async function recordPayment(
     status: string = 'succeeded',
     description?: string
 ): Promise<void> {
-    await supabaseAdmin.from('stripe_payments').insert({
+    const { error } = await supabaseAdmin.from('stripe_payments').upsert({
         stripe_payment_intent_id: paymentIntentId,
         tenant_id: tenantId,
         customer_id: customerId,
@@ -94,37 +93,44 @@ async function recordPayment(
         status,
         description,
         paid_at: status === 'succeeded' ? new Date().toISOString() : null,
-    });
+    }, { onConflict: 'stripe_payment_intent_id', ignoreDuplicates: true });
+    if (error) throw error;
 }
 
 export async function POST(req: Request) {
     const body = await req.text();
-    const headerList = await headers();
-    const signature = headerList.get('stripe-signature') as string;
+    const signature = req.headers.get('stripe-signature') || '';
     
-    // Initialize Supabase Admin Lazily inside the handler
-    const supabaseAdmin = createSupabaseAdminClient();
 
     let event;
 
 
     // Step 1: Verify webhook signature
     try {
-        if (!webhookSecret) {
+        const secrets = [process.env.STRIPE_WEBHOOK_SECRET, process.env.STRIPE_CONNECT_WEBHOOK_SECRET].filter(Boolean) as string[];
+        if (!secrets.length) {
             throw new Error('STRIPE_WEBHOOK_SECRET is missing');
         }
-        event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+        for (const secret of secrets) {
+            try { event = stripe.webhooks.constructEvent(body, signature, secret); break; } catch { /* Try the other endpoint signing secret. */ }
+        }
+        if (!event) throw new Error('Invalid signature');
+        if (process.env.NODE_ENV === 'production' && !event.livemode) throw new Error('Test events are not accepted in production');
     } catch (err: unknown) {
-        console.error('Webhook signature verification failed:', err);
+        console.error('Webhook signature verification failed');
         return NextResponse.json({ error: 'Webhook signature verification failed', code: 'STRIPE_WEBHOOK_SIGNATURE' }, { status: 400 });
     }
+
+    const supabaseAdmin = createSupabaseAdminClient();
 
     // Step 2: Atomically claim this event before performing side effects.
     try {
         const claimed = await claimWebhookEvent(supabaseAdmin, event);
         if (!claimed) {
             console.log(`Event ${event.id} is already processed or in progress, skipping.`);
-            return NextResponse.json({ received: true, status: 'already_processed' });
+            const { data: existing } = await supabaseAdmin.from('stripe_webhook_events').select('status').eq('stripe_event_id', event.id).single();
+            return NextResponse.json({ received: true, status: existing?.status === 'processed' ? 'already_processed' : 'in_progress' },
+                { status: existing?.status === 'processed' ? 200 : 503 });
         }
     } catch (err) {
         console.error('Webhook claim failed:', err);
@@ -136,8 +142,32 @@ export async function POST(req: Request) {
 
     // Step 3: Process webhook event
     try {
+        await verifyStripePlatformIdentity();
+        if (event.account) {
+            const { data: tenant, error: mappingError } = await supabaseAdmin.from('tenants').select('id')
+                .eq('stripe_connect_id', event.account).maybeSingle();
+            if (mappingError || !tenant) throw mappingError || new Error('Unknown connected Stripe account');
+            tenantId = tenant.id;
+            if (session.metadata?.tenantId && session.metadata.tenantId !== tenantId) throw new Error('Connected event tenant mismatch');
+            await processConnectEvent(supabaseAdmin, event, tenant.id);
+            await finishWebhookEvent(supabaseAdmin, event, tenantId, 'processed');
+            return NextResponse.json({ received: true, status: 'processed' });
+        }
+        if (['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'invoice.paid', 'invoice.payment_failed',
+            'customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted'].includes(event.type)) {
+            const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
+            if (!customerId) throw new Error('Platform event has no customer mapping');
+            const { data: tenant, error: mappingError } = await supabaseAdmin.from('tenants').select('id')
+                .eq('stripe_customer_id', customerId).maybeSingle();
+            if (mappingError || !tenant) throw mappingError || new Error('Unknown platform billing customer');
+            tenantId = tenant.id;
+            if (session.metadata?.tenantId && session.metadata.tenantId !== tenantId) throw new Error('Platform event tenant mismatch');
+            session.metadata = { ...session.metadata, tenantId };
+        }
         switch (event.type) {
+            case 'checkout.session.async_payment_succeeded':
             case 'checkout.session.completed': {
+                if (session.payment_status !== 'paid' && session.payment_status !== 'no_payment_required') break;
                 if (session.metadata?.type === 'addon') {
                     const claimedTenantId = session.metadata.tenantId;
                     const { data: tenant } = await supabaseAdmin.from('tenants').select('id').eq('id', claimedTenantId).maybeSingle();
@@ -167,134 +197,37 @@ export async function POST(req: Request) {
                     });
                     break;
                 }
-                if (session.metadata?.type === 'legacy_invoice') {
-                    const invoiceId = session.metadata.invoiceId;
-                    const claimedTenantId = session.metadata.tenantId;
-                    if (!invoiceId || !claimedTenantId) throw new Error('Legacy invoice checkout metadata is incomplete');
-                    const { data: existingInvoice, error: fetchError } = await supabaseAdmin
-                        .from('business_invoices')
-                        .select('id, total, amount_paid, currency, status, tenant_id')
-                        .eq('id', invoiceId)
-                        .maybeSingle();
-                    if (fetchError) throw fetchError;
-                    tenantId = resolveVerifiedWebhookTenant({
-                        mappedTenantId: existingInvoice?.tenant_id,
-                        claimedTenantId,
-                        provider: 'stripe',
-                    });
-                    if (existingInvoice && existingInvoice.status !== 'paid') {
-                        const amount = Math.max(0, Number(existingInvoice.total || 0) - Number(existingInvoice.amount_paid || 0));
-                        const invoice = await recordInvoicePaymentServer(supabaseAdmin, {
-                            tenantId,
-                            invoiceId,
-                            amount,
-                            idempotencyKey: `stripe-checkout:${session.id}`,
-                            source: 'stripe',
-                            externalReference: typeof session.payment_intent === 'string' ? session.payment_intent : session.id,
-                        });
-                        if (invoice) {
-                            await supabaseAdmin.from('business_automation_events').insert({
-                                tenant_id: tenantId,
-                                event_type: 'invoice_paid',
-                                payload: { invoiceId, amount, currency: existingInvoice.currency, stripeSessionId: session.id },
-                            });
-                        }
-                    }
-                    break;
-                }
-                if (session.metadata?.type === 'business_invoice') {
-                    const invoiceId = session.metadata.invoiceId;
-                    tenantId = session.metadata.tenantId;
-                    if (invoiceId && tenantId) {
-                        const { success, error } = await invoiceServerService.markAsPaid({
-                            invoiceId,
-                            tenantId,
-                            idempotencyKey: `stripe-checkout:${session.id}`,
-                            externalReference: typeof session.payment_intent === 'string' ? session.payment_intent : session.id,
-                        });
-                        if (!success) {
-                            console.error(`Failed to mark invoice ${invoiceId} as paid: ${error}`);
-                            throw new Error(error || 'Failed to process invoice payment');
-                        }
-                        console.log(`Invoice ${invoiceId} marked as paid via webhook.`);
-                    } else {
-                        throw new Error('Business invoice checkout metadata is incomplete');
-                    }
-                    break;
-                }
+                if (['legacy_invoice', 'business_invoice'].includes(session.metadata?.type)) throw new Error('Tenant invoice events require a connected account');
 
                 tenantId = session.metadata?.tenantId;
                 if (tenantId) {
+                    if (session.metadata?.type !== 'platform_subscription') throw new Error('Unknown platform checkout type');
                     const subscription = await stripe.subscriptions.retrieve(session.subscription);
+                    if (subscription.metadata.tenantId !== tenantId || subscription.metadata.type !== 'platform_subscription') throw new Error('Subscription mapping mismatch');
 
                     // Update tenant subscription
-                    await supabaseAdmin
+                    const { error: tenantUpdateError } = await supabaseAdmin
                         .from('tenants')
                         .update({
                             subscription_status: 'active',
                             subscription_plan: session.metadata?.plan || 'starter', // Default to starter if metadata missing
                             stripe_customer_id: session.customer,
                             stripe_subscription_id: session.subscription || null,
-                            current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
+                            current_period_end: stripePeriodEnd(subscription),
                             trial_ends_at: null, // Clear trial once paid
                         })
                         .eq('id', tenantId);
+                    if (tenantUpdateError) throw tenantUpdateError;
 
-                    // Record payment
-                    if (session.amount_total) {
-                        await recordPayment(
-                            supabaseAdmin,
-                            session.payment_intent || session.id,
-                            tenantId,
-                            session.customer,
-                            session.amount_total,
-                            session.currency,
-                            'succeeded',
-                            `Subscription activated: ${subscription.id}`
-                        );
-                    }
-
-                    // Send Card Verified Email
-                    const { data: tenant } = await supabaseAdmin
-                        .from('tenants')
-                        .select('admin_user_id, name')
-                        .eq('id', tenantId)
-                        .single();
-
-                    if (tenant?.admin_user_id) {
-                        const { data: user } = await supabaseAdmin
-                            .from('profiles')
-                            .select('email, name')
-                            .eq('id', tenant.admin_user_id)
-                            .single();
-
-                        if (user?.email) {
-                            await emailProviderService.sendEmail({
-                                to: user.email,
-                                subject: 'Payment Card Verified - AlphaClone',
-                                html: `
-                                    <div style="font-family: sans-serif; color: var(--text-primary);">
-                                        <h2>Payment Card Verified</h2>
-                                        <p>Hello ${escapeHtml(user.name || 'there')},</p>
-                                        <p>Your payment card has been successfully verified for <strong>${escapeHtml(tenant.name || 'your workspace')}</strong> on the AlphaClone platform.</p>
-                                        <p>Your subscription is now active. You can manage your billing details at any time from your dashboard.</p>
-                                        <hr />
-                                        <p style="font-size: 0.8em; color: var(--text-muted);">This is an automated notification. Please do not reply to this email.</p>
-                                    </div>
-                                `
-                            });
-                        }
-                    }
-
-                    console.log(`Tenant ${tenantId} subscription activated and email sent.`);
                 }
                 break;
             }
 
             case 'invoice.paid': {
-                const subscriptionId = session.subscription;
+                const subscriptionId = session.subscription || session.parent?.subscription_details?.subscription;
                 if (subscriptionId) {
                     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+                    if (subscription.metadata?.tenantId !== tenantId) throw new Error('Subscription tenant mapping mismatch');
                     tenantId = subscription.metadata?.tenantId;
 
                     if (tenantId) {
@@ -305,15 +238,16 @@ export async function POST(req: Request) {
                             break;
                         }
                         // Update tenant subscription
-                        await supabaseAdmin
+                        const { error: tenantUpdateError } = await supabaseAdmin
                             .from('tenants')
                             .update({
                                 subscription_status: 'active',
                                 subscription_plan: subscription.metadata?.plan || 'starter',
-                                current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
+                                current_period_end: stripePeriodEnd(subscription),
                                 trial_ends_at: null,
                             })
                             .eq('id', tenantId);
+                        if (tenantUpdateError) throw tenantUpdateError;
 
                         // Record payment for reconciliation
                         if (session.amount_paid) {
@@ -336,9 +270,10 @@ export async function POST(req: Request) {
             }
 
             case 'invoice.payment_failed': {
-                const subscriptionId = session.subscription;
+                const subscriptionId = session.subscription || session.parent?.subscription_details?.subscription;
                 if (subscriptionId) {
                     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+                    if (subscription.metadata?.tenantId !== tenantId) throw new Error('Subscription tenant mapping mismatch');
                     tenantId = subscription.metadata?.tenantId;
 
                     if (tenantId) {
@@ -350,12 +285,13 @@ export async function POST(req: Request) {
                         }
                         // Mark subscription as past_due
                         // Mark subscription as past_due
-                        await supabaseAdmin
+                        const { error: tenantUpdateError } = await supabaseAdmin
                             .from('tenants')
                             .update({
                                 subscription_status: 'past_due',
                             })
                             .eq('id', tenantId);
+                        if (tenantUpdateError) throw tenantUpdateError;
 
                         // Record failed payment
                         if (session.amount_due) {
@@ -371,39 +307,6 @@ export async function POST(req: Request) {
                             );
                         }
 
-                        // Send payment failed notification email
-                        // Send payment failed notification email
-                        const { data: tenantData } = await supabaseAdmin
-                            .from('tenants')
-                            .select('admin_user_id, name')
-                            .eq('id', tenantId)
-                            .single();
-
-                        if (tenantData?.admin_user_id) {
-                            const { data: user } = await supabaseAdmin
-                                .from('profiles')
-                                .select('email, name')
-                                .eq('id', tenantData.admin_user_id)
-                                .single();
-
-                            if (user?.email) {
-                                await emailProviderService.sendEmail({
-                                    to: user.email,
-                                    subject: 'Payment Failed - Action Required - AlphaClone',
-                                    html: `
-                                        <div style="font-family: sans-serif; color: var(--text-primary);">
-                                            <h2>Payment Failed</h2>
-                                            <p>Hello ${escapeHtml(user.name || 'there')},</p>
-                                            <p>We attempted to process your subscription payment for <strong>${escapeHtml(tenantData.name || 'your workspace')}</strong> on the AlphaClone platform, but the payment failed.</p>
-                                            <p>Your subscription is now past due. Please update your billing details from your dashboard to avoid any service interruption.</p>
-                                            <hr />
-                                            <p style="font-size: 0.8em; color: var(--text-muted);">This is an automated notification. Please do not reply to this email.</p>
-                                        </div>
-                                    `
-                                });
-                            }
-                        }
-                        console.log(`Tenant ${tenantId} payment failed.`);
                     }
                 }
                 break;
@@ -417,12 +320,13 @@ export async function POST(req: Request) {
                             .eq('tenant_id', tenantId).eq('addon_type', session.metadata.addonType);
                         break;
                     }
-                    await supabaseAdmin
+                    const { error: tenantUpdateError } = await supabaseAdmin
                         .from('tenants')
                         .update({
                             subscription_status: 'cancelled',
                         })
                         .eq('id', tenantId);
+                    if (tenantUpdateError) throw tenantUpdateError;
 
                     console.log(`Tenant ${tenantId} subscription cancelled.`);
                 }
@@ -480,7 +384,7 @@ export async function POST(req: Request) {
                         stripe_subscription_id: session.id,
                         stripe_customer_id: session.customer,
                         cancel_at_period_end: Boolean(session.cancel_at_period_end),
-                        current_period_end: new Date(session.current_period_end * 1000).toISOString(),
+                        current_period_end: stripePeriodEnd(session),
                         trial_ends_at: session.status === 'trialing' ? new Date(session.trial_end * 1000).toISOString() : null,
                         updated_at: new Date().toISOString(),
                     };
@@ -489,36 +393,14 @@ export async function POST(req: Request) {
                         updateData.subscription_plan = detectedPlan;
                     }
 
-                    await supabaseAdmin
+                    const { error: tenantUpdateError } = await supabaseAdmin
                         .from('tenants')
                         .update(updateData)
                         .eq('id', tenantId);
+                    if (tenantUpdateError) throw tenantUpdateError;
 
                     console.log(`Tenant ${tenantId} subscription updated to ${session.status} (${detectedPlan || 'unchanged'}).`);
                 }
-                break;
-            }
-
-            case 'account.updated': {
-                const account = session;
-                const tenantId = account.metadata?.tenantId;
-
-                if (tenantId && account.details_submitted) {
-                    await supabaseAdmin
-                        .from('tenants')
-                        .update({
-                            stripe_connect_onboarded: true,
-                        })
-                        .eq('id', tenantId);
-
-                    console.log(`Tenant ${tenantId} Stripe Connect account verified.`);
-                }
-                break;
-            }
-
-            case 'capability.updated': {
-                const capability = session;
-                // You could handle specific capability updates like card_payments here
                 break;
             }
 
@@ -549,7 +431,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ received: true, status: 'processed' });
     } catch (err: unknown) {
-        console.error('Webhook processing error:', err);
+        console.error('Webhook processing failed');
         const internalNote = err instanceof Error ? err.message : String(err);
 
         // Record failed webhook processing
@@ -561,5 +443,46 @@ export async function POST(req: Request) {
 
         // Return 500 so Stripe will retry
         return NextResponse.json({ error: 'Webhook processing failed', code: 'STRIPE_WEBHOOK_PROCESSING' }, { status: 500 });
+    }
+}
+
+function stripePeriodEnd(subscription: any): string | null {
+    const timestamp = subscription.current_period_end || subscription.items?.data?.[0]?.current_period_end;
+    return timestamp ? new Date(timestamp * 1000).toISOString() : null;
+}
+
+async function processConnectEvent(admin: any, event: any, tenantId: string) {
+    const object = event.data.object;
+    if (event.type === 'account.updated') {
+        if (object.id !== event.account) throw new Error('Account update scope mismatch');
+        const { error } = await admin.from('tenants').update({ stripe_connect_onboarded: (await readConnectedAccount(event.account)).chargesEnabled })
+            .eq('id', tenantId).eq('stripe_connect_id', event.account);
+        if (error) throw error;
+        return;
+    }
+    if (['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'payment_intent.succeeded'].includes(event.type)) {
+        const isCheckout = event.type.startsWith('checkout.');
+        if (isCheckout && object.payment_status !== 'paid') return;
+        if (object.metadata?.type !== 'business_invoice') return; // Connected subscriptions never grant AlphaClone entitlements.
+        const paymentIntentId = isCheckout ? (typeof object.payment_intent === 'string' ? object.payment_intent : object.payment_intent?.id) : object.id;
+        if (!paymentIntentId || !object.metadata.invoiceId) throw new Error('Invoice payment identifiers missing');
+        await reconcileInvoiceStripePayment(admin, tenantId, object.metadata.invoiceId, paymentIntentId, event.account);
+        return;
+    }
+    if (event.type === 'charge.refunded' || event.type.startsWith('charge.dispute.')) {
+        const paymentIntentId = typeof object.payment_intent === 'string' ? object.payment_intent : object.payment_intent?.id;
+        if (!paymentIntentId) throw new Error('Refund/dispute payment mapping missing');
+        const { data: payment, error } = await admin.from('stripe_payments').select('id,metadata')
+            .eq('stripe_payment_intent_id', paymentIntentId).eq('tenant_id', tenantId).single();
+        if (error || payment?.metadata?.stripe_account_id !== event.account) throw error || new Error('Refund/dispute account mapping mismatch');
+        const metadata = { ...payment.metadata, ...(event.type === 'charge.refunded'
+            ? { refunds: object.refunds?.data || [], refund_status: object.amount_refunded === object.amount ? 'full' : 'partial' }
+            : { dispute_id: object.id, dispute_status: object.status, dispute_amount: object.amount }) };
+        const { error: updateError } = await admin.from('stripe_payments').update({ metadata,
+            ...(event.type === 'charge.refunded'
+                ? { status: object.amount_refunded === object.amount ? 'refunded' : 'succeeded', refund_amount_cents: object.amount_refunded, refunded_at: new Date().toISOString() }
+                : { status: object.status === 'won' ? 'succeeded' : 'disputed' }),
+        }).eq('id', payment.id).eq('tenant_id', tenantId);
+        if (updateError) throw updateError;
     }
 }

@@ -1,3 +1,5 @@
+import { requireInvoiceStripeAccount } from '@/lib/stripeInvoiceExecution';
+import { invoiceOutstanding } from '@/lib/stripePaymentPolicy';
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
@@ -20,32 +22,12 @@ export async function POST(req: Request) {
         const { data: membership } = await supabaseAdmin.from('tenant_users').select('user_id').eq('tenant_id', invoice.tenant_id).eq('user_id', user.id).maybeSingle();
         if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         if (invoice.status === 'paid') return NextResponse.json({ error: 'Invoice is already paid' }, { status: 409 });
-        const remaining = Math.max(0, Number(invoice.total || 0) - Number(invoice.amount_paid || 0));
-        const amount = remaining > 0 ? remaining : Number(invoice.total || 0);
+        const amount = invoiceOutstanding(invoice);
         const currency = String(invoice.currency || 'usd').toLowerCase();
         const description = invoice.invoice_number ? `Invoice ${invoice.invoice_number}` : `Invoice ${invoiceId}`;
         const tenantId = invoice.tenant_id;
 
-        let stripeConnectId = null;
-
-        if (tenantId) {
-            const { data: tenant } = await supabaseAdmin
-                .from('tenants')
-                .select('stripe_connect_id, stripe_connect_onboarded')
-                .eq('id', tenantId)
-                .single();
-
-            if (tenant?.stripe_connect_onboarded && tenant?.stripe_connect_id) {
-                stripeConnectId = tenant.stripe_connect_id;
-            }
-        }
-
-        if (!stripeConnectId) {
-            return NextResponse.json(
-                { error: 'This business must connect and finish setting up Stripe before accepting invoice payments.' },
-                { status: 409 }
-            );
-        }
+        const stripeConnectId = await requireInvoiceStripeAccount(supabaseAdmin, invoice.tenant_id);
 
         const paymentIntentOptions: any = {
             amount: Math.round(amount * 100),
@@ -66,12 +48,13 @@ export async function POST(req: Request) {
         // Stripe account. AlphaClone does not collect or redistribute these funds.
         const paymentIntent = await stripe.paymentIntents.create(
             paymentIntentOptions,
-            { stripeAccount: stripeConnectId }
+            { stripeAccount: stripeConnectId, idempotencyKey: `invoice-intent:${invoice.id}:${Math.round(amount * 100)}:${currency}` }
         );
 
         return NextResponse.json({
             clientSecret: paymentIntent.client_secret,
             paymentIntentId: paymentIntent.id,
+            stripeAccountId: stripeConnectId,
             amount,
             currency,
         });

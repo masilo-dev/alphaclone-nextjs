@@ -317,7 +317,7 @@ export const paymentService = {
         doc.save(`Invoice_${invoice.id.substring(0, 8)}.pdf`);
     },
 
-    async createPaymentIntent(invoiceId: string, retryCount: number = 0): Promise<{ clientSecret: string | null; error: any }> {
+    async createPaymentIntent(invoiceId: string, retryCount: number = 0): Promise<{ clientSecret: string | null; stripeAccountId?: string; error: any }> {
         try {
             const { data: invoice, error: invoiceError } = await supabase
                 .from('business_invoices')
@@ -352,17 +352,17 @@ export const paymentService = {
                 throw new Error('Failed to create payment intent after retries');
             }
 
-            const { clientSecret } = await response.json();
+            const { clientSecret, stripeAccountId, paymentIntentId } = await response.json();
 
             auditLoggingService.logAction(
                 'payment_intent_created',
                 'invoice',
                 invoiceId,
                 undefined,
-                { clientSecret: clientSecret.substring(0, 20) + '...' }
+                { paymentIntentId }
             ).catch(err => console.error('Failed to log audit:', err));
 
-            return { clientSecret, error: null };
+            return { clientSecret, stripeAccountId, error: null };
         } catch (error) {
             console.error('Payment intent error:', error);
 
@@ -383,13 +383,13 @@ export const paymentService = {
         paymentMethodId: string
     ): Promise<{ success: boolean; error?: string }> {
         try {
-            const { clientSecret, error: intentError } = await this.createPaymentIntent(invoiceId);
+            const { clientSecret, stripeAccountId, error: intentError } = await this.createPaymentIntent(invoiceId);
 
             if (intentError || !clientSecret) {
                 return { success: false, error: 'Failed to initialize payment' };
             }
 
-            const stripe = await stripePromise;
+            const stripe = STRIPE_PUBLIC_KEY && stripeAccountId ? await loadStripe(STRIPE_PUBLIC_KEY, { stripeAccount: stripeAccountId }) : null;
             if (!stripe) {
                 return { success: false, error: 'Stripe not loaded' };
             }
@@ -426,80 +426,13 @@ export const paymentService = {
     },
 
     async markInvoicePaid(invoiceId: string, paymentIntentId: string) {
-        const tenantId = tenantService.getCurrentTenantId();
-        const { data: oldInvoice } = await supabase
-            .from('business_invoices')
-            .select('*')
-            .eq('id', invoiceId)
-            .eq('tenant_id', tenantId)
-            .single();
-
-        const remaining = Math.max(0, Number(oldInvoice?.total || 0) - Number(oldInvoice?.amount_paid || 0));
-        const payAmount = remaining > 0 ? remaining : Number(oldInvoice?.total || 0);
-
-        const response = await fetch(`/api/invoices/${encodeURIComponent(invoiceId)}/payment`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                tenantId,
-                amount: payAmount,
-                idempotencyKey: `stripe:${paymentIntentId}`,
-            }),
+        const response = await fetch('/api/stripe/reconcile-payment', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ invoiceId, paymentIntentId }),
         });
         const payload = await response.json().catch(() => ({}));
         const data = payload.invoice;
-        const error = response.ok ? null : new Error(payload.error || 'Payment could not be recorded');
-
-        if (!error && data) {
-            activityService.logActivity(data.client_id, 'Invoice Paid', {
-                invoiceId: data.id,
-                amount: payAmount,
-                currency: data.currency,
-                paymentIntentId,
-            }, data.tenant_id).catch(err => console.error('Failed to log activity:', err));
-
-            auditLoggingService.logAction(
-                'invoice_paid',
-                'invoice',
-                invoiceId,
-                oldInvoice,
-                data
-            ).catch(err => console.error('Failed to log audit:', err));
-
-            const { userService } = await import('./userService');
-            const { tenantService: tenantSvc } = await import('./tenancy/TenantService');
-
-            let recipientEmail = null;
-            let recipientName = 'Customer';
-
-            if (data.tenant_id) {
-                const tenant = await tenantSvc.getTenant(data.tenant_id);
-                if (tenant && tenant.settings?.billing_email) {
-                    recipientEmail = tenant.settings.billing_email;
-                    recipientName = tenant.name;
-                }
-            }
-
-            if (!recipientEmail && data.client_id) {
-                const { data: client } = await supabase.from('business_clients').select('email,name').eq('id', data.client_id).maybeSingle();
-                if (client?.email) {
-                    recipientEmail = client.email;
-                    recipientName = client.name || recipientName;
-                }
-            }
-
-            if (recipientEmail) {
-                import('./emailCampaignService').then(({ emailCampaignService }) => {
-                    emailCampaignService.sendTransactionalEmail(recipientEmail!, 'Payment Confirmation', {
-                        name: recipientName,
-                        amount: payAmount,
-                        currency: data.currency,
-                        projectName: 'Project',
-                        invoiceId: data.id
-                    }).catch(err => console.error('Failed to trigger payment email:', err));
-                });
-            }
-        }
+        const error = response.ok ? null : new Error(payload.error || 'Payment could not be verified');
 
         return { invoice: data ? mapBusinessInvoiceRow(data) : null, error };
     },

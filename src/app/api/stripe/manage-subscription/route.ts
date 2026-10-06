@@ -1,7 +1,8 @@
+import { verifyStripePlatformIdentity } from '@/lib/stripePlatformIdentity';
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
-import { supabase } from '@/lib/supabase';
+import { requireTenantRole } from '@/lib/apiAuth';
 import { tenantService } from '@/services/tenancy/TenantService';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
@@ -17,6 +18,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing tenantId or action' }, { status: 400 });
         }
 
+        await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin']);
+
         // Get tenant to find Stripe Customer ID
         const tenant = await tenantService.getTenant(tenantId);
 
@@ -24,6 +27,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Tenant not found or no Stripe customer linked' }, { status: 404 });
         }
 
+        await verifyStripePlatformIdentity();
         // Find active subscription
         const subscriptions = await stripe.subscriptions.list({
             customer: tenant.stripe_customer_id,
@@ -36,6 +40,9 @@ export async function POST(req: Request) {
         }
 
         const subscription = subscriptions.data[0];
+        if (subscription.metadata.type !== 'platform_subscription' || subscription.metadata.tenantId !== tenantId) {
+            return NextResponse.json({ error: 'Subscription requires billing migration' }, { status: 409 });
+        }
 
         if (action === 'cancel_at_period_end') {
             // Update Stripe Subscription to cancel at period end

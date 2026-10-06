@@ -2779,18 +2779,18 @@ export const MCP_TOOLS = [
   },
   {
     name: 'create_subscription_checkout',
-    description: 'Payment/subscription adapter: creates Stripe checkout URL for subscription upgrade.',
+    description: 'Create AlphaClone Starter platform subscription checkout ($15/month before applicable tax). This does not bill tenant customers.',
     inputSchema: {
       type: 'object',
       properties: {
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        plan_id: { type: 'string', description: 'starter | pro | enterprise' },
+        plan_id: { type: 'string', enum: ['starter'], description: 'AlphaClone Starter plan' },
         price_id: { type: 'string' },
         admin_email: { type: 'string' },
         success_url: { type: 'string' },
         cancel_url: { type: 'string' },
       },
-      required: ['plan_id', 'price_id', 'admin_email'],
+      required: ['plan_id'],
     },
   },
   {

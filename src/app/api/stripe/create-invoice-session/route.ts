@@ -1,3 +1,5 @@
+import { requireInvoiceStripeAccount } from '@/lib/stripeInvoiceExecution';
+import { invoiceOutstanding } from '@/lib/stripePaymentPolicy';
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
@@ -50,29 +52,13 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Invoice is not payable' }, { status: 409 });
         }
 
-        const { data: tenantData } = await supabaseAdmin
-            .from('tenants')
-            .select('stripe_connect_id, stripe_connect_onboarded')
-            .eq('id', invoice.tenant_id)
-            .single();
-
-        const stripeConnectId = (tenantData?.stripe_connect_onboarded && tenantData?.stripe_connect_id)
-            ? tenantData.stripe_connect_id
-            : null;
-
-        if (!stripeConnectId) {
-            return NextResponse.json(
-                { error: 'This business must connect and finish setting up Stripe before accepting invoice payments.' },
-                { status: 409 }
-            );
-        }
+        const stripeConnectId = await requireInvoiceStripeAccount(supabaseAdmin, invoice.tenant_id);
 
         const origin = new URL(req.url).origin;
         const tokenQuery = publicToken ? `&token=${publicToken}` : '';
         const safeReturn = (value: string | undefined, fallback: string) => value && new URL(value).origin === origin ? value : fallback;
 
         const sessionOptions: any = {
-            payment_method_types: ['card'],
             line_items: [
                 {
                     price_data: {
@@ -81,11 +67,12 @@ export async function POST(req: Request) {
                             name: `Invoice #${invoice.invoice_number}`,
                             description: `Payment for services - ${invoice.tenant?.name || 'Business'}`,
                         },
-                        unit_amount: Math.round(Number(invoice.total || 0) * 100),
+                        unit_amount: Math.round(invoiceOutstanding(invoice) * 100),
                     },
                     quantity: 1,
                 },
             ],
+            payment_intent_data: { metadata: { invoiceId: invoice.id, tenantId: invoice.tenant_id, type: 'business_invoice' } },
             mode: 'payment',
             success_url: safeReturn(successUrl, `${origin}/invoice/${invoiceId}?payment=success${tokenQuery}`),
             cancel_url: safeReturn(cancelUrl, `${origin}/invoice/${invoiceId}?payment=cancelled${tokenQuery}`),
@@ -100,7 +87,7 @@ export async function POST(req: Request) {
         // account. Tenant customer revenue must never fall back to AlphaClone.
         const session = await stripe.checkout.sessions.create(
             sessionOptions,
-            { stripeAccount: stripeConnectId }
+            { stripeAccount: stripeConnectId, idempotencyKey: `invoice-checkout:${invoice.id}:${invoiceOutstanding(invoice)}:${Math.floor(Date.now() / 1800000)}` }
         );
 
         return NextResponse.json({ url: session.url });
