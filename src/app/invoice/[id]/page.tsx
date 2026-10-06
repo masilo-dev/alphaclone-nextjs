@@ -185,6 +185,8 @@ function PublicInvoiceContent() {
     const taxRate = Number(invoice.tax_rate ?? invoice.taxRate ?? 0);
     const taxAmount = Math.round(Math.max(0, subtotal - discount) * (taxRate / 100) * 100) / 100;
     const total = Number(invoice.total ?? 0) || Math.round(((subtotal - discount) + taxAmount) * 100) / 100;
+    const balanceDue = Math.max(0, Number(invoice.balanceDue ?? total - Number(invoice.amountPaid || 0)));
+    const formatMoney = (amount: number) => new Intl.NumberFormat(undefined, { style: 'currency', currency: invoice.currency || 'USD' }).format(amount);
     const isPaid = invoice.status === 'paid';
     const pendingBank = invoice.paymentPendingConfirmation;
     const bankDetails = String(invoice.bankDetails || '').trim();
@@ -258,9 +260,9 @@ function PublicInvoiceContent() {
                                     <div key={idx} className="flex justify-between items-center gap-3 bg-[var(--ws-canvas)]/30 p-4 rounded-xl border border-white/5">
                                         <div className="min-w-0">
                                             <p className="font-semibold text-[var(--ws-text-secondary)] break-words">{item.description}</p>
-                                            <p className="type-card-description text-[var(--ws-text-muted)]">Qty: {item.quantity} &times; ${item.rate.toFixed(2)}</p>
+                                            <p className="type-card-description text-[var(--ws-text-muted)]">Qty: {item.quantity} &times; {formatMoney(item.rate)}</p>
                                         </div>
-                                        <p className="font-mono font-bold text-teal-400 shrink-0">${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                                        <p className="font-mono font-bold text-teal-400 shrink-0">{formatMoney(item.amount)}</p>
                                     </div>
                                 ))}
                             </div>
@@ -270,21 +272,26 @@ function PublicInvoiceContent() {
                         <div className="mt-8 pt-8 border-t border-white/5 space-y-3">
                             <div className="flex justify-between text-[var(--ws-text-muted)]">
                                 <span>Subtotal</span>
-                                <span className="font-mono">${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                <span className="font-mono">{formatMoney(subtotal)}</span>
                             </div>
                             <div className="flex justify-between text-[var(--ws-text-muted)]">
                                 <span>Tax ({taxRate}%)</span>
-                                <span className="font-mono">${taxAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                <span className="font-mono">{formatMoney(taxAmount)}</span>
                             </div>
                             {discount > 0 && (
                                 <div className="flex justify-between text-[var(--ws-text-muted)]">
                                     <span>Discount</span>
-                                    <span className="font-mono">-${discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                    <span className="font-mono">-{formatMoney(discount)}</span>
+                                </div>
+                            )}
+                            {Number(invoice.amountPaid || 0) > 0 && (
+                                <div className="flex justify-between text-[var(--ws-text-muted)]">
+                                    <span>Remaining balance</span><span>{formatMoney(balanceDue)}</span>
                                 </div>
                             )}
                             <div className="flex flex-wrap justify-between items-center gap-2 text-white pt-4">
-                                <span className="text-lg sm:text-xl font-bold">Total Amount Due</span>
-                                <span className="text-3xl sm:text-4xl font-mono font-black text-teal-500 break-all">${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                <span className="text-lg sm:text-xl font-bold">Invoice Total</span>
+                                <span className="text-3xl sm:text-4xl font-mono font-black text-teal-500 break-all">{formatMoney(total)}</span>
                             </div>
                         </div>
                     </Card>
@@ -351,7 +358,7 @@ function PublicInvoiceContent() {
                                                     <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
                                                     Processing...
                                                 </span>
-                                            ) : `Pay $${total.toLocaleString()} Now`}
+                                            ) : `Pay ${formatMoney(balanceDue)} Now`}
                                         </button>
                                     </div>
 
