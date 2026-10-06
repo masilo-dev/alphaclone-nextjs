@@ -98,3 +98,81 @@ test('approved monthly plan prices are checked independently', () => {
   assert.throws(() => assertPlatformPrice(plan, { ...base, unit_amount: amount + 100 }));
  }
 });
+
+ test('invoice currency amounts round-trip without silently charging 100x or losing precision', async () => {
+ const { invoiceAmountToStripe, stripeAmountToInvoice } = await import('../../src/lib/stripeInvoiceCurrency.ts');
+ for (const [currency, major, minor] of [['usd',10.25,1025],['pln',20.50,2050],['eur',7.99,799],['jpy',500,500],['krw',1000,1000],['isk',5,500],['ugx',500,50000]]) {
+ assert.equal(invoiceAmountToStripe(major,currency),minor);
+ assert.equal(stripeAmountToInvoice(minor,currency),major);
+ }
+ for (const [amount,currency] of [[1.5,'jpy'],[1.5,'isk'],[1.005,'usd'],[1,'kwd'],[0,'usd'],[Infinity,'usd']]) assert.throws(() => invoiceAmountToStripe(amount,currency));
+ });
+
+test('signed Connect checkout and intent events update one invoice receipt; replay and forged tenant cannot duplicate it', async () => {
+  const { stripe } = await import('../../src/lib/stripe.ts');
+  const { POST } = await import('../../src/app/api/stripe/webhook/route.ts');
+  const envNames = ['SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','STRIPE_PLATFORM_ACCOUNT_ID','STRIPE_CONNECT_WEBHOOK_SECRET'];
+  const oldEnv = Object.fromEntries(envNames.map(k=>[k,process.env[k]]));
+  const originalFetch = globalThis.fetch;
+  const originalRetrieve = stripe.paymentIntents.retrieve;
+  const originalAccount = stripe.accounts.retrieve;
+  const events = new Map(); const receipts = new Set(); let writes = 0;
+  process.env.SUPABASE_URL = 'https://invoice-fixture.invalid';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = `fixture.${Buffer.from(JSON.stringify({role:'service_role'})).toString('base64url')}.fixture`;
+  process.env.STRIPE_PLATFORM_ACCOUNT_ID = 'acct_platform_fixture';
+  process.env.STRIPE_CONNECT_WEBHOOK_SECRET = 'fixture_connect_signing_only';
+  stripe.accounts.retrieve = async () => ({ id: 'acct_platform_fixture' });
+  stripe.paymentIntents.retrieve = async (id,options) => {
+    assert.equal(options.stripeAccount,'acct_a');
+    return { id, ...payment, customer: null };
+  };
+  globalThis.fetch = async (url,options={}) => {
+    const uri = new URL(String(url));
+    assert.equal(uri.hostname,'invoice-fixture.invalid','test must never call a real backend');
+    const table = uri.pathname.split('/').pop(); const method = options.method || 'GET';
+    const body = options.body ? JSON.parse(options.body) : {};
+    const headers = new Headers(options.headers); const single = headers.get('accept')?.includes('vnd.pgrst.object');
+    const respond = (value,status=200) => new Response(JSON.stringify(value),{status,headers:{'content-type':'application/json'}});
+    if(table === 'stripe_webhook_events') {
+      if(method === 'POST') {
+        if(events.has(body.stripe_event_id)) return respond({code:'23505',message:'duplicate'},409);
+        events.set(body.stripe_event_id,{id:body.stripe_event_id,status:'retrying'});return respond([{id:body.stripe_event_id}],201);
+      }
+      const id = uri.searchParams.get('stripe_event_id')?.replace('eq.','');
+      const row = events.get(id);
+      if(method === 'PATCH') {
+        if(uri.searchParams.has('or') && row?.status === 'processed') return respond([]);
+        if(row) Object.assign(row,body);return respond([]);
+      }
+      return respond(single ? row : [row]);
+    }
+    if(table === 'tenants') {
+      const value = uri.searchParams.has('stripe_connect_id') ? {id:'tenant-a'} : {stripe_connect_id:'acct_a'};
+      return respond(single ? value : [value]);
+    }
+    if(table === 'business_invoices') return respond(invoice);
+    if(table === 'record_business_invoice_payment') {
+      if(!receipts.has(body.p_idempotency_key)) {writes++;receipts.add(body.p_idempotency_key);}
+      assert.equal(body.p_amount,15);return respond([invoice]);
+    }
+    if(table === 'stripe_payments' || table === 'audit_logs') return respond([]);
+    throw new Error(`Unexpected fixture request ${method} ${table}`);
+  };
+  const deliver = async (id,type,object) => {
+    const payload = JSON.stringify({id,object:'event',type,account:'acct_a',created:Math.floor(Date.now()/1000),livemode:false,data:{object}});
+    const signature = stripe.webhooks.generateTestHeaderString({payload,secret:process.env.STRIPE_CONNECT_WEBHOOK_SECRET});
+    return POST(new Request('https://example.test/api/stripe/webhook',{method:'POST',body:payload,headers:{'stripe-signature':signature}}));
+  };
+  try {
+    const checkout = {id:'cs_fixture',payment_status:'paid',payment_intent:'pi_fixture',metadata:payment.metadata};
+    assert.equal((await deliver('evt_checkout_fixture','checkout.session.completed',checkout)).status,200);
+    assert.equal((await deliver('evt_intent_fixture','payment_intent.succeeded',{id:'pi_fixture',...payment})).status,200);
+    assert.equal((await deliver('evt_checkout_fixture','checkout.session.completed',checkout)).status,200);
+    assert.equal(writes,1);
+    assert.equal((await deliver('evt_forged_fixture','checkout.session.completed',{...checkout,metadata:{...payment.metadata,tenantId:'tenant-b'}})).status,500);
+    assert.equal(writes,1);
+  } finally {
+    globalThis.fetch=originalFetch;stripe.paymentIntents.retrieve=originalRetrieve;stripe.accounts.retrieve=originalAccount;
+    for(const k of envNames) {if(oldEnv[k]===undefined) delete process.env[k];else process.env[k]=oldEnv[k];}
+  }
+});

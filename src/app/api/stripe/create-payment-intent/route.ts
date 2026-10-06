@@ -1,3 +1,4 @@
+import { invoiceAmountToStripe } from '@/lib/stripeInvoiceCurrency';
 import { requireInvoiceStripeAccount } from '@/lib/stripeInvoiceExecution';
 import { invoiceOutstanding } from '@/lib/stripePaymentPolicy';
 import { NextResponse } from 'next/server';
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
         const stripeConnectId = await requireInvoiceStripeAccount(supabaseAdmin, invoice.tenant_id);
 
         const paymentIntentOptions: any = {
-            amount: Math.round(amount * 100),
+            amount: invoiceAmountToStripe(amount, currency),
             currency,
             description: description || (invoiceId ? `Invoice #${invoiceId}` : 'Invoice payment'),
             metadata: {
@@ -48,7 +49,7 @@ export async function POST(req: Request) {
         // Stripe account. AlphaClone does not collect or redistribute these funds.
         const paymentIntent = await stripe.paymentIntents.create(
             paymentIntentOptions,
-            { stripeAccount: stripeConnectId, idempotencyKey: `invoice-intent:${invoice.id}:${Math.round(amount * 100)}:${currency}` }
+            { stripeAccount: stripeConnectId, idempotencyKey: `invoice-intent:${invoice.id}:${invoiceAmountToStripe(amount, currency)}:${currency}` }
         );
 
         return NextResponse.json({

@@ -39,9 +39,19 @@ function PublicInvoiceContent() {
 
     useEffect(() => {
         if (paymentResult === 'success') {
-            toast.success('Payment received — thank you!');
+            toast('Confirming payment with the business. The invoice will update after verification.');
         }
     }, [paymentResult]);
+
+    useEffect(() => {
+        if (paymentResult !== 'success' || !invoiceId || !publicToken || invoice?.status === 'paid') return;
+        let attempts = 0;
+        const timer = window.setInterval(() => {
+            if (++attempts >= 20) window.clearInterval(timer);
+            void loadInvoice();
+        }, 3000);
+        return () => window.clearInterval(timer);
+    }, [paymentResult, invoiceId, publicToken, invoice?.status]);
 
     const loadInvoice = async () => {
         try {

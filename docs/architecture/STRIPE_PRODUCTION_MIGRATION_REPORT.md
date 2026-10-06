@@ -105,3 +105,18 @@ Live Pro product prod_VOKVRiiutrcIqj / price price_1UNXqyEXRUDDQt0pTR7P4CWa.
 Live Enterprise product prod_VOKW9UZ4IMJEzE / price price_1UNXrHEXRUDDQt0p0cD4j0pZ.
 Both are active exclusive-tax monthly prices. Their STRIPE_PRO_MONTHLY_PRICE_ID and STRIPE_ENTERPRISE_MONTHLY_PRICE_ID settings are staged in the same Railway production patch, now six changes.
 HTTP and MCP checkout now select and validate each approved plan against its configured monthly price. Public Enterprise monthly copy is USD 85. Annual offers remain unapproved/unconfigured; original annual marketing values need removal or separate approval. Prior Starter-only statements above describe the earlier audit snapshot. Remaining release gates still apply.
+
+## Connected invoice payment audit — 2026-10-06
+
+Verified code path: invoice send/reminder uses a stable public invoice token and payment URL; the public page submits token-authorized checkout; checkout and authenticated Elements create direct charges scoped to the mapped tenant account. No application fee, destination transfer, charge capture, refund or payout write exists in tenant payment paths. Full Dashboard account onboarding assigns fee and loss collection to Stripe. AlphaClone reads the successful PaymentIntent in the same connected account and records a native invoice payment through the atomic RPC.
+
+Fixed currency conversion for zero-decimal charges and ISK/UGX whole-unit special cases. Incorrectly precise amounts are rejected rather than rounded. Three-decimal currencies remain blocked pending native invoice precision support. Provider country/currency/payment-method eligibility still applies.
+Removed the public page's unverified 'payment received' assertion from the return URL; the page polls native invoice state after returning. Public token persistence errors now block sending a broken payment link.
+
+Validation: 12 Stripe tests pass, including actual signed webhook HTTP requests against fixture provider/DB adapters, Checkout and PaymentIntent notifications for the same receipt, replay and cross-tenant rejection. No external network or real money in the fixture. TypeScript passes after currency/UI changes.
+
+Live read-only account listing returned zero connected accounts. Thus real onboarding, existing standalone Stripe account linking, payment-method eligibility, webhook delivery and payout behavior are NOT verified. Current onboarding creates a full Dashboard connected account; existing-account linking still needs a supported Connect authorization flow and testing.
+
+Additional release gate: invoice checkout and Elements can produce separate charge attempts. The shared receipt key deduplicates the same PaymentIntent; it does not prevent two distinct successful PaymentIntents for one invoice. A persistent per-invoice payment-attempt reservation/cancellation policy and concurrent-charge testing remain required. Refund/dispute ledger updates do not yet reverse native invoice balances. Do not claim universal production readiness.
+
+References: https://docs.stripe.com/connect/direct-charges.md?platform=web&ui=stripe-hosted and https://docs.stripe.com/currencies.

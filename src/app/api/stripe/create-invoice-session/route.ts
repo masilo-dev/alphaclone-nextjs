@@ -1,3 +1,4 @@
+import { invoiceAmountToStripe } from '@/lib/stripeInvoiceCurrency';
 import { requireInvoiceStripeAccount } from '@/lib/stripeInvoiceExecution';
 import { invoiceOutstanding } from '@/lib/stripePaymentPolicy';
 import { NextResponse } from 'next/server';
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
                             name: `Invoice #${invoice.invoice_number}`,
                             description: `Payment for services - ${invoice.tenant?.name || 'Business'}`,
                         },
-                        unit_amount: Math.round(invoiceOutstanding(invoice) * 100),
+                        unit_amount: invoiceAmountToStripe(invoiceOutstanding(invoice), String(invoice.currency || 'usd')),
                     },
                     quantity: 1,
                 },

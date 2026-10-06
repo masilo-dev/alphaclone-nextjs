@@ -1,3 +1,4 @@
+import { stripeAmountToInvoice } from '@/lib/stripeInvoiceCurrency';
 import { verifyStripePlatformIdentity } from '@/lib/stripePlatformIdentity';
 import { readConnectedAccount } from '@/lib/stripeConnectAccount';
 import 'server-only';
@@ -29,7 +30,7 @@ export async function reconcileInvoiceStripePayment(admin: SupabaseClient, tenan
   assertInvoicePayment(invoice, payment);
   // All surfaces use the same PaymentIntent key, not different session and intent keys.
   const result = await recordInvoicePaymentServer(admin, {
-    tenantId, invoiceId, amount: payment.amount_received / 100,
+    tenantId, invoiceId, amount: stripeAmountToInvoice(payment.amount_received, payment.currency),
     idempotencyKey: invoicePaymentKey(payment.id), source: 'stripe', externalReference: payment.id, actorUserId,
   });
   const { error: ledgerError } = await admin.from('stripe_payments').upsert({
