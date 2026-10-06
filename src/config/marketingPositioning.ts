@@ -16,6 +16,8 @@ export const EXECUTION_LAYER = {
   heroHeadline: 'RUN YOUR BUSINESS, NOT YOUR TOOLS.',
   heroSubhead:
     'AlphaClone is the execution layer that turns instructions into coordinated business actions across connected systems. Human-led. AI-assisted. System-executed.',
+  heroPlainLanguage:
+    'Tell AlphaClone what needs doing across your business tools. Review and approve the plan, then track the work and its results in one workspace.',
   primaryCta: 'Book a demo',
   secondaryCta: 'See a 30-second workflow',
   executionSessionPath: '/execution-session',

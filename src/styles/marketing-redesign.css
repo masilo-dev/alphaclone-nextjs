@@ -724,7 +724,7 @@ html:has(.mkt-shell) { scroll-padding-top: calc(var(--marketing-header-height) +
   position: absolute;
   inset: 0;
   opacity: 0.9;
-  background-image: linear-gradient(90deg, rgba(255,255,255,0.99) 0%, rgba(255,255,255,0.95) 42%, rgba(255,255,255,0.36) 100%);
+  background-image: linear-gradient(90deg, rgba(255,255,255,0.99) 0%, rgba(255,255,255,0.95) 42%, rgba(255,255,255,0.78) 100%);
   pointer-events: none;
 }
 
@@ -769,26 +769,26 @@ html:has(.mkt-shell) { scroll-padding-top: calc(var(--marketing-header-height) +
 .acr-product-scene { position: relative; min-height: 480px; }
 .acr-scene-glow { display: none !important; }
 .acr-laptop { position: absolute; z-index: 2; top: 10px; left: 10px; right: -36px; }
-.acr-laptop-screen { position: relative; overflow: hidden; aspect-ratio: 16 / 9.2; border: 10px solid var(--marketing-tone-142033); border-bottom-width: 16px; border-radius: 18px 18px 8px 8px; background: var(--color-white); box-shadow: 0 34px 70px rgba(19, 40, 72, 0.22); }
+.acr-laptop-screen { position: relative; overflow: hidden; aspect-ratio: 16 / 9.2; border: 10px solid var(--marketing-tone-142033); border-bottom-width: 16px; border-radius: 18px 18px 8px 8px; background: var(--color-white); box-shadow: 0 24px 48px rgba(19, 40, 72, 0.14); }
 .acr-laptop-base { display: block; width: 108%; height: 18px; margin-left: -4%; border-radius: 2px 2px 18px 18px; background: linear-gradient(var(--marketing-tone-dfe4ea), var(--marketing-tone-aeb8c5) 60%, var(--marketing-tone-7b8795)); box-shadow: 0 10px 20px rgba(21, 35, 55, 0.2); }
 .acr-phone { display: none; }
 .acr-instruction-card,
-.acr-result-card { position: absolute; z-index: 4; width: 234px; padding: 16px; border: 1px solid var(--marketing-tone-d8e0eb); border-radius: 13px; background: rgba(255,255,255,0.97); box-shadow: 0 18px 45px rgba(28, 53, 88, 0.15); }
+.acr-result-card { position: absolute; z-index: 4; width: 234px; padding: 16px; border: 1px solid var(--marketing-tone-d8e0eb); border-radius: 13px; background: var(--color-white); box-shadow: 0 12px 28px rgba(28, 53, 88, 0.10); }
 .acr-instruction-card { top: 85px; right: -88px; }
-.acr-result-card { top: 210px; right: -74px; }
+.acr-result-card { top: 240px; right: -74px; }
 .acr-instruction-card > div { display: flex; align-items: center; gap: 8px; }
 .acr-instruction-card > div > span { display: grid; width: 26px; height: 26px; place-items: center; border-radius: 50%; background: var(--marketing-bg-muted); color: var(--acr-ink); font-size: var(--type-caption-size); font-weight: var(--weight-extrabold); }
 .acr-instruction-card > div p { display: grid; margin: 0; }
 .acr-instruction-card strong,
-.acr-result-card strong { color: var(--acr-ink); font-size: var(--type-caption-size); }
-.acr-instruction-card small { color: var(--acr-muted); font-size: var(--type-caption-size); }
-.acr-instruction-card > p { margin: 11px 0 0; color: var(--marketing-tone-2e3c50); font-size: var(--type-caption-size); line-height: var(--leading-ui); }
+.acr-result-card strong { color: var(--acr-ink); font-size: var(--type-ui-size); }
+.acr-instruction-card small { color: var(--acr-muted); font-size: var(--type-ui-size); }
+.acr-instruction-card > p { margin: 11px 0 0; color: var(--marketing-tone-2e3c50); font-size: var(--type-ui-size); line-height: var(--leading-ui); }
 .acr-result-card > p { display: flex; align-items: center; gap: 7px; margin: 0; }
 .acr-result-card > p > span { display: grid; width: 25px; height: 25px; place-items: center; border-radius: 7px; background: var(--acr-ink); color: var(--color-white); }
 .acr-result-card ul { display: grid; gap: 7px; margin: 12px 0 13px; padding: 0; list-style: none; }
-.acr-result-card li { display: flex; align-items: center; gap: 6px; color: var(--marketing-tone-314157); font-size: var(--type-caption-size); font-weight: var(--weight-semibold); }
+.acr-result-card li { display: flex; align-items: center; gap: 6px; color: var(--marketing-tone-314157); font-size: var(--type-ui-size); font-weight: var(--weight-semibold); }
 .acr-result-card li svg { width: 12px; height: 12px; padding: 2px; border-radius: 50%; background: var(--marketing-tone-dff8ea); color: var(--acr-green); }
-.acr-result-card > span { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 7px; background: var(--acr-ink); color: var(--color-white); font-size: var(--type-caption-size); font-weight: var(--weight-bold); }
+.acr-result-card > span { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 7px; background: var(--acr-ink); color: var(--color-white); font-size: var(--type-ui-size); font-weight: var(--weight-bold); }
 .acr-result-card > span svg { width: 12px; }
 /* The marketing canvas is light; the legacy marketing utilities below were
    authored for dark pages and otherwise make descriptions nearly invisible. */
