@@ -60,6 +60,13 @@ export async function POST(req: Request) {
             ? tenantData.stripe_connect_id
             : null;
 
+        if (!stripeConnectId) {
+            return NextResponse.json(
+                { error: 'This business must connect and finish setting up Stripe before accepting invoice payments.' },
+                { status: 409 }
+            );
+        }
+
         const origin = new URL(req.url).origin;
         const tokenQuery = publicToken ? `&token=${publicToken}` : '';
         const safeReturn = (value: string | undefined, fallback: string) => value && new URL(value).origin === origin ? value : fallback;
@@ -89,9 +96,11 @@ export async function POST(req: Request) {
             },
         };
 
+        // Create the Checkout Session directly on the tenant's connected Stripe
+        // account. Tenant customer revenue must never fall back to AlphaClone.
         const session = await stripe.checkout.sessions.create(
             sessionOptions,
-            stripeConnectId ? { stripeAccount: stripeConnectId } : undefined
+            { stripeAccount: stripeConnectId }
         );
 
         return NextResponse.json({ url: session.url });
