@@ -159,15 +159,25 @@ defineConnectorTool({
     const supabase = createSupabaseAdminClient();
     const { rows } = await tenantHasIntegration(supabase, args.tenant_id, ['stripe']);
     const configured = envPresent('STRIPE_SECRET_KEY');
-    const connected = configured || rows.length > 0;
+    const hasPlatformAccount = envPresent('STRIPE_PLATFORM_ACCOUNT_ID');
+    const hasPlatformWebhook = envPresent('STRIPE_WEBHOOK_SECRET');
+    const hasConnectWebhook = envPresent('STRIPE_CONNECT_WEBHOOK_SECRET');
+    // Stripe Connect uses Accounts v2 + Account Links. A tenant integration row is not
+    // required for the platform Stripe runtime to be healthy; tenant onboarding state
+    // lives on tenants.stripe_connect_id / stripe_connect_onboarded.
+    const connected = configured;
     return {
       name: 'Stripe',
       key: 'stripe',
-      status: connected ? (rows.length ? 'connected' : 'configured') : 'missing',
+      status: configured ? 'configured' : 'missing',
       connected,
       details: {
         env_configured: configured,
-        has_webhook_secret: envPresent('STRIPE_WEBHOOK_SECRET'),
+        platform_secret_configured: configured,
+        platform_account_configured: hasPlatformAccount,
+        has_webhook_secret: hasPlatformWebhook,
+        has_connect_webhook_secret: hasConnectWebhook,
+        connect_mode: 'accounts_v2_account_links',
         integration_rows: rows.length,
       },
     } satisfies IntegrationHealth;
