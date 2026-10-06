@@ -153,7 +153,7 @@ for (const delivered of [true, false]) {
         rateLimitMiddleware: async () => null,
         rateLimitConfigs: { public: { contact: {} } },
       },
-      "@/lib/verifyTurnstile": { isTurnstileEnforced: () => false },
+      "@/lib/verifyTurnstile": { isTurnstileEnforced: () => false, readClientIp: () => "127.0.0.1" },
     });
     const result = await route.POST({
       json: async () => ({
@@ -333,3 +333,37 @@ test("platform env email config defaults to verified Alphaclone From address", a
   );
 });
 
+
+for (const outcome of ['database-failure', 'matching-retry', 'conflicting-retry', 'invalid-id', 'honeypot']) {
+  test(`contact submission identifiers: ${outcome}`, async () => {
+    const submissionId = 'c3b714bf-3e5b-47cb-bc94-9ca2ff326b34';
+    const body = { name: 'Test Person', email: 'test@example.com', subject: 'Question', message: 'Please explain your platform to me.', submissionId };
+    let inserts = 0; const emails = []; const rateKeys = [];
+    const saved = { ...body, tenant_id: process.env.CONTACT_TENANT_ID || process.env.DEFAULT_TENANT_ID || null,
+      id: submissionId, company: null, phone: null, created_at: new Date().toISOString() };
+    const query = {
+      insert() { inserts++; return this; }, select() { return this; }, eq() { return this; },
+      async single() { return { data: null, error: { code: outcome === 'database-failure' ? 'XX000' : '23505' } }; },
+      async maybeSingle() { return { data: { ...saved, message: outcome === 'conflicting-retry' ? 'Different inquiry' : saved.message } }; },
+    };
+    const route = load('src/app/api/contact/route.ts', {
+      'next/server': { NextResponse: response },
+      '@/lib/apiAuth': { createAdminSupabaseClientOrThrow: () => ({ from: () => query }), routeErrorResponse: error => { throw error; } },
+      '@/lib/email/sendEmailServer': { sendEmailServer: async input => { emails.push(input); return { success: true }; } },
+      '@/lib/rateLimit': { rateLimitMiddleware: async (_request, _config, key) => { rateKeys.push(key); return null; }, rateLimitConfigs: { public: { contact: {} } } },
+      '@/lib/verifyTurnstile': { isTurnstileEnforced: () => false, readClientIp: () => '192.0.2.1' },
+    });
+    if (outcome === 'invalid-id') body.submissionId = 'not-a-uuid';
+    if (outcome === 'honeypot') body.website = 'spam';
+    const result = await route.POST({ json: async () => body, headers: new Headers() });
+    const expected = { 'database-failure': 500, 'matching-retry': 200, 'conflicting-retry': 409, 'invalid-id': 400, honeypot: 200 };
+    assert.equal(result.status, expected[outcome]);
+    assert.equal(emails.length, outcome === 'matching-retry' ? 1 : 0);
+    assert.equal(inserts, ['invalid-id', 'honeypot'].includes(outcome) ? 0 : 1);
+    if (outcome === 'matching-retry') {
+      assert.equal(result.body.id, submissionId);
+      assert.equal(emails[0].idempotencyKey, `website-contact:${submissionId}`);
+      assert.deepEqual(rateKeys, ['contact:192.0.2.1', 'contact-email:test@example.com']);
+    }
+  });
+}

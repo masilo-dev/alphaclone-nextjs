@@ -1,87 +1,55 @@
-import { createHash } from 'node:crypto';
+import { createHmac, randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
-
+import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
+import { readClientIp } from '@/lib/verifyTurnstile';
 export const dynamic = 'force-dynamic';
-
 const consentRecordSchema = z.object({
-  anonymousId: z.string().min(3).max(120),
-  essential: z.literal(true),
-  functional: z.boolean(),
-  analytics: z.boolean(),
-  marketing: z.boolean(),
-  consentVersion: z.string().max(30).default('2026-10'),
+  recordId: z.string().uuid().optional(), anonymousId: z.string().min(3).max(120), essential: z.literal(true),
+  functional: z.boolean(), analytics: z.boolean(), marketing: z.boolean(),
+  consentVersion: z.string().min(1).max(30), collectedAt: z.string().datetime().optional(),
+  // Browser-reported read-back, not independent server verification of Cloudflare.
   zarazSynced: z.boolean().optional(),
 });
-
-function hashIp(rawIp: string | null): string | null {
-  if (!rawIp) return null;
-  // Truncate and salt for privacy-preserving GDPR compliance
-  return createHash('sha256')
-    .update(`ac_salt_${rawIp.trim().toLowerCase()}`)
-    .digest('hex')
-    .slice(0, 32);
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const rawBody = await request.json().catch(() => null);
-    const parsed = consentRecordSchema.safeParse(rawBody);
-
-    if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid consent payload' }, { status: 400 });
+    const limited = await rateLimitMiddleware(request, rateLimitConfigs.api.standard,
+      `cookie-consent:${readClientIp(request) || 'anonymous'}`);
+    if (limited) return limited;
+    const parsed = consentRecordSchema.safeParse(await request.json().catch(() => null));
+    if (!parsed.success) return NextResponse.json({ error: 'Invalid consent payload' }, { status: 400 });
+    const input = parsed.data;
+    const tenantId = process.env.LEGAL_SITE_TENANT_ID?.trim() || process.env.CONTACT_TENANT_ID?.trim() || process.env.DEFAULT_TENANT_ID?.trim() || null;
+    if (tenantId && !z.string().uuid().safeParse(tenantId).success) {
+      return NextResponse.json({ error: 'Consent recording is not configured' }, { status: 503 });
     }
-
-    const { anonymousId, essential, functional, analytics, marketing, consentVersion, zarazSynced } = parsed.data;
-
-    const rawIp = request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('cf-connecting-ip') || null;
-    const ipHash = hashIp(rawIp);
-    const userAgent = request.headers.get('user-agent')?.slice(0, 255) || null;
-
+    const ip = readClientIp(request);
+    const salt = process.env.CONSENT_IP_HASH_SECRET;
+    const id = input.recordId || randomUUID();
+    const record = {
+      id, anonymous_id: input.anonymousId, tenant_id: tenantId, consent_version: input.consentVersion, essential: true,
+      functional: input.functional, analytics: input.analytics, marketing: input.marketing,
+      zaraz_synced: Boolean(input.zarazSynced),
+      ip_hash: ip && salt ? createHmac('sha256', salt).update(ip).digest('hex') : null,
+      user_agent: request.headers.get('user-agent')?.slice(0, 255) || null,
+      ...(input.collectedAt ? { created_at: input.collectedAt } : {}),
+      withdrawn_at: !input.functional && !input.analytics && !input.marketing ? input.collectedAt || new Date().toISOString() : null,
+    };
     const admin = createAdminSupabaseClientOrThrow();
-
-    // 1. Look up primary AlphaClone platform tenant or default tenant
-    const { data: tenant } = await admin
-      .from('tenants')
-      .select('id')
-      .ilike('name', '%alphaclone%')
-      .limit(1)
-      .maybeSingle();
-
-    const tenantId = tenant?.id || '066eb88e-3fb0-45c9-b4d1-c3c2063ea0d4';
-
-    // 2. Insert into canonical consent_records table
-    const purposes = [
-      { purpose: 'cookie_essential', status: 'granted' },
-      { purpose: 'cookie_functional', status: functional ? 'granted' : 'denied' },
-      { purpose: 'cookie_analytics', status: analytics ? 'granted' : 'denied' },
-      { purpose: 'cookie_marketing', status: marketing ? 'granted' : 'denied' },
-    ];
-
-    const records = purposes.map((p) => ({
-      tenant_id: tenantId,
-      purpose: p.purpose,
-      channel: 'web_cmp',
-      status: p.status,
-      source: 'cloudflare_zaraz_bridge',
-      user_agent: userAgent,
-      evidence: {
-        anonymous_id: anonymousId,
-        consent_version: consentVersion,
-        zaraz_synced: Boolean(zarazSynced),
-        ip_hash: ipHash,
-        all_choices: { essential, functional, analytics, marketing },
-      },
-      collected_at: new Date().toISOString(),
-    }));
-
-    await admin.from('consent_records').insert(records);
-
-    return NextResponse.json({ success: true, recorded: records.length });
+    const { error } = await admin.from('cookie_consent_records').insert(record);
+    if (error?.code === '23505') {
+      const { data: existing, error: lookupError } = await admin.from('cookie_consent_records')
+        .select('anonymous_id,tenant_id,consent_version,essential,functional,analytics,marketing').eq('id', id).maybeSingle();
+      if (lookupError || !existing) throw new Error('Consent receipt lookup failed');
+      const fields = ['anonymous_id', 'tenant_id', 'consent_version', 'essential', 'functional', 'analytics', 'marketing'] as const;
+      if (fields.some(key => existing[key] !== record[key])) return NextResponse.json({ error: 'Consent receipt conflict' }, { status: 409 });
+      return NextResponse.json({ success: true, recorded: 1, id, replayed: true });
+    }
+    if (error) throw new Error('Consent record insert failed');
+    return NextResponse.json({ success: true, recorded: 1, id });
   } catch (error) {
-    // Non-blocking for client, but return status
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: 'Unable to record consent', details: message }, { status: 500 });
+    console.error('[consent-record] Recording failed:', error);
+    return NextResponse.json({ error: 'Unable to record consent' }, { status: 503 });
   }
 }

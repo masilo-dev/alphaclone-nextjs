@@ -7,6 +7,7 @@ import { Check, Settings2, Shield, X, RefreshCw } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   readConsentState,
+  initializeConsentAudit,
   saveConsentState,
   revokeOptionalConsents,
   UserConsentState,
@@ -23,6 +24,7 @@ export function useCookieConsent() {
 
   useEffect(() => {
     setConsent(readConsentState());
+    initializeConsentAudit();
     setReady(true);
 
     const onConsentChanged = () => {
@@ -47,7 +49,7 @@ export default function CookieBanner() {
   const pathname = usePathname();
   const { consent, ready } = useCookieConsent();
   const [openPrefs, setOpenPrefs] = useState(false);
-  const [functional, setFunctional] = useState(true);
+  const [functional, setFunctional] = useState(false);
   const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
   const preferencesDialogRef = useRef<HTMLDialogElement>(null);
@@ -59,8 +61,10 @@ export default function CookieBanner() {
       setFunctional(consent.functional);
       setAnalytics(consent.analytics);
       setMarketing(consent.marketing);
+    } else if (openPrefs) {
+      setFunctional(false); setAnalytics(false); setMarketing(false);
     }
-  }, [consent]);
+  }, [consent, openPrefs]);
 
   useEffect(() => {
     const open = () => setOpenPrefs(true);
@@ -82,7 +86,7 @@ export default function CookieBanner() {
     };
   }, [openPrefs]);
 
-  if (hideOnWorkspace) return null;
+
 
   const handleSave = (next: OptionalConsentChoices) => {
     saveConsentState(next);
@@ -99,7 +103,7 @@ export default function CookieBanner() {
 
   return (
     <>
-      {ready && !consent && (
+      {ready && !consent && !hideOnWorkspace && (
         <aside
           role="region"
           aria-label={t('Cookie consent banner')}
@@ -195,7 +199,7 @@ export default function CookieBanner() {
             />
             <ToggleRow
               label={t('Functional Cookies')}
-              description={t('Saves user workspace layout preferences, theme settings, and language localization choices.')}
+              description={t('Allows optional third-party convenience features. Your explicitly selected language, theme, and workspace settings remain available.')}
               checked={functional}
               onToggle={() => setFunctional((value) => !value)}
             />
@@ -209,7 +213,7 @@ export default function CookieBanner() {
             />
             <ToggleRow
               label={t('Marketing & Conversion Measurement')}
-              description={t('Allows anonymous campaign conversion measurement and advertising attribution where enabled.')}
+              description={t('Allows campaign conversion measurement and advertising attribution where enabled.')}
               checked={marketing}
               onToggle={() => setMarketing((value) => !value)}
             />

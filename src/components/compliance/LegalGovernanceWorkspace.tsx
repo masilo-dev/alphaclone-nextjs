@@ -15,7 +15,7 @@ import {
   Lock,
   RefreshCw,
 } from 'lucide-react';
-import { OPEN_PREFERENCES_EVENT, readConsentState, UserConsentState } from '@/lib/consent/consentManager';
+import { CONSENT_CHANGE_EVENT, OPEN_PREFERENCES_EVENT, readConsentState, UserConsentState } from '@/lib/consent/consentManager';
 import { useAuth } from '@/contexts/AuthContext';
 
 const sections = [
@@ -38,7 +38,9 @@ export function LegalGovernanceWorkspace({ section = 'overview' }: { section?: s
   const [loadingAgreements, setLoadingAgreements] = useState(false);
 
   useEffect(() => {
-    setCookieConsent(readConsentState());
+    const update = () => setCookieConsent(readConsentState());
+    update(); window.addEventListener(CONSENT_CHANGE_EVENT, update);
+    return () => window.removeEventListener(CONSENT_CHANGE_EVENT, update);
   }, []);
 
   useEffect(() => {

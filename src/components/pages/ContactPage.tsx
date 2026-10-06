@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Mail, Phone, MapPin, Send, CheckCircle2, AlertCircle, Calendar } from 'lucide-react';
 import { Button, Input } from '../ui/UIComponents';
@@ -34,6 +34,8 @@ const EMPTY_FORM: FormState = {
 
 const ContactPage: React.FC = () => {
   const { t } = useLanguage();
+  const inFlight = useRef(false);
+  const submissionAttempt = useRef<{ payload: string; id: string } | null>(null);
   const [formData, setFormData] = useState<FormState>(EMPTY_FORM);
   const [turnstileToken, setTurnstileToken] = useState('');
   const [turnstileNonce, setTurnstileNonce] = useState(0);
@@ -51,6 +53,7 @@ const ContactPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (inFlight.current) return;
     setStatus('sending');
     setErrorMessage('');
 
@@ -72,11 +75,17 @@ const ContactPage: React.FC = () => {
       return;
     }
 
+    const fingerprint = JSON.stringify(validationResult.data);
+    if (submissionAttempt.current?.payload !== fingerprint) {
+      submissionAttempt.current = { payload: fingerprint, id: crypto.randomUUID() };
+    }
+    inFlight.current = true;
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          submissionId: submissionAttempt.current.id,
           name: formData.name,
           email: formData.email,
           subject: formData.subject || 'General Inquiry',
@@ -96,6 +105,7 @@ const ContactPage: React.FC = () => {
         setStatus('success');
         setNotificationSent(payload.notificationSent !== false);
         setFormData(EMPTY_FORM);
+        submissionAttempt.current = null;
         setTurnstileToken('');
         setTurnstileUnavailable(false);
         setTurnstileNonce((n) => n + 1);
@@ -114,6 +124,8 @@ const ContactPage: React.FC = () => {
       setErrorMessage(
         'Network error. Please check your connection and try again.'
       );
+    } finally {
+      inFlight.current = false;
     }
   };
 
@@ -258,7 +270,7 @@ const ContactPage: React.FC = () => {
 
               {/* Success Banner */}
               {status === 'success' && (
-                <div className="flex items-start gap-3 text-emerald-800 bg-emerald-50 border border-emerald-200 p-4 rounded-xl mb-6 animate-fadeIn">
+                <div role="status" className="flex items-start gap-3 text-emerald-800 bg-emerald-50 border border-emerald-200 p-4 rounded-xl mb-6 animate-fadeIn">
                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0 text-emerald-600" />
                   <div>
                     <p className="font-semibold">{t('Inquiry received!')}</p>
@@ -273,7 +285,7 @@ const ContactPage: React.FC = () => {
 
               {/* Error Banner */}
               {status === 'error' && (
-                <div className="flex items-start gap-3 text-red-800 bg-red-50 border border-red-200 p-4 rounded-xl mb-6">
+                <div role="alert" className="flex items-start gap-3 text-red-800 bg-red-50 border border-red-200 p-4 rounded-xl mb-6">
                   <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0 text-red-600" />
                   <span className="type-ui">{errorMessage ? t(errorMessage) : t('Failed to send message. Please try again.')}</span>
                 </div>

@@ -3,43 +3,16 @@
  * AlphaClone Systems
  */
 
-export interface UserConsentState {
-  essential: true;
-  functional: boolean;
-  analytics: boolean;
-  marketing: boolean;
-  timestamp: string;
-  version: string;
-  anonymousId: string;
-}
-
-export type OptionalConsentChoices = {
-  functional: boolean;
-  analytics: boolean;
-  marketing: boolean;
-};
-
-export const CURRENT_CONSENT_VERSION = '2026-10';
-export const STORAGE_KEYS = ['ac_cookie_consent', 'ac_cookie_preferences'] as const;
+import { CONSENT_VERSION, CONSENT_TTL, CONSENT_KEYS, validateConsent, installConsentBridge, consentBootstrapConfig, type StoredConsent } from './consentBootstrap';
+export type UserConsentState = StoredConsent;
+export type OptionalConsentChoices = Pick<StoredConsent, 'functional' | 'analytics' | 'marketing'>;
+export const CURRENT_CONSENT_VERSION = CONSENT_VERSION;
+export const STORAGE_KEYS = CONSENT_KEYS;
 export const CONSENT_COOKIE = 'ac_cookie_consent';
-export const CONSENT_MAX_AGE_SECONDS = 60 * 60 * 24 * 365; // 1 year
+export const CONSENT_MAX_AGE_SECONDS = CONSENT_TTL;
 export const CONSENT_CHANGE_EVENT = 'ac:cookie-consent';
 export const OPEN_PREFERENCES_EVENT = 'ac:open-cookie-preferences';
-
-declare global {
-  interface Window {
-    zaraz?: {
-      consent?: {
-        set: (preferences: Record<string, boolean>) => void;
-        get?: (purposeId: string) => boolean;
-        getAll?: () => Record<string, boolean>;
-      };
-      set?: (key: string, value: unknown, options?: unknown) => void;
-    };
-    dataLayer?: unknown[];
-    gtag?: (...args: unknown[]) => void;
-  }
-}
+function bridge() { return installConsentBridge(consentBootstrapConfig(), validateConsent); }
 
 /**
  * Generates or retrieves a persistent anonymous ID for audit tracking without PII.
@@ -50,7 +23,7 @@ export function getOrCreateAnonymousId(): string {
   try {
     let id = window.localStorage.getItem(KEY);
     if (!id) {
-      id = 'anon_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now().toString(36);
+      id = 'anon_' + crypto.randomUUID();
       window.localStorage.setItem(KEY, id);
     }
     return id;
@@ -63,149 +36,66 @@ export function getOrCreateAnonymousId(): string {
  * Validates and parses raw consent string from storage or cookie.
  */
 export function parseStoredConsent(raw: string | null): UserConsentState | null {
-  if (!raw) return null;
-  try {
-    const val = JSON.parse(raw);
-    if (!val || typeof val !== 'object') return null;
-    if (val.essential !== true && val.necessary !== true) return null;
-
-    const timestamp = typeof val.timestamp === 'string' ? val.timestamp : new Date().toISOString();
-    const age = Date.now() - new Date(timestamp).getTime();
-    if (!Number.isFinite(age) || age > CONSENT_MAX_AGE_SECONDS * 1000) return null;
-
-    return {
-      essential: true,
-      functional: Boolean(val.functional ?? false),
-      analytics: Boolean(val.analytics ?? false),
-      marketing: Boolean(val.marketing ?? false),
-      timestamp,
-      version: typeof val.version === 'string' ? val.version : CURRENT_CONSENT_VERSION,
-      anonymousId: typeof val.anonymousId === 'string' ? val.anonymousId : getOrCreateAnonymousId(),
-    };
-  } catch {
-    return null;
-  }
+  return validateConsent(raw, CURRENT_CONSENT_VERSION, CONSENT_MAX_AGE_SECONDS);
 }
-
-/**
- * Reads user consent from local storage or first-party cookie.
- */
 export function readConsentState(): UserConsentState | null {
-  if (typeof window === 'undefined') return null;
-
-  try {
-    for (const key of STORAGE_KEYS) {
-      const parsed = parseStoredConsent(window.localStorage.getItem(key));
-      if (parsed) return parsed;
-    }
-  } catch {
-    // LocalStorage blocked, fall back to cookie
-  }
-
-  try {
-    const cookieEntry = document.cookie
-      .split('; ')
-      .find((entry) => entry.startsWith(`${CONSENT_COOKIE}=`))
-      ?.slice(CONSENT_COOKIE.length + 1);
-    const parsedCookie = parseStoredConsent(cookieEntry ? decodeURIComponent(cookieEntry) : null);
-    if (parsedCookie) return parsedCookie;
-  } catch {
-    // Cookie reading error
-  }
-
-  return null;
+  return typeof window === 'undefined' ? null : bridge().read();
 }
-
-/**
- * Broadcasts consent to Cloudflare Zaraz if present.
- */
-export function syncZarazConsent(choices: { functional: boolean; analytics: boolean; marketing: boolean }): boolean {
-  if (typeof window === 'undefined') return false;
-
-  const zarazPreferences: Record<string, boolean> = {
-    functional: choices.functional,
-    analytics: choices.analytics,
-    marketing: choices.marketing,
-    // Common aliases used in Zaraz dashboards
-    'analytics_id': choices.analytics,
-    'marketing_id': choices.marketing,
-    'functional_id': choices.functional,
-  };
-
-  if (window.zaraz?.consent?.set) {
-    try {
-      window.zaraz.consent.set(zarazPreferences);
-      return true;
-    } catch (err) {
-      console.warn('[ConsentManager] Zaraz consent update error:', err);
-    }
-  } else {
-    // Listen for Zaraz consent ready event if Zaraz is still loading
-    const onZarazReady = () => {
-      try {
-        window.zaraz?.consent?.set?.(zarazPreferences);
-      } catch (e) {
-        console.warn('[ConsentManager] Deferred Zaraz set failed:', e);
-      }
-    };
-    window.document.addEventListener('zarazConsentAPIReady', onZarazReady, { once: true });
-  }
-
-  return false;
+export function syncZarazConsent(choices: OptionalConsentChoices): boolean {
+  return typeof window !== 'undefined' && bridge().zaraz(choices);
 }
-
-/**
- * Emits Google Consent Mode v2 updates to dataLayer/gtag.
- */
 export function syncGoogleConsentMode(choices: { analytics: boolean; marketing: boolean }): void {
-  if (typeof window === 'undefined') return;
-
-  try {
-    window.dataLayer = window.dataLayer || [];
-    function gtag(...args: unknown[]) {
-      window.dataLayer?.push(args);
-    }
-    if (!window.gtag) {
-      window.gtag = gtag as never;
-    }
-
-    const consentSignals = {
-      analytics_storage: choices.analytics ? 'granted' : 'denied',
-      ad_storage: choices.marketing ? 'granted' : 'denied',
-      ad_user_data: choices.marketing ? 'granted' : 'denied',
-      ad_personalization: choices.marketing ? 'granted' : 'denied',
-    };
-
-    window.gtag('consent', 'update', consentSignals);
-  } catch (err) {
-    console.warn('[ConsentManager] Google Consent Mode error:', err);
-  }
+  if (typeof window !== 'undefined') bridge().google({ functional: false, ...choices }, 'update');
 }
-
-/**
- * Initializes default denied consent mode prior to any tag fire.
- */
 export function initGoogleConsentModeDefaults(): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window !== 'undefined') bridge();
+}
+const AUDIT_QUEUE_KEY = 'ac_pending_consent_records';
+let flushing = false;
+let pendingRecords: Record<string, unknown>[] = [];
+let auditListenersInstalled = false;
+function readQueue() {
   try {
-    window.dataLayer = window.dataLayer || [];
-    function gtag(...args: unknown[]) {
-      window.dataLayer?.push(args);
+    const stored = JSON.parse(localStorage.getItem(AUDIT_QUEUE_KEY) || '[]');
+    if (Array.isArray(stored)) pendingRecords = stored;
+  } catch { /* retain in-memory queue */ }
+}
+export async function flushConsentAuditQueue(): Promise<void> {
+  if (typeof window === 'undefined' || flushing) return;
+  flushing = true;
+  try {
+    readQueue();
+    while (pendingRecords.length) {
+      const record = pendingRecords[0];
+      const response = await fetch('/api/legal/consent-record', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true,
+        body: JSON.stringify(record), signal: AbortSignal.timeout(10000),
+      });
+      const receipt = await response.json().catch(() => null);
+      if (!response.ok || receipt?.success !== true) break;
+      readQueue();
+      pendingRecords = pendingRecords.filter(item => item.recordId !== record.recordId);
+      try { localStorage.setItem(AUDIT_QUEUE_KEY, JSON.stringify(pendingRecords)); } catch { /* use memory */ }
     }
-    if (!window.gtag) {
-      window.gtag = gtag as never;
-    }
-
-    window.gtag('consent', 'default', {
-      analytics_storage: 'denied',
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
-      wait_for_update: 500,
-    });
-  } catch (err) {
-    console.warn('[ConsentManager] Failed to set Google Consent Mode defaults:', err);
+  } catch { /* retry on next change, online event or page visit */ }
+  finally { flushing = false; }
+}
+export function initializeConsentAudit(): void {
+  if (typeof window === 'undefined') return;
+  if (!auditListenersInstalled) {
+    window.addEventListener('online', () => { void flushConsentAuditQueue(); });
+    auditListenersInstalled = true;
   }
+  void flushConsentAuditQueue();
+}
+function queueConsentAudit(state: UserConsentState, zarazSynced: boolean) {
+  readQueue();
+  pendingRecords.push({ recordId: crypto.randomUUID(), anonymousId: state.anonymousId,
+    essential: true, functional: state.functional, analytics: state.analytics, marketing: state.marketing,
+    consentVersion: state.version, collectedAt: state.timestamp, zarazSynced });
+  pendingRecords = pendingRecords.slice(-100);
+  try { localStorage.setItem(AUDIT_QUEUE_KEY, JSON.stringify(pendingRecords)); } catch { /* use memory */ }
+  initializeConsentAudit();
 }
 
 /**
@@ -253,29 +143,7 @@ export function saveConsentState(choices: OptionalConsentChoices): UserConsentSt
     window.dispatchEvent(new CustomEvent(CONSENT_CHANGE_EVENT, { detail: state }));
   }
 
-  // 6. Asynchronous Server-side Audit Logging
-  try {
-    if (typeof fetch === 'function') {
-      fetch('/api/legal/consent-record', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        keepalive: true,
-        body: JSON.stringify({
-          anonymousId: state.anonymousId,
-          essential: state.essential,
-          functional: state.functional,
-          analytics: state.analytics,
-          marketing: state.marketing,
-          consentVersion: state.version,
-          zarazSynced,
-        }),
-      }).catch(() => {
-        // Logging should be non-blocking
-      });
-    }
-  } catch {
-    // Ignore network logging errors in background
-  }
+  queueConsentAudit(state, zarazSynced);
 
   return state;
 }

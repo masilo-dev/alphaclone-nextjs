@@ -11,6 +11,7 @@ import { ProviderSwitcher } from "@/components/ProviderSwitcher";
 
 import { PWAProvider } from "@/contexts/PWAContext";
 import ShellSwitcher from "@/components/shells/ShellSwitcher";
+import { buildConsentBootstrapScript } from "@/lib/consent/consentBootstrap";
 import CookieBanner from "@/components/legal/CookieBanner";
 import PwaInstallPrompt from "@/components/common/PwaInstallPrompt";
 import { ConsentAwareAnalytics } from "@/components/common/ConsentAwareAnalytics";
@@ -111,7 +112,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script
           id="ac-zaraz-consent-bridge"
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var raw=localStorage.getItem('ac_cookie_consent')||localStorage.getItem('ac_cookie_preferences');var c=raw?JSON.parse(raw):null;function applyConsent(){if(!window.zaraz||!window.zaraz.consent||!window.zaraz.consent.set)return;if(c&&c.essential){window.zaraz.consent.set({functional:!!c.functional,analytics:!!c.analytics,marketing:!!c.marketing});}else{window.zaraz.consent.set({functional:false,analytics:false,marketing:false});}}if(window.zaraz&&window.zaraz.consent){applyConsent();}else{document.addEventListener('zarazConsentAPIReady',applyConsent,{once:true});}document.addEventListener('ac:cookie-consent',function(e){if(window.zaraz&&window.zaraz.consent&&window.zaraz.consent.set){var p=e.detail||{};window.zaraz.consent.set({functional:!!p.functional,analytics:!!p.analytics,marketing:!!p.marketing});}},{passive:true});}catch(e){}})();`,
+            __html: buildConsentBootstrapScript(),
           }}
         />
       </head>
