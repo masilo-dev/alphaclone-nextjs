@@ -1101,7 +1101,7 @@ html:has(.mkt-shell) { scroll-padding-top: calc(var(--marketing-header-height) +
   .acr-phone { position: absolute; z-index: 2; top: 4px; right: 8%; display: block; overflow: hidden; width: 174px; aspect-ratio: .54; border: 7px solid var(--marketing-tone-142033); border-radius: 28px; background: var(--color-white); box-shadow: 0 25px 55px rgba(23,45,76,.24); transform: rotate(4deg); }
   .acr-phone-speaker { position: absolute; z-index: 2; top: 5px; left: 50%; width: 52px; height: 8px; border-radius: 999px; background: var(--marketing-tone-142033); transform: translateX(-50%); }
   .acr-instruction-card { display: none; }
-  .acr-result-card { top: 96px; left: 5px; right: auto; width: 190px; padding: 13px; }
+  .acr-result-card { top: 96px; left: 5px; right: auto; width: 210px; padding: 13px; }
   .acr-integrations { padding: 26px 0; }
   .acr-strip-head { align-items: flex-start; }
   .acr-strip-head > a { display: none; }
