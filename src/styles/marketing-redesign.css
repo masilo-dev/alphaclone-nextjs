@@ -977,34 +977,7 @@ html:has(.mkt-shell) { scroll-padding-top: calc(var(--marketing-header-height) +
 
 /* Explicit contrast overrides for legacy marketing-theme utility collisions. */
 /* The guide intentionally uses dark panels inside the light marketing shell. */
-.platform-guide {
-  --guide-page: var(--brand-violet-950);
-  --guide-panel: var(--ws-canvas);
-  --guide-border: var(--ws-text-muted);
-  --guide-text: var(--ws-surface-secondary);
-  --guide-text-secondary: var(--ws-border);
-  --guide-text-muted: var(--marketing-tone-aebed1);
-  --guide-accent: var(--marketing-tone-79e8da);
-  --guide-action: var(--brand-blue-500);
-  --guide-action-text: var(--success-700);
-  --guide-label: var(--brand-blue-700);
-}
-.mkt-light-canvas .mkt-shell-content > .platform-guide { background: var(--guide-page) !important; color: var(--guide-text) !important; }
-.mkt-light-canvas .platform-guide section[class*="bg-slate-"],
-.mkt-light-canvas .platform-guide section[class*="bg-white/"] { background-color: transparent !important; }
-.mkt-light-canvas .platform-guide h1,
-.mkt-light-canvas .platform-guide h2,
-.mkt-light-canvas .platform-guide h3,
-.mkt-light-canvas .platform-guide .text-white { color: var(--guide-text) !important; }
-.mkt-light-canvas .platform-guide .text-slate-300 { color: var(--guide-text-secondary) !important; }
-.mkt-light-canvas .platform-guide .text-slate-400,
-.mkt-light-canvas .platform-guide .text-slate-500 { color: var(--guide-text-muted) !important; }
-.mkt-light-canvas .platform-guide [class*="text-teal-"] { color: var(--guide-accent) !important; }
-.mkt-light-canvas .platform-guide div[class*="bg-slate-"],
-.mkt-light-canvas .platform-guide div[class*="border-slate-"] { background-color: var(--guide-panel) !important; border-color: var(--guide-border) !important; }
-.mkt-light-canvas .platform-guide .bg-teal-500 { background-color: var(--guide-action) !important; color: var(--guide-action-text) !important; }
-.mkt-light-canvas .platform-guide .bg-teal-500 * { color: var(--guide-action-text) !important; }
-.mkt-light-canvas .platform-guide .bg-teal-700 { background-color: var(--guide-label) !important; color: var(--guide-text) !important; }
+
 
 .mkt-header-redesign .mkt-nav-link-redesign { color: var(--marketing-tone-1c2b41) !important; }
 .acr-redesign .acr-eyebrow { color: var(--marketing-tone-526d95) !important; }
