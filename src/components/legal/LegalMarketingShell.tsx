@@ -4,7 +4,7 @@ import MarketingShell from '@/components/marketing/system/MarketingShell';
 /** Unified legal/trust shell using the shared marketing header and footer. */
 export default function LegalMarketingShell({ children }: { children: ReactNode }) {
   return (
-    <MarketingShell>
+    <MarketingShell className="mkt-public-page">
       <div className="flex min-h-[calc(100vh-5rem)] flex-col">
         <div className="flex-1">{children}</div>
       </div>
