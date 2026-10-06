@@ -9,8 +9,8 @@ export async function POST(req: Request) {
       successUrl: z.string().url().optional(), cancelUrl: z.string().url().optional(),
     }).parse(await req.json());
     const { user } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin']);
-    if (planId !== 'starter') return NextResponse.json({ error: 'Subscription unavailable: only Starter is configured' }, { status: 503 });
-    const session = await createPlatformStarterCheckout({ tenantId, userId: user.id, email: user.email,
+    if (planId === 'free') return NextResponse.json({ error: 'Subscription unavailable: choose a paid subscription plan' }, { status: 503 });
+    const session = await createPlatformStarterCheckout({ plan: planId, tenantId, userId: user.id, email: user.email,
       origin: new URL(req.url).origin, successUrl, cancelUrl });
     return NextResponse.json({ url: session.url });
   } catch (error) { return routeErrorResponse(error, 'Subscription checkout is unavailable', req); }

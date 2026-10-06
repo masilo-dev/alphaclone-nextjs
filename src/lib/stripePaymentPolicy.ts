@@ -1,4 +1,4 @@
-import { STARTER_MONTHLY_CENTS } from '@/config/platformBilling';
+import { PLATFORM_MONTHLY_USD, PlatformPlan } from '@/config/platformBilling';
 /** Provider-independent payment checks, shared by HTTP routes and workers. */
 export function invoiceOutstanding(invoice: { total: unknown; amount_paid?: unknown; status: string }) {
   if (!['sent', 'viewed', 'overdue'].includes(invoice.status)) throw new Error('Invoice is not payable');
@@ -21,11 +21,11 @@ export function assertInvoicePayment(invoice: { id: string; tenant_id: string; c
   if (payment.status !== 'succeeded' || payment.amount_received <= 0) throw new Error('Payment has not succeeded');
 }
 
-export function assertStarterPrice(price: { active: boolean; currency: string; unit_amount: number | null;
+export function assertPlatformPrice(plan: PlatformPlan, price: { active: boolean; currency: string; unit_amount: number | null;
   tax_behavior: string | null; recurring: { interval: string; interval_count: number } | null }) {
-  if (!price.active || price.currency !== 'usd' || price.unit_amount !== STARTER_MONTHLY_CENTS ||
+  if (!price.active || price.currency !== 'usd' || price.unit_amount !== PLATFORM_MONTHLY_USD[plan] * 100 ||
       price.recurring?.interval !== 'month' || price.recurring.interval_count !== 1 || price.tax_behavior !== 'exclusive') {
-    throw new Error('Starter price configuration invalid: expected USD 15 monthly before tax');
+    throw new Error(`${plan} price configuration invalid: expected USD ${PLATFORM_MONTHLY_USD[plan]} monthly before tax`);
   }
 }
 
@@ -35,3 +35,5 @@ export function redactStripeEvent(value: unknown): unknown {
     [key, /client_secret|secret_key|access_token|refresh_token|webhook_secret/i.test(key) ? '[REDACTED]' : redactStripeEvent(item)]));
   return value;
 }
+
+export function assertStarterPrice(price: Parameters<typeof assertPlatformPrice>[1]) { assertPlatformPrice('starter', price); }

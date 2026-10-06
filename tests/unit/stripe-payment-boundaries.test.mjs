@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { invoiceOutstanding, invoicePaymentKey, assertInvoicePayment, assertStarterPrice } from '../../src/lib/stripePaymentPolicy.ts';
+import { invoiceOutstanding, invoicePaymentKey, assertInvoicePayment, assertStarterPrice, assertPlatformPrice } from '../../src/lib/stripePaymentPolicy.ts';
 const validPrice = { active: true, currency: 'usd', unit_amount: 1500, recurring: { interval: 'month', interval_count: 1 }, tax_behavior: 'exclusive' };
 test('Starter must be exactly USD 15 monthly with exclusive tax', () => {
   assert.doesNotThrow(() => assertStarterPrice(validPrice));
@@ -89,4 +89,12 @@ test('tenant customer subscription requests cannot use platform or another tenan
   assert.deepEqual(tenantSubscriptionRequestOptions(mapping, { tenantId: 'tenant-a', stripeAccountId: 'acct_a' }), { stripeAccount: 'acct_a' });
   assert.throws(() => tenantSubscriptionRequestOptions(mapping, { tenantId: 'tenant-b', stripeAccountId: 'acct_a' }));
   assert.throws(() => tenantSubscriptionRequestOptions(mapping, { tenantId: 'tenant-a', stripeAccountId: 'acct_platform' }));
+});
+
+test('approved monthly plan prices are checked independently', () => {
+ const base = { active: true, currency: 'usd', tax_behavior: 'exclusive', recurring: { interval: 'month', interval_count: 1 } };
+ for (const [plan, amount] of [['starter',1500],['pro',4500],['enterprise',8500]]) {
+  assertPlatformPrice(plan, { ...base, unit_amount: amount });
+  assert.throws(() => assertPlatformPrice(plan, { ...base, unit_amount: amount + 100 }));
+ }
 });

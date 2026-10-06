@@ -136,7 +136,7 @@ export default function PricingPage() {
             <p className="mx-auto mt-5 max-w-3xl text-base sm:text-lg text-[var(--marketing-text-secondary)] leading-relaxed" aria-live="polite">
               {billingPeriod === 'annual'
                 ? t('Starter $144/year · Pro $432/year · Enterprise $768/year. Save 20% compared with monthly billing. Contact us to confirm annual setup.')
-                : t('Starter $15/month · Pro $45/month · Enterprise $80/month. Choose the execution capacity that fits your business.')}
+                : t('Starter $15/month · Pro $45/month · Enterprise $85/month. Choose the execution capacity that fits your business.')}
             </p>
             <div className="mt-8 flex justify-center">
               <MarketingPricingToggle value={billingPeriod} onChange={setBillingPeriod} />
@@ -285,7 +285,7 @@ export default function PricingPage() {
         <MarketingContainer>
           <ConversionBanner
             title="Find leads. Run outreach. Manage clients. Publish content. Execute work."
-            description="Get started with Starter at $15, scale to Pro at $45, or choose Enterprise at $80."
+            description="Get started with Starter at $15, scale to Pro at $45, or choose Enterprise at $85."
           />
         </MarketingContainer>
       </MarketingSection>

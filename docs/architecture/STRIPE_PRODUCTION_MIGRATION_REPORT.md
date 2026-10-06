@@ -97,3 +97,11 @@ The automated cases cover configured price validation, outstanding balances, own
 ```
 
 This report is also new. Original PR work is retained; the branch is based on 4f459f5c61274cf55eba1c678eabba4d72bd85eb. No real charges were created during validation.
+
+## Approved three-plan update — 2026-10-06
+
+User approved monthly Starter USD 15, Pro USD 45 and Enterprise USD 85, before applicable tax.
+Live Pro product prod_VOKVRiiutrcIqj / price price_1UNXqyEXRUDDQt0pTR7P4CWa.
+Live Enterprise product prod_VOKW9UZ4IMJEzE / price price_1UNXrHEXRUDDQt0p0cD4j0pZ.
+Both are active exclusive-tax monthly prices. Their STRIPE_PRO_MONTHLY_PRICE_ID and STRIPE_ENTERPRISE_MONTHLY_PRICE_ID settings are staged in the same Railway production patch, now six changes.
+HTTP and MCP checkout now select and validate each approved plan against its configured monthly price. Public Enterprise monthly copy is USD 85. Annual offers remain unapproved/unconfigured; original annual marketing values need removal or separate approval. Prior Starter-only statements above describe the earlier audit snapshot. Remaining release gates still apply.

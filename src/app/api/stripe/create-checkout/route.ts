@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        if (plan !== 'starter') return NextResponse.json({ error: 'Subscription unavailable: only Starter is configured' }, { status: 503 });
-        const session = await createPlatformStarterCheckout({ tenantId, userId, email: user.email, origin: new URL(req.url).origin });
+        if (!['starter', 'pro', 'enterprise'].includes(plan)) return NextResponse.json({ error: 'Subscription unavailable: unsupported plan' }, { status: 503 });
+        const session = await createPlatformStarterCheckout({ plan, tenantId, userId, email: user.email, origin: new URL(req.url).origin });
 
         return NextResponse.json({ sessionId: session.id, url: session.url });
     } catch (error: any) {

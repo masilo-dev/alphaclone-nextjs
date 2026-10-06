@@ -406,7 +406,7 @@ export function TermsOfService() {
 
          <Section id="subscription" title="4. Subscription Plans & Billing">
             <Sub title="4.1 Plans">
-               <p>AlphaClone offers Starter ($15/month), Pro ($45/month), and Enterprise ($80/month) subscription tiers. Annual billing is available at Starter $144/year, Pro $432/year, and Enterprise $768/year. Current plan features, usage limits, and support levels are listed on the pricing page.</p>
+               <p>AlphaClone offers Starter ($15/month), Pro ($45/month), and Enterprise ($85/month) subscription tiers. Annual billing is available at Starter $144/year, Pro $432/year, and Enterprise $768/year. Current plan features, usage limits, and support levels are listed on the pricing page.</p>
             </Sub>
             <Sub title="4.2 Billing Cycle">
                <p>Subscriptions are billed monthly in advance. Your billing date is set on the day you first provide payment details. Invoices are issued automatically and sent to your registered email address. You authorize AlphaClone to charge your payment method on each monthly billing date.</p>

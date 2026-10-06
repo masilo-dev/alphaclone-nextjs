@@ -1,12 +1,13 @@
+import { PLATFORM_PRICE_ENV, PlatformPlan } from '@/config/platformBilling';
 import { verifyStripePlatformIdentity } from '@/lib/stripePlatformIdentity';
 import 'server-only';
 import { stripe } from '@/lib/stripe';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { assertStarterPrice } from '@/lib/stripePaymentPolicy';
+import { assertPlatformPrice } from '@/lib/stripePaymentPolicy';
 
 /** Both subscription checkout routes execute the same platform-only command. */
 export async function createPlatformStarterCheckout(input: {
-  tenantId: string; userId: string; email?: string; origin: string; successUrl?: string; cancelUrl?: string;
+  plan?: PlatformPlan; tenantId: string; userId: string; email?: string; origin: string; successUrl?: string; cancelUrl?: string;
 }) {
   const admin = createSupabaseAdminClient();
   const { data: membership, error: membershipError } = await admin.from('tenant_users').select('role')
@@ -15,9 +16,11 @@ export async function createPlatformStarterCheckout(input: {
     throw new Error('Workspace owner or administrator required');
   }
   await verifyStripePlatformIdentity();
-  const priceId = process.env.STRIPE_STARTER_MONTHLY_PRICE_ID;
-  if (!priceId) throw new Error('Starter subscription unavailable: price configuration required');
-  assertStarterPrice(await stripe.prices.retrieve(priceId));
+  const plan = input.plan || 'starter';
+  if (!Object.hasOwn(PLATFORM_PRICE_ENV, plan)) throw new Error('Unsupported subscription plan');
+  const priceId = process.env[PLATFORM_PRICE_ENV[plan]];
+  if (!priceId) throw new Error('Subscription unavailable: price configuration required');
+  assertPlatformPrice(plan, await stripe.prices.retrieve(priceId));
   // Enabling automatic_tax alone collects nothing without registrations.
   const registrations = await stripe.tax.registrations.list({ status: 'active', limit: 1 });
   const settings = await stripe.tax.settings.retrieve();
@@ -39,7 +42,7 @@ export async function createPlatformStarterCheckout(input: {
   if (active.data.some((s: { status: string }) => !['canceled', 'incomplete_expired'].includes(s.status))) throw new Error('Subscription already exists; use billing settings');
   const safeUrl = (candidate: string | undefined, fallback: string) => candidate && new URL(candidate).origin === input.origin
     ? candidate : `${input.origin}${fallback}`;
-  const metadata = { tenantId: input.tenantId, userId: input.userId, plan: 'starter', type: 'platform_subscription' };
+  const metadata = { tenantId: input.tenantId, userId: input.userId, plan, type: 'platform_subscription' };
   return stripe.checkout.sessions.create({ mode: 'subscription', customer: customerId, customer_update: { address: 'auto', name: 'auto' },
     line_items: [{ price: priceId, quantity: 1 }], automatic_tax: { enabled: true }, tax_id_collection: { enabled: true },
     success_url: safeUrl(input.successUrl, '/dashboard?checkout=success'), cancel_url: safeUrl(input.cancelUrl, '/dashboard?checkout=cancelled'),

@@ -52,7 +52,7 @@ export const TIER_PRICING = {
         annualPriceId: process.env.STRIPE_PRO_ANNUAL_PRICE_ID,
     },
     enterprise: {
-        monthly: 8000, // Future plan: checkout unconfigured
+        monthly: 8500, // $85 before applicable tax
         annual: 76800, // Future plan: checkout unconfigured
         monthlyPriceId: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID,
         annualPriceId: process.env.STRIPE_ENTERPRISE_ANNUAL_PRICE_ID,

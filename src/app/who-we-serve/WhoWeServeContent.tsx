@@ -136,7 +136,7 @@ export default function WhoWeServePage() {
                             <SecondaryCTA className="w-full sm:w-auto">{t('Book a demo')}</SecondaryCTA>
                         </div>
                         <p className="mt-6 type-caption font-bold text-[var(--marketing-muted-strong)] uppercase tracking-caps">
-                            Starter $15 · Pro $45 · Enterprise $80
+                            Starter $15 · Pro $45 · Enterprise $85
                         </p>
                     </div>
                 </AnimateIn>

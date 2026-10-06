@@ -7672,9 +7672,9 @@ Return ONLY a JSON array of 60 objects:
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
           const { data: profile } = await supabaseAdmin.from('profiles').select('email').eq('id', user_id).maybeSingle();
-          if (a.client_id || (a.plan_id && a.plan_id !== 'starter')) throw new Error('This tool manages only the AlphaClone Starter platform subscription');
+          if (a.client_id || (a.plan_id && !['starter', 'pro', 'enterprise'].includes(a.plan_id))) throw new Error('This tool manages AlphaClone platform subscriptions');
           const { createPlatformStarterCheckout } = await import('@/lib/stripePlatformCheckout');
-          const session = await createPlatformStarterCheckout({ tenantId: tenant_id, userId: user_id,
+          const session = await createPlatformStarterCheckout({ plan: a.plan_id || 'starter', tenantId: tenant_id, userId: user_id,
             email: profile?.email, origin: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').origin,
             successUrl: a.success_url, cancelUrl: a.cancel_url });
           result = { content: [{ type: 'text', text: JSON.stringify({ checkoutUrl: session.url, type: 'platform_subscription' }) }] };
