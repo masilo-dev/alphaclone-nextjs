@@ -1,3 +1,4 @@
+import '@/styles/product-system.css';
 import '@/styles/alphaclone-os-v3.css';
 import '@/styles/alphaclone-os-v3-pwa.css';
 import '@/styles/apple-fluid-system.css';

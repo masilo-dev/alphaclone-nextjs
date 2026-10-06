@@ -113,7 +113,7 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
           className="w-full flex items-center gap-2.5 px-3 py-2.5 type-caption text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] transition-colors"
         >
           <Sparkles className="w-4 h-4 text-teal-500 dark:text-teal-400" />
-          {t('Platform tour')}
+          {t('Help · Product Tour')}
         </button>
 
         <button

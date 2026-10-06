@@ -56,15 +56,13 @@ describe('Light Mode / Dark Mode Systems & Tour Branding Integrity', () => {
     assert.match(tour, /\[data-tour="os-home"\]/);
   });
 
-  it('PlatformExecutionWelcome prevents dual-tour conflicts by yielding when tour is active', () => {
-    assert.match(welcomeBanner, /document\.documentElement\.getAttribute\('data-product-tour-active'\) === 'true'/);
-    assert.match(welcomeBanner, /alphaclone:walkthrough-state-changed/);
-    assert.match(welcomeBanner, /dismiss\(\);\s*requestPlatformTour\(\);/, 'clicking tour button in banner must dismiss banner');
-    assert.doesNotMatch(welcomeBanner, /#356AF4/i, 'banner must use brand tokens instead of hardcoded blue');
+  it('retired module welcome adapter renders no competing guidance surface', () => {
+    assert.match(welcomeBanner, /function PlatformExecutionWelcome[\s\S]*?return null;/);
+    assert.match(welcomeBanner, /alphaclone:start-product-tour/);
   });
 
-  it('resolveOnboardingGate suppresses welcome banner if walkthrough is completed or dismissed', () => {
-    assert.match(onboardingGate, /tourRecord\.state === 'completed' \|\| tourRecord\.state === 'dismissed'/);
+  it('resolveOnboardingGate retires proactive welcome banners for every account', () => {
+    assert.match(onboardingGate, /function canShowPlatformWelcomeBanner[\s\S]*?return false;/);
   });
 
   it('ThemeToggle uses semantic design tokens and brand teal instead of dark slate blocks', () => {

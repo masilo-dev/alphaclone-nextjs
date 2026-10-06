@@ -1,0 +1,106 @@
+/* Product-only finishing layer. No public-page selectors or root overrides. */
+.ac-product-system {
+  --type-page-title-size: 1.375rem;
+  --type-section-title-size: 1rem;
+  --ac-product-gap: 1rem;
+  --ac-product-control-height: 2.75rem;
+  color: var(--ws-text-primary);
+}
+.ac-product-system .ac-untitled-page__header,
+.ac-product-system .ac-workspace-toolbar { gap: .75rem; }
+.ac-product-system .ac-workspace-sidebar svg { flex-shrink: 0; }
+.ac-product-system .ac-workspace-sidebar [aria-current="page"] {
+  color: var(--ws-text-primary);
+  background: var(--color-bg-active);
+}
+.ac-product-system :focus-visible {
+  outline: 2px solid var(--color-border-brand, var(--brand-teal));
+  outline-offset: 2px;
+}
+.ac-product-system .ac-client-portal-root nav { overscroll-behavior: contain; }
+.ac-product-system .ac-client-portal-root nav[aria-label="Mobile navigation"] {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (max-width: 767px) {
+  .ac-product-system { --type-page-title-size: 1.125rem; --ac-product-gap: .75rem; }
+  .ac-product-system input:not([type="checkbox"]):not([type="radio"]),
+  .ac-product-system select,
+  .ac-product-system textarea { font-size: 1rem; } /* Prevent iOS form zoom. */
+  .ac-product-system .ac-untitled-page__header { gap: .5rem; }
+  .ac-product-system .ac-untitled-page__header > div:last-child { max-width: 100%; }
+}
+/* A light authentication island must stay readable when html has dark mode. */
+.ac-auth-root.light {
+  --background-app: #f6f7f9;
+  --surface-primary: #fff;
+  --surface-secondary: #f6f7f9;
+  --surface-hover: #eef0f4;
+  --text-primary: #212446;
+  --text-secondary: #525866;
+  --text-muted: #626977;
+  --text-inverse: #fff;
+  --border-default: #d5d9e0;
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-muted);
+  --color-text-placeholder: var(--text-muted);
+  --color-bg-primary: var(--surface-primary);
+  --color-border-primary: var(--border-default);
+  --ws-text-primary: var(--text-primary);
+  --ws-text-secondary: var(--text-secondary);
+  --ws-text-tertiary: var(--text-muted);
+  --ws-text-muted: var(--text-muted);
+  --ws-surface-primary: var(--surface-primary);
+  --ws-surface-secondary: var(--surface-secondary);
+  --ws-panel: var(--surface-primary);
+  --ws-canvas: var(--background-app);
+  --ws-border: var(--border-default);
+  --ws-hover: var(--surface-hover);
+  color: var(--text-primary);
+  background: var(--background-app);
+  color-scheme: light;
+}
+.ac-auth-root.light .ac-auth-canvas {
+  background: var(--background-app);
+  color: var(--text-primary);
+}
+.ac-auth-root.light .ac-auth-card {
+  background: var(--surface-primary);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-md);
+}
+.ac-auth-root.light input:not([type="checkbox"]):not([type="radio"]),
+.ac-auth-root.light textarea, .ac-auth-root.light select {
+  min-height: 2.75rem;
+  font-size: 1rem;
+  background: var(--surface-primary);
+  color: var(--text-primary);
+}
+.ac-auth-root.light input::placeholder { color: var(--text-muted); }
+.ac-auth-root.light :focus-visible {
+  outline: 2px solid var(--color-brand-700);
+  outline-offset: 2px;
+}
+@media (max-width: 430px) {
+  .ac-auth-root.light .ac-auth-card { padding: 1.25rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ac-product-system *, .ac-auth-root.light * {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+.ac-auth-root.light button[type="submit"] {
+  background-color: var(--brand-navy, #212446);
+  color: #fff;
+}
+.ac-auth-root.light button[type="submit"]:hover:not(:disabled) { filter: brightness(1.15); }
+.ac-product-system [data-tour="business-setup-checklist"] { margin-bottom: .75rem; }
+.ac-product-system [data-ac-page-header] h1 {
+  font-size: var(--type-page-title-size);
+  font-weight: 600;
+  line-height: 1.4;
+}

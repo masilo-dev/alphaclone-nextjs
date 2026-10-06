@@ -156,12 +156,10 @@ import AlphaCloneContractModal from "./contracts/AlphaCloneContractModal";
 import PwaSettingsScreen from "./pwa/PwaSettingsScreen";
 import OnboardingPipelines from "./dashboard/OnboardingPipelines";
 import PortfolioShowcase from "./dashboard/PortfolioShowcase";
-import WelcomeModal from "./dashboard/WelcomeModal";
 import OnboardingFlow from "./onboarding/OnboardingFlow";
 import CreateInvoiceModal from "./dashboard/CreateInvoiceModal";
 import ProductTour from "./onboarding/ProductTour";
 import {
-  canAutoStartWalkthrough,
   markAutoStartEvaluated,
   setWalkthroughState,
 } from "@/lib/onboarding/walkthroughService";
@@ -617,7 +615,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [totalClientCount, setTotalClientCount] = useState<number>(0);
 
   // Welcome Modal (show only once per user)
-  const [welcomeOpen, setWelcomeOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined" || !user?.id) return;
@@ -635,32 +632,15 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       if (cancelled) return;
 
-      if (!gate.welcomeSeen && !gate.establishedWorkspace) {
-        setWelcomeOpen(true);
-        setShowOnboarding(false);
-        return;
-      }
+      setShowOnboarding(gate.firstRunEligible);
 
-      if (!gate.onboardingCompleted) {
-        setShowOnboarding(true);
-        return;
-      }
-
-      // Only auto-start once per browser session for eligible users
-      if (
-        (location === "/dashboard" || location === "/dashboard/business") &&
-        canAutoStartWalkthrough(user.id, gate.establishedWorkspace)
-      ) {
-        markAutoStartEvaluated(user.id);
-        window.setTimeout(() => setShowProductTour(true), 1500);
-      }
     };
 
     resolveGates();
     return () => {
       cancelled = true;
     };
-  }, [user.id, currentTenant?.id, location]);
+  }, [user.id, currentTenant?.id]);
 
   const [showProductTour, setShowProductTour] = useState(false);
 
@@ -689,6 +669,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   // restarts from step 1 even if a previous run is mid-way or got stuck open.
   const [tourRunId, setTourRunId] = useState(0);
   const requestProductTour = useCallback(() => {
+    setShowOnboarding(false);
     if (activeTab !== "/dashboard" && activeTab !== "overview" && activeTab !== "dashboard") {
       setActiveTab("/dashboard");
       window.setTimeout(() => {
@@ -2389,27 +2370,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       <SkipToMainContent />
       <ConnectionStatus />
 
-      <WelcomeModal
-        isOpen={welcomeOpen}
-        onClose={() => {
-          if (typeof window !== "undefined") {
-            localStorage.setItem(`welcome_seen_${user.id}`, "true");
-            localStorage.setItem(`business_welcome_seen_${user.id}`, "1");
-            window.dispatchEvent(new CustomEvent("alphaclone:onboarding-updated"));
-          }
-          setWelcomeOpen(false);
-          if (
-            typeof window !== "undefined" &&
-            localStorage.getItem(`onboarding_completed_${user.id}`) !== "true"
-          ) {
-            setShowOnboarding(true);
-            return;
-          }
-          setShowProductTour(true);
-        }}
-        userName={user.name}
-      />
-
       {showOnboarding && (
         <OnboardingFlow
           user={user}
@@ -2423,7 +2383,6 @@ const Dashboard: React.FC<DashboardProps> = ({
               navigateToTab(nextPath);
               return;
             }
-            setShowProductTour(true);
           }}
         />
       )}

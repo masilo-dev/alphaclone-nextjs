@@ -13,7 +13,6 @@ import test from 'node:test';
 const read = (relativePath) => readFileSync(new URL(relativePath, import.meta.url), 'utf8');
 
 const onboarding = read('../../src/components/onboarding/OnboardingFlow.tsx');
-const welcome = read('../../src/components/dashboard/business/BusinessWelcomeModal.tsx');
 const dashboard = read('../../src/components/dashboard/business/BusinessDashboard.tsx');
 const home = read('../../src/components/dashboard/business/BusinessHome.tsx');
 const guide = read('../../src/components/pages/PlatformGuide.tsx');
@@ -60,10 +59,8 @@ test('onboarding is durably saved before it is locally cached or routed', () => 
 });
 
 test('welcome and dashboard setup avoid a second competing first-use checklist', () => {
-  assert.match(welcome, /Choose my first goal/);
-  assert.match(welcome, /You do not need to set up everything today/);
   assert.match(home, /const \[onboardingComplete, setOnboardingComplete\]/);
-  assert.match(home, /const showSetup = !onboardingComplete/);
+  assert.match(home, /const showSetup = onboardingComplete/);
   assert.match(home, /alphaclone:onboarding-updated/);
 });
 

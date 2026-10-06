@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     LogOut, ChevronDown, ChevronRight, ShieldAlert, Activity, Loader2,
-    Sun, Moon, X, Sparkles, PanelLeftClose, PanelLeftOpen
+    Sun, Moon, X, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import Image from 'next/image';
 import { LOGO_URL } from '../../constants';
@@ -49,7 +49,6 @@ const Sidebar = React.memo<SidebarProps>(({
     forceHidden = false,
     onNavigate,
     activeBgTasksCount = 0,
-    onStartTour,
 }) => {
     const router = useRouter();
     const { t } = useLanguage();
@@ -398,28 +397,6 @@ const Sidebar = React.memo<SidebarProps>(({
                             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                         </button>
                     )}
-
-                    {onStartTour && sidebarOpen ? (
-                        <button
-                            type="button"
-                            onClick={onStartTour}
-                            className="mb-2 flex w-full items-center gap-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2 type-caption font-semibold text-[var(--ws-text-secondary)] transition hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]"
-                        >
-                            <Sparkles className="h-3.5 w-3.5" />
-                            {t('Platform tour')}
-                        </button>
-                    ) : null}
-
-                    {onStartTour && !sidebarOpen ? (
-                        <button
-                            type="button"
-                            onClick={onStartTour}
-                            title={t('Platform tour')}
-                            className="mb-2 flex w-full items-center justify-center rounded-lg py-2 text-[var(--brand-blue-400)] transition hover:bg-[var(--ws-hover)]"
-                        >
-                            <Sparkles className="h-4 w-4" />
-                        </button>
-                    ) : null}
 
                     {/* User row — identity only; account actions live in header menu */}
                     <div className={`flex ${sidebarOpen ? 'items-center gap-3' : 'flex-col items-center gap-2'}`}>

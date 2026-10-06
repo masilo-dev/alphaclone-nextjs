@@ -32,15 +32,15 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
   };
 
   return (
-    <main className="min-h-screen bg-[var(--ws-canvas)] px-4 py-20 text-white">
-      <section className="mx-auto max-w-lg rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-8 text-center shadow-2xl">
+    <main className="min-h-screen bg-[var(--ws-canvas)] px-4 py-12 text-[var(--ws-text-primary)]">
+      <section className="mx-auto max-w-lg rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-5 sm:p-6 text-center shadow-md">
         <h1 className="text-2xl font-bold">Workspace invitation</h1>
         <p className="mt-3 text-[var(--ws-text-muted)]">Accept this invitation using the same email address that received it.</p>
-        {error && <p className="mt-5 rounded-lg border border-red-500/30 bg-[var(--error-500)]/10 p-3 type-card-description text-[var(--error-text,var(--error-500))]">{error}</p>}
+        {error && <p role="alert" className="mt-5 rounded-lg border border-red-500/30 bg-[var(--error-500)]/10 p-3 type-card-description text-[var(--error-text,var(--error-500))]">{error}</p>}
         {!loading && !user ? (
-          <Link href={`/auth/login?next=${encodeURIComponent(`/invite/${token}`)}`} className="mt-6 inline-flex rounded-lg bg-teal-500 px-5 py-3 font-semibold text-slate-950">Sign in to accept</Link>
+          <Link href={`/auth/login?next=${encodeURIComponent(`/invite/${token}`)}`} className="mt-6 inline-flex rounded-lg bg-[var(--brand-navy)] px-5 py-3 font-semibold text-white">Sign in to accept</Link>
         ) : (
-          <button onClick={accept} disabled={loading || submitting} className="mt-6 rounded-lg bg-teal-500 px-5 py-3 font-semibold text-slate-950 disabled:opacity-50">
+          <button onClick={accept} disabled={loading || submitting} className="mt-6 rounded-lg bg-[var(--brand-navy)] px-5 py-3 font-semibold text-white disabled:opacity-50">
             {submitting ? 'Accepting…' : 'Accept invitation'}
           </button>
         )}

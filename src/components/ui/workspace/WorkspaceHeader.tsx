@@ -41,12 +41,13 @@ export function WorkspaceHeader({
   helpContent,
   helpTitle = 'How this works',
   className,
-  density = 'comfortable',
+  density = 'compact',
 }: WorkspaceHeaderProps) {
   const densityStyles = WORKSPACE_FOCUS.density[density];
 
   return (
     <header
+      data-ac-page-header
       className={cn(
         'w-full flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)]',
         densityStyles.header,
@@ -84,7 +85,7 @@ export function WorkspaceHeader({
       {(primaryAction || secondaryActions) ? (
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           {secondaryActions ? (
-            <div className="flex items-center gap-1.5">{secondaryActions}</div>
+            <div className="flex flex-wrap items-center gap-1.5">{secondaryActions}</div>
           ) : null}
           {primaryAction ? (
             <div className="shrink-0">{primaryAction}</div>

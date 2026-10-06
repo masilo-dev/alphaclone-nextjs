@@ -100,4 +100,27 @@ describe('Walkthrough Service State Machine', () => {
     setWalkthroughState(testUser, 'dismissed');
     assert.equal(canAutoStartWalkthrough(testUser, false), false);
   });
+  it('preserves boolean-string legacy completion and dismissal on migration', () => {
+    localStorage.setItem(`tour_completed_${testUser}`, 'true');
+    assert.equal(getWalkthroughRecord(testUser).state, 'completed');
+    localStorage.clear();
+    localStorage.setItem(`tour_dismissed_${testUser}`, 'true');
+    assert.equal(getWalkthroughRecord(testUser).state, 'dismissed');
+  });
+
+  it('hydrating durable completion does not write back to the profile', () => {
+    const previousFetch = globalThis.fetch;
+    let writes = 0;
+    window.location = { origin: 'https://example.test' };
+    globalThis.fetch = () => { writes++; return Promise.resolve({ ok: true }); };
+    try {
+      setWalkthroughState(testUser, 'completed', undefined, { persistProfile: false });
+      assert.equal(getWalkthroughRecord(testUser).state, 'completed');
+      assert.equal(writes, 0);
+    } finally {
+      globalThis.fetch = previousFetch;
+      delete window.location;
+    }
+  });
+
 });

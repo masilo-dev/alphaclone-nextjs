@@ -1,5 +1,6 @@
 'use client';
 
+import { Input } from '@/components/ui/input';
 import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -151,7 +152,7 @@ function PortalLoginContent() {
                                 <label htmlFor="email" className="block type-label font-medium text-[color:var(--ws-text-primary)] mb-1.5">
                                     Email address
                                 </label>
-                                <input
+                                <Input
                                     id="email"
                                     type="email"
                                     autoComplete="email"
@@ -177,7 +178,7 @@ function PortalLoginContent() {
                                     </Link>
                                 </div>
                                 <div className="relative">
-                                    <input
+                                    <Input
                                         id="password"
                                         type={showPassword ? 'text' : 'password'}
                                         autoComplete="current-password"

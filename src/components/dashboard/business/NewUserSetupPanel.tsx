@@ -1,155 +1,80 @@
 'use client';
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { UserPlus, FileText, Mail, ChevronRight, X, CheckCircle2 } from 'lucide-react';
-import { WORKSPACE } from '@/constants/design';
-import { cn } from '@/lib/utils';
+import React, { useEffect, useId, useState } from 'react';
+import Link from 'next/link';
+import { CheckCircle2, ChevronDown, ChevronUp, X } from 'lucide-react';
 import type { User } from '@/types';
-
-const SETUP_STEPS = [
-  {
-    id: 'client',
-    step: '1',
-    title: 'Add your first client',
-    description: 'Put a contact in CRM so deals, invoices, and mail have someone to attach to.',
-    href: '/dashboard/crm/workspace?quickAdd=true',
-    icon: UserPlus,
-  },
-  {
-    id: 'invoice',
-    step: '2',
-    title: 'Send your first invoice',
-    description: 'Create a bill in under a minute — templates and tracking are already set up.',
-    href: '/dashboard/business/billing/manage?create=true',
-    icon: FileText,
-  },
-  {
-    id: 'campaign',
-    step: '3',
-    title: 'Send a promotion or update',
-    description: 'Create a reviewable email campaign for customers who have opted in.',
-    href: '/dashboard/business/campaigns',
-    icon: Mail,
-  },
-] as const;
+import { cn } from '@/lib/utils';
 
 interface NewUserSetupPanelProps {
   user: User;
+  tenantId: string;
+  stats: Record<string, unknown> | null;
   onDismiss?: () => void;
   className?: string;
 }
 
-export function NewUserSetupPanel({ user, onDismiss, className }: NewUserSetupPanelProps) {
-  const router = useRouter();
-  const firstName = (user.name || user.email || 'there').split(' ')[0];
-
+/** One passive checklist; observed completion is cached per user AND workspace. */
+export function NewUserSetupPanel({ user, tenantId, stats, onDismiss, className }: NewUserSetupPanelProps) {
+  const key = `alphaclone:setup:v1:${tenantId}:${user.id}`;
+  const regionId = useId();
+  const [collapsed, setCollapsed] = useState(false);
+  const [completed, setCompleted] = useState<string[]>([]);
+  const [tourActive, setTourActive] = useState(false);
+  const steps = [
+    { id: 'profile', title: 'Complete business profile', href: '/dashboard/settings', done: Boolean(user.company?.trim()) },
+    { id: 'client', title: 'Add your first client', href: '/dashboard/crm/workspace?quickAdd=true', done: Number(stats?.clientCount) > 0 },
+    { id: 'project', title: 'Create your first project', href: '/dashboard/business/projects/manage?create=true', done: Number(stats?.activeProjects) > 0 },
+  ];
+  const observed = steps.filter(step => step.done).map(step => step.id).join(',');
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(key) ?? '{}');
+      const previous = Array.isArray(saved.completed) ? saved.completed.filter((id: unknown) => typeof id === 'string') : [];
+      const next = [...new Set<string>([...previous, ...observed.split(',').filter(Boolean)])];
+      setCompleted(next);
+      setCollapsed(saved.collapsed === true);
+      localStorage.setItem(key, JSON.stringify({ completed: next, collapsed: saved.collapsed === true }));
+    } catch { /* Checklist remains usable when browser storage is unavailable. */ }
+  }, [key, observed]);
+  useEffect(() => {
+    const sync = () => setTourActive(document.documentElement.dataset.productTourActive === 'true');
+    const observer = new MutationObserver(sync);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-product-tour-active'] });
+    sync();
+    return () => observer.disconnect();
+  }, []);
+  if (tourActive || completed.length === steps.length) return null;
   return (
-    <div
-      className={cn(WORKSPACE.panel.base, 'p-4 md:p-5 border-[var(--ac-accent)]/25', className)}
-      data-tour="business-setup-checklist"
-    >
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div>
-          <p className="type-caption font-semibold uppercase tracking-label text-[var(--ac-accent)]">
-            Start here
-          </p>
-          <h2 className="text-lg font-semibold text-[var(--ws-text-primary)] tracking-tight mt-1">
-            Welcome, {firstName} — choose one first win
-          </h2>
-          <p className="type-card-description text-[var(--ws-text-secondary)] mt-1 max-w-xl">
-            You do not need to set up everything today. Pick the action that will help your business most right now.
-          </p>
-          <p className="mt-3 type-caption font-semibold text-[var(--ws-text-secondary)]" aria-label="Account created; choose your first useful action">
-            Account created · Your first useful action is next
-          </p>
-        </div>
-        {onDismiss ? (
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="p-1.5 rounded-md text-[var(--ws-text-tertiary)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]"
-            aria-label="Dismiss setup guide"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        ) : null}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {SETUP_STEPS.map((item) => {
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => router.push(item.href)}
-              className="group text-left p-4 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] hover:border-[var(--ac-accent)]/40 hover:bg-[var(--ac-accent-muted)] transition-colors"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-tertiary)]">
-                  Step {item.step}
-                </span>
-                <Icon className="w-4 h-4 text-[var(--ac-accent)] ml-auto" />
-              </div>
-              <p className="type-card-description font-semibold text-[var(--ws-text-primary)] group-hover:text-[var(--ac-accent-hover)]">
-                {item.title}
-              </p>
-              <p className="type-card-description text-[var(--ws-text-secondary)] mt-1 leading-relaxed">
-                {item.description}
-              </p>
-              <span className="inline-flex items-center gap-1 mt-3 type-ui font-semibold text-[var(--ac-accent)]">
-                Open
-                <ChevronRight className="w-3.5 h-3.5" />
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[var(--ws-border)]">
-        <button
-          type="button"
-          onClick={() => router.push('/dashboard/help')}
-          className="ac-workspace-action-btn type-ui"
-        >
-          Platform guide
+    <section className={cn('rounded-[var(--ws-radius-lg)] border border-[var(--ws-border)] bg-[var(--ws-panel)] p-3', className)} data-tour="business-setup-checklist" aria-label="Getting started">
+      <div className="flex items-center justify-between gap-2">
+        <button type="button" aria-expanded={!collapsed} aria-controls={regionId} className="flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--ws-text-primary)]" onClick={() => {
+          const next = !collapsed;
+          setCollapsed(next);
+          try { localStorage.setItem(key, JSON.stringify({ completed, collapsed: next })); } catch { /* Optional cache. */ }
+        }}>
+          Getting started <span className="text-xs font-normal text-[var(--ws-text-secondary)]">{completed.length}/{steps.length}</span>
+          {collapsed ? <ChevronDown className="h-4 w-4" aria-hidden /> : <ChevronUp className="h-4 w-4" aria-hidden />}
         </button>
-        <button
-          type="button"
-          onClick={() => router.push('/guide')}
-          className="ac-workspace-action-btn type-ui"
-        >
-          Setup walkthrough
-        </button>
-        <span className="type-ui text-[var(--ws-text-tertiary)] inline-flex items-center gap-1">
-          <CheckCircle2 className="w-3.5 h-3.5" />
-          Full access active
-        </span>
+        {onDismiss ? <button type="button" onClick={onDismiss} aria-label="Dismiss getting started" className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)]"><X className="h-4 w-4" aria-hidden /></button> : null}
       </div>
-    </div>
+      {!collapsed ? <ul id={regionId} className="divide-y divide-[var(--ws-border)]">
+        {steps.map(step => completed.includes(step.id) ? null : <li key={step.id}>
+          <Link href={step.href} className="flex min-h-11 items-center gap-2 rounded-md py-2 text-sm text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]"><CheckCircle2 className="h-4 w-4 text-[var(--ws-text-tertiary)]" aria-hidden />{step.title}</Link>
+        </li>)}
+      </ul> : null}
+    </section>
   );
 }
 
 export function isSetupChecklistDismissed(userId: string): boolean {
   if (typeof window === 'undefined') return true;
-  return localStorage.getItem(`setup_checklist_dismissed_${userId}`) === '1';
+  try {
+    return localStorage.getItem(`setup_checklist_dismissed_${userId}`) === '1' ||
+      localStorage.getItem(`onboarding_goal_dismissed_${userId}`) === 'true';
+  } catch { return true; }
 }
-
 export function dismissSetupChecklist(userId: string): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(`setup_checklist_dismissed_${userId}`, '1');
-}
-
-export function isNewWorkspaceStats(stats: Record<string, unknown> | null | undefined): boolean {
-  if (!stats) return false;
-  const values = [
-    stats.totalLeads,
-    stats.clientCount,
-    stats.activeProjects,
-    stats.totalTasks,
-    stats.unreadMessages,
-    stats.activeCampaigns,
-  ];
-  return values.every((value) => Number(value || 0) === 0);
+  try { localStorage.setItem(`setup_checklist_dismissed_${userId}`, '1'); } catch { /* Optional cache. */ }
 }
