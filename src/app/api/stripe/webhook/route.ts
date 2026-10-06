@@ -472,7 +472,10 @@ async function processConnectEvent(admin: any, event: any, tenantId: string) {
     }
     if (event.type === 'charge.refunded' || event.type.startsWith('charge.dispute.')) {
         const paymentIntentId = typeof object.payment_intent === 'string' ? object.payment_intent : object.payment_intent?.id;
-        if (!paymentIntentId) throw new Error('Refund/dispute payment mapping missing');
+        if (!paymentIntentId) return; // Charges outside this integration are not native invoices.
+        const intent = await stripe.paymentIntents.retrieve(paymentIntentId, { stripeAccount: event.account });
+        if (intent.metadata.type !== 'business_invoice') return;
+        if (intent.metadata.tenantId !== tenantId) throw new Error('Refund/dispute tenant ownership mismatch');
         const { data: payment, error } = await admin.from('stripe_payments').select('id,metadata')
             .eq('stripe_payment_intent_id', paymentIntentId).eq('tenant_id', tenantId).single();
         if (error || payment?.metadata?.stripe_account_id !== event.account) throw error || new Error('Refund/dispute account mapping mismatch');

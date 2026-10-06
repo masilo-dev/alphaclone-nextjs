@@ -137,7 +137,8 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
+    if (!dev) config.cache = false;
     config.parallelism = 1;
     // Critical: Increase timeout for long-running builds/bundling to prevent stalls
     config.output.chunkLoadTimeout = 180000;
@@ -311,6 +312,7 @@ export default withSentryConfig(workflowConfig as any, {
   // Full client upload balloons webpack memory during CI builds.
   widenClientFileUpload: false,
   sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
     deleteSourcemapsAfterUpload: true,
   },
   tunnelRoute: "/monitoring",

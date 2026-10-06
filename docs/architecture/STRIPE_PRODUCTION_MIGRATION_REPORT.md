@@ -134,3 +134,9 @@ User confirms existing tax registration, but registered jurisdictions and effect
 Build investigation: 3 GiB single-worker build exhausted V8 heap. Current retry uses 4 GiB, webpack parallelism 1, Next cpus 1 and RAYON_NUM_THREADS 1. Build PASS remains unverified. Prior statements about no migrations/reservation/refund balance implementation describe earlier snapshots and are superseded by this section. PR remains draft; no production deployment.
 
 Applied follow-up migration stripe_refund_cumulative_tax_rounding: incremental tax reversals use cumulative differences. A real PostgreSQL rollback test of 300 small refunds reversed exactly the original tax without penny drift. Signed webhook fixtures also cover partial/full refund events, replay and retrieval of current connected-account charge state instead of stale payload totals.
+
+Build follow-up: the 4 GiB single-thread attempt also exhausted V8 heap. A new attempt disables production webpack cache and skips Sentry source-map generation when no SENTRY_AUTH_TOKEN is configured. Final build result is pending.
+
+Tax classification mutation was rejected by automatic approval review: business-use SaaS classification was not explicitly user-confirmed. No tax code was changed. Proposed category is txcd_10103001, subject to confirmation. Jurisdictions/effective dates still missing. Each product's default_price was independently set to its already approved live monthly price.
+
+Refund/dispute handlers now read the scoped PaymentIntent metadata and ignore transactions outside the native invoice integration, leaving unrelated business payments untouched. Latest 14 signed/provider-fixture tests pass and changed files lint without errors.
