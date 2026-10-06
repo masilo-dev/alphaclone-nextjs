@@ -40,5 +40,10 @@ export async function reconcileInvoiceStripePayment(admin: SupabaseClient, tenan
     paid_at: new Date().toISOString(), metadata: { stripe_account_id: accountId, invoice_id: invoiceId },
   }, { onConflict: 'stripe_payment_intent_id', ignoreDuplicates: true });
   if (ledgerError) throw ledgerError;
+  if (payment.metadata.paymentAttemptId) {
+    const { error: attemptError } = await admin.from('stripe_invoice_attempts').update({ settled_payment_intent: payment.id })
+      .eq('invoice_id', invoiceId).eq('tenant_id', tenantId).eq('id', payment.metadata.paymentAttemptId);
+    if (attemptError) throw attemptError;
+  }
   return { invoice: result, payment };
 }

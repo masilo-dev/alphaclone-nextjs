@@ -7,8 +7,8 @@
   },
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "rm -rf app && cross-env NEXT_TELEMETRY_DISABLED=1 SERWIST_SUPPRESS_TURBOPACK_WARNING=1 NODE_OPTIONS=--max-old-space-size=12288 next build --webpack",
-    "build:prod": "rm -rf app && cross-env NODE_OPTIONS=--max-old-space-size=12288 next build --webpack",
+    "build": "rm -rf app && cross-env NEXT_TELEMETRY_DISABLED=1 SERWIST_SUPPRESS_TURBOPACK_WARNING=1 RAYON_NUM_THREADS=1 NODE_OPTIONS=--max-old-space-size=4096 next build --webpack",
+    "build:prod": "rm -rf app && cross-env RAYON_NUM_THREADS=1 NODE_OPTIONS=--max-old-space-size=4096 next build --webpack",
     "start": "node scripts/validate-production-env.mjs --warn-only && NODE_OPTIONS=\"${NODE_OPTIONS:---max-old-space-size=4096}\" next start -H 0.0.0.0 -p ${PORT:-3000}",
     "start:worker": "tsx src/worker/index.ts",
     "lint": "cross-env NODE_OPTIONS=--max-old-space-size=4096 eslint",

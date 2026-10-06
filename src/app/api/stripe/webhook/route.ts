@@ -1,3 +1,4 @@
+import { stripeAmountToInvoice } from '@/lib/stripeInvoiceCurrency';
 import { verifyStripePlatformIdentity } from '@/lib/stripePlatformIdentity';
 import { redactStripeEvent } from '@/lib/stripePaymentPolicy';
 import { readConnectedAccount } from '@/lib/stripeConnectAccount';
@@ -475,6 +476,19 @@ async function processConnectEvent(admin: any, event: any, tenantId: string) {
         const { data: payment, error } = await admin.from('stripe_payments').select('id,metadata')
             .eq('stripe_payment_intent_id', paymentIntentId).eq('tenant_id', tenantId).single();
         if (error || payment?.metadata?.stripe_account_id !== event.account) throw error || new Error('Refund/dispute account mapping mismatch');
+        if (event.type === 'charge.refunded') {
+            // Retrieve current provider state: delayed events must not overwrite a newer refund total.
+            const charge = await stripe.charges.retrieve(object.id, { stripeAccount: event.account });
+            const chargeIntent = typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id;
+            if (chargeIntent !== paymentIntentId) throw new Error('Refund charge ownership mismatch');
+            const { error: refundError } = await admin.rpc('reconcile_stripe_invoice_refund', {
+                p_tenant_id: tenantId, p_invoice_id: payment.metadata.invoice_id,
+                p_payment_intent_id: paymentIntentId, p_account_id: event.account,
+                p_refunded_amount: charge.amount_refunded ? stripeAmountToInvoice(charge.amount_refunded, charge.currency) : 0,
+            });
+            if (refundError) throw refundError;
+            Object.assign(object, { amount_refunded: charge.amount_refunded, amount: charge.amount, refunds: charge.refunds });
+        }
         const metadata = { ...payment.metadata, ...(event.type === 'charge.refunded'
             ? { refunds: object.refunds?.data || [], refund_status: object.amount_refunded === object.amount ? 'full' : 'partial' }
             : { dispute_id: object.id, dispute_status: object.status, dispute_amount: object.amount }) };

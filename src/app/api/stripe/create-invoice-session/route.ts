@@ -1,3 +1,4 @@
+import { withInvoicePaymentAttempt } from '@/lib/stripeInvoiceAttempt';
 import { invoiceAmountToStripe } from '@/lib/stripeInvoiceCurrency';
 import { requireInvoiceStripeAccount } from '@/lib/stripeInvoiceExecution';
 import { invoiceOutstanding } from '@/lib/stripePaymentPolicy';
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
         if (invoice.status === 'paid') {
             return NextResponse.json({ error: 'Invoice already paid' }, { status: 409 });
         }
-        if (!['sent', 'viewed', 'overdue'].includes(invoice.status)) {
+        if (!['sent', 'viewed', 'overdue', 'partially_paid'].includes(invoice.status)) {
             return NextResponse.json({ error: 'Invoice is not payable' }, { status: 409 });
         }
 
@@ -86,10 +87,7 @@ export async function POST(req: Request) {
 
         // Create the Checkout Session directly on the tenant's connected Stripe
         // account. Tenant customer revenue must never fall back to AlphaClone.
-        const session = await stripe.checkout.sessions.create(
-            sessionOptions,
-            { stripeAccount: stripeConnectId, idempotencyKey: `invoice-checkout:${invoice.id}:${invoiceOutstanding(invoice)}:${Math.floor(Date.now() / 1800000)}` }
-        );
+        const session = await withInvoicePaymentAttempt(supabaseAdmin, {tenantId: invoice.tenant_id, invoiceId: invoice.id, accountId: stripeConnectId, kind: 'checkout', amount: sessionOptions.line_items[0].price_data.unit_amount, currency: sessionOptions.line_items[0].price_data.currency}, options => stripe.checkout.sessions.create({...sessionOptions, metadata: {...sessionOptions.metadata, paymentAttemptId: options.idempotencyKey?.replace('invoice-attempt:', '')}, payment_intent_data: {...sessionOptions.payment_intent_data, metadata: {...sessionOptions.payment_intent_data.metadata, paymentAttemptId: options.idempotencyKey?.replace('invoice-attempt:', '')}}}, options));
 
         return NextResponse.json({ url: session.url });
     } catch (err: any) {

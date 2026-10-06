@@ -79,6 +79,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     scrollRestoration: true,
+    cpus: 1,
     webpackMemoryOptimizations: true,
     // Keep Webpack compilation isolated from the main Next.js process. This
     // materially lowers peak memory for Railway's containerized builds.
@@ -137,6 +138,7 @@ const nextConfig: NextConfig = {
     ];
   },
   webpack: (config, { isServer }) => {
+    config.parallelism = 1;
     // Critical: Increase timeout for long-running builds/bundling to prevent stalls
     config.output.chunkLoadTimeout = 180000;
 

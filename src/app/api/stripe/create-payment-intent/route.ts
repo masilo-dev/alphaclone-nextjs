@@ -1,3 +1,4 @@
+import { withInvoicePaymentAttempt } from '@/lib/stripeInvoiceAttempt';
 import { invoiceAmountToStripe } from '@/lib/stripeInvoiceCurrency';
 import { requireInvoiceStripeAccount } from '@/lib/stripeInvoiceExecution';
 import { invoiceOutstanding } from '@/lib/stripePaymentPolicy';
@@ -47,10 +48,7 @@ export async function POST(req: Request) {
 
         // Tenant customer payments are direct charges on the tenant's connected
         // Stripe account. AlphaClone does not collect or redistribute these funds.
-        const paymentIntent = await stripe.paymentIntents.create(
-            paymentIntentOptions,
-            { stripeAccount: stripeConnectId, idempotencyKey: `invoice-intent:${invoice.id}:${invoiceAmountToStripe(amount, currency)}:${currency}` }
-        );
+        const paymentIntent = await withInvoicePaymentAttempt(supabaseAdmin, {tenantId, invoiceId, accountId: stripeConnectId, kind: 'intent', amount: paymentIntentOptions.amount, currency}, options => stripe.paymentIntents.create({...paymentIntentOptions, metadata: {...paymentIntentOptions.metadata, paymentAttemptId: options.idempotencyKey?.replace('invoice-attempt:', '')}}, options));
 
         return NextResponse.json({
             clientSecret: paymentIntent.client_secret,

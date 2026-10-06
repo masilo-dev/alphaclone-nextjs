@@ -116,12 +116,15 @@ test('signed Connect checkout and intent events update one invoice receipt; repl
   const originalFetch = globalThis.fetch;
   const originalRetrieve = stripe.paymentIntents.retrieve;
   const originalAccount = stripe.accounts.retrieve;
+  const originalCharge = stripe.charges.retrieve;
+  let providerRefunded = 500; let ledger; const refundRequests = [];
   const events = new Map(); const receipts = new Set(); let writes = 0;
   process.env.SUPABASE_URL = 'https://invoice-fixture.invalid';
   process.env.SUPABASE_SERVICE_ROLE_KEY = `fixture.${Buffer.from(JSON.stringify({role:'service_role'})).toString('base64url')}.fixture`;
   process.env.STRIPE_PLATFORM_ACCOUNT_ID = 'acct_platform_fixture';
   process.env.STRIPE_CONNECT_WEBHOOK_SECRET = 'fixture_connect_signing_only';
   stripe.accounts.retrieve = async () => ({ id: 'acct_platform_fixture' });
+  stripe.charges.retrieve = async (id,options) => { assert.equal(options.stripeAccount,'acct_a');return {id,payment_intent:'pi_fixture',currency:'usd',amount:1500,amount_refunded:providerRefunded,refunds:{data:[]}}; };
   stripe.paymentIntents.retrieve = async (id,options) => {
     assert.equal(options.stripeAccount,'acct_a');
     return { id, ...payment, customer: null };
@@ -141,7 +144,7 @@ test('signed Connect checkout and intent events update one invoice receipt; repl
       const id = uri.searchParams.get('stripe_event_id')?.replace('eq.','');
       const row = events.get(id);
       if(method === 'PATCH') {
-        if(uri.searchParams.has('or') && row?.status === 'processed') return respond([]);
+        if(uri.searchParams.has('or') && row?.status === 'processed') return respond(null);
         if(row) Object.assign(row,body);return respond([]);
       }
       return respond(single ? row : [row]);
@@ -155,7 +158,15 @@ test('signed Connect checkout and intent events update one invoice receipt; repl
       if(!receipts.has(body.p_idempotency_key)) {writes++;receipts.add(body.p_idempotency_key);}
       assert.equal(body.p_amount,15);return respond([invoice]);
     }
-    if(table === 'stripe_payments' || table === 'audit_logs') return respond([]);
+    if(table === 'stripe_payments') {
+      if(method==='POST') ledger={id:'ledger-fixture',...body};
+      if(method==='PATCH') Object.assign(ledger,body);
+      return respond(method==='GET' ? ledger : []);
+    }
+    if(table === 'reconcile_stripe_invoice_refund') {
+      assert.equal(body.p_account_id,'acct_a');assert.equal(body.p_invoice_id,'invoice-a');refundRequests.push(body.p_refunded_amount);return respond(0);
+    }
+    if(table === 'audit_logs') return respond([]);
     throw new Error(`Unexpected fixture request ${method} ${table}`);
   };
   const deliver = async (id,type,object) => {
@@ -169,10 +180,51 @@ test('signed Connect checkout and intent events update one invoice receipt; repl
     assert.equal((await deliver('evt_intent_fixture','payment_intent.succeeded',{id:'pi_fixture',...payment})).status,200);
     assert.equal((await deliver('evt_checkout_fixture','checkout.session.completed',checkout)).status,200);
     assert.equal(writes,1);
+    const charge={id:'ch_fixture',payment_intent:'pi_fixture',amount:1500,amount_refunded:200,currency:'usd',refunds:{data:[]}};
+    assert.equal((await deliver('evt_refund_fixture','charge.refunded',charge)).status,200);
+    assert.equal((await deliver('evt_refund_fixture','charge.refunded',charge)).status,200);
+    assert.deepEqual(refundRequests,[5]); // Provider current state beats the older event's 2 USD.
+    providerRefunded=1500;
+    assert.equal((await deliver('evt_refund_full_fixture','charge.refunded',charge)).status,200);
+    assert.deepEqual(refundRequests,[5,15]);
     assert.equal((await deliver('evt_forged_fixture','checkout.session.completed',{...checkout,metadata:{...payment.metadata,tenantId:'tenant-b'}})).status,500);
     assert.equal(writes,1);
   } finally {
-    globalThis.fetch=originalFetch;stripe.paymentIntents.retrieve=originalRetrieve;stripe.accounts.retrieve=originalAccount;
+    globalThis.fetch=originalFetch;stripe.paymentIntents.retrieve=originalRetrieve;stripe.accounts.retrieve=originalAccount;stripe.charges.retrieve=originalCharge;
     for(const k of envNames) {if(oldEnv[k]===undefined) delete process.env[k];else process.env[k]=oldEnv[k];}
   }
+});
+
+test('durable invoice reservation shares provider idempotency across concurrent creation and rejects cross-surface attempts', async () => {
+ const { withInvoicePaymentAttempt } = await import('../../src/lib/stripeInvoiceAttempt.ts');
+ const attempt={id:'attempt-fixture',kind:'checkout',amount_minor:1500,currency:'usd',stripe_account_id:'acct_a',created_at:new Date().toISOString()};
+ const keys=[]; const objects=new Map();
+ const admin={rpc:async()=>({data:[attempt],error:null}),from(){return {update(){return this;},eq(){return this;},then(resolve){resolve({error:null});}};}};
+ const input={tenantId:'tenant-a',invoiceId:'invoice-a',accountId:'acct_a',kind:'checkout',amount:1500,currency:'usd'};
+ const create=async options=>{assert.equal(options.stripeAccount,'acct_a');keys.push(options.idempotencyKey);if(!objects.has(options.idempotencyKey)) objects.set(options.idempotencyKey,{id:'cs_one',status:'open'});return objects.get(options.idempotencyKey);};
+ const results=await Promise.all(Array.from({length:10},()=>withInvoicePaymentAttempt(admin,input,create)));
+ assert.equal(new Set(results.map(r=>r.id)).size,1);assert.equal(new Set(keys).size,1);
+ await assert.rejects(withInvoicePaymentAttempt(admin,{...input,kind:'intent'},create),/Another payment attempt/);
+ await assert.rejects(withInvoicePaymentAttempt(admin,{...input,accountId:'acct_b'},create),/Another payment attempt/);
+ await assert.rejects(withInvoicePaymentAttempt(admin,{...input,amount:1600},create),/Another payment attempt/);
+ attempt.created_at=new Date(Date.now()-21*3600000).toISOString();
+ await assert.rejects(withInvoicePaymentAttempt(admin,input,create),/provider reconciliation/);
+});
+
+test('onboarding capability checks block unfinished accounts and detect payout readiness independently', async () => {
+ const { stripe } = await import('../../src/lib/stripe.ts');
+ const { readConnectedAccount } = await import('../../src/lib/stripeConnectAccount.ts');
+ const { requireInvoiceStripeAccount } = await import('../../src/lib/stripeInvoiceExecution.ts');
+ const old=process.env.STRIPE_PLATFORM_ACCOUNT_ID;
+ process.env.STRIPE_PLATFORM_ACCOUNT_ID='acct_platform_fixture';
+ const original=stripe.v2.core.accounts.retrieve;
+ let status='pending';let closed=false;
+ stripe.v2.core.accounts.retrieve=async id=>({id,closed,dashboard:'full',configuration:{merchant:{capabilities:{card_payments:{status},stripe_balance:{payouts:{status:'pending'}}}}},requirements:{entries:[{description:'Identity verification'}]}});
+ const admin={from(){return {select(){return this;},eq(){return this;},single:async()=>({data:{stripe_connect_id:'acct_a'},error:null})};}};
+ try {
+  await assert.rejects(requireInvoiceStripeAccount(admin,'tenant-a'),/onboarding incomplete/);
+  status='active';const state=await readConnectedAccount('acct_a');assert.equal(state.chargesEnabled,true);assert.equal(state.payoutsEnabled,false);
+  assert.equal(await requireInvoiceStripeAccount(admin,'tenant-a'),'acct_a');
+  closed=true;await assert.rejects(requireInvoiceStripeAccount(admin,'tenant-a'),/onboarding incomplete/);
+ } finally {stripe.v2.core.accounts.retrieve=original;if(old===undefined)delete process.env.STRIPE_PLATFORM_ACCOUNT_ID;else process.env.STRIPE_PLATFORM_ACCOUNT_ID=old;}
 });

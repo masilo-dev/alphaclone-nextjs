@@ -1,7 +1,7 @@
 import { PLATFORM_MONTHLY_USD, PlatformPlan } from '@/config/platformBilling';
 /** Provider-independent payment checks, shared by HTTP routes and workers. */
 export function invoiceOutstanding(invoice: { total: unknown; amount_paid?: unknown; status: string }) {
-  if (!['sent', 'viewed', 'overdue'].includes(invoice.status)) throw new Error('Invoice is not payable');
+  if (!['sent', 'viewed', 'overdue', 'partially_paid'].includes(invoice.status)) throw new Error('Invoice is not payable');
   const amount = Number(invoice.total) - Number(invoice.amount_paid || 0);
   if (!Number.isFinite(amount) || amount <= 0) throw new Error('Invoice has no outstanding balance');
   return amount;

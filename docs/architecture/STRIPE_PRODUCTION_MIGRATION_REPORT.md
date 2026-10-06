@@ -120,3 +120,17 @@ Live read-only account listing returned zero connected accounts. Thus real onboa
 Additional release gate: invoice checkout and Elements can produce separate charge attempts. The shared receipt key deduplicates the same PaymentIntent; it does not prevent two distinct successful PaymentIntents for one invoice. A persistent per-invoice payment-attempt reservation/cancellation policy and concurrent-charge testing remain required. Refund/dispute ledger updates do not yet reverse native invoice balances. Do not claim universal production readiness.
 
 References: https://docs.stripe.com/connect/direct-charges.md?platform=web&ui=stripe-hosted and https://docs.stripe.com/currencies.
+
+## Reservation, refund and onboarding completion work — 2026-10-06
+
+Applied additive Supabase migrations stripe_invoice_attempt_reservations and stripe_invoice_refund_reconciliation. New service-role-only tables/RPCs reserve one provider attempt per invoice under a native invoice row lock and record cumulative provider-confirmed refunds atomically. Checkout and Elements share reservations; different surfaces, amounts or accounts fail closed. Persisted provider IDs are reused. Only provider-confirmed expired/cancelled attempts may be released; ambiguous creation older than 20 hours is held for reconciliation instead of reusing an expired Stripe idempotency key. Successful payments mark the reservation; refunds release only the matching settled reservation.
+
+Refund handling retrieves the charge on the connected account, then posts only the incremental refund through the database RPC. Native amount_paid, invoice status, canonical refund adjustments/payment status and balanced reversing journal entries update in one transaction. Original payment evidence is retained. No refund API is called and AlphaClone moves no funds.
+
+14 Stripe tests pass, including pending/active/closed onboarding capabilities and concurrent request idempotency. Final TypeScript passes. Changed Stripe files lint with no errors. Real PostgreSQL transactional checks passed for one reservation across Checkout/Elements, account mismatch rejection, partial refunds, replay, stale cumulative totals, full refunds and balanced journal entries. All fixture transactions rolled back.
+
+User confirms existing tax registration, but registered jurisdictions and effective dates were not provided. Stripe Tax registrations still cannot be configured accurately. Connector exposes only the live platform account; no sandbox context or real connected business is available for provider end-to-end testing. Rotated credentials are still required.
+
+Build investigation: 3 GiB single-worker build exhausted V8 heap. Current retry uses 4 GiB, webpack parallelism 1, Next cpus 1 and RAYON_NUM_THREADS 1. Build PASS remains unverified. Prior statements about no migrations/reservation/refund balance implementation describe earlier snapshots and are superseded by this section. PR remains draft; no production deployment.
+
+Applied follow-up migration stripe_refund_cumulative_tax_rounding: incremental tax reversals use cumulative differences. A real PostgreSQL rollback test of 300 small refunds reversed exactly the original tax without penny drift. Signed webhook fixtures also cover partial/full refund events, replay and retrieval of current connected-account charge state instead of stale payload totals.
