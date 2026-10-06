@@ -158,15 +158,15 @@ function StatusDot({ status }: { status: HealthStatus }) {
 }
 
 function statusBadgeClass(status: HealthStatus) {
-  if (status === 'degraded') return 'border-amber-500/30 bg-amber-500/10 text-[var(--warning-text,var(--warning-500))]';
-  if (status === 'unhealthy') return 'border-rose-500/30 bg-rose-500/10 text-[var(--error-text,var(--error-500))]';
-  return status === 'healthy' ? 'border-emerald-500/30 bg-emerald-500/10 text-[var(--success-text,var(--success-500))]' : 'border-slate-500/30 bg-slate-500/10 text-[var(--ws-text-secondary)]';
+  if (status === 'degraded') return 'border-amber-500/30 bg-amber-500/10 text-amber-800';
+  if (status === 'unhealthy') return 'border-rose-500/30 bg-rose-500/10 text-rose-800';
+  return status === 'healthy' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-800' : 'border-slate-500/30 bg-slate-500/10 text-[var(--marketing-text-secondary)]';
 }
 
 function statusRowBadge(status: HealthStatus) {
-  if (status === 'degraded') return 'border-amber-500/30 bg-amber-500/10 text-[var(--warning-text,var(--warning-500))]';
-  if (status === 'unhealthy') return 'border-rose-500/30 bg-rose-500/10 text-[var(--error-text,var(--error-500))]';
-  return status === 'healthy' ? 'border-emerald-500/30 bg-emerald-500/10 text-[var(--success-text,var(--success-500))]' : 'border-slate-500/30 bg-slate-500/10 text-[var(--ws-text-secondary)]';
+  if (status === 'degraded') return 'border-amber-500/30 bg-amber-500/10 text-amber-800';
+  if (status === 'unhealthy') return 'border-rose-500/30 bg-rose-500/10 text-rose-800';
+  return status === 'healthy' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-800' : 'border-slate-500/30 bg-slate-500/10 text-[var(--marketing-text-secondary)]';
 }
 
 export default async function PlatformStatusPage() {
@@ -183,7 +183,7 @@ export default async function PlatformStatusPage() {
 
   return (
     <MarketingLandingShell>
-      <div className="min-h-screen bg-[var(--brand-violet-950)] pt-20 text-[var(--ws-text-secondary)]">
+      <div className="min-h-screen bg-[var(--marketing-bg-secondary)] pt-20 text-[var(--marketing-text-secondary)]">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -191,7 +191,7 @@ export default async function PlatformStatusPage() {
         <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
 
           {/* ── Status Header Banner ───────────────────────────────── */}
-          <div className="mb-10 rounded-2xl border border-white/10 bg-gradient-to-r from-slate-900/90 via-slate-950 to-slate-900/90 p-8 shadow-2xl backdrop-blur-xl">
+          <div className="mb-10 rounded-2xl border border-[var(--marketing-border)] bg-[var(--marketing-surface)] p-8 shadow-sm ">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <div
@@ -200,25 +200,25 @@ export default async function PlatformStatusPage() {
                   <StatusDot status={report.status} />
                   {report.label}
                 </div>
-                <h1 className="text-3xl font-black text-white sm:text-4xl">
+                <h1 className="text-3xl font-black text-[var(--marketing-ink)] sm:text-4xl">
                   System Status & Reliability
                 </h1>
-                <p className="mt-2 max-w-2xl type-card-description leading-6 text-[var(--ws-text-secondary)]">
+                <p className="mt-2 max-w-2xl type-card-description leading-6 text-[var(--marketing-text-secondary)]">
                   {report.summary}
                 </p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-[var(--ws-panel)]/80 p-4 text-right type-caption text-[var(--ws-text-muted)]">
-                <div className="font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">
+              <div className="rounded-xl border border-[var(--marketing-border)] bg-[var(--marketing-bg-secondary)] p-4 text-right type-caption text-[var(--marketing-text-secondary)]">
+                <div className="font-semibold uppercase tracking-wider text-[var(--marketing-text-secondary)]">
                   Last Health Check
                 </div>
-                <time dateTime={report.checkedAt} className="mt-1 block font-mono type-caption text-[var(--ws-text-secondary)]">
+                <time dateTime={report.checkedAt} className="mt-1 block font-mono type-caption text-[var(--marketing-text-secondary)]">
                   {new Date(report.checkedAt).toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit',
                     second: '2-digit',
                   })}
                 </time>
-                <div className="mt-0.5 type-ui text-[var(--ws-text-muted)]">Auto-refreshes every 30s</div>
+                <div className="mt-0.5 type-ui text-[var(--marketing-text-secondary)]">Auto-refreshes every 30s</div>
               </div>
             </div>
           </div>
@@ -243,39 +243,39 @@ export default async function PlatformStatusPage() {
             ].map(({ icon, value, label }) => (
               <div
                 key={label}
-                className="rounded-xl border border-white/10 bg-[var(--ws-canvas)]/80 p-5 shadow-lg backdrop-blur-sm"
+                className="rounded-xl border border-[var(--marketing-border)] bg-[var(--marketing-surface)] p-5 shadow-sm "
               >
                 {icon}
-                <div className="text-2xl font-black text-white">{value}</div>
-                <div className="mt-1 type-caption font-medium text-[var(--ws-text-muted)]">{label}</div>
+                <div className="text-2xl font-black text-[var(--marketing-ink)]">{value}</div>
+                <div className="mt-1 type-caption font-medium text-[var(--marketing-text-secondary)]">{label}</div>
               </div>
             ))}
           </div>
 
           {/* ── Service Status Grid ───────────────────────────────── */}
           <div className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
-            <section className="rounded-2xl border border-white/10 bg-[var(--ws-canvas)]/90 p-6 shadow-xl backdrop-blur-md">
-              <div className="mb-6 flex items-center justify-between gap-4 border-b border-white/10 pb-4">
+            <section className="rounded-2xl border border-[var(--marketing-border)] bg-[var(--marketing-surface)] p-6 shadow-sm ">
+              <div className="mb-6 flex items-center justify-between gap-4 border-b border-[var(--marketing-border)] pb-4">
                 <div>
-                  <h2 className="text-xl font-bold text-white">Platform Components</h2>
-                  <p className="mt-0.5 type-card-description text-[var(--ws-text-muted)]">
+                  <h2 className="text-xl font-bold text-[var(--marketing-ink)]">Platform Components</h2>
+                  <p className="mt-0.5 type-card-description text-[var(--marketing-text-secondary)]">
                     Platform areas are listed here; the health endpoint does not independently verify each service.
                   </p>
                 </div>
-                <ShieldCheck className="h-6 w-6 text-[var(--ws-text-muted)]" />
+                <ShieldCheck className="h-6 w-6 text-[var(--marketing-text-secondary)]" />
               </div>
-              <div className="divide-y divide-white/5">
+              <div className="divide-y divide-[var(--marketing-border)]">
                 {report.checks.map((check) => (
                   <div
                     key={check.name}
                     className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div>
-                      <div className="flex items-center gap-2.5 type-ui font-semibold text-white">
+                      <div className="flex items-center gap-2.5 type-ui font-semibold text-[var(--marketing-ink)]">
                         <StatusDot status={check.status} />
                         <span>{check.name}</span>
                       </div>
-                      <p className="mt-1 pl-5 type-card-description text-[var(--ws-text-muted)]">{check.detail}</p>
+                      <p className="mt-1 pl-5 type-card-description text-[var(--marketing-text-secondary)]">{check.detail}</p>
                     </div>
                     <span
                       className={`w-fit rounded-full border px-3 py-1 type-caption font-bold capitalize ${statusRowBadge(check.status)}`}
@@ -293,26 +293,26 @@ export default async function PlatformStatusPage() {
 
             <aside className="space-y-6">
               {/* Trust & Security panel — business-friendly only */}
-              <section className="rounded-2xl border border-white/10 bg-[var(--ws-canvas)]/90 p-6 shadow-xl backdrop-blur-md">
+              <section className="rounded-2xl border border-[var(--marketing-border)] bg-[var(--marketing-surface)] p-6 shadow-sm ">
                 <div className="flex items-center gap-2.5 mb-4">
-                  <Zap className="h-5 w-5 text-teal-400" />
-                  <h2 className="text-lg font-bold text-white">Security & Compliance</h2>
+                  <Zap className="h-5 w-5 text-[var(--marketing-link-hover)]" />
+                  <h2 className="text-lg font-bold text-[var(--marketing-ink)]">Security & Compliance</h2>
                 </div>
-                <p className="type-caption text-[var(--ws-text-muted)]">The runtime health check does not verify security controls. Review the published documents for policy and support information.</p>
+                <p className="type-caption text-[var(--marketing-text-secondary)]">The runtime health check does not verify security controls. Review the published documents for policy and support information.</p>
                 <div className="mt-4 flex flex-col gap-2 type-ui">
-                  <Link href="/security-policy" className="text-cyan-300 underline">Security policy</Link>
-                  <Link href="/compliance" className="text-cyan-300 underline">Compliance overview</Link>
-                  <Link href="/sla" className="text-cyan-300 underline">Service level agreement</Link>
+                  <Link href="/security-policy" className="text-[var(--marketing-link-hover)] underline">Security policy</Link>
+                  <Link href="/compliance" className="text-[var(--marketing-link-hover)] underline">Compliance overview</Link>
+                  <Link href="/sla" className="text-[var(--marketing-link-hover)] underline">Service level agreement</Link>
                 </div>
               </section>
 
               {/* Incident Log */}
-              <section className="rounded-2xl border border-white/10 bg-[var(--ws-canvas)]/90 p-6 shadow-xl backdrop-blur-md">
+              <section className="rounded-2xl border border-[var(--marketing-border)] bg-[var(--marketing-surface)] p-6 shadow-sm ">
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="mt-0.5 h-5 w-5 text-teal-400 shrink-0" />
+                  <AlertCircle className="mt-0.5 h-5 w-5 text-[var(--marketing-link-hover)] shrink-0" />
                   <div>
-                    <h2 className="text-base font-bold text-white">Incident Log</h2>
-                    <p className="mt-1.5 type-card-description leading-5 text-[var(--ws-text-muted)]">
+                    <h2 className="text-base font-bold text-[var(--marketing-ink)]">Incident Log</h2>
+                    <p className="mt-1.5 type-card-description leading-5 text-[var(--marketing-text-secondary)]">
                       An incident history is not available on this page. The health check above only reports current web application liveness.
                     </p>
                   </div>
@@ -322,9 +322,9 @@ export default async function PlatformStatusPage() {
           </div>
 
           {/* ── Enterprise Modules ────────────────────────────────── */}
-          <section className="mt-8 rounded-2xl border border-white/10 bg-[var(--ws-canvas)]/90 p-6 shadow-xl backdrop-blur-md">
-            <h2 className="text-lg font-bold text-white">Product Areas</h2>
-            <p className="mt-1 type-caption text-[var(--ws-text-muted)]">These areas are not independently monitored by this health check.</p>
+          <section className="mt-8 rounded-2xl border border-[var(--marketing-border)] bg-[var(--marketing-surface)] p-6 shadow-sm ">
+            <h2 className="text-lg font-bold text-[var(--marketing-ink)]">Product Areas</h2>
+            <p className="mt-1 type-caption text-[var(--marketing-text-secondary)]">These areas are not independently monitored by this health check.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               {[
                 'CRM & Lead Pipeline',
@@ -335,23 +335,23 @@ export default async function PlatformStatusPage() {
               ].map((item) => (
                 <div
                   key={item}
-                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-3 type-caption font-semibold text-[var(--ws-text-secondary)]"
+                  className="flex items-center gap-2 rounded-xl border border-[var(--marketing-border)] bg-[var(--marketing-bg-secondary)] px-3.5 py-3 type-caption font-semibold text-[var(--marketing-text-secondary)]"
                 >
                   {item}
                 </div>
               ))}
             </div>
-            <div className="mt-6 flex flex-wrap gap-5 border-t border-white/10 pt-4 type-caption font-medium text-[var(--ws-text-muted)]">
-              <Link href="/sla" className="text-cyan-400 transition-colors hover:text-cyan-300">
+            <div className="mt-6 flex flex-wrap gap-5 border-t border-[var(--marketing-border)] pt-4 type-caption font-medium text-[var(--marketing-text-secondary)]">
+              <Link href="/sla" className="text-[var(--marketing-link-hover)] transition-colors hover:text-[var(--marketing-link-hover)]">
                 SLA Agreement
               </Link>
-              <Link href="/legal" className="text-cyan-400 transition-colors hover:text-cyan-300">
+              <Link href="/legal" className="text-[var(--marketing-link-hover)] transition-colors hover:text-[var(--marketing-link-hover)]">
                 Legal & Compliance
               </Link>
-              <Link href="/security-policy" className="text-cyan-400 transition-colors hover:text-cyan-300">
+              <Link href="/security-policy" className="text-[var(--marketing-link-hover)] transition-colors hover:text-[var(--marketing-link-hover)]">
                 Security Policy
               </Link>
-              <Link href="/contact" className="text-cyan-400 transition-colors hover:text-cyan-300">
+              <Link href="/contact" className="text-[var(--marketing-link-hover)] transition-colors hover:text-[var(--marketing-link-hover)]">
                 Contact Support
               </Link>
             </div>
