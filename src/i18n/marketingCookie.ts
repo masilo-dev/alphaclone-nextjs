@@ -25,11 +25,11 @@ const pl: Record<string, string> = {
   'Choose which optional cookies and trackers AlphaClone and Cloudflare Zaraz may activate.': 'Wybierz, które opcjonalne pliki cookie i narzędzia śledzące mogą aktywować AlphaClone i Cloudflare Zaraz.',
   'Essential Cookies & Security': 'Niezbędne pliki cookie i bezpieczeństwo',
   'Required for secure authentication, Cloudflare Turnstile bot verification, session state, and CSRF protection. Cannot be disabled.': 'Wymagane do bezpiecznego logowania, weryfikacji botów Cloudflare Turnstile, stanu sesji i ochrony CSRF. Nie można wyłączyć.',
-  'Saves user workspace layout preferences, theme settings, and language localization choices.': 'Zapisuje preferencje układu przestrzeni roboczej, ustawienia motywu i wybór języka użytkownika.',
+  'Allows optional third-party convenience features. Your explicitly selected language, theme, and workspace settings remain available.': 'Zezwala na opcjonalne funkcje zewnętrzne. Wybrany język, motyw i ustawienia przestrzeni roboczej pozostają dostępne.',
   'Analytics & Platform Insights': 'Analityka i statystyki platformy',
   'Helps us understand platform usage to improve performance and reliability. Governed via Google Consent Mode v2.': 'Pomaga nam zrozumieć wykorzystanie platformy w celu poprawy wydajności i niezawodności. Zarządzane za pośrednictwem Google Consent Mode v2.',
   'Marketing & Conversion Measurement': 'Marketing i pomiar konwersji',
-  'Allows anonymous campaign conversion measurement and advertising attribution where enabled.': 'Umożliwia anonimowy pomiar konwersji kampanii i atrybucję reklam tam, gdzie została włączona.',
+  'Allows campaign conversion measurement and advertising attribution where enabled.': 'Umożliwia pomiar konwersji kampanii i atrybucję reklam tam, gdzie została włączona.',
   'Reset to Essential Only': 'Przywróć tylko niezbędne',
 };
 
@@ -58,11 +58,11 @@ const es: Record<string, string> = {
   'Choose which optional cookies and trackers AlphaClone and Cloudflare Zaraz may activate.': 'Elige qué cookies y rastreadores opcionales pueden activar AlphaClone y Cloudflare Zaraz.',
   'Essential Cookies & Security': 'Cookies esenciales y seguridad',
   'Required for secure authentication, Cloudflare Turnstile bot verification, session state, and CSRF protection. Cannot be disabled.': 'Requeridas para autenticación segura, verificación de bots Cloudflare Turnstile, estado de sesión y protección CSRF. No se pueden desactivar.',
-  'Saves user workspace layout preferences, theme settings, and language localization choices.': 'Guarda las preferencias de diseño del espacio de trabajo del usuario, la configuración del tema y las opciones de idioma.',
+  'Allows optional third-party convenience features. Your explicitly selected language, theme, and workspace settings remain available.': 'Permite funciones opcionales de terceros. El idioma, el tema y los ajustes del espacio de trabajo que hayas elegido siguen disponibles.',
   'Analytics & Platform Insights': 'Análisis y estadísticas de la plataforma',
   'Helps us understand platform usage to improve performance and reliability. Governed via Google Consent Mode v2.': 'Nos ayuda a comprender el uso de la plataforma para mejorar el rendimiento y la fiabilidad. Gestionado a través de Google Consent Mode v2.',
   'Marketing & Conversion Measurement': 'Marketing y medición de conversiones',
-  'Allows anonymous campaign conversion measurement and advertising attribution where enabled.': 'Permite la medición anónima de conversiones de campañas y la atribución de publicidad donde esté habilitada.',
+  'Allows campaign conversion measurement and advertising attribution where enabled.': 'Permite la medición de conversiones de campañas y la atribución de publicidad donde esté habilitada.',
   'Reset to Essential Only': 'Restablecer solo a esenciales',
 };
 

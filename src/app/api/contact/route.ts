@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { escapeHtml } from '@/lib/email/escapeHtml';
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClientOrThrow, routeErrorResponse } from '@/lib/apiAuth';
@@ -14,7 +15,7 @@ import { isTurnstileBypassToken, isTurnstileEnforced, readClientIp, readTurnstil
  * - Sends notification to bonnie@alphaclonesystems.com AFTER persistence.
  * - Email failure NEVER causes inquiry data loss (HTTP 200 still returned).
  * - Honeypot field (`website`) silently drops bot submissions.
- * - CONTACT_TENANT_ID env var is optional; falls back to DEFAULT_TENANT_ID.
+ * - Production requires CONTACT_TENANT_ID or DEFAULT_TENANT_ID for owner routing.
  */
 
 const PLATFORM_NOTIFICATION_EMAIL = 'bonnie@alphaclonesystems.com';
@@ -43,35 +44,35 @@ function buildNotificationHtml(params: {
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><title>New AlphaClone Inquiry</title></head>
-<body style="font-family:system-ui,sans-serif;background:var(--ws-canvas);color:var(--ws-border);margin:0;padding:0;">
-  <div style="max-width:600px;margin:32px auto;background:var(--ws-panel);border-radius:12px;overflow:hidden;border:1px solid var(--ws-surface-tertiary);">
-    <div style="padding:20px 28px;background:var(--ws-canvas);border-bottom:1px solid var(--ws-surface-tertiary);">
-      <p style="margin:0;font-size:13px;color:var(--ws-text-secondary);letter-spacing:0.05em;text-transform:uppercase;font-weight:600;">AlphaClone Systems</p>
-      <h1 style="margin:6px 0 0;font-size:20px;font-weight:700;color:var(--ws-surface-secondary);">New Website Inquiry</h1>
+<body style="font-family:system-ui,sans-serif;background:#f8fafc;color:#334155;margin:0;padding:0;">
+  <div style="max-width:600px;margin:32px auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;">
+    <div style="padding:20px 28px;background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+      <p style="margin:0;font-size:13px;color:#64748b;letter-spacing:0.05em;text-transform:uppercase;font-weight:600;">AlphaClone Systems</p>
+      <h1 style="margin:6px 0 0;font-size:20px;font-weight:700;color:#0f172a;">New Website Inquiry</h1>
     </div>
     <div style="padding:24px 28px;">
       <table style="width:100%;border-collapse:collapse;font-size:14px;">
         <tr>
-          <td style="padding:8px 0;color:var(--ws-text-secondary);width:100px;vertical-align:top;font-weight:600;">Name</td>
-          <td style="padding:8px 0;color:var(--ws-surface-secondary);">${name}</td>
+          <td style="padding:8px 0;color:#64748b;width:100px;vertical-align:top;font-weight:600;">Name</td>
+          <td style="padding:8px 0;color:#0f172a;">${name}</td>
         </tr>
         <tr>
-          <td style="padding:8px 0;color:var(--ws-text-secondary);vertical-align:top;font-weight:600;">Email</td>
-          <td style="padding:8px 0;"><a href="mailto:${email}" style="color:var(--info-500);">${email}</a></td>
+          <td style="padding:8px 0;color:#64748b;vertical-align:top;font-weight:600;">Email</td>
+          <td style="padding:8px 0;"><a href="mailto:${email}" style="color:#2563eb;">${email}</a></td>
         </tr>
-        ${company ? `<tr><td style="padding:8px 0;color:var(--ws-text-secondary);vertical-align:top;font-weight:600;">Company</td><td style="padding:8px 0;color:var(--ws-surface-secondary);">${company}</td></tr>` : ''}
-        ${phone ? `<tr><td style="padding:8px 0;color:var(--ws-text-secondary);vertical-align:top;font-weight:600;">Phone</td><td style="padding:8px 0;color:var(--ws-surface-secondary);">${phone}</td></tr>` : ''}
+        ${company ? `<tr><td style="padding:8px 0;color:#64748b;vertical-align:top;font-weight:600;">Company</td><td style="padding:8px 0;color:#0f172a;">${company}</td></tr>` : ''}
+        ${phone ? `<tr><td style="padding:8px 0;color:#64748b;vertical-align:top;font-weight:600;">Phone</td><td style="padding:8px 0;color:#0f172a;">${phone}</td></tr>` : ''}
         <tr>
-          <td style="padding:8px 0;color:var(--ws-text-secondary);vertical-align:top;font-weight:600;">Subject</td>
-          <td style="padding:8px 0;color:var(--ws-surface-secondary);">${subject}</td>
+          <td style="padding:8px 0;color:#64748b;vertical-align:top;font-weight:600;">Subject</td>
+          <td style="padding:8px 0;color:#0f172a;">${subject}</td>
         </tr>
       </table>
-      <div style="margin-top:20px;padding:16px;background:var(--ws-canvas);border:1px solid var(--ws-surface-tertiary);border-radius:8px;">
-        <p style="margin:0 0 6px;font-size:12px;color:var(--ws-text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Message</p>
-        <p style="margin:0;color:var(--ws-border);font-size:14px;line-height:1.6;white-space:pre-wrap;">${message}</p>
+      <div style="margin-top:20px;padding:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+        <p style="margin:0 0 6px;font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Message</p>
+        <p style="margin:0;color:#334155;font-size:14px;line-height:1.6;white-space:pre-wrap;">${message}</p>
       </div>
     </div>
-    <div style="padding:16px 28px;background:var(--ws-canvas);border-top:1px solid var(--ws-surface-tertiary);font-size:12px;color:var(--ws-text-muted);">
+    <div style="padding:16px 28px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:12px;color:#64748b;">
       <p style="margin:0;">Submission ID: ${submissionId} &nbsp;·&nbsp; Received: ${submittedAt}</p>
       <p style="margin:6px 0 0;">Reply directly to this email to respond to the sender.</p>
     </div>
@@ -107,9 +108,16 @@ export async function POST(request: NextRequest) {
     const limited = await rateLimitMiddleware(
       request,
       rateLimitConfigs.public.contact,
-      `contact:${email || request.headers.get('x-forwarded-for') || 'anonymous'}`
+      `contact:${readClientIp(request) || 'anonymous'}`
     );
     if (limited) return limited;
+    const emailLimited = await rateLimitMiddleware(request, rateLimitConfigs.public.contact,
+      `contact-email:${email.trim().toLowerCase()}`);
+    if (emailLimited) return emailLimited;
+    const submissionId = body.submissionId;
+    if (submissionId !== undefined && !z.string().uuid().safeParse(submissionId).success) {
+      return NextResponse.json({ error: 'Invalid submission identifier' }, { status: 400 });
+    }
 
     // ── 4. Cloudflare Turnstile verification ─────────────────────────────────
     // Marketing contact is honeypot + rate-limited. If the Turnstile widget
@@ -137,12 +145,17 @@ export async function POST(request: NextRequest) {
       process.env.DEFAULT_TENANT_ID?.trim() ||
       null;
 
+    if ((tenantId && !z.string().uuid().safeParse(tenantId).success) || (!tenantId && process.env.NODE_ENV === 'production')) {
+      console.error('[contact] Owner tenant configuration is required');
+      return NextResponse.json({ error: 'Contact form temporarily unavailable. Please email bonnie@alphaclonesystems.com.' }, { status: 503 });
+    }
     // Live schema uses enum submission_status ('New'|'Read'|'Replied').
     // Optional subject/company/phone/source columns were added for marketing inquiries.
-    const { data: submission, error: dbError } = await supabase
+    let { data: submission, error: dbError } = await supabase
       .from('contact_submissions')
       .insert([
         {
+          ...(submissionId ? { id: submissionId } : {}),
           ...(tenantId ? { tenant_id: tenantId } : {}),
           name,
           email,
@@ -158,6 +171,18 @@ export async function POST(request: NextRequest) {
       .select('id, created_at')
       .single();
 
+    if (dbError?.code === '23505' && submissionId) {
+      const replay = await supabase.from('contact_submissions')
+        .select('id,created_at,tenant_id,name,email,subject,message,company,phone').eq('id', submissionId).maybeSingle();
+      const saved = replay.data;
+      if (replay.error || !saved) return NextResponse.json({ error: 'Unable to confirm submission. Please try again.' }, { status: 503 });
+      if ((saved.tenant_id || null) !== tenantId || saved.name !== name || saved.email !== email ||
+          saved.message !== message || saved.subject !== (subject || 'General Inquiry') ||
+          (saved.company || null) !== (company || null) || (saved.phone || null) !== (phone || null)) {
+        return NextResponse.json({ error: 'Submission identifier already used. Please reload and try again.' }, { status: 409 });
+      }
+      submission = saved; dbError = null;
+    }
     if (dbError || !submission) {
       console.error('[contact] DB insertion failed:', dbError);
       return NextResponse.json(
@@ -168,7 +193,7 @@ export async function POST(request: NextRequest) {
 
     // ── 6. Email notification (best-effort — never block response on failure) ─
     const notificationEmailTenantId =
-      tenantId || process.env.DEFAULT_TENANT_ID || '00000000-0000-0000-0000-000000000000';
+      tenantId || process.env.DEFAULT_TENANT_ID || '';
 
     let notificationSent = false;
     try {

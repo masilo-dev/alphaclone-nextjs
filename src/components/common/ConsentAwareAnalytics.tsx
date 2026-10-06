@@ -19,10 +19,14 @@ export function ConsentAwareAnalytics() {
     const current = readConsentState();
     setAllow(Boolean(current?.analytics));
 
+    const gaId = process.env.NEXT_PUBLIC_GA_ID;
+    if (gaId) (window as unknown as Record<string, unknown>)[`ga-disable-${gaId}`] = !current?.analytics;
+
     // 3. Listen for consent updates
     const onConsent = () => {
       const updated = readConsentState();
       setAllow(Boolean(updated?.analytics));
+      if (gaId) (window as unknown as Record<string, unknown>)[`ga-disable-${gaId}`] = !updated?.analytics;
     };
 
     window.addEventListener(CONSENT_CHANGE_EVENT, onConsent);
@@ -43,6 +47,7 @@ export function ConsentAwareAnalytics() {
         {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
+          window['ga-disable-${gaId}'] = false;
           gtag('js', new Date());
           gtag('config', '${gaId}', {
             page_path: window.location.pathname,

@@ -569,7 +569,7 @@ const cookieCategories = [
          { name: 'sb-[project]-auth-token.0 / .1', purpose: 'Chunked auth token for large session payloads.', duration: 'Session', party: 'First party' },
          { name: 'next-auth.csrf-token', purpose: 'CSRF protection for form submissions.', duration: 'Session', party: 'First party' },
          { name: 'cf_clearance, cf_bm', purpose: 'Cloudflare Turnstile security tokens. Protects forms from bots and spam.', duration: 'Session / 1 year', party: 'Cloudflare, Inc.' },
-         { name: 'cookieConsent', purpose: 'Stores your cookie consent preferences to avoid re-prompting.', duration: '1 year', party: 'First party' },
+         { name: 'ac_cookie_consent', purpose: 'Stores your cookie choices, timestamp, and policy version.', duration: '1 year', party: 'First party' },
       ]
    },
    {
@@ -580,10 +580,9 @@ const cookieCategories = [
       iconClass: 'text-blue-600',
       labelClass: 'text-blue-700',
       icon: Eye,
-      desc: 'These cookies help us understand how users interact with the platform. Data is anonymized and aggregated — we cannot identify individual users from analytics data. We use this to improve the platform experience.',
+      desc: 'These cookies help us understand how users interact with the platform. Analytics may use pseudonymous browser identifiers; it is enabled only after you choose analytics. We use this to improve the platform experience.',
       cookies: [
          { name: '_ga, _ga_[ID]', purpose: 'Google Analytics — tracks page views and navigation patterns (anonymized).', duration: '2 years', party: 'Google LLC' },
-         { name: 'ac_webvitals', purpose: 'AlphaClone Core Web Vitals monitoring — measures LCP, CLS, INP.', duration: 'Session', party: 'First party' },
       ]
    },
    {
@@ -594,7 +593,7 @@ const cookieCategories = [
       iconClass: 'text-indigo-600',
       labelClass: 'text-indigo-700',
       icon: Database,
-      desc: 'Functional cookies remember your preferences to enhance your experience — such as your selected language, sidebar state, theme preference, and dashboard layout settings.',
+      desc: 'Optional functional consent controls third-party convenience tools. Local settings that remember a language, theme, or workspace layout you explicitly select support that requested feature and are separate from optional tracking.',
       cookies: [
          { name: 'ac_sidebar_state', purpose: 'Remembers whether your dashboard sidebar is expanded or collapsed.', duration: '1 year', party: 'First party' },
          { name: 'ac_theme', purpose: 'Stores your color theme preference.', duration: '1 year', party: 'First party' },
@@ -610,7 +609,7 @@ const cookieCategories = [
       iconClass: 'text-violet-600',
       labelClass: 'text-violet-700',
       icon: ExternalLink,
-      desc: 'Marketing cookies track your activity across websites to help us deliver relevant advertising. We currently use these sparingly — only for retargeting visitors who did not complete registration.',
+      desc: 'Marketing cookies track your activity across websites to help us deliver relevant advertising. These tools may run only when enabled for this site and after you choose marketing.',
       cookies: [
          { name: '_fbp', purpose: 'Facebook Pixel — tracks conversions for Facebook/Instagram ad campaigns.', duration: '3 months', party: 'Meta Platforms, Inc.' },
          { name: 'li_sugr, AnalyticsSyncHistory', purpose: 'LinkedIn Insight Tag — measures ad campaign effectiveness.', duration: '1 month', party: 'LinkedIn Corporation' },
@@ -680,7 +679,7 @@ export function CookiePolicy() {
          </Section>
 
          <Section id="cookie-details" title="3. Cookie Details by Category">
-            <p>Below is a full list of all cookies used by AlphaClone, organized by category. Click each category to expand the full cookie table.</p>
+            <p>The tables describe platform storage and possible provider cookies; actual cookies depend on enabled tools and are not an automated scan of your browser. Click each category to expand the full cookie table.</p>
             <div className="mt-6 space-y-4">
                {cookieCategories.map((cat, i) => (
                   <div key={i} className="rounded-2xl border border-[var(--marketing-border)] overflow-hidden">
