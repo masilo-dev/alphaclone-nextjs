@@ -103,7 +103,7 @@ function ProductScene() {
           src="/screenshots/mobile-crm.png"
           alt={t('AlphaClone mobile CRM view')}
           fill
-          priority
+          loading="lazy"
           sizes="190px"
           className="object-cover object-top"
         />
@@ -119,7 +119,7 @@ function ProductScene() {
           <li><Check /> {t('CRM context attached')}</li>
           <li><Check /> {t('Drafts ready for review')}</li>
         </ul>
-        <span>{t('View in CRM')} <ArrowRight /></span>
+        <span>{t('Ready for your review')}</span>
       </div>
     </div>
   );
@@ -243,7 +243,7 @@ export default function MarketingHomePage() {
             <div className="acr-hero-copy">
               <p className="acr-eyebrow">{t(EXECUTION_LAYER.category)}</p>
               <h1>{t('Run your business,')}<br /><span>{t('not your tools.')}</span></h1>
-              <p className="acr-hero-lead">{t(EXECUTION_LAYER.heroSubhead)}</p>
+              <p className="acr-hero-lead">{t(EXECUTION_LAYER.heroPlainLanguage)}</p>
               <div className="acr-hero-actions">
                 <PrimaryCTA href={DEMO_HREF} className="mkt-btn-large">{t(EXECUTION_LAYER.primaryCta)} <ArrowRight className="h-4 w-4" /></PrimaryCTA>
                 <SecondaryCTA href="#workflow" className="mkt-btn-large"><span className="acr-play"><Play className="h-3 w-3" fill="currentColor" /></span> {t(EXECUTION_LAYER.secondaryCta)}</SecondaryCTA>

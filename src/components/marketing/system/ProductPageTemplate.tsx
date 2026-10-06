@@ -8,6 +8,7 @@ import { ConversionBanner } from './ConversionBanner';
 import { WorkflowStep } from './FeatureBlocks';
 import { MarketingContainer, MarketingSection, SectionHeading } from './LayoutPrimitives';
 import ProductSystemVisual, { ProductFlowRail, ProductOutcomeStrip } from './ProductSystemVisual';
+import ProductShowcase from './ProductShowcase';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 type ProductPageTemplateProps = {
@@ -52,7 +53,9 @@ export default function ProductPageTemplate({ feature }: ProductPageTemplateProp
           </div>
 
           <div className="mx-auto mt-12 max-w-5xl">
-            <ProductSystemVisual product={feature.name} slug={feature.slug} />
+            {feature.slug === 'crm' || feature.slug === 'project-management'
+              ? <ProductShowcase slug={feature.slug} />
+              : <ProductSystemVisual product={feature.name} slug={feature.slug} />}
             <div className="mt-4"><ProductOutcomeStrip product={feature.name} /></div>
           </div>
         </MarketingContainer>
