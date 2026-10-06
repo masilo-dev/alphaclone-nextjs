@@ -8,5 +8,5 @@ type MarketingLandingShellProps = {
 
 /** Shared nav + footer shell for indexable product landing pages. */
 export default function MarketingLandingShell({ children, className }: MarketingLandingShellProps) {
-  return <MarketingShell className={className}>{children}</MarketingShell>;
+  return <MarketingShell className={`mkt-public-page ${className || ''}`.trim()}>{children}</MarketingShell>;
 }

@@ -6,6 +6,8 @@ import { AlphaIcon } from '@/components/marketing/icons';
 import { ConversionBanner } from './ConversionBanner';
 import { MarketingContainer, MarketingSection, SectionHeading } from './LayoutPrimitives';
 import { PrimaryCTA, SecondaryCTA } from './CtaButtons';
+import { DEMO_HREF } from '@/lib/marketing/cta';
+import { EXECUTION_LAYER } from '@/config/marketingPositioning';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export type SolutionModule = {
@@ -45,8 +47,8 @@ export default function SolutionPageTemplate({ content }: SolutionPageTemplatePr
               {t(content.description)}
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <PrimaryCTA />
-              <SecondaryCTA />
+              <PrimaryCTA href={DEMO_HREF} />
+              <SecondaryCTA href={EXECUTION_LAYER.workflowPath} />
             </div>
           </div>
         </MarketingContainer>

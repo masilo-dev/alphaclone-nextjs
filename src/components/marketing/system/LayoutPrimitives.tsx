@@ -65,7 +65,7 @@ export function SectionHeading({
   as?: 'h1' | 'h2' | 'h3';
 }) {
   return (
-    <div className={`mb-10 max-w-3xl ${align === 'center' ? 'mx-auto text-center' : 'text-left'}`}>
+    <div className={`mkt-section-heading mb-10 max-w-3xl ${align === 'center' ? 'mx-auto text-center' : 'text-left'}`}>
       {eyebrow ? <p className="mkt-label mb-4">{eyebrow}</p> : null}
       <Tag className="font-marketing-heading tracking-tight text-[var(--marketing-text-primary)]">
         {title}
