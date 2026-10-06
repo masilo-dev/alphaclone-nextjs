@@ -1,3 +1,7 @@
+import { withInvoicePaymentAttempt } from '@/lib/stripeInvoiceAttempt';
+import { invoiceAmountToStripe } from '@/lib/stripeInvoiceCurrency';
+import { requireInvoiceStripeAccount } from '@/lib/stripeInvoiceExecution';
+import { invoiceOutstanding } from '@/lib/stripePaymentPolicy';
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
@@ -46,26 +50,17 @@ export async function POST(req: Request) {
         if (invoice.status === 'paid') {
             return NextResponse.json({ error: 'Invoice already paid' }, { status: 409 });
         }
-        if (!['sent', 'viewed', 'overdue'].includes(invoice.status)) {
+        if (!['sent', 'viewed', 'overdue', 'partially_paid'].includes(invoice.status)) {
             return NextResponse.json({ error: 'Invoice is not payable' }, { status: 409 });
         }
 
-        const { data: tenantData } = await supabaseAdmin
-            .from('tenants')
-            .select('stripe_connect_id, stripe_connect_onboarded')
-            .eq('id', invoice.tenant_id)
-            .single();
-
-        const stripeConnectId = (tenantData?.stripe_connect_onboarded && tenantData?.stripe_connect_id)
-            ? tenantData.stripe_connect_id
-            : null;
+        const stripeConnectId = await requireInvoiceStripeAccount(supabaseAdmin, invoice.tenant_id);
 
         const origin = new URL(req.url).origin;
         const tokenQuery = publicToken ? `&token=${publicToken}` : '';
         const safeReturn = (value: string | undefined, fallback: string) => value && new URL(value).origin === origin ? value : fallback;
 
         const sessionOptions: any = {
-            payment_method_types: ['card'],
             line_items: [
                 {
                     price_data: {
@@ -74,11 +69,12 @@ export async function POST(req: Request) {
                             name: `Invoice #${invoice.invoice_number}`,
                             description: `Payment for services - ${invoice.tenant?.name || 'Business'}`,
                         },
-                        unit_amount: Math.round(Number(invoice.total || 0) * 100),
+                        unit_amount: invoiceAmountToStripe(invoiceOutstanding(invoice), String(invoice.currency || 'usd')),
                     },
                     quantity: 1,
                 },
             ],
+            payment_intent_data: { metadata: { invoiceId: invoice.id, tenantId: invoice.tenant_id, type: 'business_invoice' } },
             mode: 'payment',
             success_url: safeReturn(successUrl, `${origin}/invoice/${invoiceId}?payment=success${tokenQuery}`),
             cancel_url: safeReturn(cancelUrl, `${origin}/invoice/${invoiceId}?payment=cancelled${tokenQuery}`),
@@ -89,10 +85,9 @@ export async function POST(req: Request) {
             },
         };
 
-        const session = await stripe.checkout.sessions.create(
-            sessionOptions,
-            stripeConnectId ? { stripeAccount: stripeConnectId } : undefined
-        );
+        // Create the Checkout Session directly on the tenant's connected Stripe
+        // account. Tenant customer revenue must never fall back to AlphaClone.
+        const session = await withInvoicePaymentAttempt(supabaseAdmin, {tenantId: invoice.tenant_id, invoiceId: invoice.id, accountId: stripeConnectId, kind: 'checkout', amount: sessionOptions.line_items[0].price_data.unit_amount, currency: sessionOptions.line_items[0].price_data.currency}, options => stripe.checkout.sessions.create({...sessionOptions, metadata: {...sessionOptions.metadata, paymentAttemptId: options.idempotencyKey?.replace('invoice-attempt:', '')}, payment_intent_data: {...sessionOptions.payment_intent_data, metadata: {...sessionOptions.payment_intent_data.metadata, paymentAttemptId: options.idempotencyKey?.replace('invoice-attempt:', '')}}}, options));
 
         return NextResponse.json({ url: session.url });
     } catch (err: any) {

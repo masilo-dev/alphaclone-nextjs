@@ -34,7 +34,7 @@ export async function ensureInvoicePublicToken(
   const publicToken = existing || globalThis.crypto.randomUUID();
 
   if (!existing || !invoice.is_public) {
-    await admin
+    const { error: updateError } = await admin
       .from('business_invoices')
       .update({
         is_public: true,
@@ -43,6 +43,7 @@ export async function ensureInvoicePublicToken(
       })
       .eq('id', invoiceId)
       .eq('tenant_id', tenantId);
+    if (updateError) throw updateError;
   }
 
   return publicToken;

@@ -1,7 +1,8 @@
+import { STARTER_MONTHLY_USD } from '@/config/platformBilling';
 /**
  * Single source of truth for PUBLIC, marketing-facing pricing.
  *
- * Public plans: Starter $15 · Pro $45 · Enterprise $80.
+ * Public plans: Starter $15 · Pro $45 · Enterprise $85.
  * Keep in sync with `src/lib/entitlements/planEntitlements.ts` and Stripe PLAN_PRICING.
  */
 
@@ -44,7 +45,7 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
   {
     id: 'starter',
     name: 'Starter',
-    price: 15,
+    price: STARTER_MONTHLY_USD,
     yearly: 144,
     tagline: 'Essential execution capacity for solo founders getting their core workflows connected.',
     features: [
@@ -109,7 +110,7 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
   {
     id: 'enterprise',
     name: 'Enterprise',
-    price: 80,
+    price: 85,
     yearly: 768,
     tagline: 'Truly unlimited AlphaClone execution — only external provider and safety limits apply.',
     features: [
@@ -141,8 +142,8 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
   },
 ];
 
-export const PRICING_FROM = 15;
-export const PRICING_TO = 80;
+export const PRICING_FROM = STARTER_MONTHLY_USD;
+export const PRICING_TO = 85;
 
 /** Reusable marketing copy — import instead of hard-coding prices in pages. */
 export const MARKETING_PRICING = {
@@ -159,7 +160,7 @@ export const MARKETING_PRICING = {
   paidFromPhrase: '$15/month for Starter',
   /** Schema.org / meta description snippet */
   metaPriceSnippet:
-    'Starter is $15/month, Pro is $45/month, and Enterprise is $80/month.',
+    'Starter is $15/month, Pro is $45/month, and Enterprise is $85/month.',
   enterpriseUnlimitedLine:
     'Enterprise includes the highest AlphaClone execution capacity (provider and safety limits still apply).',
 } as const;

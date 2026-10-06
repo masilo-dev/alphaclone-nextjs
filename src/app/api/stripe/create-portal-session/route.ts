@@ -1,3 +1,4 @@
+import { verifyStripePlatformIdentity } from '@/lib/stripePlatformIdentity';
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
@@ -23,6 +24,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'No Stripe customer found for this tenant' }, { status: 404 });
         }
 
+        await verifyStripePlatformIdentity();
+        const customer = await stripe.customers.retrieve(tenant.stripe_customer_id);
+        if (customer.deleted || customer.metadata.tenantId !== tenantId) throw new Error('Legacy billing customer requires migration');
         const session = await stripe.billingPortal.sessions.create({
             customer: tenant.stripe_customer_id,
             return_url: returnUrl && new URL(returnUrl).origin === new URL(req.url).origin

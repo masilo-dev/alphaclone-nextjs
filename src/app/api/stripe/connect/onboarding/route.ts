@@ -1,3 +1,5 @@
+import { verifyStripePlatformIdentity } from '@/lib/stripePlatformIdentity';
+import { readConnectedAccount, isMissingStripeAccount } from '@/lib/stripeConnectAccount';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { stripe } from '@/lib/stripe';
@@ -17,22 +19,27 @@ export async function POST(req: Request) {
     const { user } = await requireTenantRole(tenantId, adminRoles);
     const admin = createSupabaseAdminClient();
     const { data: tenant, error } = await admin.from('tenants')
-      .select('stripe_connect_id, country_code, billing_email')
+      .select('stripe_connect_id, name')
       .eq('id', tenantId).single();
     if (error || !tenant) throw error || new Error('Workspace not found');
 
+    await verifyStripePlatformIdentity();
     let accountId = tenant.stripe_connect_id ? String(tenant.stripe_connect_id) : '';
+    let legacyAccountId = '';
+    if (accountId) {
+      try { const state = await readConnectedAccount(accountId); if (state.closed) { legacyAccountId = accountId; accountId = ''; } }
+      catch (error) { if (!isMissingStripeAccount(error)) throw error; legacyAccountId = accountId; accountId = ''; }
+    }
     if (!accountId) {
-      const account = await stripe.accounts.create({
-        type: 'express',
-        country: String(tenant.country_code || 'US').toUpperCase(),
-        email: tenant.billing_email || user.email || undefined,
-        capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
+      const account = await stripe.v2.core.accounts.create({
+        dashboard: 'full', display_name: tenant.name, contact_email: user.email || undefined,
+        configuration: { merchant: { capabilities: { card_payments: { requested: true } } } },
+        defaults: { responsibilities: { fees_collector: 'stripe', losses_collector: 'stripe' } },
         metadata: { tenantId, type: 'business_connect' },
-      }, { idempotencyKey: `connect-account-${tenantId}` });
+      }, { idempotencyKey: `connect-account:${tenantId}:${legacyAccountId || 'new'}` });
       accountId = account.id;
       const { error: updateError } = await admin.from('tenants')
-        .update({ stripe_connect_id: accountId })
+        .update({ stripe_connect_id: accountId, stripe_connect_onboarded: false })
         .eq('id', tenantId);
       if (updateError) throw updateError;
     }
@@ -44,16 +51,17 @@ export async function POST(req: Request) {
       try { return new URL(candidate).origin === requestOrigin ? candidate : fallback; } catch { return fallback; }
     };
     const fallback = `${appUrl}/dashboard/business/settings?tab=integrations`;
-    const accountLink = await stripe.accountLinks.create({
+    const accountLink = await stripe.v2.core.accountLinks.create({
       account: accountId,
-      refresh_url: safeUrl(refreshUrl, `${fallback}&connect=refresh`),
-      return_url: safeUrl(returnUrl, `${fallback}&connect=success`),
-      type: 'account_onboarding',
+      use_case: { type: 'account_onboarding', account_onboarding: {
+        refresh_url: safeUrl(refreshUrl, `${fallback}&connect=refresh`),
+        return_url: safeUrl(returnUrl, `${fallback}&connect=success`),
+      } },
     });
     await admin.from('business_automation_events').insert({
       tenant_id: tenantId,
       event_type: 'stripe_connect_onboarding_started',
-      payload: { actorUserId: user.id },
+      payload: { actorUserId: user.id, accountId, legacyAccountId: legacyAccountId || null },
     });
     return NextResponse.json({ url: accountLink.url });
   } catch (error) {

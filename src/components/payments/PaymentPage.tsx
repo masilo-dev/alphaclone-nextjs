@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise, paymentService, Invoice, Payment } from '../../services/paymentService';
+import { paymentService, Invoice, Payment } from '../../services/paymentService';
 import { CheckoutForm } from './CheckoutForm';
 import { Card, Button, Badge } from '../ui/UIComponents';
 import { CreditCard, History, FileText, Check, X, CheckCircle } from 'lucide-react';
@@ -23,6 +24,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
     // Checkout state
     const [showCheckout, setShowCheckout] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+    const [stripeAccountId, setStripeAccountId] = useState<string | null>(null);
     const [clientSecret, setClientSecret] = useState<string | null>(null);
 
     const loadData = useCallback(async () => {
@@ -47,9 +49,10 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
         setSelectedInvoice(invoice);
 
         // Create PaymentIntent
-        const { clientSecret: secret, error } = await paymentService.createPaymentIntent(invoice.id);
+        const { clientSecret: secret, stripeAccountId: accountId, error } = await paymentService.createPaymentIntent(invoice.id);
 
-        if (secret) {
+        if (secret && accountId) {
+            setStripeAccountId(accountId);
             setClientSecret(secret);
             setShowCheckout(true);
         } else {
@@ -209,7 +212,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
                             <p className="text-[var(--ws-text-muted)] type-card-description">Complete your payment for invoice #{selectedInvoice.id.slice(0, 8)}</p>
                         </div>
 
-                        <Elements stripe={stripePromise} options={{
+                        <Elements key={stripeAccountId} stripe={stripeAccountId ? loadStripe(ENV.VITE_STRIPE_PUBLIC_KEY!, { stripeAccount: stripeAccountId }) : null} options={{
                             clientSecret,
                             appearance: { theme: 'night', labels: 'floating' }
                         }}>

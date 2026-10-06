@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 
 interface StripeConnectStatus {
   connected: boolean;
+  reconnectRequired?: boolean;
   accountId?: string;
   chargesEnabled: boolean;
   payoutsEnabled: boolean;
@@ -27,9 +28,10 @@ export const StripeConnectOnboarding: React.FC = () => {
     try {
       const response = await fetch(`/api/stripe/connect/status?tenantId=${currentTenant.id}`);
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Stripe status could not be loaded');
       setStatus(data);
     } catch (error) {
-      console.error('Failed to check Stripe status:', error);
+      toast.error(error instanceof Error ? error.message : 'Stripe status could not be loaded');
     } finally {
       setLoading(false);
     }
@@ -114,11 +116,11 @@ export const StripeConnectOnboarding: React.FC = () => {
         <h3 className="text-lg font-semibold text-[var(--ws-text-primary)]">Stripe Connect</h3>
       </div>
 
-      {!status ? (
+      {!status || (!status.accountId && !status.reconnectRequired) ? (
         <div className="space-y-4">
           <p className="text-[var(--ws-text-muted)]">
             Connect your Stripe account to receive payments directly from your clients. 
-            AlphaClone never touches your money - payments go directly to your Stripe account.
+            Payments go directly to your Stripe account.
           </p>
           
           <div className="space-y-3">
@@ -157,13 +159,13 @@ export const StripeConnectOnboarding: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4 type-ui">
             <div>
-              <span className="text-[var(--ws-text-muted)]">Charges Enabled:</span>
+              <span className="text-[var(--ws-text-muted)]">Payments:</span>
               <span className={`ml-2 ${status.chargesEnabled ? 'text-green-400' : 'text-amber-400'}`}>
                 {status.chargesEnabled ? 'Yes' : 'No'}
               </span>
             </div>
             <div>
-              <span className="text-[var(--ws-text-muted)]">Payouts Enabled:</span>
+              <span className="text-[var(--ws-text-muted)]">Payouts:</span>
               <span className={`ml-2 ${status.payoutsEnabled ? 'text-green-400' : 'text-amber-400'}`}>
                 {status.payoutsEnabled ? 'Yes' : 'No'}
               </span>
@@ -206,20 +208,20 @@ export const StripeConnectOnboarding: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-amber-400">
             <AlertCircle className="w-5 h-5" />
-            <span className="font-medium">Connection In Progress</span>
+            <span className="font-medium">{status.reconnectRequired ? 'Reconnect Stripe' : 'Setup incomplete'}</span>
           </div>
           
           <p className="text-[var(--ws-text-muted)] type-card-description">
-            Your Stripe account setup is in progress. Please complete the onboarding process in Stripe.
+            Stripe needs additional business information before payments can be accepted.
           </p>
 
           <Button 
-            onClick={checkConnectStatus}
+            onClick={handleConnect}
             disabled={loading}
             variant="outline"
             className="w-full border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]"
           >
-            Check Status
+            {status.reconnectRequired ? 'Reconnect Stripe' : 'Continue setup'}
           </Button>
         </div>
       )}

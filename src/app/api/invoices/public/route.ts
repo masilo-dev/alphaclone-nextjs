@@ -35,6 +35,8 @@ function mapPublicInvoice(row: Record<string, unknown>, lineItems: Record<string
     discount_amount: row.discount_amount,
     discountAmount: row.discount_amount,
     total: row.total,
+    amountPaid: Number(row.amount_paid || 0),
+    balanceDue: Math.max(0, Number(row.total || 0) - Number(row.amount_paid || 0)),
     currency: row.currency || 'USD',
     notes: row.notes,
     bankDetails: row.bank_details,

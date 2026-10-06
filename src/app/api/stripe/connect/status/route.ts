@@ -1,6 +1,6 @@
+import { readConnectedAccount, isMissingStripeAccount } from '@/lib/stripeConnectAccount';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { stripe } from '@/lib/stripe';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
@@ -16,17 +16,16 @@ export async function GET(req: NextRequest) {
     if (!tenant?.stripe_connect_id) {
       return NextResponse.json({ connected: false, chargesEnabled: false, payoutsEnabled: false, requirements: [] });
     }
-    const account = await stripe.accounts.retrieve(String(tenant.stripe_connect_id));
-    if (account.deleted) return NextResponse.json({ connected: false, chargesEnabled: false, payoutsEnabled: false, requirements: [] });
-    const connected = Boolean(account.details_submitted && account.charges_enabled);
-    await admin.from('tenants').update({ stripe_connect_onboarded: connected }).eq('id', tenantId);
-    return NextResponse.json({
-      connected,
-      accountId: account.id,
-      chargesEnabled: account.charges_enabled,
-      payoutsEnabled: account.payouts_enabled,
-      requirements: account.requirements?.currently_due || [],
-    });
+    let state;
+    try { state = await readConnectedAccount(String(tenant.stripe_connect_id)); }
+    catch (error) {
+      if (!isMissingStripeAccount(error)) throw error;
+      return NextResponse.json({ connected: false, reconnectRequired: true, chargesEnabled: false, payoutsEnabled: false, requirements: [] });
+    }
+    const { error: updateError } = await admin.from('tenants').update({ stripe_connect_onboarded: state.chargesEnabled }).eq('id', tenantId);
+    if (updateError) throw updateError;
+    return NextResponse.json({ connected: state.chargesEnabled, accountId: state.id,
+      reconnectRequired: state.closed, chargesEnabled: state.chargesEnabled, payoutsEnabled: state.payoutsEnabled, requirements: state.requirements });
   } catch (error) {
     return routeErrorResponse(error, 'Stripe Connect status could not be loaded', req);
   }

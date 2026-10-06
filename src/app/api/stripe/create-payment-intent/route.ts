@@ -1,3 +1,7 @@
+import { withInvoicePaymentAttempt } from '@/lib/stripeInvoiceAttempt';
+import { invoiceAmountToStripe } from '@/lib/stripeInvoiceCurrency';
+import { requireInvoiceStripeAccount } from '@/lib/stripeInvoiceExecution';
+import { invoiceOutstanding } from '@/lib/stripePaymentPolicy';
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
@@ -20,33 +24,21 @@ export async function POST(req: Request) {
         const { data: membership } = await supabaseAdmin.from('tenant_users').select('user_id').eq('tenant_id', invoice.tenant_id).eq('user_id', user.id).maybeSingle();
         if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         if (invoice.status === 'paid') return NextResponse.json({ error: 'Invoice is already paid' }, { status: 409 });
-        const remaining = Math.max(0, Number(invoice.total || 0) - Number(invoice.amount_paid || 0));
-        const amount = remaining > 0 ? remaining : Number(invoice.total || 0);
+        const amount = invoiceOutstanding(invoice);
         const currency = String(invoice.currency || 'usd').toLowerCase();
         const description = invoice.invoice_number ? `Invoice ${invoice.invoice_number}` : `Invoice ${invoiceId}`;
         const tenantId = invoice.tenant_id;
 
-        let stripeConnectId = null;
-
-        if (tenantId) {
-            const { data: tenant } = await supabaseAdmin
-                .from('tenants')
-                .select('stripe_connect_id, stripe_connect_onboarded')
-                .eq('id', tenantId)
-                .single();
-
-            if (tenant?.stripe_connect_onboarded && tenant?.stripe_connect_id) {
-                stripeConnectId = tenant.stripe_connect_id;
-            }
-        }
+        const stripeConnectId = await requireInvoiceStripeAccount(supabaseAdmin, invoice.tenant_id);
 
         const paymentIntentOptions: any = {
-            amount: Math.round(amount * 100),
+            amount: invoiceAmountToStripe(amount, currency),
             currency,
-            description: description || (invoiceId ? `Invoice #${invoiceId}` : 'AlphaClone Payment'),
+            description: description || (invoiceId ? `Invoice #${invoiceId}` : 'Invoice payment'),
             metadata: {
                 invoiceId,
                 tenantId,
+                type: 'business_invoice',
                 integration: 'alphaclone_payment_service'
             },
             automatic_payment_methods: {
@@ -54,16 +46,14 @@ export async function POST(req: Request) {
             },
         };
 
-        if (stripeConnectId) {
-            paymentIntentOptions.transfer_data = { destination: stripeConnectId };
-            paymentIntentOptions.application_fee_amount = Math.round(amount * 100 * 0.02);
-        }
-
-        const paymentIntent = await stripe.paymentIntents.create(paymentIntentOptions);
+        // Tenant customer payments are direct charges on the tenant's connected
+        // Stripe account. AlphaClone does not collect or redistribute these funds.
+        const paymentIntent = await withInvoicePaymentAttempt(supabaseAdmin, {tenantId, invoiceId, accountId: stripeConnectId, kind: 'intent', amount: paymentIntentOptions.amount, currency}, options => stripe.paymentIntents.create({...paymentIntentOptions, metadata: {...paymentIntentOptions.metadata, paymentAttemptId: options.idempotencyKey?.replace('invoice-attempt:', '')}}, options));
 
         return NextResponse.json({
             clientSecret: paymentIntent.client_secret,
             paymentIntentId: paymentIntent.id,
+            stripeAccountId: stripeConnectId,
             amount,
             currency,
         });

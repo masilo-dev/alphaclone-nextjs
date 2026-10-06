@@ -15,12 +15,14 @@ const withSerwist = withSerwistInit({
 } as Parameters<typeof withSerwistInit>[0]);
 
 const nextConfig: NextConfig = {
+  // npm run build validates types before and after compilation in separate processes.
+  // The post-build tsc also checks Next-generated route contracts.
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
   serverExternalPackages: ['playwright-core', 'chromium-bidi', '@browserbasehq/sdk', 'puppeteer-core', 'jsdom', 'got', 'node-html-parser', 'robots-txt-guard', 'workflow', '@workflow/core', '@sendgrid/mail', '@sendgrid/helpers', '@upstash/qstash', '@upstash/ratelimit', '@upstash/redis', 'nodemailer'],
   typescript: {
-    ignoreBuildErrors: false,
+    ignoreBuildErrors: process.env.ALPHACLONE_SEQUENTIAL_TYPECHECK === "1",
   },
   transpilePackages: [
     '@blocknote/core',
@@ -79,6 +81,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     scrollRestoration: true,
+    cpus: 1,
     webpackMemoryOptimizations: true,
     // Keep Webpack compilation isolated from the main Next.js process. This
     // materially lowers peak memory for Railway's containerized builds.
@@ -136,7 +139,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
+    if (!dev) config.cache = false;
+    config.parallelism = 1;
     // Critical: Increase timeout for long-running builds/bundling to prevent stalls
     config.output.chunkLoadTimeout = 180000;
 
@@ -309,6 +314,7 @@ export default withSentryConfig(workflowConfig as any, {
   // Full client upload balloons webpack memory during CI builds.
   widenClientFileUpload: false,
   sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
     deleteSourcemapsAfterUpload: true,
   },
   tunnelRoute: "/monitoring",

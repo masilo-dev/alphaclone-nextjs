@@ -1,3 +1,4 @@
+import { STARTER_MONTHLY_CENTS } from '@/config/platformBilling';
 import { supabase } from '../lib/supabase';
 
 /**
@@ -39,22 +40,22 @@ export const TIER_PRICING = {
         annual: 0,
     },
     starter: {
-        monthly: 2000, // $20
-        annual: 19200, // $192/year
-        monthlyPriceId: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID || 'price_1T0PCcCCIq5cPz4Hvazdrvtb',
-        annualPriceId: process.env.STRIPE_STARTER_ANNUAL_PRICE_ID || 'price_1T0PCcCCIq5cPz4HF47biusi',
+        monthly: STARTER_MONTHLY_CENTS, // $15 before applicable tax
+        annual: 14400, // Annual checkout remains unconfigured
+        monthlyPriceId: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID,
+        annualPriceId: process.env.STRIPE_STARTER_ANNUAL_PRICE_ID,
     },
     pro: {
         monthly: 4500, // $45
         annual: 43200, // $432/year
-        monthlyPriceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || 'price_1T0PChCCIq5cPz4HiD85RMtD',
-        annualPriceId: process.env.STRIPE_PRO_ANNUAL_PRICE_ID || 'price_1T0PChCCIq5cPz4HVpwBieMq',
+        monthlyPriceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
+        annualPriceId: process.env.STRIPE_PRO_ANNUAL_PRICE_ID,
     },
     enterprise: {
-        monthly: 8900, // $89
-        annual: 85400, // $854/year
-        monthlyPriceId: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || 'price_1T0PCqCCIq5cPz4HtjeFQZSG',
-        annualPriceId: process.env.STRIPE_ENTERPRISE_ANNUAL_PRICE_ID || 'price_1T0PCqCCIq5cPz4HNiqbW1Sp',
+        monthly: 8500, // $85 before applicable tax
+        annual: 76800, // Future plan: checkout unconfigured
+        monthlyPriceId: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID,
+        annualPriceId: process.env.STRIPE_ENTERPRISE_ANNUAL_PRICE_ID,
     },
 };
 

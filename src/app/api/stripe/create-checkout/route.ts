@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
-import { stripe } from '@/lib/stripe';
-import { PLAN_PRICING, SubscriptionPlan } from '@/services/tenancy/types';
-import { matchesPublicMonthlyPrice } from '@/config/pricingPlans';
+import { createPlatformStarterCheckout } from '@/lib/stripePlatformCheckout';
 import { requireTenantRole } from '@/lib/apiAuth';
 import { isTurnstileEnforced, readClientIp, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
@@ -29,86 +27,8 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Pull pricing from PLAN_PRICING — single source of truth
-        const validPlans: SubscriptionPlan[] = ['starter', 'pro', 'enterprise'];
-        if (!validPlans.includes(plan as SubscriptionPlan)) {
-            return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
-        }
-
-        const planConfig = PLAN_PRICING[plan as SubscriptionPlan];
-        if (!matchesPublicMonthlyPrice(plan, planConfig.monthly * 100)) {
-            console.error('Checkout price differs from public pricing', { plan });
-            return NextResponse.json(
-                { error: 'Checkout pricing is being updated. Please contact sales before subscribing.' },
-                { status: 503 },
-            );
-        }
-        const planNames: Record<string, string> = {
-            starter: 'Starter Plan',
-            pro: 'Pro Plan',
-            enterprise: 'Enterprise Plan',
-        };
-        const planName = planNames[plan] || plan;
-
-        if (planConfig.stripePriceId) {
-            const configuredPrice = await stripe.prices.retrieve(planConfig.stripePriceId);
-            const expectedAmount = planConfig.monthly * 100;
-            if (
-                configuredPrice.currency !== 'usd' ||
-                configuredPrice.unit_amount !== expectedAmount ||
-                configuredPrice.recurring?.interval !== 'month'
-            ) {
-                console.error('Stripe price configuration mismatch', {
-                    plan,
-                    priceId: planConfig.stripePriceId,
-                    expectedAmount,
-                    actualAmount: configuredPrice.unit_amount,
-                    currency: configuredPrice.currency,
-                    interval: configuredPrice.recurring?.interval,
-                });
-                return NextResponse.json(
-                    { error: `Checkout for ${plan} is temporarily unavailable while its Stripe price is updated.` },
-                    { status: 503 },
-                );
-            }
-        }
-
-        // Use Stripe Price ID from PLAN_PRICING if available, otherwise use price_data
-        const lineItem = planConfig.stripePriceId
-            ? { price: planConfig.stripePriceId, quantity: 1 }
-            : {
-                price_data: {
-                    currency: 'usd',
-                    product_data: {
-                        name: planName,
-                        description: `AlphaClone ${planName} - Monthly Subscription`,
-                    },
-                    unit_amount: planConfig.monthly * 100, // cents
-                    recurring: { interval: 'month' as const },
-                },
-                quantity: 1,
-            };
-
-        // Create Stripe Checkout Session
-        const session = await stripe.checkout.sessions.create({
-            mode: 'subscription',
-            payment_method_types: ['card'],
-            line_items: [lineItem],
-            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?payment=success`,
-            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?payment=cancelled`,
-            metadata: {
-                tenantId,
-                userId,
-                plan,
-            },
-            subscription_data: {
-                metadata: {
-                    tenantId,
-                    userId,
-                    plan,
-                },
-            },
-        });
+        if (!['starter', 'pro', 'enterprise'].includes(plan)) return NextResponse.json({ error: 'Subscription unavailable: unsupported plan' }, { status: 503 });
+        const session = await createPlatformStarterCheckout({ plan, tenantId, userId, email: user.email, origin: new URL(req.url).origin });
 
         return NextResponse.json({ sessionId: session.id, url: session.url });
     } catch (error: any) {

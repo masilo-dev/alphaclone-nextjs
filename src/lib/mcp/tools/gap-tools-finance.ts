@@ -284,7 +284,7 @@ registerTool('gap-finance', {
   description: 'Mark a quote as sent and optionally email it to the client with provider receipt.',
   inputSchema: z.object({ tenant_id: tid, quote_id: z.string(), recipient_email: z.string().optional() }),
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, quote_id: { type: 'string' }, recipient_email: { type: 'string' } }, required: ['quote_id'] },
-  handler: async (args) => {
+  handler: async (args, context) => {
     const supabase = createSupabaseAdminClient();
     const { data: quote, error: fetchErr } = await supabase
       .from('quotes')
@@ -331,8 +331,11 @@ registerTool('gap-finance', {
 
     if (recipient) {
       try {
-        const { sendEmailServer } = await import('@/lib/email/emailServer');
-        emailResult = await sendEmailServer(args.tenant_id, {
+        const { executeSendEmailCommand } = await import('@/lib/execution/commands/sendEmailCommand');
+        const execution = await executeSendEmailCommand({
+          tenantId: context.tenantId, userId: context.userId, executionSource: 'mcp',
+          initiationSource: 'mcp.send_quote', relatedRecord: {type: 'quote', id: args.quote_id},
+          idempotencyKey: `quote-send:${context.tenantId}:${args.quote_id}:${recipient}`,
           to: recipient,
           subject: `Quotation: ${quote.name || quote.quote_number}`,
           html: `<p>Hello,</p><p>Please review quotation <strong>${quote.quote_number}</strong> for ${quote.currency || 'EUR'} ${quote.total_amount}.</p>`,
@@ -347,13 +350,14 @@ registerTool('gap-finance', {
               ]
             : undefined,
         });
+        emailResult = execution.ok ? execution.result : { success: false, error: execution.error?.message || 'Email execution failed' };
       } catch (err: any) {
         console.warn('[MCP send_quote] email send failed:', err?.message || err);
       }
     }
 
     const providerAccepted = Boolean(emailResult?.success);
-    const messageId = emailResult?.messageId ?? null;
+    const messageId = emailResult?.canonicalMessageId ?? emailResult?.emailId ?? null;
 
     if (!providerAccepted) {
       if (pdfUrl && pdfUrl !== quote.pdf_url) {
@@ -509,7 +513,7 @@ registerTool('gap-finance', {
 // ── create_subscription_checkout ─────────────────────────────────────
 registerTool('gap-finance', {
   name: 'create_subscription_checkout',
-  description: 'Create a Stripe subscription checkout session for a client.',
+  description: 'AlphaClone platform subscription checkout. Tenant customer subscriptions require connected-account billing.',
   inputSchema: z.object({ tenant_id: tid, client_id: z.string().optional(), price_id: z.string().optional(), plan_name: z.string().optional(), amount_cents: z.number().optional(), success_url: z.string().optional(), cancel_url: z.string().optional() }),
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, client_id: { type: 'string' }, price_id: { type: 'string' }, plan_name: { type: 'string' }, amount_cents: { type: 'number' } }, required: [] },
   handler: async (args) => {
