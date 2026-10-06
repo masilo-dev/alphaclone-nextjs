@@ -40,13 +40,21 @@ export async function POST(req: Request) {
             }
         }
 
+        if (!stripeConnectId) {
+            return NextResponse.json(
+                { error: 'This business must connect and finish setting up Stripe before accepting invoice payments.' },
+                { status: 409 }
+            );
+        }
+
         const paymentIntentOptions: any = {
             amount: Math.round(amount * 100),
             currency,
-            description: description || (invoiceId ? `Invoice #${invoiceId}` : 'AlphaClone Payment'),
+            description: description || (invoiceId ? `Invoice #${invoiceId}` : 'Invoice payment'),
             metadata: {
                 invoiceId,
                 tenantId,
+                type: 'business_invoice',
                 integration: 'alphaclone_payment_service'
             },
             automatic_payment_methods: {
@@ -54,12 +62,12 @@ export async function POST(req: Request) {
             },
         };
 
-        if (stripeConnectId) {
-            paymentIntentOptions.transfer_data = { destination: stripeConnectId };
-            paymentIntentOptions.application_fee_amount = Math.round(amount * 100 * 0.02);
-        }
-
-        const paymentIntent = await stripe.paymentIntents.create(paymentIntentOptions);
+        // Tenant customer payments are direct charges on the tenant's connected
+        // Stripe account. AlphaClone does not collect or redistribute these funds.
+        const paymentIntent = await stripe.paymentIntents.create(
+            paymentIntentOptions,
+            { stripeAccount: stripeConnectId }
+        );
 
         return NextResponse.json({
             clientSecret: paymentIntent.client_secret,
