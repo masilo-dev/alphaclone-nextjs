@@ -7,8 +7,8 @@
   },
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "rm -rf app && cross-env NEXT_TELEMETRY_DISABLED=1 SERWIST_SUPPRESS_TURBOPACK_WARNING=1 RAYON_NUM_THREADS=1 NODE_OPTIONS=--max-old-space-size=4096 next build --webpack",
-    "build:prod": "rm -rf app && cross-env RAYON_NUM_THREADS=1 NODE_OPTIONS=--max-old-space-size=4096 next build --webpack",
+    "build": "rm -rf app && npm run typecheck && cross-env NEXT_TELEMETRY_DISABLED=1 SERWIST_SUPPRESS_TURBOPACK_WARNING=1 RAYON_NUM_THREADS=1 ALPHACLONE_SEQUENTIAL_TYPECHECK=1 NODE_OPTIONS=--max-old-space-size=4096 next build --webpack && npm run typecheck:build",
+    "build:prod": "npm run build",
     "start": "node scripts/validate-production-env.mjs --warn-only && NODE_OPTIONS=\"${NODE_OPTIONS:---max-old-space-size=4096}\" next start -H 0.0.0.0 -p ${PORT:-3000}",
     "start:worker": "tsx src/worker/index.ts",
     "lint": "cross-env NODE_OPTIONS=--max-old-space-size=4096 eslint",
@@ -63,7 +63,8 @@
     "test:media-gateway": "node --import tsx --test tests/unit/mcp-connector-upgrade.test.mjs tests/unit/mcp-production-hardening.test.mjs",
     "test:tool-registry": "node --import tsx --test tests/unit/mcp-tool-registry-static-load.test.mjs tests/unit/mcp-tool-exposure-gate.test.mjs tests/unit/mcp-production-hardening.test.mjs",
     "chatgpt:annotate-connector": "node scripts/annotate-chatgpt-connector-tools.mjs",
-    "verify:production": "npm run typecheck && npm test && npm run validate:prod-guards && npm run validate:env"
+    "verify:production": "npm run typecheck && npm test && npm run validate:prod-guards && npm run validate:env",
+    "typecheck:build": "cross-env NODE_OPTIONS=--max-old-space-size=5760 tsc --noEmit"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.0",

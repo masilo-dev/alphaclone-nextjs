@@ -15,12 +15,14 @@ const withSerwist = withSerwistInit({
 } as Parameters<typeof withSerwistInit>[0]);
 
 const nextConfig: NextConfig = {
+  // npm run build validates types before and after compilation in separate processes.
+  // The post-build tsc also checks Next-generated route contracts.
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
   serverExternalPackages: ['playwright-core', 'chromium-bidi', '@browserbasehq/sdk', 'puppeteer-core', 'jsdom', 'got', 'node-html-parser', 'robots-txt-guard', 'workflow', '@workflow/core', '@sendgrid/mail', '@sendgrid/helpers', '@upstash/qstash', '@upstash/ratelimit', '@upstash/redis', 'nodemailer'],
   typescript: {
-    ignoreBuildErrors: false,
+    ignoreBuildErrors: process.env.ALPHACLONE_SEQUENTIAL_TYPECHECK === "1",
   },
   transpilePackages: [
     '@blocknote/core',
