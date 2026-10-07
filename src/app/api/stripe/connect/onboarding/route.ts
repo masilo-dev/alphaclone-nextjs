@@ -11,10 +11,11 @@ const adminRoles = ['owner', 'admin', 'tenant_admin', 'super_admin'];
 
 export async function POST(req: Request) {
   try {
-    const { tenantId, returnUrl, refreshUrl } = z.object({
+    const { tenantId, returnUrl, refreshUrl, country } = z.object({
       tenantId: z.string().uuid(),
       returnUrl: z.string().url().optional(),
       refreshUrl: z.string().url().optional(),
+      country: z.string().regex(/^[A-Za-z]{2}$/, 'Business country must be a 2-letter ISO country code').transform((value) => value.toUpperCase()),
     }).parse(await req.json());
     const { user } = await requireTenantRole(tenantId, adminRoles);
     const admin = createSupabaseAdminClient();
@@ -33,6 +34,7 @@ export async function POST(req: Request) {
     if (!accountId) {
       const account = await stripe.v2.core.accounts.create({
         dashboard: 'full', display_name: tenant.name, contact_email: user.email || undefined,
+        identity: { country },
         configuration: { merchant: { capabilities: { card_payments: { requested: true } } } },
         defaults: { responsibilities: { fees_collector: 'stripe', losses_collector: 'stripe' } },
         metadata: { tenantId, type: 'business_connect' },
