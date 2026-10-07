@@ -223,6 +223,13 @@ export async function loadMcpOAuthClient(
     return { client: result.data as McpOAuthClientRow };
   }
 
+  if (result.error) {
+    console.warn('[MCP OAuth] Client lookup unavailable:', clientId, result.error.code || result.error.message);
+    // A failed lookup is not evidence that a registered client does not exist.
+    // Never seed or reject credentials based on an unavailable database.
+    return { client: null, error: 'temporarily_unavailable' };
+  }
+
   if (
     PLATFORM_MCP_OAUTH_CLIENT_IDS.has(clientId) ||
     PLATFORM_CLIENT_SEEDS[clientId]
@@ -238,12 +245,5 @@ export async function loadMcpOAuthClient(
     }
   }
 
-  if (result.error) {
-    console.warn(
-      "[MCP OAuth] Client lookup error:",
-      clientId,
-      result.error.message,
-    );
-  }
   return { client: null, error: "invalid_client" };
 }

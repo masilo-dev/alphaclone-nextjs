@@ -301,19 +301,32 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
 
   const supabase = createSupabaseAdminClient();
 
-  let { data: client } = await supabase
+  let { data: client, error: clientLookupError } = await supabase
     .from('mcp_oauth_clients')
     .select('client_id, redirect_uris, is_public')
     .eq('client_id', clientId)
     .maybeSingle();
 
+  if (clientLookupError) {
+    return new Response(JSON.stringify({ error: 'temporarily_unavailable', error_description: 'Client registration could not be verified. Please retry shortly.' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'Retry-After': '5', ...CORS_HEADERS },
+    });
+  }
+
   if (!client && PLATFORM_MCP_OAUTH_CLIENT_IDS.has(clientId)) {
     await ensurePlatformMcpOAuthClient(supabase, clientId);
-    ({ data: client } = await supabase
+    ({ data: client, error: clientLookupError } = await supabase
       .from('mcp_oauth_clients')
       .select('client_id, redirect_uris, is_public')
       .eq('client_id', clientId)
       .maybeSingle());
+    if (clientLookupError) {
+      return new Response(JSON.stringify({ error: 'temporarily_unavailable', error_description: 'Client registration could not be verified. Please retry shortly.' }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'Retry-After': '5', ...CORS_HEADERS },
+      });
+    }
   }
 
   if (client) {

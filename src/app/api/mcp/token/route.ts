@@ -150,6 +150,9 @@ async function authenticateClient(
   const client = loaded.client;
 
   if (!client) {
+    if (loaded.error === 'temporarily_unavailable') {
+      return { valid: false, error: loaded.error };
+    }
     console.warn('[MCP Token] Client authentication failed - client not found:', clientId);
     return { valid: false, error: 'invalid_client' };
   }
@@ -290,6 +293,12 @@ export async function POST(req: NextRequest) {
     // Authenticate the client (required for confidential clients)
     const clientAuth = await authenticateClient(req, client_id, client_secret, supabase);
     if (!clientAuth.valid) {
+      if (clientAuth.error === 'temporarily_unavailable') {
+        const response = tokenError('temporarily_unavailable', 'Client registration could not be verified. Please retry shortly.', 503);
+        response.headers.set('Retry-After', '5');
+        response.headers.set('Cache-Control', 'no-store');
+        return response;
+      }
       return tokenError(
         'invalid_client',
         'Client authentication failed. Confidential clients must provide valid client_secret.',

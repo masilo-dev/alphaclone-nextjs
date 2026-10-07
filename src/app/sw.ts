@@ -2,6 +2,7 @@
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 import { CacheFirst, ExpirationPlugin, Serwist, NetworkOnly, disableNavigationPreload } from "serwist";
+import { bypassAuthenticationFetch } from '../lib/pwa/authNetworkBypass';
 
 declare global {
     interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -173,6 +174,8 @@ serwist.setCatchHandler(async ({ request }) => {
     return Response.error();
 });
 
+// Register before Serwist so even its precache route cannot handle auth traffic.
+self.addEventListener('fetch', (event) => bypassAuthenticationFetch(event, self.location.origin));
 serwist.addEventListeners();
 
 const ALLOWED_NOTIFICATION_PATHS = [

@@ -67,13 +67,9 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const { user } = useAuth();
     const userId = user?.id ?? null;
 
-    // Synchronous initial value to eliminate English-to-Polish / English-to-Spanish flash on load
-    const [language, setLanguageState] = useState<SupportedLanguage>(() => {
-        if (typeof window !== 'undefined') {
-            return getStoredLanguage(null);
-        }
-        return 'en';
-    });
+    // The first client render must match SSR. Read browser preferences after
+    // hydration, otherwise a saved language changes the server-rendered tree.
+    const [language, setLanguageState] = useState<SupportedLanguage>('en');
 
     useEffect(() => {
         const stored = getStoredLanguage(userId);
