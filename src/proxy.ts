@@ -114,6 +114,9 @@ async function applyGlobalApiRateLimit(
   if (
     pathname === "/api/health" ||
     pathname === "/api/readiness" ||
+    pathname === "/api/platform-status" ||
+    pathname === "/platform-status" ||
+    pathname === "/platform-status/history" ||
     pathname.startsWith("/api/cron/") ||
     pathname.startsWith("/api/webhooks/") ||
     // Never rate-limit OAuth code/token exchange — Claude maps 429 → McpAuthorizationError
@@ -186,6 +189,9 @@ export async function proxy(request: NextRequest) {
   if (
     pathname === "/api/health" ||
     pathname === "/api/readiness" ||
+    pathname === "/api/platform-status" ||
+    pathname === "/platform-status" ||
+    pathname === "/platform-status/history" ||
     pathname.startsWith("/api/cron/") ||
     pathname.startsWith("/api/webhooks/")
   ) {
