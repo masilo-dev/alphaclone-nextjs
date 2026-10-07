@@ -67,8 +67,12 @@ export async function GET() {
     rateLimitDistributed = false;
   }
 
-  // The dedicated liveness endpoint is cheap. Readiness must never claim the
-  // database is ready when it was intentionally not checked.
+  // Railway uses this endpoint as a deployment/startup health gate. A transient
+  // Supabase/PostgREST timeout must not kill an otherwise healthy Next.js
+  // container and leave the previous release pinned forever. Configuration is
+  // the hard startup requirement; database state remains visible in the body so
+  // application monitoring can alert on degradation independently.
+  const appReady = configured;
   const healthy = configured && dbStatus === 'ready';
   const body = {
     status: healthy ? 'ok' : 'degraded',
@@ -84,7 +88,7 @@ export async function GET() {
     timestamp: new Date().toISOString(),
   };
 
-  const status = soft || healthy ? 200 : 503;
+  const status = soft || appReady ? 200 : 503;
   return NextResponse.json(body, {
     status,
     headers: { 'Cache-Control': 'no-store' },
