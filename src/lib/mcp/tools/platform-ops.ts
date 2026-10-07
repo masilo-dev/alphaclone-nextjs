@@ -191,7 +191,7 @@ defineConnectorTool({
   handler: async () => ({
     app_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
     package_name: 'alphaclone-nextjs',
-    mcp_protocol_version: '2025-11-25',
+    mcp_protocol_version: '2025-06-18',
     status: 'operational',
     environment: process.env.NODE_ENV || 'production',
   }),

@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 800;
 
-const MCP_PROTOCOL_VERSION = '2025-11-25';
+import { MCP_PROTOCOL_VERSION } from '@/lib/mcp/standardResponse';
 
 export async function POST(req: NextRequest) {
   const cors = handleCorsApp(req);

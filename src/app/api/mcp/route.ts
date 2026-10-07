@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 800;
 
-const MCP_PROTOCOL_VERSION = '2025-11-25';
+const MCP_PROTOCOL_VERSION = '2025-06-18';
 const MCP_VERSION_HEADER = '2025-03-26';
 const SUPPORTED_MCP_PROTOCOL_VERSIONS = ['2024-11-05', '2025-03-26', '2025-11-25'] as const;
 

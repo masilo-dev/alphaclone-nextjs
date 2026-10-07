@@ -18,7 +18,7 @@ export const maxDuration = 800;
 export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 
-const MCP_PROTOCOL_VERSION = '2025-11-25';
+import { MCP_PROTOCOL_VERSION } from '@/lib/mcp/standardResponse';
 
 function getBaseUrl(_req: NextRequest) {
   return PUBLIC_APP_ORIGIN;
