@@ -127,6 +127,7 @@ const ProfileSetup: React.FC<SetupComponentProps> = ({ tenant, user, onComplete 
 const StripeConnectSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete }) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [businessCountry, setBusinessCountry] = useState('US');
 
   useEffect(() => {
     // Check if already connected
@@ -154,7 +155,8 @@ const StripeConnectSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete 
         body: JSON.stringify({ 
           tenantId: tenant.id,
           returnUrl: `${window.location.origin}/dashboard/onboarding`,
-          refreshUrl: `${window.location.origin}/dashboard/onboarding`
+          refreshUrl: `${window.location.origin}/dashboard/onboarding`,
+          country: businessCountry
         })
       });
 
@@ -220,10 +222,26 @@ const StripeConnectSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete 
         </ul>
       </div>
 
+      <div className="max-w-xs mx-auto mb-4 text-left">
+        <label htmlFor="onboarding-stripe-country" className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1">
+          Business country
+        </label>
+        <input
+          id="onboarding-stripe-country"
+          value={businessCountry}
+          onChange={(event) => setBusinessCountry(event.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2))}
+          maxLength={2}
+          autoComplete="country"
+          className="w-full px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 rounded-lg text-white uppercase"
+          placeholder="US"
+        />
+        <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">2-letter code for the country where the business is legally registered.</p>
+      </div>
+
       <button
         onClick={handleConnect}
-        disabled={isConnecting}
-        className="px-6 py-3 bg-purple-500 hover:bg-purple-400 text-white font-semibold rounded-lg"
+        disabled={isConnecting || businessCountry.length !== 2}
+        className="px-6 py-3 bg-purple-500 hover:bg-purple-400 text-white font-semibold rounded-lg disabled:opacity-50"
       >
         {isConnecting ? 'Connecting...' : 'Connect Stripe Account'}
       </button>
