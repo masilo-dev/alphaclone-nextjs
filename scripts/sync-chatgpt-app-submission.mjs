@@ -120,6 +120,17 @@ function entryFromAnnotations(name, annotations) {
 }
 
 const doc = JSON.parse(fs.readFileSync(TARGET, "utf8"));
+
+// OpenAI review schema uses expected_behavior. Normalize legacy files so the
+// generated submission cannot silently carry obsolete expected_output fields.
+for (const key of ["test_cases", "negative_test_cases"]) {
+  for (const testCase of doc[key] || []) {
+    if (testCase.expected_output && !testCase.expected_behavior) {
+      testCase.expected_behavior = testCase.expected_output;
+    }
+    delete testCase.expected_output;
+  }
+}
 doc.tools = doc.tools || {};
 
 const tools = await getUnifiedMcpTools({ catalogMode: "full", sanitizeForClient: true });

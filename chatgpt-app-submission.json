@@ -6375,40 +6375,40 @@
       "user_prompt": "Give me a quick business snapshot for my workspace.",
       "file_attachment_urls": null,
       "tools_triggered": "get_business_snapshot",
-      "expected_output": "Returns an overview of business health, key counts, and relevant operational signals.",
-      "expected_output_url": null
+      "expected_output_url": null,
+      "expected_behavior": "Returns an overview of business health, key counts, and relevant operational signals."
     },
     {
       "description": "Show connected LinkedIn identities before posting.",
       "user_prompt": "Show my LinkedIn identities and company pages.",
       "file_attachment_urls": null,
       "tools_triggered": "get_linkedin_identities",
-      "expected_output": "Returns the personal identity and any connected organization identities with posting availability.",
-      "expected_output_url": null
+      "expected_output_url": null,
+      "expected_behavior": "Returns the personal identity and any connected organization identities with posting availability."
     },
     {
       "description": "Draft a LinkedIn company-page post.",
       "user_prompt": "Create a LinkedIn post for our company page about our new service launch.",
       "file_attachment_urls": null,
       "tools_triggered": "create_linkedin_post",
-      "expected_output": "Creates or publishes the LinkedIn post using the selected company identity.",
-      "expected_output_url": null
+      "expected_output_url": null,
+      "expected_behavior": "Creates or publishes the LinkedIn post using the selected company identity."
     },
     {
       "description": "Generate and send an invoice.",
       "user_prompt": "Create an invoice for Acme Corp and send it to the client.",
       "file_attachment_urls": null,
       "tools_triggered": "send_invoice",
-      "expected_output": "Generates the invoice and sends the client-facing invoice flow.",
-      "expected_output_url": null
+      "expected_output_url": null,
+      "expected_behavior": "Generates the invoice and sends the client-facing invoice flow."
     },
     {
       "description": "Prepare a contract for signature.",
       "user_prompt": "Create a contract and send it for signature.",
       "file_attachment_urls": null,
       "tools_triggered": "send_contract",
-      "expected_output": "Creates the contract and sends it through the external signing workflow.",
-      "expected_output_url": null
+      "expected_output_url": null,
+      "expected_behavior": "Creates the contract and sends it through the external signing workflow."
     }
   ],
   "negative_test_cases": [
@@ -6417,24 +6417,25 @@
       "user_prompt": "What is the weather in Zurich tomorrow?",
       "file_attachment_urls": null,
       "tools_triggered": null,
-      "expected_output": "The app should not be invoked because the request is outside the business workspace domain.",
-      "expected_output_url": null
+      "expected_output_url": null,
+      "expected_behavior": "The app should not be invoked because the request is outside the business workspace domain."
     },
     {
       "description": "Do not trigger for coding help.",
       "user_prompt": "Write me a Python binary search implementation.",
       "file_attachment_urls": null,
       "tools_triggered": null,
-      "expected_output": "The app should not be invoked because the request is unrelated to the business operating system tools.",
-      "expected_output_url": null
+      "expected_output_url": null,
+      "expected_behavior": "The app should not be invoked because the request is unrelated to the business operating system tools."
     },
     {
       "description": "Do not trigger for restaurant reservations.",
       "user_prompt": "Book a table for two at an Italian restaurant tonight.",
       "file_attachment_urls": null,
       "tools_triggered": null,
-      "expected_output": "The app should not be invoked because the request is outside the supported workflows.",
-      "expected_output_url": null
+      "expected_output_url": null,
+      "expected_behavior": "The app should not be invoked because the request is outside the supported workflows."
     }
-  ]
+  ],
+  "release_notes": "AlphaClone production MCP reliability release: unified protocol negotiation, durable bulk execution with idempotency and job-status polling, transient authentication resilience, structured MCP errors, and removal of the application-level MCP wall-clock cutoff."
 }
