@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       const { data: byToken, error: tokenError } = await admin
         .from('business_clients')
         .select(
-          'id, tenant_id, name, email, finance_portal_token, client_portal_password_hash, client_portal_session_salt, is_active'
+          'id, tenant_id, name, email, finance_portal_token, client_portal_password_hash, client_portal_session_salt, client_portal_login_failure_count, client_portal_locked_until, is_active'
         )
         .eq('finance_portal_token', token)
         .maybeSingle();
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       const { data: byEmail, error: emailError } = await admin
         .from('business_clients')
         .select(
-          'id, tenant_id, name, email, finance_portal_token, client_portal_password_hash, client_portal_session_salt, is_active'
+          'id, tenant_id, name, email, finance_portal_token, client_portal_password_hash, client_portal_session_salt, client_portal_login_failure_count, client_portal_locked_until, is_active'
         )
         .ilike('email', email)
         .eq('is_active', true)
