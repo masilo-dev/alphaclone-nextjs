@@ -174,8 +174,8 @@ export const Input: React.FC<InputProps> = ({
   ].filter(Boolean).join(' ') || undefined;
 
   const baseInputClass = `w-full bg-[var(--ws-surface-primary,var(--surface-primary))] border ${
-    error ? 'border-[var(--danger,#D85858)]' : 'border-[var(--ws-border,var(--border-default))]'
-  } rounded-[10px] px-3.5 py-2.5 type-ui leading-normal text-[var(--ws-text-primary,var(--text-primary))] placeholder:text-[var(--ws-text-tertiary,var(--text-muted))] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-[var(--ac-accent,#356AF4)] transition-colors ${
+    error ? 'border-[var(--danger)]' : 'border-[var(--ws-border,var(--border-default))]'
+  } rounded-[10px] px-3.5 py-2.5 type-ui leading-normal text-[var(--ws-text-primary,var(--text-primary))] placeholder:text-[var(--ws-text-tertiary,var(--text-muted))] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-[var(--ac-accent)] transition-colors ${
     icon ? 'pl-10' : ''
   } ${className}`;
 
@@ -186,7 +186,7 @@ export const Input: React.FC<InputProps> = ({
       )}
       <div className="relative group">
         {icon && (
-          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted,var(--text-muted))] group-focus-within:text-[var(--interactive-secondary,#4199A4)] transition-colors pointer-events-none" aria-hidden="true">
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted,var(--text-muted))] group-focus-within:text-[var(--interactive-secondary)] transition-colors pointer-events-none" aria-hidden="true">
             {icon}
           </div>
         )}
@@ -529,7 +529,7 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
               item.onClick();
               setIsOpen(false);
             }}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 sm:py-2 min-h-11 sm:min-h-9 type-ui font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring,#356AF4)] ${
+            className={`w-full flex items-center gap-2.5 px-3 py-2.5 sm:py-2 min-h-11 sm:min-h-9 type-ui font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${
               item.variant === 'danger'
                 ? 'text-[var(--state-danger,var(--error-500))] hover:bg-[color-mix(in_srgb,var(--state-danger,var(--error-500))_10%,transparent)]'
                 : 'text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
