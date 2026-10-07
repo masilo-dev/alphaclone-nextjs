@@ -468,6 +468,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     {/* STEP 1: Edit Details */}
                     {step === 'edit' && (
                         <div className="space-y-6">
+                            <PaymentRailBanner compact />
                             <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 flex items-start gap-3 border-teal-500/20`}>
                                 <Edit3 className="w-5 h-5 text-teal-400 mt-0.5" />
                                 <div>
