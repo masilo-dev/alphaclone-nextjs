@@ -10,6 +10,7 @@ import { getUnifiedMcpTools } from '@/lib/mcp/listAllTools';
 import { ALL_MODULE_NAMES, coreTools, getModuleTools, findToolsByQuery } from '@/lib/mcp/progressiveDiscovery';
 import { getToolGovernance } from '@/lib/mcp/canonicalToolRegistry';
 import { executeTool, hasTool } from '@/lib/mcp/tool-registry';
+import { MCP_PROTOCOL_VERSION } from '@/lib/mcp/standardResponse';
 
 
 
@@ -179,7 +180,7 @@ defineConnectorTool({
   handler: async () => {
     const allTools = await getUnifiedMcpTools({ catalogMode: 'full', sanitizeForClient: false });
     return okResult('list_capabilities', {
-      protocol_version: '2024-11-05',
+      protocol_version: MCP_PROTOCOL_VERSION,
       capabilities: {
         tools: { listChanged: true },
         resources: { subscribe: true, listChanged: true },
