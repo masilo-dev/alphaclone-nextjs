@@ -24,8 +24,17 @@ export async function GET(req: NextRequest) {
     }
     const { error: updateError } = await admin.from('tenants').update({ stripe_connect_onboarded: state.chargesEnabled }).eq('id', tenantId);
     if (updateError) throw updateError;
-    return NextResponse.json({ connected: state.chargesEnabled, accountId: state.id,
-      reconnectRequired: state.closed, chargesEnabled: state.chargesEnabled, payoutsEnabled: state.payoutsEnabled, requirements: state.requirements });
+    return NextResponse.json({
+      connected: state.chargesEnabled,
+      accountId: state.id,
+      accountDisplayName: (state.account as any).display_name || null,
+      country: (state.account as any).identity?.country || null,
+      dashboardType: state.dashboard || null,
+      reconnectRequired: state.closed,
+      chargesEnabled: state.chargesEnabled,
+      payoutsEnabled: state.payoutsEnabled,
+      requirements: state.requirements,
+    });
   } catch (error) {
     return routeErrorResponse(error, 'Stripe Connect status could not be loaded', req);
   }
