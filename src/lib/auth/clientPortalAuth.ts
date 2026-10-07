@@ -203,6 +203,7 @@ export async function requireClientPortalSession(
     .eq('id', claims.sub)
     .maybeSingle();
   if (error || !client) return { ok: false, error: { code: 'INTERNAL_ERROR', http: 500 } };
+  if (client.tenant_id !== claims.tid) return { ok: false, error: { code: 'BAD_TOKEN', http: 401 } };
   if (client.is_active === false) return { ok: false, error: { code: 'CLIENT_INACTIVE', http: 403 } };
   if (client.client_portal_session_salt !== claims.salt) {
     return { ok: false, error: { code: 'SALT_ROTATED', http: 401 } };
@@ -211,6 +212,8 @@ export async function requireClientPortalSession(
     .from('client_portal_sessions')
     .select('id, is_active, signed_out_at, expires_at')
     .eq('session_jti', claims.jti)
+    .eq('client_id', claims.sub)
+    .eq('tenant_id', claims.tid)
     .maybeSingle();
   if (
     !sessionRow ||
