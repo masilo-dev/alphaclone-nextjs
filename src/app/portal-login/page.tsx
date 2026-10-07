@@ -90,7 +90,9 @@ function PortalLoginContent() {
                 return;
             }
 
-            const redirectTarget = safeNext || data.redirectTo || '/';
+            // The server owns post-auth routing (notably first-time password setup).
+            // Only fall back to the sanitized requested destination for older responses.
+            const redirectTarget = data.redirectTo || safeNext || '/';
             router.replace(redirectTarget);
         } catch {
             setError('Network error. Please check your connection and try again.');
