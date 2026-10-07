@@ -20,6 +20,7 @@ import { UNIVERSAL_SERVICE_CATALOG } from '../../services/universalServiceCatalo
 import { supabase } from '@/lib/supabase';
 import { getTaxRateForCountry } from '@/lib/tax/taxRules';
 import { WORKSPACE } from '@/constants/design';
+import { PaymentRailBanner } from '@/components/dashboard/payments/PaymentRailBanner';
 
 
 interface LineItem {
@@ -88,8 +89,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     } | undefined;
     const tenantPaymentMethods = tenantSettings?.paymentMethods || tenantSettings?.payment_methods;
     const tenantDefaults = {
-        bank: tenantPaymentMethods?.bank || 'Bank: ABSA\nAccount: 123456789\nBranch: Sandton',
-        mobile: tenantPaymentMethods?.mobile || 'Mobile Money: +27 123 456 7890',
+        bank: tenantPaymentMethods?.bank || '',
+        mobile: tenantPaymentMethods?.mobile || '',
     };
 
     React.useEffect(() => {
