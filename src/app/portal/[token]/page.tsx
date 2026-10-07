@@ -733,16 +733,17 @@ export default function ClientPortalPage() {
                                 accent="var(--info)"
                             />
                             <StatCard
-                                label="Open invoices"
-                                value={portal.summary.openInvoices}
-                                hint={portal.summary.openBalance > 0 ? `Balance due: ${money(portal.summary.openBalance)}` : 'No balance due'}
+                                label="Invoices"
+                                value={portal.invoices.length}
+                                hint={portal.summary.openBalance > 0 ? `Balance due: ${money(portal.summary.openBalance)}` : portal.invoices.length > 0 ? 'Payment history available' : 'No invoices shared'}
                                 icon={CreditCard}
                                 accent="var(--warning)"
                             />
                             <StatCard
-                                label="Pending quotes"
-                                value={portal.summary.pendingQuotes}
-                                icon={FileText}
+                                label="Contracts"
+                                value={portal.contracts.length}
+                                hint={portal.contracts.length > 0 ? 'Shared contracts available' : 'No contracts shared'}
+                                icon={ScrollText}
                                 accent="var(--brand-blue-400)"
                             />
                             <StatCard
