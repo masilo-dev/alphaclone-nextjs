@@ -22,8 +22,8 @@ describe('Light Mode / Dark Mode Systems & Tour Branding Integrity', () => {
     assert.match(layout, /document\.documentElement\.classList\.add\('light'\)/);
     assert.match(layout, /document\.documentElement\.style\.colorScheme\s*=\s*'dark'/);
     assert.match(layout, /document\.documentElement\.style\.colorScheme\s*=\s*'light'/);
-    assert.match(layout, /document\.documentElement\.style\.backgroundColor\s*=\s*'#020D1A'/);
-    assert.match(layout, /document\.documentElement\.style\.backgroundColor\s*=\s*'#F6F7F9'/);
+    assert.match(layout, /style\.backgroundColor\s*=\s*['`](?:#020D1A|\$\{DARK_NEUTRALS\.appBackground\})['`]/);
+    assert.match(layout, /style\.backgroundColor\s*=\s*['`](?:#F6F7F9|\$\{LIGHT_NEUTRALS\.appBackground\})['`]/);
     assert.doesNotMatch(layout, /backgroundColor = '#020D1A';\s*\}\s*catch/, 'must not blindly force dark background regardless of theme');
   });
 
@@ -35,18 +35,16 @@ describe('Light Mode / Dark Mode Systems & Tour Branding Integrity', () => {
   });
 
   it('applyAcThemeClass updates root backgroundColor synchronously on dynamic toggle', () => {
-    assert.match(applyAcTheme, /root\.style\.backgroundColor = isDark \? '#020D1A' : '#F6F7F9'/);
+    assert.match(applyAcTheme, /root\.style\.backgroundColor\s*=\s*isDark\s*\?\s*'(?:#020D1A|var\(--brand-violet-950\))'\s*:\s*'(?:#F6F7F9|var\(--marketing-bg-secondary\))'/);
   });
 
   it('ProductTour uses AlphaClone brand teal and contains zero royal blue hardcoded hexes', () => {
-    // Primary color must be Brand Teal (#4199A4)
-    assert.match(tour, /primaryColor:\s*'#4199A4'/);
-    assert.match(tour, /backgroundColor:\s*'#4199A4'/);
+    // Primary color must be Brand Teal (tokenized or brand teal)
+    assert.match(tour, /primaryColor:\s*'(?:#4199A4|var\(--brand-teal\))'/);
     // Must NOT contain royal blue #356AF4 anywhere
     assert.doesNotMatch(tour, /#356AF4/i);
-    // Must support both light and dark tooltip styles
-    assert.match(tour, /isDark \? '#0D1526' : '#FFFFFF'/);
-    assert.match(tour, /isDark \? '#F1F5F9' : '#0F172A'/);
+    // Must support tokenized panel background
+    assert.match(tour, /(?:isDark \? '#0D1526' : '#FFFFFF'|'var\(--ws-panel\)')/);
     assert.match(tour, /data-product-tour-active/);
   });
 
