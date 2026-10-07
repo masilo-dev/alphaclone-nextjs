@@ -42,7 +42,12 @@ export function inferToolAnnotations(toolName: string): McpToolAnnotations {
 
   const destructive =
     /^(delete|remove|destroy|purge|drop|revoke|cancel|void)_/.test(name) ||
-    /(^|_)(delete|remove|destroy|purge|drop|revoke)(_|$)/.test(name);
+    /(^|_)(delete|remove|destroy|purge|drop|revoke)(_|$)/.test(name) ||
+    // OpenAI review treats irreversible external side effects such as sending
+    // messages/transactions and publishing as destructive even when the
+    // provider itself accepted the operation successfully.
+    /^(send|publish|post|tweet|notify|dispatch)_/.test(name) ||
+    /(^|_)(send|publish)(_|$)/.test(name);
 
   const openWorld =
     /(publish|send|email|sms|whatsapp|tweet|post_to|social|stripe|zoho|gmail|webhook|notify)/.test(
@@ -65,9 +70,18 @@ export function inferToolAnnotations(toolName: string): McpToolAnnotations {
 }
 
 export function resolveToolAnnotations(toolName: string): McpToolAnnotations {
+  const inferred = inferToolAnnotations(toolName);
   const fromSubmission = loadSubmissionAnnotations().get(toolName);
-  if (fromSubmission) return fromSubmission;
-  return inferToolAnnotations(toolName);
+  if (!fromSubmission) return inferred;
+
+  // Never let a stale submission snapshot weaken high-confidence safety hints
+  // advertised by the live MCP server. OpenAI scans the production endpoint,
+  // and its annotations must describe the real side effects.
+  return {
+    readOnlyHint: fromSubmission.readOnlyHint && inferred.readOnlyHint,
+    openWorldHint: fromSubmission.openWorldHint || inferred.openWorldHint,
+    destructiveHint: fromSubmission.destructiveHint || inferred.destructiveHint,
+  };
 }
 
 /** Size-limited connector tool surface (ChatGPT Apps, Claude.ai, etc.). */
