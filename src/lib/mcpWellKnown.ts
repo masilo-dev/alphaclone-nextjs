@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PUBLIC_APP_ORIGIN, PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
 import { ALL_MCP_SCOPES } from '@/lib/mcp/scopes';
+import { MCP_PROTOCOL_VERSION } from '@/lib/mcp/standardResponse';
 
 /**
  * Always returns the configured public-facing HTTPS base URL.
@@ -20,9 +21,9 @@ function getDiscoveryHeaders() {
     Pragma: 'no-cache',
     Expires: '0',
     Vary: 'Origin, Access-Control-Request-Headers',
-    'x-mcp-version': '2025-11-25',
-    'x-protocol-version': '2025-11-25',
-    'MCP-Protocol-Version': '2025-11-25',
+    'x-mcp-version': MCP_PROTOCOL_VERSION,
+    'x-protocol-version': MCP_PROTOCOL_VERSION,
+    'MCP-Protocol-Version': MCP_PROTOCOL_VERSION,
   };
 }
 
