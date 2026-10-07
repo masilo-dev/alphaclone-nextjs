@@ -21,15 +21,18 @@ export async function POST(req: Request) {
     const { user } = await requireTenantRole(tenantId, adminRoles);
     const admin = createSupabaseAdminClient();
     const { data: tenant, error } = await admin.from('tenants')
-      .select('stripe_connect_id, name')
+      .select('stripe_connect_id, stripe_connect_pending_id, name')
       .eq('id', tenantId).single();
     if (error || !tenant) throw error || new Error('Workspace not found');
 
     await verifyStripePlatformIdentity();
-    let accountId = tenant.stripe_connect_id ? String(tenant.stripe_connect_id) : '';
+    const activeAccountId = tenant.stripe_connect_id ? String(tenant.stripe_connect_id) : '';
+    let accountId = replaceAccount && tenant.stripe_connect_pending_id
+      ? String(tenant.stripe_connect_pending_id)
+      : activeAccountId;
     let legacyAccountId = '';
-    if (accountId && replaceAccount) {
-      legacyAccountId = accountId;
+    if (replaceAccount && activeAccountId && !tenant.stripe_connect_pending_id) {
+      legacyAccountId = activeAccountId;
       accountId = '';
     }
     if (accountId) {
@@ -51,9 +54,10 @@ export async function POST(req: Request) {
         metadata: { tenantId, type: 'business_connect' },
       }, { idempotencyKey: `connect-account:${tenantId}:${legacyAccountId ? `after:${legacyAccountId}` : 'initial'}` });
       accountId = account.id;
-      const { error: updateError } = await admin.from('tenants')
-        .update({ stripe_connect_id: accountId, stripe_connect_onboarded: false })
-        .eq('id', tenantId);
+      const update = replaceAccount && activeAccountId
+        ? { stripe_connect_pending_id: accountId, stripe_connect_pending_previous_id: activeAccountId }
+        : { stripe_connect_id: accountId, stripe_connect_onboarded: false };
+      const { error: updateError } = await admin.from('tenants').update(update).eq('id', tenantId);
       if (updateError) throw updateError;
     }
 
