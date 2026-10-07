@@ -20,9 +20,15 @@ export async function requireInvoiceStripeAccount(admin: SupabaseClient, tenantI
 
 export async function reconcileInvoiceStripePayment(admin: SupabaseClient, tenantId: string, invoiceId: string,
   paymentIntentId: string, accountId: string, actorUserId?: string) {
-  const { data: tenant, error: tenantError } = await admin.from('tenants').select('stripe_connect_id').eq('id', tenantId).single();
-  if (tenantError) throw tenantError;
-  if (!accountId || tenant?.stripe_connect_id !== accountId) throw new Error('Stripe account does not belong to the invoice tenant');
+  if (!accountId) throw new Error('Stripe account is required for invoice reconciliation');
+  // A tenant may replace its connected account after an invoice was created. Validate
+  // the provider account against the durable invoice attempt instead of only the tenant's
+  // current connection, so delayed success/refund events from the old account stay valid.
+  const { data: attempt, error: attemptError } = await admin.from('stripe_invoice_attempts')
+    .select('id').eq('tenant_id', tenantId).eq('invoice_id', invoiceId)
+    .eq('stripe_account_id', accountId).limit(1).maybeSingle();
+  if (attemptError) throw attemptError;
+  if (!attempt) throw new Error('Stripe account does not belong to this invoice payment attempt');
   const { data: invoice, error } = await admin.from('business_invoices').select('id,tenant_id,currency,status,total,amount_paid')
     .eq('id', invoiceId).eq('tenant_id', tenantId).single();
   if (error || !invoice) throw error || new Error('Invoice not found');
