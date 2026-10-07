@@ -50,6 +50,7 @@ import {
   resolveDocumentThemeId,
 } from '@/lib/documents/documentBuilders';
 import type { DocumentThemeId } from '@/lib/documents/renderDocument';
+import { PaymentRailBanner } from '@/components/dashboard/payments/PaymentRailBanner';
 
 
 interface EnhancedInvoiceModalProps {
@@ -534,7 +535,7 @@ export default function EnhancedInvoiceModal({
   };
 
   const renderDetailsTab = () => (
-    <div className="space-y-6">
+    <div className="space-y-6">\n          <PaymentRailBanner compact />
       <div className="relative" ref={dropdownRef}>
         <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Search Client</label>
         <div className="relative">

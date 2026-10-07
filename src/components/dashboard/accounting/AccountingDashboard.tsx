@@ -1,3 +1,4 @@
+import { PaymentRailBanner } from '@/components/dashboard/payments/PaymentRailBanner';
 'use client';
 
 import React, { useState, useEffect } from 'react';
