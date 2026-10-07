@@ -8,10 +8,10 @@ import {
 } from '@/lib/runtime/workerRuntimeCounters';
 import { isBackgroundJobHeapBlocked, backgroundJobBlockedReason } from '@/lib/runtime/backgroundJobGate';
 
-const SYNC_TIMEOUT_MS = Number(process.env.MCP_TOOL_SYNC_TIMEOUT_MS || 15_000);
-const HEAVY_SYNC_TIMEOUT_MS = Number(process.env.MCP_TOOL_HEAVY_SYNC_TIMEOUT_MS || 25_000);
-const SOCIAL_PUBLISH_TIMEOUT_MS = Number(process.env.MCP_TOOL_SOCIAL_PUBLISH_TIMEOUT_MS || 45_000);
-const EMAIL_OUTBOUND_TIMEOUT_MS = Number(process.env.MCP_TOOL_EMAIL_OUTBOUND_TIMEOUT_MS || 30_000);
+const SYNC_TIMEOUT_MS = Number(process.env.MCP_TOOL_SYNC_TIMEOUT_MS || 60_000);
+const HEAVY_SYNC_TIMEOUT_MS = Number(process.env.MCP_TOOL_HEAVY_SYNC_TIMEOUT_MS || 120_000);
+const SOCIAL_PUBLISH_TIMEOUT_MS = Number(process.env.MCP_TOOL_SOCIAL_PUBLISH_TIMEOUT_MS || 120_000);
+const EMAIL_OUTBOUND_TIMEOUT_MS = Number(process.env.MCP_TOOL_EMAIL_OUTBOUND_TIMEOUT_MS || 90_000);
 
 const HEAVY_TOOLS = new Set([
   'bulk_update_records',
@@ -89,15 +89,20 @@ export async function executeMcpToolWithBudget<T>(
   const timeoutMs = resolveMcpToolTimeoutMs(toolName);
 
   try {
+    // Reliability contract: the MCP gateway must not manufacture short 15–45s
+    // failures while the underlying operation is still progressing. Long/heavy
+    // work should queue at the tool boundary; synchronous work gets a generous
+    // safety deadline so platform/proxy requests cannot hang forever.
     return await Promise.race([
       fn(),
       new Promise<T>((_, reject) => {
         const timer = setTimeout(() => {
-          reject(
-            new Error(
-              `Tool ${toolName} timed out after ${timeoutMs}ms. If this was an outbound operation, verify its status with get_action_status or search_emails / get_social_posts before retrying to prevent duplicates.`
-            )
-          );
+          const error = new Error(
+            `Tool ${toolName} exceeded its ${timeoutMs}ms execution safety deadline. The operation may still be reconciling; check its durable action status before retrying.`
+          ) as Error & { code?: string; retryable?: boolean };
+          error.code = 'MCP_EXECUTION_DEADLINE';
+          error.retryable = true;
+          reject(error);
         }, timeoutMs);
         if (typeof timer.unref === 'function') timer.unref();
       }),
