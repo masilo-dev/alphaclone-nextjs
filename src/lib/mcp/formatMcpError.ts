@@ -62,7 +62,7 @@ export function formatToolExecutionError(tool: string, err: unknown): StandardMc
   const code = e?.code || 'TOOL_ERROR';
   const retryable =
     code === 'RATE_LIMITED' ||
-    /timeout|transient|503|502|429|temporarily unavailable/i.test(message);
+    /timeout|timed out|deadline|transient|network|failed to fetch|PGRST00[0-3]|408|429|500|502|503|504|520|522|524|temporarily unavailable/i.test(message);
 
   if (code === 'CONFIRMATION_REQUIRED') {
     return standardError(tool, code, message, {
