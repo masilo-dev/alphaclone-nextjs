@@ -2,9 +2,12 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
-import { Providers } from '@/components/Providers';
+import dynamic from 'next/dynamic';
 import { MarketingProviders } from '@/components/MarketingProviders';
 import { isAppShellRoute, isPublicMarketingRoute } from '@/lib/isPublicMarketingRoute';
+
+// Load the full authenticated provider stack only for routes that need it.
+const Providers = dynamic(() => import('@/components/Providers').then((module) => module.Providers));
 
 export function ProviderSwitcher({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
