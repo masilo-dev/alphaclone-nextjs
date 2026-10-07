@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
 import { PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
+import { MCP_PROTOCOL_VERSION } from '@/lib/mcp/standardResponse';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ export async function GET(req: NextRequest) {
     ok: true,
     service: 'mcp',
     transport: 'streamable-http',
-    protocol_version: '2025-11-25',
+    protocol_version: MCP_PROTOCOL_VERSION,
     /** Canonical Streamable HTTP endpoint for all MCP clients */
     endpoint: '/api/mcp',
     resource: PUBLIC_MCP_RESOURCE,
@@ -22,8 +23,8 @@ export async function GET(req: NextRequest) {
   }, {
     headers: {
       ...getMcpCorsHeaders(req),
-      'MCP-Protocol-Version': '2025-11-25',
-      'x-mcp-version': '2025-11-25',
+      'MCP-Protocol-Version': MCP_PROTOCOL_VERSION,
+      'x-mcp-version': MCP_PROTOCOL_VERSION,
       'Cache-Control': 'no-store',
     },
   });
