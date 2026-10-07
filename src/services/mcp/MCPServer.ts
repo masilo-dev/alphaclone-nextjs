@@ -2992,14 +2992,16 @@ class AlphaCloneMCPServer {
               language: a.language,
               final_confirmation: a.final_confirmation,
               dry_run: a.dry_run,
+              idempotency_key: a.idempotency_key,
             },
             { tenantId: tenant_id, userId: user_id },
           );
 
           result = {
+            isError: 'success' in output && output.success === false,
             content: [{
               type: 'text',
-              text: JSON.stringify({ ok: true, tool: 'send_batch_outreach', data: output }, null, 2),
+              text: JSON.stringify({ ok: !('success' in output) || output.success !== false, tool: 'send_batch_outreach', data: output }, null, 2),
             }],
           };
           break;

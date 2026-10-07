@@ -75,7 +75,9 @@ export class ZohoMailService extends ZohoService {
         }
 
         const accountsData = await this.getAccounts();
-        const accountId = accountsData?.data?.[0]?.accountId;
+        const accounts = accountsData?.data || [];
+        if (accounts.length !== 1) throw new Error('ZOHO_ACCOUNT_SELECTION_REQUIRED: Select a Zoho account before sending');
+        const accountId = accounts[0]?.accountId;
         if (accountId) {
             await this.saveConfig({ accountId: String(accountId) });
             config.accountId = String(accountId);
@@ -129,7 +131,11 @@ export class ZohoMailService extends ZohoService {
     async getSenderAddresses(): Promise<string[]> {
         try {
             const data = await this.getAccounts();
-            const accounts = (data?.data || []) as any[];
+            const config = await this.getConfig();
+            const available = (data?.data || []) as any[];
+            const accounts = config?.accountId
+                ? available.filter((account) => String(account.accountId) === String(config.accountId))
+                : available.length === 1 ? available : [];
             const addresses: string[] = [];
             
             for (const acc of accounts) {
@@ -284,17 +290,19 @@ export class ZohoMailService extends ZohoService {
         const { base } = await this.getMailBase();
         const validAddresses = await this.getSenderAddresses();
         
-        if (!params.fromAddress || (validAddresses.length > 0 && !validAddresses.includes(params.fromAddress))) {
-            const primary = validAddresses.length > 0 ? validAddresses[0] : null;
-            if (primary) params.fromAddress = primary;
+        if (!validAddresses.length) throw new Error('EMAIL_SENDER_VERIFICATION_FAILED: Zoho sender identities are unavailable');
+        if (params.fromAddress && !validAddresses.some((address) => address.toLowerCase() === params.fromAddress!.toLowerCase())) {
+            throw new Error('EMAIL_SENDER_NOT_VERIFIED: Requested Zoho sender is not available on this account');
         }
+        if (!params.fromAddress) params.fromAddress = validAddresses[0];
 
         const subject = normalizeEmailSubject(params.subject);
         if (!subject) {
             throw new Error('Email subject is required.');
         }
-        const toAddress = extractEmailAddress(params.toAddress);
-        if (!toAddress.includes('@')) {
+        const recipientParts = params.toAddress.split(',').map((value) => extractEmailAddress(value));
+        const toAddress = [...new Set(recipientParts)].join(',');
+        if (!recipientParts.length || recipientParts.some((value) => !value.includes('@'))) {
             throw new Error('Recipient email address is invalid.');
         }
 

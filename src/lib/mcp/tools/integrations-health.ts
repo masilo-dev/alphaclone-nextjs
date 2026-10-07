@@ -139,7 +139,8 @@ defineConnectorTool({
       key: 'zoho',
       status: rows.length ? 'connected' : 'missing',
       connected: rows.length > 0,
-      details: { integration_rows: rows },
+      details: { integration_rows: rows, verification_scope: 'integration_configuration',
+        limitation: 'Enabled integration does not verify a sender, quota, credentials or delivery. Use list_email_accounts and a provider receipt.' },
     } satisfies IntegrationHealth;
   },
 });

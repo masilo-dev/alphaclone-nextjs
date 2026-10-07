@@ -1,3 +1,4 @@
+import { emailReceiptEvidence } from '@/lib/email/emailReceiptEvidence';
 /**
  * Individual email MCP actions — real provider sends (no fake success).
  */
@@ -227,25 +228,29 @@ defineConnectorTool({
     const tenantId = ctx.tenantId;
     if (!tenantId) throwConnectorError('TENANT_ACCESS_DENIED', 'Active workspace required');
     const supabase = createSupabaseAdminClient();
-    const { data: integrations } = await supabase
-      .from('integrations')
-      .select('id, provider, status, metadata, created_at')
-      .eq('tenant_id', tenantId)
-      .in('provider', ['zoho', 'gmail', 'brevo', 'sendgrid', 'resend', 'outlook', 'smtp']);
-
-    const { data: senders } = await supabase
+    const { data: accounts, error: accountError } = await supabase
+      .from('email_provider_accounts')
+      .select('id, provider, connection_status, email_address, display_name, account_type, capabilities, legacy_integration_id, created_at')
+      .eq('tenant_id', tenantId).is('deleted_at', null);
+    const { data: integrations, error: integrationError } = await supabase
+      .from('integrations').select('id, type, enabled')
+      .eq('tenant_id', tenantId).in('type', ['zoho', 'gmail', 'brevo', 'sendgrid', 'resend', 'outlook', 'microsoft', 'microsoft365']);
+    const { data: senders, error: senderError } = await supabase
       .from('email_sender_addresses')
       .select('id, provider, email_address, display_name, is_default, is_verified, region')
       .eq('tenant_id', tenantId);
-
+    if (accountError || integrationError || senderError) {
+      throw new Error(`EMAIL_ACCOUNT_DISCOVERY_FAILED: ${accountError?.message || integrationError?.message || senderError?.message}`);
+    }
     return okResult('list_email_accounts', {
-      accounts: (integrations || []).map((row) => ({
-        account_id: row.id,
-        provider: row.provider,
-        status: row.status,
-        connected_at: row.created_at,
+      accounts: (accounts || []).map((row) => ({
+        account_id: row.id, provider: row.provider, status: row.connection_status,
+        sender: row.email_address, sender_configured: Boolean(row.email_address),
+        account_type: row.account_type, capabilities: row.capabilities, connected_at: row.created_at,
       })),
+      integrations: integrations || [],
       sender_addresses: senders || [],
+      limitation: 'Connected configuration does not prove sender verification or inbox delivery.',
     });
   },
 });
@@ -339,16 +344,18 @@ defineConnectorTool({
       idempotencyKey,
     });
     if (existing) {
-      return okResult('send_email', existing.sanitized_output, {
-        receipt: {
-          action_id: String(existing.action_id),
-          status: String(existing.final_status),
-          provider: existing.provider as string,
-          provider_reference: existing.provider_reference as string,
-          entity_type: 'email',
-        },
+      const evidence = await emailReceiptEvidence(tenantId, userId, existing);
+      const replay = okResult('send_email', { ...existing.sanitized_output as Record<string, unknown>, ...evidence,
+        idempotent_replay: true }, {
+        receipt: { action_id: String(existing.action_id), status: String(existing.final_status),
+          provider: existing.provider as string, provider_reference: existing.provider_reference as string, entity_type: 'email' },
         meta: { deduplicated: true, idempotency_key: idempotencyKey },
       });
+      if (!existing.success || evidence.delivery_evidence?.status === 'failed') {
+        return { ...replay, ok: false as const, error: { code: String(existing.error_code || 'PREVIOUS_EMAIL_EXECUTION_FAILED'),
+          message: 'The previous email attempt was not successful. Review its persisted outcome; no new send was made.', retryable: false } };
+      }
+      return replay;
     }
 
     const recipient = await resolveRecipientByNameOrEmail({
@@ -490,6 +497,7 @@ defineConnectorTool({
               }))
             : undefined,
           preferredProvider: preferredOutbound,
+          providerAccountId: args.account_id,
         }),
       isSuccess: (result) => result.success,
       mapError: (result) => ({
@@ -499,7 +507,7 @@ defineConnectorTool({
       }),
       buildReceipt: (result) => ({
         action_id: '',
-        status: 'completed',
+        status: 'provider_accepted',
         provider: result.provider || null,
         provider_reference: result.emailId || null,
         entity_id: result.emailId || null,
@@ -519,18 +527,10 @@ defineConnectorTool({
         idempotencyKey,
         metadata: { code: gatewayResult.error?.code, error: gatewayResult.error?.message },
       });
-      throwConnectorError(
-        gatewayResult.error?.code || 'PROVIDER_REJECTED',
-        gatewayResult.error?.message || 'Email provider rejected the send',
-        {
-          remediation: gatewayResult.error?.remediation,
-          next_action:
-            gatewayResult.error?.code === 'PROVIDER_MISSING' ||
-            /provider|integration|sender/i.test(String(gatewayResult.error?.message))
-              ? 'Call check_mcp_execution_readiness with action=email_send, connect Zoho or Gmail under Integrations, then retry send_email.'
-              : 'Verify recipient email and plain-text body, then retry send_email.',
-        }
-      );
+      return { ...okResult('send_email', { ...result, action_id: gatewayResult.actionId,
+        delivery_status: result?.deliveryStatus || 'failed', provider_message_id: result?.emailId || null }),
+        ok: false as const, error: { code: gatewayResult.error?.code || 'PROVIDER_REJECTED',
+          message: gatewayResult.error?.message || 'Email provider rejected the send', retryable: false } };
     }
 
     const result = gatewayResult.result!;
@@ -776,7 +776,7 @@ defineConnectorTool({
         tool,
         idempotencyKey,
       });
-      if (row) return okResult('get_action_status', { receipt: row });
+      if (row) return okResult('get_action_status', await emailReceiptEvidence(tenantId, ctx.userId, row));
     }
 
     if (idempotencyKey) {
@@ -788,7 +788,7 @@ defineConnectorTool({
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (byIdemp) return okResult('get_action_status', { receipt: byIdemp });
+      if (byIdemp) return okResult('get_action_status', await emailReceiptEvidence(tenantId, ctx.userId, byIdemp));
     }
 
     // 2. Check mcp_action_receipts by action_id
@@ -799,7 +799,7 @@ defineConnectorTool({
         .eq('tenant_id', tenantId)
         .or(`action_id.eq.${actionId},id.eq.${actionId}`)
         .maybeSingle();
-      if (byAction) return okResult('get_action_status', { receipt: byAction });
+      if (byAction) return okResult('get_action_status', await emailReceiptEvidence(tenantId, ctx.userId, byAction));
     }
 
     // 3. Check social_publish_operations (handles Instagram, Facebook, LinkedIn operations)

@@ -1,3 +1,6 @@
+import { emailOperationStore, runEmailOperation } from '@/lib/email/emailOperation';
+import { deriveStableMcpIdempotencyKey } from '@/lib/mcp/toolRiskTiers';
+import { createHash } from 'node:crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { mapWithConcurrency, readConcurrencyEnv } from '@/lib/concurrency/mapWithConcurrency';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
@@ -27,6 +30,7 @@ type OutreachEntity = Record<string, unknown> & {
 };
 
 export type BatchOutreachArgs = {
+  idempotency_key?: string;
   lead_ids?: string[];
   client_ids?: string[];
   tone?: string;
@@ -75,11 +79,19 @@ async function preflightEntity(tenantId: string, entity: OutreachEntity) {
 }
 
 export async function executeBatchOutreach(args: BatchOutreachArgs, ctx: BatchContext) {
+  const dryRun = args.dry_run === true || (args.dry_run !== false && args.final_confirmation !== true);
+  if (dryRun) return executeBatchOutreachOnce(args, ctx);
+  const key = (args as unknown as Record<string, unknown>).idempotency_key as string || deriveStableMcpIdempotencyKey({ tenantId: ctx.tenantId, toolName: 'send_batch_outreach', args: args as unknown as Record<string, unknown> });
+  return runEmailOperation({ store: emailOperationStore(ctx.tenantId, 'email_batch_outreach', key),
+    execute: (actionId, checkpoint) => executeBatchOutreachOnce(args, ctx, key, actionId, checkpoint) });
+}
+
+async function executeBatchOutreachOnce(args: BatchOutreachArgs, ctx: BatchContext, operationKey?: string, actionId?: string, checkpoint?: (output: Record<string, unknown>) => Promise<void>) {
   const leadIds = Array.isArray(args.lead_ids) ? [...new Set(args.lead_ids.map((id) => String(id || '').trim()).filter(Boolean))] : [];
   const clientIds = Array.isArray(args.client_ids) ? [...new Set(args.client_ids.map((id) => String(id || '').trim()).filter(Boolean))] : [];
   const tone = String(args.tone || 'professional');
   const customContext = String(args.custom_context || '');
-  const deliveryProvider = String(args.delivery_provider || 'sendgrid');
+  const deliveryProvider = args.delivery_provider ? String(args.delivery_provider) : undefined;
 
   const batchLanguage = resolveCampaignLanguage({
     languageMode: args.language_mode,
@@ -114,15 +126,16 @@ export async function executeBatchOutreach(args: BatchOutreachArgs, ctx: BatchCo
   }
 
   const supabase = createSupabaseAdminClient();
-  const [{ data: leads }, { data: clients }] = await Promise.all([
+  const [{ data: leads, error: leadError }, { data: clients, error: clientError }] = await Promise.all([
     leadIds.length
       ? supabase.from('leads').select('*').in('id', leadIds).eq('tenant_id', ctx.tenantId)
-      : Promise.resolve({ data: [] as OutreachEntity[] }),
+      : Promise.resolve({ data: [] as OutreachEntity[], error: null }),
     clientIds.length
       ? supabase.from('business_clients').select('*').in('id', clientIds).eq('tenant_id', ctx.tenantId)
-      : Promise.resolve({ data: [] as OutreachEntity[] }),
+      : Promise.resolve({ data: [] as OutreachEntity[], error: null }),
   ]);
 
+  if (leadError || clientError) throw new Error('EMAIL_RECIPIENT_LOOKUP_FAILED');
   const allEntities = [...(leads || []), ...(clients || [])];
   if (!allEntities.length) {
     throw new Error('No valid leads or clients found for the provided IDs');
@@ -132,9 +145,16 @@ export async function executeBatchOutreach(args: BatchOutreachArgs, ctx: BatchCo
   const prefetched = await mapWithConcurrency(allEntities, preflightConcurrency, (entity) =>
     preflightEntity(ctx.tenantId, entity)
   );
-  const eligible = prefetched.filter((row): row is typeof row & { entity: OutreachEntity; email: string } =>
+  const valid = prefetched.filter((row): row is typeof row & { entity: OutreachEntity; email: string } =>
     row.status === 'eligible');
   const skipped = prefetched.filter((row) => row.status === 'skipped');
+
+  const seen = new Set<string>();
+  const eligible = valid.filter((row) => {
+    const normalized = row.email.trim().toLowerCase();
+    if (seen.has(normalized)) { skipped.push({ name: row.name, email: normalized, status: 'skipped', error: 'duplicate_email' }); return false; }
+    seen.add(normalized); row.email = normalized; return true;
+  });
 
   if (dryRun) {
     return {
@@ -193,9 +213,13 @@ export async function executeBatchOutreach(args: BatchOutreachArgs, ctx: BatchCo
           fromName: 'AlphaClone Outreach',
           preferredProvider: deliveryProvider as 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail',
           templateName: 'mcpAiOutreach',
+          category: 'outreach',
+          idempotencyKey: `outreach:${createHash('sha256').update(`${operationKey}:${email}`).digest('hex')}`,
+          auditMetadata: { batch_id: actionId, source_module: 'mcp', source_action: 'batch_outreach' },
         });
         if (!emailResult.success) {
-          throw new Error(emailResult.error || 'Outreach email failed');
+          return { name, email, status: emailResult.deliveryStatus || 'failed', provider: emailResult.provider,
+            email_id: emailResult.emailId, sender: emailResult.sender, provider_account_id: emailResult.providerAccountId, canonical_message_id: emailResult.canonicalMessageId, execution_success: false, code: emailResult.code, error: emailResult.error };
         }
 
         await supabase.from('lead_outreach_log').insert({
@@ -212,27 +236,34 @@ export async function executeBatchOutreach(args: BatchOutreachArgs, ctx: BatchCo
         return {
           name,
           email,
-          status: 'sent',
+          status: 'provider_accepted',
           language: batchLanguage.code,
           provider: emailResult.provider,
           email_id: emailResult.emailId,
+          sender: emailResult.sender, provider_account_id: emailResult.providerAccountId,
+          canonical_message_id: emailResult.canonicalMessageId, execution_success: true,
         };
       } catch (err) {
         return {
           name,
           email,
-          status: 'failed',
-          error: err instanceof Error ? err.message : 'send_failed',
+          status: 'unknown', execution_success: false, code: 'OUTCOME_UNKNOWN',
+          error: 'Execution interrupted; reconcile before retrying.',
         };
       }
     }));
     results.push(...chunkResults);
+    await checkpoint?.({ action_id: actionId, status: 'executing', results: [...results], skipped_recipients: skipped });
   }
 
-  const sent = results.filter((row) => row.status === 'sent').length;
+  const sent = results.filter((row) => row.status === 'provider_accepted').length;
   const failed = results.filter((row) => row.status === 'failed').length;
+  const executionErrors = results.filter((row) => row.execution_success === false).length;
 
   return {
+    action_id: actionId,
+    success: failed === 0 && executionErrors === 0 && !results.some((row) => row.status === 'unknown'),
+    status: results.some((row) => row.status === 'unknown') ? 'unknown' : failed || executionErrors ? 'failed' : 'provider_accepted',
     dry_run: false,
     execution_mode: 'direct' as const,
     requested: recipientCount,

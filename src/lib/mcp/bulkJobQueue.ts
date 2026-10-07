@@ -23,6 +23,7 @@ export type BulkJobStatus =
   | 'processing'
   | 'completed'
   | 'partially_completed'
+  | 'unknown'
   | 'failed';
 
 const BULK_EVENT_PREFIX = 'bulk_mcp:';
@@ -186,7 +187,7 @@ export async function getBulkJobStatus(
   return {
     job_id: String(data.id),
     tool,
-    status: mapQueueStatus(String(data.status), { requested, processed, succeeded, failed }, data.last_error),
+    status: output?.status === 'unknown' ? 'unknown' : mapQueueStatus(String(data.status), { requested, processed, succeeded, failed }, data.last_error),
     requested,
     processed,
     succeeded,
@@ -205,6 +206,7 @@ export async function getBulkJobStatus(
 export async function updateBulkJobProgress(
   jobId: string,
   progress: BulkJobProgress,
+  tenantId: string,
   extraPayload?: Record<string, unknown>
 ): Promise<void> {
   const admin = createSupabaseAdminClient();
@@ -212,6 +214,7 @@ export async function updateBulkJobProgress(
     .from('mcp_event_queue')
     .select('payload')
     .eq('id', jobId)
+    .eq('tenant_id', tenantId)
     .maybeSingle();
 
   const payload = (row?.payload || {}) as Record<string, unknown>;
@@ -228,7 +231,7 @@ export async function updateBulkJobProgress(
       },
       updated_at: new Date().toISOString(),
     })
-    .eq('id', jobId);
+    .eq('id', jobId).eq('tenant_id', tenantId);
 }
 
 export { toolFromEventName, eventNameForTool };

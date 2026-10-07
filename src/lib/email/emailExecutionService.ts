@@ -84,6 +84,8 @@ export const EmailExecutionService = {
       relatedEntityId: request.relatedRecord?.id,
       subject: request.subject,
       content: request.message || request.html || '',
+      provider: request.preferredProvider,
+      providerAccountId: String(request.auditMetadata?.provider_account_id || ''),
     });
 
     return sendViaEmailGateway({

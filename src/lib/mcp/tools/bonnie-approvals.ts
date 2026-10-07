@@ -204,19 +204,18 @@ registerTool('bonnie-approvals', {
         : String((payload as { instruction?: string }).instruction || ''),
     });
 
-    if (!result.execution?.success) {
-      throw new Error(result.execution?.error || 'Approval execution failed');
-    }
-
     return {
+      isError: !result.execution?.success,
       content: [{
         type: 'text',
         text: JSON.stringify({
-          success: true,
+          success: result.execution?.success === true,
           approval_id: args.approval_id,
-          executed: true,
+          executed: Boolean(result.execution?.result),
           tool: result.execution.result?.tool,
           summary: result.execution.result?.summary,
+          result: result.execution.result?.executionResult || null,
+          error: result.execution?.error || null,
           continuation: result.continuation?.continued
             ? {
                 continued: true,

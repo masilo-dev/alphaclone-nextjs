@@ -76,7 +76,8 @@ export async function executeEmailSendDurableTask(params: {
   task: Record<string, unknown>;
 }): Promise<{ ok: boolean; result?: Record<string, unknown>; error?: string }> {
   const input = (params.task.structured_input || {}) as Record<string, unknown>;
-  const tenantId = String(input.tenantId || params.tenantId);
+  const tenantId = params.tenantId;
+  if (input.tenantId && input.tenantId !== tenantId) return { ok: false, error: 'EMAIL_TENANT_CONTEXT_MISMATCH' };
   const userId = String(input.userId || '');
   if (!userId) return { ok: false, error: 'missing_user_id' };
 
@@ -93,7 +94,8 @@ export async function executeEmailSendDurableTask(params: {
   });
 
   if (!result.success) {
-    return { ok: false, error: result.error || result.code || 'email_send_failed' };
+    return { ok: false, result: { ...result, delivery_status: result.deliveryStatus || 'failed' },
+      error: result.error || result.code || 'email_send_failed' };
   }
 
   return {

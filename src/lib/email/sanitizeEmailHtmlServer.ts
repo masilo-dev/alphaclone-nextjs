@@ -23,7 +23,6 @@ const ALLOWED_TAGS = [
   'body',
   'meta',
   'title',
-  'style',
   'center',
 ];
 
@@ -57,7 +56,7 @@ const ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions['allowedAttributes'] = {
   td: TABLE_LAYOUT_ATTRS,
   col: ['width', 'span', 'style'],
   colgroup: ['width', 'span', 'style'],
-  meta: ['charset', 'name', 'content', 'http-equiv'],
+  meta: ['charset', 'name', 'content'],
   html: ['lang', 'xmlns', 'xmlns:v', 'xmlns:o'],
 };
 
@@ -65,6 +64,29 @@ const ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions['allowedAttributes'] = {
 export const OUTBOUND_EMAIL_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: ALLOWED_TAGS,
   allowedAttributes: ALLOWED_ATTRIBUTES,
+  allowedStyles: {
+    '*': {
+      color: [/^(#[0-9a-f]{3,8}|[a-z]+|rgba?\([\d\s.,%]+\))$/i],
+      'background-color': [/^(#[0-9a-f]{3,8}|[a-z]+|rgba?\([\d\s.,%]+\))$/i],
+      'font-family': [/^[\w\s,.'"-]+$/],
+      'font-size': [/^[\d.]+(px|pt|em|rem|%)$/],
+      'font-weight': [/^(normal|bold|[1-9]00)$/],
+      'line-height': [/^[\d.]+(px|pt|em|rem|%)?$/],
+      'text-align': [/^(left|right|center|justify)$/],
+      'text-decoration': [/^(none|underline|line-through)$/],
+      'vertical-align': [/^(top|middle|bottom|baseline)$/],
+      display: [/^(block|inline|inline-block|table|table-cell|none)$/],
+      margin: [/^[\d.\s%-]+(px|pt|em|rem|auto|[\d.\s%-])*$/],
+      padding: [/^[\d.\s%]+(px|pt|em|rem|[\d.\s%])*$/],
+      width: [/^([\d.]+(px|pt|em|rem|%)|auto)$/],
+      height: [/^([\d.]+(px|pt|em|rem|%)|auto)$/],
+      'max-width': [/^[\d.]+(px|pt|em|rem|%)$/],
+      'border-radius': [/^[\d.]+(px|%)$/],
+      border: [/^[\d.]+px\s+(solid|dashed|none)\s+(#[0-9a-f]{3,8}|[a-z]+)$/i],
+      'border-collapse': [/^(collapse|separate)$/],
+      'word-break': [/^(normal|break-word|break-all)$/],
+    },
+  },
   allowedSchemes: ['http', 'https', 'mailto'],
   allowProtocolRelative: false,
   disallowedTagsMode: 'discard',

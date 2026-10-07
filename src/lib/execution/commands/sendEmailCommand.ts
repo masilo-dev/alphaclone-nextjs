@@ -36,6 +36,8 @@ export async function executeSendEmailCommand(
       sequenceId: params.sequenceId,
       sequenceStepId: params.sequenceStepId,
       outreachAttemptId: params.outreachAttemptId,
+      provider: params.preferredProvider,
+      providerAccountId: params.providerAccountId,
     });
 
   const guard = await guardDomainCapability({
@@ -99,7 +101,7 @@ export async function executeSendEmailCommand(
     }),
     buildReceipt: (r) => ({
       action_id: '',
-      status: r.success ? 'verified' : 'failed',
+      status: r.deliveryStatus === 'unknown' ? 'unknown_execution_state' : r.success ? 'provider_accepted' : 'failed',
       provider: r.provider,
       provider_reference: r.emailId || r.canonicalMessageId,
       timestamp: new Date().toISOString(),

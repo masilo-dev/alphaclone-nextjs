@@ -269,7 +269,7 @@ async function sendViaZoho(input: EmailSendInput): Promise<EmailSendResult> {
         return {
             ok: true,
             provider: 'zoho',
-            emailId: String(result?.data?.messageId || ''),
+            emailId: String(result?.data?.messageId || result?.messageId || ''),
         };
     } catch (error) {
         return {
@@ -511,22 +511,8 @@ export async function sendWithProviderSdk(
     if (result.ok && input.userId) {
         try {
             const supabaseAdmin = createSupabaseAdminClient();
-            // Resolve tenantId
-            const { data: profile } = await supabaseAdmin
-                .from('profiles')
-                .select('tenant_id')
-                .eq('id', input.userId)
-                .maybeSingle();
-
-            let tenantId = profile?.tenant_id;
-            if (!tenantId) {
-                const { data: membership } = await supabaseAdmin
-                    .from('tenant_users')
-                    .select('tenant_id')
-                    .eq('user_id', input.userId)
-                    .maybeSingle();
-                tenantId = membership?.tenant_id;
-            }
+            // Use the authorized execution workspace, never a user's default profile workspace.
+            const tenantId = input.tenantId;
 
             if (tenantId) {
                 const recipients = Array.isArray(input.to) ? input.to : [input.to];

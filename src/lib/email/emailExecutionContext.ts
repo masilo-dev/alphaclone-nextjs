@@ -19,6 +19,8 @@ export type EmailExecutionIdentity = {
   relatedEntityId?: string | null;
   subject?: string | null;
   content?: string | null;
+  provider?: string | null;
+  providerAccountId?: string | null;
 };
 
 function nonEmpty(value: unknown): string | null {
@@ -64,6 +66,8 @@ export function buildTenantEmailIdempotencyKey(
     identity.sequenceStepId || '',
     identity.outreachAttemptId || '',
     identity.relatedEntityId || '',
+    identity.provider || '',
+    identity.providerAccountId || '',
     contentHash,
   ].join('|');
 

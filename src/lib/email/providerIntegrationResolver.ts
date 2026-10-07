@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import type { EmailProvider } from '@/lib/email/providerSdk';
+import { resolveZohoSender } from '@/lib/email/providerSenderIdentity';
 
 export type ResolvedEmailProviderConfig = {
   tenantId: string;
@@ -8,6 +9,7 @@ export type ResolvedEmailProviderConfig = {
   integrationId?: string | null;
   apiKey: string;
   fromEmail?: string;
+  senderVerificationError?: string;
   fromName?: string;
   ownerUserId?: string | null;
   accountType?: string | null;
@@ -296,6 +298,7 @@ export async function resolveAllConnectedEmailProviders(params: {
   const seen = new Set<string>();
 
   for (const provider of order) {
+    if (params.preferredProvider && provider !== normalizeEmailProvider(params.preferredProvider)) continue;
     if (provider === 'outlook') {
       const candidateUsers = [...new Set([
         params.preferredUserId,
@@ -331,6 +334,14 @@ export async function resolveAllConnectedEmailProviders(params: {
         ownerUserId: account.owner_user_id || row.user_id || null,
         accountType: account.account_type || null,
       };
+      if (provider === 'zoho' && !config.fromEmail && config.ownerUserId) {
+        try {
+          config.fromEmail = await resolveZohoSender(config.ownerUserId, params.tenantId,
+            String(row.config?.accountId || '') || undefined);
+        } catch {
+          config.senderVerificationError = 'Zoho sender discovery failed; verify account credentials and permissions.';
+        }
+      }
       if (seen.has(config.providerAccountId)) continue;
       seen.add(config.providerAccountId);
       resolved.push(config);

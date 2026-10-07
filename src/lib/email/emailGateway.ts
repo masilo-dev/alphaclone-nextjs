@@ -16,6 +16,8 @@ import {
 import { publicEmailUrl, isAbsoluteHttpsUrl } from '@/lib/siteUrl';
 import type { EmailAttachment } from '@/lib/email/emailAttachment';
 import { recordSuccessfulEmailSend } from '@/lib/email/usageMeteringService';
+import { emailOperationStore, runEmailOperation } from '@/lib/email/emailOperation';
+import { buildTenantEmailIdempotencyKey } from '@/lib/email/emailExecutionContext';
 
 export type EmailGatewayCategory =
   | 'marketing'
@@ -168,6 +170,18 @@ async function recordGatewayAudit(params: {
 }
 
 export async function sendViaEmailGateway(request: EmailGatewayRequest): Promise<EmailGatewayResult> {
+  const key = request.idempotencyKey || buildTenantEmailIdempotencyKey({ tenantId: request.tenantId }, {
+    sourceModule: 'email', sourceAction: `gateway:${request.preferredProvider || 'auto'}`,
+    recipient: request.to, subject: request.subject, content: request.message || request.html || '',
+  });
+  const output = await runEmailOperation({
+    store: emailOperationStore(request.tenantId, 'canonical_email_send', key),
+    execute: async () => ({ ...await executeEmailGateway({ ...request, idempotencyKey: key }) }),
+  });
+  return output as unknown as EmailGatewayResult;
+}
+
+async function executeEmailGateway(request: EmailGatewayRequest): Promise<EmailGatewayResult> {
   const recipients = Array.isArray(request.to) ? request.to : [request.to];
   const primaryRecipient = String(recipients[0] || '').trim().toLowerCase();
 
@@ -339,6 +353,7 @@ export async function sendViaEmailGateway(request: EmailGatewayRequest): Promise
       listUnsubscribeUrl: compliance.unsubscribeRequired ? unsubscribeUrl : undefined,
       auditMetadata: {
         ...(request.auditMetadata || {}),
+        idempotency_key: request.idempotencyKey,
         email_gateway_version: GATEWAY_VERSION,
         email_category: request.category,
         template_id: request.templateId || 'default',
@@ -347,6 +362,8 @@ export async function sendViaEmailGateway(request: EmailGatewayRequest): Promise
         workflow_id: request.workflowId || null,
         campaign_id: request.campaignId || null,
       },
+      providerAccountId: typeof request.auditMetadata?.provider_account_id === 'string'
+        ? request.auditMetadata.provider_account_id : undefined,
     },
     request.preferredProvider,
   );

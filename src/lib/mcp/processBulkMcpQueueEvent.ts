@@ -41,7 +41,7 @@ export async function processBulkMcpQueueEvent(params: {
       succeeded: 0,
       failed: 0,
       remaining: requested,
-    });
+    }, params.tenantId);
 
     let output: Record<string, unknown>;
 
@@ -70,7 +70,7 @@ export async function processBulkMcpQueueEvent(params: {
       remaining: Math.max(0, Number(output.requested || requested) - processed),
     };
 
-    await updateBulkJobProgress(params.eventId, progress);
+    await updateBulkJobProgress(params.eventId, progress, params.tenantId);
 
     return {
       tool,

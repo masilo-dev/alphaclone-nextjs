@@ -7,6 +7,9 @@ import { ingestMediaInput } from '@/lib/media/ingestMedia';
 import { findReceiptByIdempotency, persistActionReceipt } from '@/lib/mcp/actionReceipts';
 import { assertLeadStageTransition } from '@/lib/stageProgression';
 import { normalizeLeadPipelineStage } from '@/lib/crmPipelineStages';
+import { emailOperationStore, runEmailOperation } from '@/lib/email/emailOperation';
+import { deriveStableMcpIdempotencyKey } from '@/lib/mcp/toolRiskTiers';
+import { createHash } from 'node:crypto';
 import { isUuid } from '@/lib/tenant/platformTenant';
 
 type RecordType = 'lead' | 'client' | 'contact' | 'invoice' | 'project' | 'task';
@@ -451,6 +454,22 @@ async function loadRecipients(args: BulkEmailArgs, tenantId: string): Promise<{ 
 }
 
 export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
+  if (args.dry_run !== false) return executeBulkEmailOnce(args, ctx);
+  if (args.confirm_send !== true) throw new Error('Set confirm_send: true after reviewing a dry run');
+  const key = args.idempotency_key || deriveStableMcpIdempotencyKey({ tenantId: ctx.tenantId, toolName: 'send_bulk_email', args: args as unknown as Record<string, unknown> });
+  // Reconcile historical receipts without repeating previously attempted recipients.
+  const historical = await findReceiptByIdempotency({ tenantId: ctx.tenantId, tool: 'send_bulk_email', idempotencyKey: key });
+  if (historical?.sanitized_output && typeof historical.sanitized_output === 'object') {
+    return { ...historical.sanitized_output, success: historical.success === true && Number((historical.sanitized_output as Record<string, unknown>).failed || 0) === 0, idempotent_replay: true };
+  }
+  return runEmailOperation({
+    store: emailOperationStore(ctx.tenantId, 'email_batch', key),
+    execute: (actionId, checkpoint) => executeBulkEmailOnce({ ...args, idempotency_key: key }, ctx, actionId, checkpoint),
+  });
+}
+
+async function executeBulkEmailOnce(args: BulkEmailArgs, ctx: BatchContext, operationId?: string,
+  checkpoint?: (output: Record<string, unknown>) => Promise<void>) {
   const subject = String(args.subject || '').trim();
   if (!subject) throw new Error('subject is required');
   if (!String(args.text || '').trim() && !String(args.html || '').trim()) {
@@ -465,10 +484,6 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
     await ensureEmailProviderReady(ctx.tenantId, ctx.userId || '');
   }
   const key = dryRun ? null : idempotencyKey(args.idempotency_key);
-  if (key) {
-    const replay = await replayIfPresent(ctx.tenantId, 'send_bulk_email', key);
-    if (replay) return replay;
-  }
 
   const { recipients, skipped } = await loadRecipients(args, ctx.tenantId);
 
@@ -494,13 +509,14 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
   const eligibleRecipients = recipients.filter((r) => eligibleEmailSet.has(r.email));
   const allSkipped = [...skipped, ...suppressionSkipped];
 
-  const actionId = crypto.randomUUID();
+  const actionId = operationId || crypto.randomUUID();
   const results: Array<Record<string, unknown>> = dryRun
     ? eligibleRecipients.map((recipient) => ({ ...recipient, status: 'dry_run' }))
     : [];
 
   if (!dryRun) {
-    const sendResults = await mapWithConcurrency(eligibleRecipients, BULK_EMAIL_CONCURRENCY, async (recipient) => {
+    await mapWithConcurrency(eligibleRecipients, BULK_EMAIL_CONCURRENCY, async (recipient) => {
+      const outcome = await (async () => {
       try {
         const sent = await sendEmailServer({
           tenantId: ctx.tenantId,
@@ -512,32 +528,53 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
           fromName: args.from_name || 'AlphaClone Systems',
           preferredProvider: args.provider as any,
           templateName: 'mcpBulkEmail',
+          category: emailCategory,
+          idempotencyKey: `bulk:${createHash('sha256').update(`${key}:${recipient.email}`).digest('hex')}`,
+          auditMetadata: { batch_id: actionId, source_module: 'mcp', source_action: 'bulk_email' },
         });
         return {
           ...recipient,
-          status: sent.success ? 'provider_accepted' : 'failed',
+          status: sent.deliveryStatus || (sent.success ? 'provider_accepted' : 'failed'),
+          execution_success: sent.success,
           provider: sent.provider || null,
           email_id: sent.emailId || null,
+          message_id: sent.emailId || null,
+          canonical_message_id: sent.canonicalMessageId || null,
+          provider_account_id: sent.providerAccountId || null,
+          sender: sent.sender || null,
+          delivery_evidence: sent.deliveredAt || null,
           accepted_at: sent.success ? new Date().toISOString() : null,
           sent_at: null,
           failed_at: sent.success ? null : new Date().toISOString(),
-          error_code: sent.success ? null : 'PROVIDER_SEND_FAILED',
+          error_code: sent.success ? null : sent.code || 'PROVIDER_SEND_FAILED',
           error: sent.success ? null : sent.error || 'send_failed',
         };
       } catch (error) {
-        return { ...recipient, status: 'failed', error: error instanceof Error ? error.message : 'send_failed' };
+        return { ...recipient, status: 'unknown', execution_success: false, error_code: 'OUTCOME_UNKNOWN', error: 'Execution interrupted; reconcile before retrying.' };
       }
+      })();
+      results.push(outcome);
+      await checkpoint?.({ action_id: actionId, status: 'executing', recipients: [...results], skipped_recipients: allSkipped });
+      return outcome;
     });
-    results.push(...sendResults);
   }
 
-  const sentCount = results.filter((result) => result.status === 'provider_accepted').length;
+  const sentCount = results.filter((result) => ['provider_accepted', 'delivered'].includes(String(result.status))).length;
   const failedCount = results.filter((result) => result.status === 'failed').length;
+  const unknownCount = results.filter((result) => result.status === 'unknown').length;
+  const executionErrors = results.filter((result) => result.execution_success === false).length;
   const output: Record<string, unknown> = {
     action_id: actionId,
     dry_run: dryRun,
     execution_mode: dryRun ? 'simulated' : 'direct',
     email_category: emailCategory,
+    status: dryRun ? 'simulated' : unknownCount ? 'unknown' : failedCount || executionErrors ? 'failed' : 'provider_accepted',
+    success: dryRun || (failedCount === 0 && unknownCount === 0 && executionErrors === 0),
+    execution_errors: executionErrors,
+    provider_accepted: sentCount,
+    delivered: results.filter((row) => row.status === 'delivered').length,
+    unknown: unknownCount,
+    idempotency_key: key,
     requested: preflight.requested + skipped.length,
     eligible: eligibleRecipients.length,
     processed: dryRun ? 0 : results.length,
@@ -547,7 +584,7 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
     preflight: {
       previously_unsubscribed: preflight.previously_unsubscribed,
       hard_suppressed: preflight.hard_suppressed + preflight.complaint_suppressed,
-      duplicates_removed: preflight.duplicates_removed,
+      duplicates_removed: preflight.duplicates_removed + skipped.filter((row) => row.reason === 'duplicate_email').length,
       invalid: preflight.invalid,
       consent_blocked: preflight.consent_blocked,
     },
@@ -555,17 +592,5 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
     skipped_recipients: allSkipped,
   };
 
-  if (!dryRun) {
-    await recordReceipt({
-      tenantId: ctx.tenantId,
-      userId: ctx.userId,
-      tool: 'send_bulk_email',
-      idempotencyKey: key as string,
-      actionId,
-      entityType: 'bulk_email',
-      output,
-      input: args as unknown as Record<string, unknown>,
-    });
-  }
   return output;
 }

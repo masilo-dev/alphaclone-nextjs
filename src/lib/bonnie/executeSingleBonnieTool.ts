@@ -32,6 +32,12 @@ function extractToolText(result: { content?: Array<{ text?: string }> }): string
   }
 }
 
+export function extractStructuredToolResult(result: { content?: Array<{ text?: string }> }): unknown {
+  const text = result.content?.find((item) => item.text)?.text;
+  if (!text) return null;
+  try { return JSON.parse(text); } catch { return { message: text }; }
+}
+
 function buildApprovalPreview(
   tool: string,
   args: Record<string, unknown>
@@ -160,6 +166,7 @@ export async function executeSingleBonnieTool(params: {
             ? humanizeTechnicalFailure(text, { tool })
             : `${businessToolActivity(tool)}.`,
           details: text,
+          executionResult: extractStructuredToolResult(result),
         };
       } else {
         const { mcpServerTools } = await resolveBonnieToolSets();
@@ -177,6 +184,7 @@ export async function executeSingleBonnieTool(params: {
               ? humanizeTechnicalFailure(text, { tool })
               : `${businessToolActivity(tool)}.`,
             details: text,
+            executionResult: extractStructuredToolResult(result),
           };
         } else {
           toolResult = {
