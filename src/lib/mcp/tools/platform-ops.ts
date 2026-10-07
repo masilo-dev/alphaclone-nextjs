@@ -27,7 +27,7 @@ defineConnectorTool({
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const toolCount = await getUnifiedMcpToolCount();
-    const { MCP_TOOL_CATALOG_VERSION } = await import('@/lib/mcp/standardResponse');
+    const { MCP_PROTOCOL_VERSION, MCP_TOOL_CATALOG_VERSION } = await import('@/lib/mcp/standardResponse');
     const { SOCIAL_PUBLISH_TOOL_CATALOG_VERSION } = await import('@/lib/social/types');
 
     const [{ error: dbError }, { count: leadCount }] = await Promise.all([
@@ -87,7 +87,7 @@ defineConnectorTool({
           }
         : null,
       mcp: {
-        protocol_version: '2025-11-25',
+        protocol_version: MCP_PROTOCOL_VERSION,
         discovered_tools: toolCount,
         tool_catalog_version: MCP_TOOL_CATALOG_VERSION,
         social_publish_catalog_version: SOCIAL_PUBLISH_TOOL_CATALOG_VERSION,
@@ -191,7 +191,7 @@ defineConnectorTool({
   handler: async () => ({
     app_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
     package_name: 'alphaclone-nextjs',
-    mcp_protocol_version: '2025-06-18',
+    mcp_protocol_version: MCP_PROTOCOL_VERSION,
     status: 'operational',
     environment: process.env.NODE_ENV || 'production',
   }),
