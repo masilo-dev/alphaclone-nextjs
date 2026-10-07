@@ -2,17 +2,27 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { upsertNativeBookingFromProvider } from '@/lib/booking/nativeBookingSync';
+import { denyIfWebhookVerificationMissing } from '@/lib/security/webhookVerify';
+import { isProduction } from '@/lib/security/productionGuard';
 
 function verifyCalWebhook(req: Request, body: string) {
   const secret = process.env.CAL_WEBHOOK_SECRET || process.env.CALCOM_WEBHOOK_SECRET;
   if (!secret) {
-    console.warn('[Cal webhook] CAL_WEBHOOK_SECRET not set - accepting webhook in unsigned mode.');
+    if (isProduction()) {
+      return false;
+    }
+    console.warn('[Cal webhook] CAL_WEBHOOK_SECRET not set - accepting webhook in unsigned mode (development only).');
     return true;
   }
 
   const bearer = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
   const sharedSecret = req.headers.get('x-alphaclone-webhook-secret') || req.headers.get('x-cal-webhook-secret');
-  if (bearer === secret || sharedSecret === secret) return true;
+  if (bearer && secret && bearer.length === secret.length && crypto.timingSafeEqual(Buffer.from(bearer), Buffer.from(secret))) {
+    return true;
+  }
+  if (sharedSecret && secret && sharedSecret.length === secret.length && crypto.timingSafeEqual(Buffer.from(sharedSecret), Buffer.from(secret))) {
+    return true;
+  }
 
   const signature =
     req.headers.get('x-cal-signature-256') ||
@@ -23,7 +33,10 @@ function verifyCalWebhook(req: Request, body: string) {
   const received = signature.replace(/^sha256=/i, '');
   const expected = crypto.createHmac('sha256', secret).update(body).digest('hex');
   try {
-    return crypto.timingSafeEqual(Buffer.from(received, 'hex'), Buffer.from(expected, 'hex'));
+    const receivedBuf = Buffer.from(received, 'hex');
+    const expectedBuf = Buffer.from(expected, 'hex');
+    if (receivedBuf.length !== expectedBuf.length) return false;
+    return crypto.timingSafeEqual(receivedBuf, expectedBuf);
   } catch {
     return false;
   }
@@ -83,6 +96,12 @@ async function resolveTenantId(supabase: ReturnType<typeof createSupabaseAdminCl
 }
 
 export async function POST(req: Request) {
+  const secret = process.env.CAL_WEBHOOK_SECRET || process.env.CALCOM_WEBHOOK_SECRET;
+  const missingGuard = denyIfWebhookVerificationMissing('cal', Boolean(secret));
+  if (missingGuard) {
+    return missingGuard;
+  }
+
   const body = await req.text();
   if (!verifyCalWebhook(req, body)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -29,9 +29,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
   children, variant = 'primary', size = 'md', ...props
 }, ref) => {
   const { t } = useLanguage();
-  return <CanonicalButton ref={ref} variant={variant === 'default' ? 'primary' : variant} size={size} {...props}>
-    {typeof children === 'string' ? t(children) : children}
-  </CanonicalButton>;
+  return (
+    <CanonicalButton ref={ref} variant={variant === 'default' ? 'primary' : variant} size={size} {...props}>
+      {typeof children === 'string' ? t(children) : children}
+    </CanonicalButton>
+  );
 });
 Button.displayName = 'Button';
 
@@ -95,18 +97,18 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', cla
   const variants: Record<string, string> = {
     success: "bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_28%,transparent)]",
     warning: "bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_28%,transparent)]",
-    neutral: "bg-[var(--surface-secondary)] text-[var(--text-secondary)] border-[var(--border-default)]",
+    neutral: "bg-[var(--ws-surface-secondary,var(--surface-secondary))] text-[var(--ws-text-secondary,var(--text-secondary))] border-[var(--ws-border,var(--border-default))]",
     error: "bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)] border-[color-mix(in_srgb,var(--danger)_28%,transparent)]",
     blue: "bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)] border-[color-mix(in_srgb,var(--info)_28%,transparent)]",
     default: "bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)] border-[color-mix(in_srgb,var(--info)_28%,transparent)]",
-    secondary: "bg-[var(--surface-secondary)] text-[var(--text-secondary)] border-[var(--border-default)]",
-    outline: "bg-transparent text-[var(--text-secondary)] border-[var(--border-default)]",
+    secondary: "bg-[var(--ws-surface-secondary,var(--surface-secondary))] text-[var(--ws-text-secondary,var(--text-secondary))] border-[var(--ws-border,var(--border-default))]",
+    outline: "bg-transparent text-[var(--ws-text-secondary,var(--text-secondary))] border-[var(--ws-border,var(--border-default))]",
   };
 
   const resolvedClass = variants[variant] || variants.neutral;
 
   return (
-      <span className={`inline-flex items-center px-2 py-1 rounded-full type-ui font-medium border whitespace-nowrap ${resolvedClass} ${className}`}>
+    <span className={`inline-flex items-center min-h-6 px-2.5 py-0.5 rounded-full type-caption font-semibold border whitespace-nowrap ${resolvedClass} ${className}`}>
       {renderedChildren}
     </span>
   );
@@ -171,16 +173,20 @@ export const Input: React.FC<InputProps> = ({
     !error && hint ? hintId : null,
   ].filter(Boolean).join(' ') || undefined;
 
-  const sharedClass = `w-full bg-[var(--surface-primary)] border ${error ? 'border-[var(--danger)]' : 'border-[var(--border-default)]'} rounded-[10px] px-3 py-2 type-caption leading-normal text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-[var(--interactive-secondary)] transition-colors ${icon ? 'pl-10' : ''} ${className}`;
+  const baseInputClass = `w-full bg-[var(--ws-surface-primary,var(--surface-primary))] border ${
+    error ? 'border-[var(--danger,#D85858)]' : 'border-[var(--ws-border,var(--border-default))]'
+  } rounded-[10px] px-3.5 py-2.5 type-ui leading-normal text-[var(--ws-text-primary,var(--text-primary))] placeholder:text-[var(--ws-text-tertiary,var(--text-muted))] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-[var(--ac-accent,#356AF4)] transition-colors ${
+    icon ? 'pl-10' : ''
+  } ${className}`;
 
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={fieldId} className="block type-caption font-medium text-[var(--text-secondary)] mb-1">{label}</label>
+        <label htmlFor={fieldId} className="block type-caption font-medium text-[var(--ws-text-secondary,var(--text-secondary))] mb-1.5">{label}</label>
       )}
       <div className="relative group">
         {icon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-[var(--interactive-secondary)] transition-colors" aria-hidden="true">
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted,var(--text-muted))] group-focus-within:text-[var(--interactive-secondary,#4199A4)] transition-colors pointer-events-none" aria-hidden="true">
             {icon}
           </div>
         )}
@@ -189,7 +195,7 @@ export const Input: React.FC<InputProps> = ({
             id={fieldId}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy}
-            className={`${sharedClass} min-h-[80px] resize-y`}
+            className={`${baseInputClass} min-h-[80px] resize-y`}
             {...(validate || isControlled
               ? { ...props, ...fieldProps }
               : fieldProps as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
@@ -199,7 +205,7 @@ export const Input: React.FC<InputProps> = ({
             id={fieldId}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy}
-            className={sharedClass}
+            className={`${baseInputClass} min-h-11`}
             {...(validate || isControlled
               ? { ...props, ...fieldProps }
               : fieldProps as React.InputHTMLAttributes<HTMLInputElement>)}
@@ -523,7 +529,7 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
               item.onClick();
               setIsOpen(false);
             }}
-            className={`w-full flex items-center gap-2 px-3 py-2.5 ${WORKSPACE.typography.sectionLabel} rounded-lg transition-colors ${
+            className={`w-full flex items-center gap-2.5 px-3 py-2.5 sm:py-2 min-h-11 sm:min-h-9 type-ui font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring,#356AF4)] ${
               item.variant === 'danger'
                 ? 'text-[var(--state-danger,var(--error-500))] hover:bg-[color-mix(in_srgb,var(--state-danger,var(--error-500))_10%,transparent)]'
                 : 'text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'

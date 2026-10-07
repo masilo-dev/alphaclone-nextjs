@@ -43,7 +43,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
     md: "h-10 px-4 py-2 type-ui min-h-11 min-w-11 rounded-[10px]",
     lg: "h-12 px-6 text-base min-h-12 min-w-12 rounded-[12px]",
     default: "h-10 px-4 py-2 type-ui min-h-11 min-w-11 rounded-[10px]",
-    icon: "h-10 w-10 p-0 min-h-10 min-w-10 rounded-[10px]",
+    icon: "h-10 w-10 p-0 min-h-11 min-w-11 rounded-[10px]",
   };
 
   const visualVariant = variant === 'default' ? 'outline' : variant;

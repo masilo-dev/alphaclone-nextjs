@@ -14,7 +14,7 @@ process.env.PUBLIC_MCP_RESOURCE =
 
 test("MCP rate limit is generous and OAuth protocol paths are exempt", () => {
   const proxy = fs.readFileSync(
-    new URL("../../proxy.ts", import.meta.url),
+    new URL("../../src/proxy.ts", import.meta.url),
     "utf8",
   );
   const rate = fs.readFileSync(

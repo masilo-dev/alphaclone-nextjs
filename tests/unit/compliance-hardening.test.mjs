@@ -45,7 +45,7 @@ test("signUpSchema enforces 12 character minimum", () => {
 
 test("proxy applies global API rate limiting including MCP", () => {
   const src = fs.readFileSync(
-    new URL("../../proxy.ts", import.meta.url),
+    new URL("../../src/proxy.ts", import.meta.url),
     "utf8",
   );
   assert.match(src, /applyGlobalApiRateLimit/);

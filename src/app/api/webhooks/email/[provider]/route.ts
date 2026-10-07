@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 import { syncSuppressionCleanup } from '@/lib/email/suppression';
 import { campaignHealth } from '@/lib/outreach/outreachIntelligence';
 import { createHash } from 'node:crypto';
 import { DeliveryReconciliationService } from '@/lib/email/deliveryReconciliationService';
 import { brevoDeliveryEvent } from '@/lib/email/reconcileBrevoMessage';
+import { denyIfWebhookVerificationMissing } from '@/lib/security/webhookVerify';
 
 type SupportedProvider = 'resend' | 'sendgrid' | 'brevo' | 'zoho' | 'gmail';
 
@@ -116,8 +118,16 @@ function mapDeliveryStatus(eventType: string): string {
 function isWebhookAuthorized(req: NextRequest): boolean {
   const token = req.nextUrl.searchParams.get('token') || req.headers.get('x-webhook-token');
   const expected = process.env.EMAIL_WEBHOOK_SHARED_TOKEN;
-  if (!expected) return false;
-  return Boolean(token) && token === expected;
+  if (!expected || !token) return false;
+
+  try {
+    const tokenBuf = Buffer.from(token);
+    const expectedBuf = Buffer.from(expected);
+    if (tokenBuf.length !== expectedBuf.length) return false;
+    return crypto.timingSafeEqual(tokenBuf, expectedBuf);
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(
@@ -125,6 +135,12 @@ export async function POST(
   context: { params: Promise<{ provider: string }> }
 ) {
   try {
+    const expected = process.env.EMAIL_WEBHOOK_SHARED_TOKEN;
+    const missingGuard = denyIfWebhookVerificationMissing('email', Boolean(expected));
+    if (missingGuard) {
+      return missingGuard;
+    }
+
     const { provider: providerParam } = await context.params;
     const provider = normalizeProvider(providerParam);
     if (!provider) {

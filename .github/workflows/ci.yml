@@ -31,7 +31,7 @@ jobs:
         run: npm run lint
 
       - name: Type check with TypeScript
-        run: npx tsc --noEmit
+        run: npm run typecheck
 
       - name: Check code formatting (scoped)
         run: npx prettier --check "tests/**/*.{mjs,js,ts}" "docs/**/*.md" ".github/**/*.yml" "scripts/**/*.{mjs,js}"

@@ -14,16 +14,42 @@ const BASE_URL = process.env.BASE_URL || 'https://alphaclonesystems.com';
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 const anon = createClient(SUPABASE_URL, ANON_KEY);
 
+const fs = require('fs');
+const COOKIE_CACHE_PATH = path.join(process.cwd(), '.qa_auth_cookies.json');
 let cachedCookies = null;
 
 async function getAuthCookies(email = 'bonnie@alphaclonesystems.com') {
   if (cachedCookies) return cachedCookies;
 
-  const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
-    type: 'magiclink',
-    email,
-  });
-  if (linkErr) throw new Error(`Magiclink error: ${linkErr.message}`);
+  if (fs.existsSync(COOKIE_CACHE_PATH)) {
+    try {
+      const raw = JSON.parse(fs.readFileSync(COOKIE_CACHE_PATH, 'utf8'));
+      if (raw && Array.isArray(raw.cookies) && (Date.now() - raw.timestamp) < 3600_000) {
+        cachedCookies = raw.cookies;
+        return cachedCookies;
+      }
+    } catch {}
+  }
+
+  let linkData = null;
+  let linkErr = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = await admin.auth.admin.generateLink({
+        type: 'magiclink',
+        email,
+      });
+      linkData = res.data;
+      linkErr = res.error;
+      if (!linkErr && linkData?.properties?.hashed_token) break;
+    } catch (e) {
+      linkErr = e;
+    }
+    if (attempt < 3) await new Promise((r) => setTimeout(r, 2000 * attempt));
+  }
+  if (linkErr || !linkData?.properties?.hashed_token) {
+    throw new Error(`Magiclink error: ${linkErr?.message || linkErr || 'Missing hashed token'}`);
+  }
 
   const { data: authData, error: authErr } = await anon.auth.verifyOtp({
     token_hash: linkData.properties.hashed_token,
@@ -58,6 +84,10 @@ async function getAuthCookies(email = 'bonnie@alphaclonesystems.com') {
     secure: !domain.startsWith('localhost'),
     sameSite: 'Lax',
   }));
+
+  try {
+    fs.writeFileSync(COOKIE_CACHE_PATH, JSON.stringify({ timestamp: Date.now(), cookies: cachedCookies }, null, 2));
+  } catch {}
 
   return cachedCookies;
 }

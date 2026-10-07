@@ -2,22 +2,24 @@ import { verifyStripePlatformIdentity } from '@/lib/stripePlatformIdentity';
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
-import { requireTenantRole } from '@/lib/apiAuth';
 import { tenantService } from '@/services/tenancy/TenantService';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { requireTenantRole } from '@/lib/apiAuth';
+import { z } from 'zod';
+
+const schema = z.object({
+    tenantId: z.string().uuid(),
+    action: z.enum(['cancel_at_period_end', 'resume']),
+});
 
 export async function POST(req: Request) {
-    const authClient = await createSupabaseServerClient();
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     try {
-        const { tenantId, action } = await req.json();
-
-        if (!tenantId || !action) {
-            return NextResponse.json({ error: 'Missing tenantId or action' }, { status: 400 });
+        const body = await req.json().catch(() => ({}));
+        const parsed = schema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json({ error: 'Valid tenantId and action required', details: parsed.error.flatten() }, { status: 400 });
         }
 
+        const { tenantId, action } = parsed.data;
         await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin']);
 
         // Get tenant to find Stripe Customer ID

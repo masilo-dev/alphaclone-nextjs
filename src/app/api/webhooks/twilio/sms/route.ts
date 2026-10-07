@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { isProduction } from '@/lib/security/productionGuard';
+import { denyIfWebhookVerificationMissing } from '@/lib/security/webhookVerify';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 import { normalizePhoneNumber } from '@/services/engine/CommunicationEngine';
 import { recordInboundOutreachReply } from '@/lib/outreach/recordInboundOutreachReply';
@@ -14,11 +15,19 @@ function getRawUrl(req: NextRequest) {
   return url.toString();
 }
 
-function validateTwilioSignature(params: Record<string, string>, url: string, signatureHeader: string, authToken: string) {
-  const sortedKeys = Object.keys(params).sort();
-  const data = url + sortedKeys.map((k) => k + params[k]).join('');
-  const digest = crypto.createHmac('sha1', authToken).update(data).digest('base64');
-  return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(signatureHeader));
+function validateTwilioSignature(params: Record<string, string>, url: string, signatureHeader: string, authToken: string): boolean {
+  if (!signatureHeader || !authToken) return false;
+  try {
+    const sortedKeys = Object.keys(params).sort();
+    const data = url + sortedKeys.map((k) => k + params[k]).join('');
+    const digest = crypto.createHmac('sha1', authToken).update(data).digest('base64');
+    const digestBuf = Buffer.from(digest);
+    const sigBuf = Buffer.from(signatureHeader);
+    if (digestBuf.length !== sigBuf.length) return false;
+    return crypto.timingSafeEqual(digestBuf, sigBuf);
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -36,7 +45,12 @@ export async function POST(req: NextRequest) {
 
     const signature = req.headers.get('x-twilio-signature');
     const authToken = process.env.TWILIO_AUTH_TOKEN || '';
-    if (isProduction() && (!signature || !authToken)) {
+    const missingGuard = denyIfWebhookVerificationMissing('twilio', Boolean(authToken));
+    if (missingGuard) {
+      return missingGuard;
+    }
+
+    if (isProduction() && !signature) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     if (signature && authToken) {
