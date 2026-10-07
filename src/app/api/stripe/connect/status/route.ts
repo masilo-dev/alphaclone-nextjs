@@ -11,8 +11,32 @@ export async function GET(req: NextRequest) {
     const tenantId = z.string().uuid().parse(req.nextUrl.searchParams.get('tenantId'));
     const { admin } = await requireTenantAccess(tenantId);
     const { data: tenant, error } = await admin.from('tenants')
-      .select('stripe_connect_id').eq('id', tenantId).single();
+      .select('stripe_connect_id, stripe_connect_pending_id, stripe_connect_pending_previous_id').eq('id', tenantId).single();
     if (error) throw error;
+    if (tenant?.stripe_connect_pending_id) {
+      try {
+        const pending = await readConnectedAccount(String(tenant.stripe_connect_pending_id));
+        if (!pending.closed && pending.chargesEnabled) {
+          const { error: promoteError } = await admin.from('tenants').update({
+            stripe_connect_id: pending.id,
+            stripe_connect_onboarded: true,
+            stripe_connect_pending_id: null,
+            stripe_connect_pending_previous_id: null,
+          }).eq('id', tenantId).eq('stripe_connect_pending_id', pending.id);
+          if (promoteError) throw promoteError;
+          return NextResponse.json({
+            connected: true, accountId: pending.id,
+            accountDisplayName: (pending.account as any).display_name || null,
+            country: (pending.account as any).identity?.country || null,
+            chargesEnabled: pending.chargesEnabled, payoutsEnabled: pending.payoutsEnabled,
+            requirements: pending.requirements, replacementActivated: true,
+          });
+        }
+      } catch (pendingError) {
+        if (!isMissingStripeAccount(pendingError)) throw pendingError;
+        await admin.from('tenants').update({ stripe_connect_pending_id: null, stripe_connect_pending_previous_id: null }).eq('id', tenantId);
+      }
+    }
     if (!tenant?.stripe_connect_id) {
       return NextResponse.json({ connected: false, chargesEnabled: false, payoutsEnabled: false, requirements: [] });
     }
@@ -34,6 +58,7 @@ export async function GET(req: NextRequest) {
       chargesEnabled: state.chargesEnabled,
       payoutsEnabled: state.payoutsEnabled,
       requirements: state.requirements,
+      replacementPending: Boolean(tenant.stripe_connect_pending_id),
     });
   } catch (error) {
     return routeErrorResponse(error, 'Stripe Connect status could not be loaded', req);
