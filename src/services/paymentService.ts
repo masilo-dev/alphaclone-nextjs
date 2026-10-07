@@ -437,22 +437,26 @@ export const paymentService = {
         return { invoice: data ? mapBusinessInvoiceRow(data) : null, error };
     },
 
-    async reconcilePayment(invoiceId: string): Promise<{ reconciled: boolean; error?: string }> {
+    async reconcilePayment(invoiceId: string, paymentIntentId?: string): Promise<{ reconciled: boolean; error?: string }> {
         try {
+            const body: { invoiceId: string; paymentIntentId?: string } = { invoiceId };
+            if (paymentIntentId) body.paymentIntentId = paymentIntentId;
+
             const response = await fetch(`/api/stripe/reconcile-payment`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ invoiceId }),
+                body: JSON.stringify(body),
             });
 
             if (!response.ok) {
-                throw new Error('Reconciliation failed');
+                const payload = await response.json().catch(() => ({}));
+                throw new Error(payload.error || 'Reconciliation failed');
             }
 
-            const { status, paymentIntentId } = await response.json();
+            const { status, paymentIntentId: reconciledPiId } = await response.json();
 
-            if (status === 'succeeded' && paymentIntentId) {
-                await this.markInvoicePaid(invoiceId, paymentIntentId);
+            if (status === 'succeeded' && reconciledPiId) {
+                await this.markInvoicePaid(invoiceId, reconciledPiId);
                 return { reconciled: true };
             }
 
