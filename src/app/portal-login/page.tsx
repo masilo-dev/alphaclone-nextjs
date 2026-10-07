@@ -172,12 +172,9 @@ function PortalLoginContent() {
                                     <label htmlFor="password" className="block type-label font-medium text-[color:var(--ws-text-primary)]">
                                         Password
                                     </label>
-                                    <Link
-                                        href="/auth/reset-password"
-                                        className="type-caption font-medium text-[color:var(--brand-teal)] hover:opacity-80 transition-opacity"
-                                    >
-                                        Forgot password?
-                                    </Link>
+                                    <span className="type-caption text-[color:var(--ws-text-tertiary)]">
+                                        Use your client access link to recover access
+                                    </span>
                                 </div>
                                 <div className="relative">
                                     <Input
