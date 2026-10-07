@@ -6,6 +6,7 @@ import { buildApiHealthReport, deriveApiErrorRate } from '@/lib/mcp/apiHealthRep
 import { buildPaginationMeta, normalizePagination } from '@/lib/mcp/connector/pagination';
 import { okResult } from '@/lib/mcp/connector/response';
 import { throwConnectorError } from '@/lib/mcp/connector/response';
+import { MCP_PROTOCOL_VERSION, MCP_TOOL_CATALOG_VERSION } from '@/lib/mcp/standardResponse';
 
 defineConnectorTool({
   module: 'platform-ops',
@@ -27,7 +28,6 @@ defineConnectorTool({
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const toolCount = await getUnifiedMcpToolCount();
-    const { MCP_PROTOCOL_VERSION, MCP_TOOL_CATALOG_VERSION } = await import('@/lib/mcp/standardResponse');
     const { SOCIAL_PUBLISH_TOOL_CATALOG_VERSION } = await import('@/lib/social/types');
 
     const [{ error: dbError }, { count: leadCount }] = await Promise.all([
