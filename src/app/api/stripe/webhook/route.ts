@@ -145,12 +145,32 @@ export async function POST(req: Request) {
     try {
         await verifyStripePlatformIdentity();
         if (event.account) {
-            const { data: tenant, error: mappingError } = await supabaseAdmin.from('tenants').select('id')
+            const { data: currentTenant, error: mappingError } = await supabaseAdmin.from('tenants').select('id')
                 .eq('stripe_connect_id', event.account).maybeSingle();
-            if (mappingError || !tenant) throw mappingError || new Error('Unknown connected Stripe account');
-            tenantId = tenant.id;
+            if (mappingError) throw mappingError;
+
+            tenantId = currentTenant?.id;
+            // Historical invoice events can legitimately arrive after the tenant changes
+            // Stripe accounts. Resolve those against the immutable invoice-attempt mapping.
+            if (!tenantId && session.metadata?.tenantId && session.metadata?.invoiceId) {
+                const { data: historicalAttempt, error: attemptError } = await supabaseAdmin.from('stripe_invoice_attempts')
+                    .select('tenant_id').eq('tenant_id', session.metadata.tenantId)
+                    .eq('invoice_id', session.metadata.invoiceId).eq('stripe_account_id', event.account)
+                    .limit(1).maybeSingle();
+                if (attemptError) throw attemptError;
+                tenantId = historicalAttempt?.tenant_id;
+            }
+            if (!tenantId) {
+                // Account lifecycle events for a deliberately disconnected old account no
+                // longer control tenant readiness and can be acknowledged without mutation.
+                if (event.type === 'account.updated') {
+                    await finishWebhookEvent(supabaseAdmin, event, undefined, 'processed');
+                    return NextResponse.json({ received: true, status: 'detached_account_ignored' });
+                }
+                throw new Error('Unknown connected Stripe account');
+            }
             if (session.metadata?.tenantId && session.metadata.tenantId !== tenantId) throw new Error('Connected event tenant mismatch');
-            await processConnectEvent(supabaseAdmin, event, tenant.id);
+            await processConnectEvent(supabaseAdmin, event, tenantId);
             await finishWebhookEvent(supabaseAdmin, event, tenantId, 'processed');
             return NextResponse.json({ received: true, status: 'processed' });
         }
