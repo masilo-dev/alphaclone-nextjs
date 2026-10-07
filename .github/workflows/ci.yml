@@ -109,7 +109,7 @@ jobs:
           fi
 
       - name: Upload production build for browser tests
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: next-build-${{ github.sha }}
           path: .next
