@@ -688,13 +688,12 @@ export async function POST(req: NextRequest) {
         }, { headers: mcpJsonHeaders(req) });
       } catch (err: any) {
         console.error(`[MCP route.ts] Execution error for ${toolName}:`, err);
+        const { formatToolExecutionError, structuredErrorToMcpContent } = await import('@/lib/mcp/formatMcpError');
+        const structured = formatToolExecutionError(String(toolName), err);
         return NextResponse.json({
           jsonrpc: '2.0',
           id: requestBody.id,
-          result: {
-            content: [{ type: 'text', text: JSON.stringify({ error: true, message: err?.message || 'Tool execution failed' }) }],
-            isError: true,
-          },
+          result: structuredErrorToMcpContent(structured),
         }, { headers: mcpJsonHeaders(req) });
       }
     }
