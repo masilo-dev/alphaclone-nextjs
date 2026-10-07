@@ -13,6 +13,7 @@
 # testing
 /coverage
 .qa_auth_cookies.json
+/qa/results/
 
 # next.js
 /.next/
