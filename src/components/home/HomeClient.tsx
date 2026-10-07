@@ -1,12 +1,22 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { Suspense, useState, useEffect, useRef } from 'react';
 import MarketingHomePage from '@/components/marketing/system/MarketingHomePage';
-import AppLauncher from '@/components/AppLauncher';
+import dynamic from 'next/dynamic';
 import { Project } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import SplashScreen from '@/components/ui/SplashScreen';
+const AppLauncher = dynamic(() => import('@/components/AppLauncher'), { ssr: false });
+const SplashScreen = dynamic(() => import('@/components/ui/SplashScreen'), { ssr: false });
+
+// Keep query-dependent behavior inside its own boundary, so reading the URL
+// never makes the marketing page wait for browser JavaScript.
+function HomeQueryReader({ onQuery }: { onQuery: (query: string) => void }) {
+  const params = useSearchParams();
+  const query = params?.toString() ?? '';
+  useEffect(() => { onQuery(query); }, [query, onQuery]);
+  return null;
+}
 
 interface HomeClientProps {
   initialProjects: Project[];
@@ -14,7 +24,7 @@ interface HomeClientProps {
 
 export default function HomeClient({ initialProjects }: HomeClientProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [query, setQuery] = useState('');
   const { user, loading } = useAuth();
   const [projects] = useState<Project[]>(initialProjects);
   const hasRedirected = useRef(false);
@@ -23,7 +33,7 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
   const [isInitialLoad, setIsInitialLoad] = useState(false);
 
   useEffect(() => {
-    const mode = searchParams?.get('mode');
+    const mode = new URLSearchParams(query).get('mode');
     const isStandalone = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone);
     if (mode === 'pwa' || isStandalone) {
       setIsPwa(true);
@@ -31,7 +41,7 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
 
     // Remove artificial delay for instant load
     setIsInitialLoad(false);
-  }, [searchParams]);
+  }, [query]);
 
   useEffect(() => {
     if (!loading && user && !hasRedirected.current) {
@@ -50,7 +60,8 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
   }, [user, loading, router, isPwa]);
 
   useEffect(() => {
-    const authStatus = searchParams?.get('auth_status');
+    const searchParams = new URLSearchParams(query);
+    const authStatus = searchParams.get('auth_status');
     const message = searchParams?.get('message');
 
     if (authStatus === 'new_account') {
@@ -89,7 +100,7 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
 
       router.replace('/');
     }
-  }, [searchParams, router]);
+  }, [query, router]);
 
   const handleLogin = () => {
     if (isPwa) {
@@ -104,6 +115,9 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
 
   return (
     <>
+      <Suspense fallback={null}>
+        <HomeQueryReader onQuery={setQuery} />
+      </Suspense>
       {isPwa && (
         <>
           <SplashScreen isVisible={isInitialLoad} mode="loading" />

@@ -1,5 +1,4 @@
 import React, { Suspense } from 'react';
-import { preload } from 'react-dom';
 import type { Metadata } from 'next';
 import HomeClient from '@/components/home/HomeClient';
 import { buildMarketingMetadata } from '@/lib/seo/metadata';
@@ -23,11 +22,6 @@ export const metadata: Metadata = {
  * FAQ structured data lives on /faq only (canonical FAQPage schema).
  */
 export default async function Home() {
-  preload('/images/alphaclone-hero-backdrop.jpg', {
-    as: 'image',
-    fetchPriority: 'high',
-  });
-
   return (
     <Suspense
       fallback={

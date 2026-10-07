@@ -20,12 +20,12 @@ test('dashboard layout loads workspace OS styles', () => {
   assert.match(layout, /alphaclone-os-v3\.css/);
 });
 
-test('marketing home preloads hero LCP image', () => {
+test('marketing home does not preload the decorative backdrop twice', () => {
   const page = read('src/app/page.tsx');
-  assert.match(page, /preload\(/);
-  assert.match(page, /alphaclone-hero-backdrop\.jpg/);
+  assert.doesNotMatch(page, /preload\(/);
   const home = read('src/components/marketing/system/MarketingHomePage.tsx');
-  assert.match(home, /fetchPriority="high"/);
+  assert.match(home, /fetchPriority="low"/);
+  assert.match(home, /src="\/screenshots\/deals-dashboard\.png"[\s\S]*?priority/);
 });
 
 test('public marketing routes use lightweight providers', () => {

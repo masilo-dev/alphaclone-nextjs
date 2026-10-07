@@ -231,8 +231,8 @@ export default function MarketingHomePage() {
             src="/images/alphaclone-hero-backdrop.jpg"
             alt=""
             fill
-            priority
-            fetchPriority="high"
+            loading="lazy"
+            fetchPriority="low"
             sizes="100vw"
             className="object-cover object-center"
             quality={75}

@@ -1,14 +1,21 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { GlobalErrorBoundary } from '@/components/GlobalErrorBoundary';
-import { BookingModalProvider } from '@/contexts/BookingModalContext';
-import AlphaCloneBookingModal from '@/components/marketing/system/AlphaCloneBookingModal';
+import { BookingModalProvider, useBookingModal } from '@/contexts/BookingModalContext';
+import dynamic from 'next/dynamic';
 import { ToastProvider } from '@/components/Toast';
+
+const AlphaCloneBookingModal = dynamic(() => import('@/components/marketing/system/AlphaCloneBookingModal'), { ssr: false });
+
+function BookingModalLoader() {
+  const { isOpen } = useBookingModal();
+  return isOpen ? <AlphaCloneBookingModal /> : null;
+}
 
 /**
  * Lightweight provider tree for public marketing pages.
@@ -38,7 +45,7 @@ export function MarketingProviders({ children }: { children: React.ReactNode }) 
               <LanguageProvider>
                 <BookingModalProvider>
                   {children}
-                  <AlphaCloneBookingModal />
+                  <BookingModalLoader />
                 </BookingModalProvider>
               </LanguageProvider>
             </ThemeProvider>
