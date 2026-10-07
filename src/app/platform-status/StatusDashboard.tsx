@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useState} from 'react';
 import Link from 'next/link';
+import styles from './status.module.css';
 import {LABELS,SERVICES,STALE_MS,overallStatus,type Status} from '@/lib/platform-monitoring/model';
 type Service={id:string;name:string;group:string;status:Status;checked_at:string|null;latency_ms:number|null;message:string;scope:string;uptime:number|null;samples:number;verified_samples:number};
 type Incident={id:string;service_name:string;status:string;started_at:string;resolved_at:string|null;message:string};
@@ -18,7 +19,7 @@ export default function StatusDashboard({history=false}:{history?:boolean}) {
  const services=(snapshot?.services||SERVICES.map(([id,name,group])=>({id,name,group,status:'unknown' as Status,checked_at:null,latency_ms:null,message:'No monitoring evidence available',scope:'Not verified',uptime:null,samples:0,verified_samples:0}))).map(s=>({...s,status:failed||!s.checked_at||now-Date.parse(s.checked_at)>STALE_MS?'unknown' as Status:s.status}));
  const overall=overallStatus(services.map(s=>s.status));
  const overallCopy:Record<Status,string>={operational:'All Systems Operational',unknown:'Some services are not verified',degraded:'Service degradation detected',partial_outage:'Partial service outage',major_outage:'Service outage detected',maintenance:'Scheduled maintenance'};
- return <main className="min-h-screen bg-white text-slate-900"><div className="mx-auto max-w-4xl px-5 py-12 sm:py-20">
+ return <main className={`${styles.page} min-h-screen bg-white text-slate-900`}><div className="mx-auto max-w-4xl px-5 py-12 sm:py-20">
  <Link href="/" className="text-sm text-slate-600">AlphaClone Systems</Link>
  <h1 className="mt-8 text-3xl font-semibold tracking-tight sm:text-4xl">AlphaClone Systems Status</h1>
  <p className="mt-3 text-base text-slate-600">Real-time health monitoring of the AlphaClone execution platform.</p>

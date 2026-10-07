@@ -1,0 +1,19 @@
+/* Isolate the trust page from the legacy dark marketing text overrides. */
+.page.page {
+  --text-primary: var(--color-slate-900);
+  --text-secondary: var(--color-slate-600);
+  --text-muted: var(--color-slate-500);
+  background: var(--color-white) !important;
+  color: var(--color-slate-900) !important;
+  color-scheme: light;
+}
+.page.page :is(h1, h2, h3, th, td) {
+  color: var(--color-slate-900) !important;
+}
+.page.page :is(p, a, [class*="text-slate-"]) {
+  color: var(--color-slate-600) !important;
+}
+.page.page [class*="text-emerald-"] { color: var(--color-emerald-700) !important; }
+.page.page [class*="text-amber-"] { color: var(--color-amber-700) !important; }
+.page.page [class*="text-red-"] { color: var(--color-red-700) !important; }
+.page.page [class*="text-blue-"] { color: var(--color-blue-700) !important; }
