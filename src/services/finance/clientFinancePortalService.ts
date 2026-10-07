@@ -173,13 +173,13 @@ export async function getClientFinancePortalData(
       .select('contract_id, token, expires_at, used_at, revoked_at, signer_email')
       .in('contract_id', contractIds)
       .eq('tenant_id', client.tenant_id)
-      .eq('signer_email', client.email)
+      .ilike('signer_email', client.email.trim())
       .is('used_at', null)
       .is('revoked_at', null)
       .gt('expires_at', new Date().toISOString())
     : { data: [] as any[] };
   const activeTokenByContract = new Map((signingTokens || []).map((row: any) => [row.contract_id, row.token]));
-  const sharedStatuses = new Set(['sent', 'viewed', 'client_signed', 'fully_signed', 'signed', 'completed']);
+  const sharedStatuses = new Set(['sent', 'viewed', 'negotiating', 'client_signed', 'fully_signed', 'signed', 'active', 'completed']);
   const contractRows = (contracts || []).filter((contract: any) =>
     sharedStatuses.has(String(contract.status || '').toLowerCase()) || activeTokenByContract.has(contract.id)
   ).map((contract: any) => ({
