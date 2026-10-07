@@ -20,6 +20,7 @@ export const StripeConnectOnboarding: React.FC = () => {
   const { currentTenant } = useTenant();
   const [status, setStatus] = useState<StripeConnectStatus | null>(null);
   const [loading, setLoading] = useState(false);
+  const [businessCountry, setBusinessCountry] = useState('US');
 
   const checkConnectStatus = async () => {
     if (!currentTenant?.id) return;
@@ -51,7 +52,8 @@ export const StripeConnectOnboarding: React.FC = () => {
         body: JSON.stringify({ 
           tenantId: currentTenant.id,
           returnUrl: `${window.location.origin}/dashboard/business/settings?tab=integrations`,
-          refreshUrl: `${window.location.origin}/dashboard/business/settings?tab=integrations`
+          refreshUrl: `${window.location.origin}/dashboard/business/settings?tab=integrations`,
+          country: businessCountry
         })
       });
 
@@ -142,9 +144,29 @@ export const StripeConnectOnboarding: React.FC = () => {
             </div>
           </div>
 
+          <div>
+            <label htmlFor="stripe-business-country" className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1">
+              Business country
+            </label>
+            <input
+              id="stripe-business-country"
+              value={businessCountry}
+              onChange={(event) => setBusinessCountry(event.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2))}
+              maxLength={2}
+              inputMode="text"
+              autoComplete="country"
+              aria-describedby="stripe-business-country-help"
+              className="w-full px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] uppercase"
+              placeholder="US"
+            />
+            <p id="stripe-business-country-help" className="mt-1 type-card-description text-[var(--ws-text-muted)]">
+              Enter the 2-letter country code where this business is legally registered. Stripe uses this to create the connected account.
+            </p>
+          </div>
+
           <Button 
             onClick={handleConnect}
-            disabled={loading}
+            disabled={loading || businessCountry.length !== 2}
             className="w-full bg-teal-600 hover:bg-teal-500 text-black font-semibold"
           >
             {loading ? 'Connecting...' : 'Connect Stripe Account'}
