@@ -77,7 +77,28 @@ export const authService = {
             if (error) {
                 console.error("SignIn Error:", error);
 
-                // ✅ Track failed attempts in database
+                // Infrastructure/network failures are not credential failures and must never
+                // increment lockout counters. Supabase can surface transient upstream failures
+                // as AuthRetryableFetchError / Failed to fetch / timeout / 5xx errors.
+                const errorName = String((error as any)?.name || '').toLowerCase();
+                const errorMessage = String(error.message || '').toLowerCase();
+                const errorStatus = Number((error as any)?.status || 0);
+                const transientAuthFailure =
+                    errorName.includes('retryable') ||
+                    errorMessage.includes('failed to fetch') ||
+                    errorMessage.includes('network') ||
+                    errorMessage.includes('timed out') ||
+                    errorMessage.includes('timeout') ||
+                    [408, 429, 500, 502, 503, 504, 520, 522, 524].includes(errorStatus);
+
+                if (transientAuthFailure) {
+                    return {
+                        user: null,
+                        error: 'Authentication service is temporarily unavailable. Please try again in a moment.',
+                    };
+                }
+
+                // Only genuine provider credential/authentication rejections count as failed logins.
                 const currentAttempts = parseInt(localStorage.getItem('failed_login_attempts') || '0') + 1;
                 localStorage.setItem('failed_login_attempts', currentAttempts.toString());
 
