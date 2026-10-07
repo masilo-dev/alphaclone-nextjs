@@ -6,6 +6,12 @@ export function isPublicMarketingRoute(pathname: string | null | undefined): boo
   if (!pathname) return true;
   if (pathname === '/') return true;
   const prefixes = [
+    '/marketing',
+    '/solutions',
+    '/reliability',
+    '/execution-session',
+    '/support',
+    '/customers',
     '/crm',
     '/project-management',
     '/lead-management',
