@@ -6,6 +6,18 @@ export function isPublicMarketingRoute(pathname: string | null | undefined): boo
   if (!pathname) return true;
   if (pathname === '/') return true;
   const prefixes = [
+    '/crm',
+    '/project-management',
+    '/lead-management',
+    '/ai-business-os',
+    '/ai-agents',
+    '/video-meetings',
+    '/guide',
+    '/docs',
+    '/sla',
+    '/compliance',
+    '/security-policy',
+    '/data-deletion',
     '/about',
     '/pricing',
     '/faq',
@@ -43,7 +55,7 @@ export function isAppShellRoute(pathname: string | null | undefined): boolean {
     pathname.startsWith('/preferences') ||
     pathname.startsWith('/call') ||
     pathname.startsWith('/contract') ||
-    pathname.startsWith('/project') ||
+    (pathname === '/project' || pathname.startsWith('/project/')) ||
     pathname.startsWith('/p/') ||
     pathname.startsWith('/bp/')
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useLayoutEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
 /**
@@ -20,6 +20,10 @@ export default function MarketingShell({ children }: { children: React.ReactNode
   const isDashboardOrApp =
     ['/dashboard', '/auth', '/login', '/register', '/account', '/billing', '/contract', '/project', '/invoice', '/form', '/portal', '/private-docs', '/p', '/bp']
       .some(isRouteOrChild);
+
+  useLayoutEffect(() => {
+    document.documentElement.dataset.acSurface = isDashboardOrApp ? 'app' : 'marketing';
+  }, [isDashboardOrApp]);
 
   if (isDashboardOrApp) {
     return <div className="ac-business-root min-h-screen">{children}</div>;
