@@ -2,7 +2,8 @@ import '@/styles/product-system.css';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
-import { getRawSessionCookie, verifyClientPortalSessionToken } from '@/lib/auth/clientPortalAuth';
+import { requireClientPortalAccessDoubleGuarded } from '@/lib/auth/clientPortalAuth';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 export const metadata: Metadata = {
     robots: { index: false, follow: false },
@@ -22,31 +23,35 @@ async function ClientFinancePortalLayoutInner({
     params: Promise<{ token: string }>;
 }) {
     const { token } = await params;
-    const raw = await getRawSessionCookie();
+    const admin = createSupabaseAdminClient();
 
-    let hasValidSession = false;
-    if (raw) {
-        const verified = verifyClientPortalSessionToken(raw);
-        hasValidSession = verified.ok;
-    }
+    const resolveClientByPortalToken = async (db: any, portalToken: string) => {
+        const { data, error } = await db
+            .from('business_clients')
+            .select('id, tenant_id, is_active')
+            .eq('finance_portal_token', portalToken)
+            .maybeSingle();
+        if (error) throw error;
+        return data;
+    };
 
-    if (!hasValidSession) {
-        try {
-            const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
-            const admin = createSupabaseAdminClient();
-            const { data: client } = await admin
-                .from('business_clients')
-                .select('id, client_portal_password_hash')
-                .eq('finance_portal_token', token)
-                .maybeSingle();
+    const access = await requireClientPortalAccessDoubleGuarded(
+        admin,
+        token,
+        resolveClientByPortalToken
+    );
 
-            if (client && client.client_portal_password_hash == null) {
-                redirect(`/set-password?token=${encodeURIComponent(token)}`);
-            }
-        } catch (e: any) {
-            if (e?.digest?.startsWith?.('NEXT_REDIRECT') || e?.message?.includes?.('NEXT_REDIRECT')) {
-                throw e;
-            }
+    if (!access.ok) {
+        // Preserve the first-time setup experience only for an active client whose
+        // invite token resolves and who has not set a portal password yet.
+        const { data: client } = await admin
+            .from('business_clients')
+            .select('id, client_portal_password_hash, is_active')
+            .eq('finance_portal_token', token)
+            .maybeSingle();
+
+        if (client && client.is_active !== false && client.client_portal_password_hash == null) {
+            redirect(`/set-password?token=${encodeURIComponent(token)}`);
         }
 
         const nextPath = `/portal/${encodeURIComponent(token)}`;
