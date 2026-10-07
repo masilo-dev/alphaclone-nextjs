@@ -244,15 +244,6 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
         source: '/.well-known/:path*',
         headers: [
           {
@@ -295,6 +286,26 @@ const nextConfig: NextConfig = {
             value: 'no-cache, no-store, no-transform, must-revalidate, max-age=0',
           },
         ],
+      },
+      // Specific asset rules must follow the catch-all: the last matching
+      // header wins. Hashed assets can be cached across deployments and must
+      // not inherit no-transform, which prevents edge compression.
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/favicon.ico',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400' }],
+      },
+      {
+        source: '/favicon-32x32.png',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400' }],
       },
     ];
   },

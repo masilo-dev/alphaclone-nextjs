@@ -3309,3 +3309,14 @@ html:not([data-product-tour-active="true"]) .__floater {
 [data-framer-exit] {
   pointer-events: none !important;
 }
+
+/* Keep the public canvas white during SSR, hydration and route loading. */
+html[data-ac-surface="marketing"],
+html[data-ac-surface="marketing"] body {
+  background: #ffffff;
+  color-scheme: light;
+}
+html[data-ac-surface="marketing"] .ac-route-loading {
+  background: #ffffff;
+  color: #0F172A;
+}

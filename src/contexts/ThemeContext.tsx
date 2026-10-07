@@ -1,6 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useLayoutEffect, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
+import { isPublicMarketingRoute } from '@/lib/isPublicMarketingRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { preferencesService } from '@/services/dashboardService';
 import {
@@ -39,6 +41,7 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const { user } = useAuth();
+    const forceLight = isPublicMarketingRoute(usePathname());
     const userId = user?.id ?? null;
 
     const [backgroundColor, setBackgroundColor] = useState('var(--ws-canvas)');
@@ -46,12 +49,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const [isDark, setIsDark] = useState(true);
 
     const applyMode = useCallback((mode: ThemeMode) => {
-        const acMode = uiModeToAcTheme(mode);
+        const acMode = forceLight ? 'light' : uiModeToAcTheme(mode);
         applyAcThemeClass(acMode);
         setIsDark(resolveIsDark(acMode));
-    }, []);
+    }, [forceLight]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const savedColor = localStorage.getItem('dashboard-bg-color');
         if (savedColor) {
             setBackgroundColor(savedColor);
@@ -69,15 +72,15 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
             const acTheme = readStoredAcTheme(userId);
             const uiMode = acThemeToUiMode(acTheme);
             setThemeModeState(uiMode);
-            setIsDark(resolveIsDark(acTheme));
+            setIsDark(forceLight ? false : resolveIsDark(acTheme));
         };
         window.addEventListener('ac-theme-changed', onThemeChanged);
         return () => window.removeEventListener('ac-theme-changed', onThemeChanged);
-    }, [userId]);
+    }, [userId, forceLight]);
 
     useEffect(() => {
         const acMode = uiModeToAcTheme(themeMode);
-        if (acMode !== 'auto') return;
+        if (forceLight || acMode !== 'auto') return;
 
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         const handler = () => {
@@ -86,7 +89,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         };
         mediaQuery.addEventListener('change', handler);
         return () => mediaQuery.removeEventListener('change', handler);
-    }, [themeMode]);
+    }, [themeMode, forceLight]);
 
     const handleSetBackgroundColor = (color: string) => {
         setBackgroundColor(color);
@@ -99,14 +102,13 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
             const acMode = uiModeToAcTheme(mode);
             setThemeModeState(mode);
             persistAcTheme(acMode, userId);
-            applyAcThemeClass(acMode);
-            setIsDark(resolveIsDark(acMode));
+            applyMode(mode);
 
             if (userId && !opts?.skipServer) {
                 void preferencesService.updateTheme(userId, acMode);
             }
         },
-        [userId],
+        [userId, applyMode],
     );
 
     const resetToDefault = () => {
@@ -120,9 +122,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
                 backgroundColor,
                 setBackgroundColor: handleSetBackgroundColor,
                 resetToDefault,
-                themeMode,
+                themeMode: forceLight ? 'light' : themeMode,
                 setThemeMode: handleSetThemeMode,
-                isDark,
+                isDark: forceLight ? false : isDark,
             }}
         >
             {children}
