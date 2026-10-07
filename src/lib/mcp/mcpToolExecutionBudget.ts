@@ -8,11 +8,6 @@ import {
 } from '@/lib/runtime/workerRuntimeCounters';
 import { isBackgroundJobHeapBlocked, backgroundJobBlockedReason } from '@/lib/runtime/backgroundJobGate';
 
-const SYNC_TIMEOUT_MS = Number(process.env.MCP_TOOL_SYNC_TIMEOUT_MS || 60_000);
-const HEAVY_SYNC_TIMEOUT_MS = Number(process.env.MCP_TOOL_HEAVY_SYNC_TIMEOUT_MS || 120_000);
-const SOCIAL_PUBLISH_TIMEOUT_MS = Number(process.env.MCP_TOOL_SOCIAL_PUBLISH_TIMEOUT_MS || 120_000);
-const EMAIL_OUTBOUND_TIMEOUT_MS = Number(process.env.MCP_TOOL_EMAIL_OUTBOUND_TIMEOUT_MS || 90_000);
-
 const HEAVY_TOOLS = new Set([
   'bulk_update_records',
   'send_bulk_email',
@@ -60,12 +55,6 @@ const QUEUED_ONLY_TOOLS = new Set([
   'bulk_upload_media',
 ]);
 
-export function resolveMcpToolTimeoutMs(toolName: string): number {
-  if (SOCIAL_PUBLISH_TOOLS.has(toolName)) return SOCIAL_PUBLISH_TIMEOUT_MS;
-  if (EMAIL_OUTBOUND_TOOLS.has(toolName)) return EMAIL_OUTBOUND_TIMEOUT_MS;
-  return HEAVY_TOOLS.has(toolName) ? HEAVY_SYNC_TIMEOUT_MS : SYNC_TIMEOUT_MS;
-}
-
 export function isHeavyMcpTool(toolName: string): boolean {
   return HEAVY_TOOLS.has(toolName) || SOCIAL_PUBLISH_TOOLS.has(toolName) || EMAIL_OUTBOUND_TOOLS.has(toolName);
 }
@@ -86,27 +75,13 @@ export async function executeMcpToolWithBudget<T>(
   }
 
   incrementActiveMcpRequests();
-  const timeoutMs = resolveMcpToolTimeoutMs(toolName);
 
   try {
-    // Reliability contract: the MCP gateway must not manufacture short 15–45s
-    // failures while the underlying operation is still progressing. Long/heavy
-    // work should queue at the tool boundary; synchronous work gets a generous
-    // safety deadline so platform/proxy requests cannot hang forever.
-    return await Promise.race([
-      fn(),
-      new Promise<T>((_, reject) => {
-        const timer = setTimeout(() => {
-          const error = new Error(
-            `Tool ${toolName} exceeded its ${timeoutMs}ms execution safety deadline. The operation may still be reconciling; check its durable action status before retrying.`
-          ) as Error & { code?: string; retryable?: boolean };
-          error.code = 'MCP_EXECUTION_DEADLINE';
-          error.retryable = true;
-          reject(error);
-        }, timeoutMs);
-        if (typeof timer.unref === 'function') timer.unref();
-      }),
-    ]);
+    // Do not impose an application-level wall-clock timeout on MCP execution.
+    // Provider/database layers retain their own bounded connection/request guards,
+    // and long-running business work should use durable queue/action semantics.
+    // The gateway itself must not manufacture a failure merely because work is slow.
+    return await fn();
   } finally {
     decrementActiveMcpRequests();
   }
