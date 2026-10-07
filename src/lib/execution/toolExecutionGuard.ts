@@ -33,6 +33,10 @@ export async function guardToolExecution(params: {
 }): Promise<ToolExecutionGuardResult> {
   const { tenantId, userId, toolName, args, options } = params;
   let policy: PolicyDecision | null = null;
+  // Persist the retry identity in the approval's original arguments, too.
+  if (capabilityRequiresIdempotencyKey(toolName) || mcpToolRequiresIdempotency(toolName)) {
+    ensureMcpIdempotencyKey({ tenantId, toolName, args, requireKey: true });
+  }
 
   if (!options.skipPolicyEvaluation) {
     policy = await evaluateToolPolicy({

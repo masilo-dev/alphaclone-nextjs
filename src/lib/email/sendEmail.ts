@@ -13,6 +13,7 @@ import { sanitizeBonnieOutboundText } from '@/lib/bonnie/bonnieBannedLanguage';
 import { persistCanonicalOutboundEmail } from '@/lib/email/persistCanonicalEmail';
 import { toUnifiedEmailProvider } from '@/lib/email/unifiedEmailDomain';
 import { type EmailAttachment, normalizeEmailAttachments } from '@/lib/email/emailAttachment';
+import { assertBrevoSender } from '@/lib/email/providerSenderIdentity';
 
 export type { EmailAttachment } from '@/lib/email/emailAttachment';
 
@@ -50,6 +51,9 @@ export interface SendEmailResult {
   error?: string;
   errorDetails?: unknown;
   code?: string;
+  deliveryStatus?: 'provider_accepted' | 'delivered' | 'failed' | 'unknown';
+  sender?: string;
+  deliveredAt?: string | null;
 }
 
 function normalizePreferredProvider(value: unknown): OutboundEmailProvider | undefined {
@@ -154,13 +158,22 @@ export async function sendEmail(
     for (const config of configs) {
       const fromEmail = String(config.fromEmail || '').trim();
       if (!fromEmail) {
-        tried.push({ provider: config.provider, providerAccountId: config.providerAccountId, error: 'Tenant provider sender email is missing' });
+        tried.push({ provider: config.provider, providerAccountId: config.providerAccountId, error: config.senderVerificationError || 'Tenant provider sender email is missing' });
         continue;
       }
       const fromName = tenantSenderName(config, payload);
       if (!fromName) {
         tried.push({ provider: config.provider, providerAccountId: config.providerAccountId, error: 'Tenant provider sender identity is missing' });
         continue;
+      }
+
+      if (config.provider === 'brevo') {
+        try { await assertBrevoSender(config.apiKey, fromEmail); }
+        catch {
+          return { success: false, provider: config.provider, providerAccountId: config.providerAccountId,
+            sender: fromEmail, tried, deliveryStatus: 'failed', code: 'EMAIL_SENDER_NOT_VERIFIED',
+            error: 'Configured Brevo sender could not be verified as active. Check sender settings before sending.' };
+        }
       }
 
       const PROVIDER_TIMEOUT_MS = Number(process.env.EMAIL_PROVIDER_SEND_TIMEOUT_MS || 8_000);
@@ -197,6 +210,12 @@ export async function sendEmail(
       }
 
       if (!providerResult.ok) {
+        if (/timeout|timed out|network|fetch failed|abort|socket|ECONN/i.test(providerResult.error || '')) {
+          return { success: false, provider: config.provider, providerAccountId: config.providerAccountId,
+            sender: fromEmail, tried: [...tried, { provider: config.provider, error: 'Provider outcome is unknown' }],
+            deliveryStatus: 'unknown', code: 'OUTCOME_UNKNOWN',
+            error: 'Provider outcome is unknown. Reconcile before retrying; automatic fallback was stopped.' };
+        }
         tried.push({ provider: config.provider, providerAccountId: config.providerAccountId, error: providerResult.error || 'Provider rejected request' });
         await logEmailSend({
           tenantId,
@@ -212,7 +231,12 @@ export async function sendEmail(
         continue;
       }
 
-      const providerMessageId = providerResult.emailId || emailId;
+      const providerMessageId = providerResult.emailId;
+      if (!providerMessageId) {
+        return { success: false, provider: config.provider, providerAccountId: config.providerAccountId,
+          sender: fromEmail, tried, deliveryStatus: 'unknown', code: 'OUTCOME_UNKNOWN',
+          error: 'Provider returned acceptance without a message ID. Reconciliation is required.' };
+      }
       let canonicalMessageId: string;
       try {
         canonicalMessageId = await persistCanonicalOutboundEmail({
@@ -254,6 +278,8 @@ export async function sendEmail(
           error: 'Provider accepted the email, but AlphaClone could not save the canonical communication record.',
           errorDetails: persistenceError,
           code: 'LOCAL_EMAIL_PERSISTENCE_FAILED',
+          deliveryStatus: 'provider_accepted',
+          sender: fromEmail,
         };
       }
 
@@ -270,6 +296,8 @@ export async function sendEmail(
       });
       return {
         success: true,
+        deliveryStatus: 'provider_accepted',
+        sender: fromEmail,
         emailId: providerMessageId,
         canonicalMessageId,
         providerAccountId: config.providerAccountId,

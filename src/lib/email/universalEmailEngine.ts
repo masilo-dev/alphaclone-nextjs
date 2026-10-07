@@ -202,6 +202,7 @@ export async function sendUniversalEmail(input: UniversalEmailSendInput): Promis
     text: layout.text,
     isPlatformNotification: purpose.communicationClass !== 'outreach_marketing',
     templateName: purpose.templateKey,
+    idempotencyKey,
     listUnsubscribeUrl: includeListUnsubscribe ? unsubscribeUrl : undefined,
     auditMetadata: {
       communication_id: communicationId,

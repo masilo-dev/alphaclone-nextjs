@@ -30,7 +30,7 @@ registerTool('crm', {
       tenant_id: { type: 'string', format: 'uuid', description: 'Tenant UUID' },
       limit: { type: 'number', description: 'Max contacts to retrieve (default: 50)' },
       search: { type: 'string', description: 'Filter by name or email search term' },
-      status: { type: 'string', description: 'Filter by status (e.g. lead, customer)' },
+      status: { type: 'string', description: 'Filter by status (active, inactive, unsubscribed, bounced)' },
     },
     required: ['tenant_id'],
   },
@@ -55,7 +55,7 @@ registerTool('crm', {
     email: z.string().email(),
     phone: z.string().optional(),
     company: z.string().optional(),
-    status: z.string().optional().default('lead'),
+    status: z.enum(['active', 'inactive', 'unsubscribed', 'bounced']).optional().default('active'),
   }),
   jsonSchema: {
     type: 'object',
@@ -65,7 +65,7 @@ registerTool('crm', {
       email: { type: 'string', format: 'email' },
       phone: { type: 'string' },
       company: { type: 'string' },
-      status: { type: 'string', default: 'lead' },
+      status: { type: 'string', enum: ['active', 'inactive', 'unsubscribed', 'bounced'], default: 'active' },
     },
     required: ['tenant_id', 'name', 'email'],
   },
@@ -82,7 +82,7 @@ registerTool('crm', {
         email: args.email,
         phone: args.phone || null,
         // company field doesn't exist in contacts table - store in metadata if needed
-        status: args.status || 'lead',
+        status: args.status || 'active',
       })
       .select()
       .single();
@@ -96,7 +96,7 @@ registerTool('crm', {
         email: args.email,
         phone: args.phone || null,
         company: args.company || args.name,
-        sales_stage: args.status === 'customer' ? 'customer' : 'lead',
+        sales_stage: 'lead',
         is_active: true,
         crm_contact_id: data.id,
       });
@@ -802,4 +802,3 @@ registerTool('crm', {
     return result;
   },
 });
-

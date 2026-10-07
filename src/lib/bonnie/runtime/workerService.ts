@@ -157,13 +157,16 @@ async function executeTaskStages(params: {
         tenantId,
         taskId: task.id,
         to: 'COMPLETED',
-        trigger: 'email_send_verified',
+        trigger: 'email_provider_accepted',
         actorType: 'worker',
         actorId: worker,
         relatedAttemptId: attemptId,
         patch: { structured_output: outcome.result || {} },
       });
       return { status: 'COMPLETED' as const };
+    }
+    if (outcome.result?.delivery_status === 'unknown') {
+      throw new Error('Uncertain email execution: reconciliation required before retry');
     }
     throw new Error(outcome.error || 'email_send_failed');
   }

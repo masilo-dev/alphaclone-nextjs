@@ -53,6 +53,9 @@ export interface SendEmailServerResult {
   errorDetails?: unknown;
   code?: string;
   gatewayVersion?: string;
+  deliveryStatus?: 'provider_accepted' | 'delivered' | 'failed' | 'unknown';
+  sender?: string;
+  deliveredAt?: string | null;
 }
 
 function inferCategory(params: SendEmailServerParams): EmailGatewayCategory {
@@ -144,5 +147,8 @@ export async function sendEmailServer(params: SendEmailServerParams): Promise<Se
     errorDetails: result.tried,
     code: result.code,
     gatewayVersion: result.gatewayVersion,
+    deliveryStatus: result.deliveryStatus,
+    sender: result.sender,
+    deliveredAt: result.deliveredAt,
   };
 }

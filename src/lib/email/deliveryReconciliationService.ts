@@ -11,7 +11,8 @@ type CanonicalDeliveryState =
   | 'bounced'
   | 'complained'
   | 'unsubscribed'
-  | 'failed';
+  | 'failed'
+  | 'deferred';
 
 export type ReconcileProviderEventInput = {
   supabase: SupabaseClient;
@@ -82,6 +83,8 @@ function patchForEvent(eventType: CanonicalDeliveryState, occurredAt: string, cu
       return { complained_at: current.complained_at || occurredAt, delivery_status: 'complained' };
     case 'unsubscribed':
       return { unsubscribed_at: current.unsubscribed_at || occurredAt };
+    case 'deferred':
+      return { delivery_status: current.delivered_at ? current.delivery_status : 'deferred' };
     case 'failed':
       return {
         failed_at: current.failed_at || occurredAt,
@@ -125,15 +128,15 @@ export const DeliveryReconciliationService = {
 
     const { data: existing, error: existingError } = await input.supabase
       .from('email_delivery_events')
-      .select('id')
+      .select('id, processed_at')
       .eq('tenant_id', input.tenantId)
       .eq('provider_account_id', input.providerAccountId)
       .eq('provider_event_id', input.providerEventId)
       .maybeSingle();
     if (existingError) throw new Error(`EMAIL_DELIVERY_EVENT_LOOKUP_FAILED: ${existingError.message}`);
-    if (existing?.id) return { messageId: String(message.id), duplicate: true };
+    if (existing?.processed_at) return { messageId: String(message.id), duplicate: true };
 
-    const { error: eventError } = await input.supabase.from('email_delivery_events').insert({
+    const { error: eventError } = existing?.id ? { error: null } : await input.supabase.from('email_delivery_events').insert({
       tenant_id: input.tenantId,
       message_id: message.id,
       provider_account_id: input.providerAccountId,
@@ -146,15 +149,12 @@ export const DeliveryReconciliationService = {
       received_at: new Date().toISOString(),
       payload_safe: input.payloadSafe || {},
       signature_verified: true,
-      processed_at: new Date().toISOString(),
+      processed_at: null,
     });
     if (eventError) {
       // The unique tenant/provider-account/provider-event constraint closes the
       // select/insert race. Concurrent delivery of the same event is idempotent.
-      if ((eventError as { code?: string }).code === '23505') {
-        return { messageId: String(message.id), duplicate: true };
-      }
-      throw new Error(`EMAIL_DELIVERY_EVENT_INSERT_FAILED: ${eventError.message}`);
+      if ((eventError as { code?: string }).code !== '23505') throw new Error(`EMAIL_DELIVERY_EVENT_INSERT_FAILED: ${eventError.message}`);
     }
 
     const patch = patchForEvent(input.eventType, occurredAt, message as CurrentMessageEvidence);
@@ -165,6 +165,16 @@ export const DeliveryReconciliationService = {
       .eq('id', message.id)
       .eq('provider_account_id', input.providerAccountId);
     if (updateError) throw new Error(`EMAIL_MESSAGE_RECONCILIATION_FAILED: ${updateError.message}`);
+
+    const { error: recipientError } = await input.supabase.from('email_message_recipients')
+      .update({ delivery_status: patch.delivery_status || message.delivery_status || 'unknown' })
+      .eq('tenant_id', input.tenantId).eq('message_id', message.id)
+      .eq('email_address', String(input.recipientEmail || '').trim().toLowerCase());
+    if (recipientError) throw new Error(`EMAIL_RECIPIENT_RECONCILIATION_FAILED: ${recipientError.message}`);
+    const { error: processedError } = await input.supabase.from('email_delivery_events')
+      .update({ processed_at: new Date().toISOString() }).eq('tenant_id', input.tenantId)
+      .eq('provider_account_id', input.providerAccountId).eq('provider_event_id', input.providerEventId);
+    if (processedError) throw new Error(`EMAIL_EVENT_CHECKPOINT_FAILED: ${processedError.message}`);
 
     return { messageId: String(message.id), duplicate: false };
   },

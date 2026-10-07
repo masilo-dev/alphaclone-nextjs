@@ -8,6 +8,7 @@ export type BonnieToolResult = {
   success: boolean;
   summary: string;
   details?: string;
+  executionResult?: unknown;
   approvalRequired?: boolean;
   approvalId?: string;
   riskClass?: string;

@@ -238,11 +238,11 @@ defineConnectorTool({
       });
     }
       const output = (await executeBulkEmail(args, { tenantId: ctx.tenantId, userId: ctx.userId })) as Record<string, any>;
-    return okResult('send_bulk_email', output, {
+    const response = okResult('send_bulk_email', output, {
       receipt: {
         action_id: String(output.action_id),
         status: args.dry_run === false
-          ? (Number(output.failed || 0) > 0 ? 'completed_with_failures' : 'completed')
+          ? (output.status === 'unknown' ? 'unknown_execution_state' : output.success === false ? 'failed' : 'provider_accepted')
           : 'simulated',
         entity_id: String(output.action_id),
         entity_type: 'bulk_email',
@@ -256,6 +256,12 @@ defineConnectorTool({
         retry_available: args.dry_run !== false,
       },
     });
+    if (output.success === false) {
+      return { ...response, ok: false as const,
+        error: { code: output.status === 'unknown' ? 'OUTCOME_UNKNOWN' : 'BATCH_RECIPIENT_FAILURE',
+          message: 'Review the individual recipient outcomes. No delivery is claimed.', retryable: false } };
+    }
+    return response;
   },
 });
 

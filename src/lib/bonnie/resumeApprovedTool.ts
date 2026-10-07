@@ -48,6 +48,12 @@ export async function resumeApprovedTool(params: {
   const policySource =
     payload.source === 'mcp' || payload.source === 'playbook' ? payload.source : 'bonnie';
 
+  const { data: claimed, error: claimError } = await admin.from('autonomous_runner_approvals')
+    .update({ status: 'approved', updated_at: new Date().toISOString() })
+    .eq('id', params.approvalId).eq('tenant_id', params.tenantId).eq('status', 'pending')
+    .select('id').maybeSingle();
+  if (claimError || !claimed) return { success: false, error: claimError?.message || 'Approval is already executing' };
+
   const result = await executeSingleBonnieTool({
     tenantId: params.tenantId,
     userId: execUserId,
@@ -58,7 +64,7 @@ export async function resumeApprovedTool(params: {
   });
 
   const finalStatus = result.success ? 'executed' : 'approved';
-  await admin
+  const { error: persistenceError } = await admin
     .from('autonomous_runner_approvals')
     .update({
       status: result.success ? 'executed' : finalStatus,
@@ -69,6 +75,7 @@ export async function resumeApprovedTool(params: {
           success: result.success,
           summary: result.summary,
           details: result.details,
+          result: result.executionResult,
           executed_at: new Date().toISOString(),
           executed_by: params.userId,
         },
@@ -77,5 +84,6 @@ export async function resumeApprovedTool(params: {
     .eq('id', params.approvalId)
     .eq('tenant_id', params.tenantId);
 
+  if (persistenceError) return { success: false, result, error: 'Approval result could not be persisted. Review the execution receipt before retrying.' };
   return { success: result.success, result, error: result.success ? undefined : result.summary };
 }

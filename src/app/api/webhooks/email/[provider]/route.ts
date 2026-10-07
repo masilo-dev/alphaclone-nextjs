@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 import { syncSuppressionCleanup } from '@/lib/email/suppression';
 import { campaignHealth } from '@/lib/outreach/outreachIntelligence';
+import { createHash } from 'node:crypto';
+import { DeliveryReconciliationService } from '@/lib/email/deliveryReconciliationService';
+import { brevoDeliveryEvent } from '@/lib/email/reconcileBrevoMessage';
 
 type SupportedProvider = 'resend' | 'sendgrid' | 'brevo' | 'zoho' | 'gmail';
 
@@ -82,7 +85,7 @@ function parseBrevoEvent(raw: Record<string, unknown>): ParsedWebhookEvent {
   return {
     provider: 'brevo',
     eventType: String(raw.event || raw.message_event || 'unknown'),
-    providerMessageId: typeof raw['message-id'] === 'string' ? raw['message-id'] : null,
+    providerMessageId: typeof raw['message-id'] === 'string' ? raw['message-id'] : typeof raw.messageId === 'string' ? raw.messageId : null,
     trackingId: trackingId || null,
     eventTimestamp: parseIsoTimestamp(raw.date || raw.ts_event || raw.timestamp),
     payload: raw,
@@ -149,6 +152,40 @@ export async function POST(
     let unmatched = 0;
     const affectedCampaigns = new Set<string>(); // `${tenantId}:${campaignId}`
     for (const event of parsedEvents) {
+      let canonicalTenantId: string | null = null;
+      // Authentication is already verified above. Match the exact canonical
+      // provider reference, never infer tenancy from the recipient's email.
+      if (event.providerMessageId) {
+        const { data: canonical, error: canonicalError } = await admin.from('email_messages')
+          .select('id, tenant_id, provider_account_id')
+          .eq('provider_message_id', event.providerMessageId)
+          .eq('metadata->>provider', provider).maybeSingle();
+        if (canonicalError) throw new Error('EMAIL_WEBHOOK_CANONICAL_MATCH_FAILED');
+        canonicalTenantId = canonical?.tenant_id || null;
+        const normalized = event.eventType.toLowerCase();
+        const canonicalType = provider === 'brevo' ? brevoDeliveryEvent(normalized)
+          : normalized.includes('delivered') ? 'delivered' as const
+            : normalized.includes('bounce') ? 'bounced' as const
+              : normalized.includes('defer') ? 'deferred' as const
+                : normalized.includes('complaint') || normalized.includes('spam') ? 'complained' as const
+                  : normalized.includes('unsubscribe') ? 'unsubscribed' as const
+                    : normalized.includes('fail') || normalized.includes('reject') ? 'failed' as const : null;
+        if (canonical && canonicalType) {
+          const eventId = String(event.payload.id || event.payload.sg_event_id || createHash('sha256')
+            .update(`${provider}:${event.providerMessageId}:${event.eventType}:${event.eventTimestamp}`).digest('hex'));
+          await DeliveryReconciliationService.applyProviderEvent({ supabase: admin,
+            tenantId: canonical.tenant_id, providerAccountId: canonical.provider_account_id,
+            provider, providerMessageId: event.providerMessageId, providerEventId: eventId,
+            eventType: canonicalType, occurredAt: event.eventTimestamp || undefined,
+            recipientEmail: typeof event.payload.email === 'string' ? event.payload.email : null,
+            signatureVerified: true, payloadSafe: { source: 'authenticated_provider_webhook', event: event.eventType } });
+          if (['bounced', 'complained', 'unsubscribed'].includes(canonicalType) && typeof event.payload.email === 'string') {
+            await syncSuppressionCleanup({ tenantId: canonical.tenant_id, email: event.payload.email,
+              reason: canonicalType === 'bounced' ? 'bounce' : canonicalType === 'complained' ? 'spam_report' : 'unsubscribe',
+              provider, eventId });
+          }
+        }
+      }
       const eventTypeLower = event.eventType.toLowerCase();
       const mappedStatus = mapDeliveryStatus(event.eventType);
       const isBounceLike = eventTypeLower.includes('bounce') || eventTypeLower.includes('spam') || eventTypeLower.includes('reject') || eventTypeLower.includes('drop');
@@ -178,13 +215,15 @@ export async function POST(
         | null = null;
 
       if (event.providerMessageId) {
-        const { data: cr } = await admin
+        let campaignLookup = admin
           .from('campaign_recipients')
           .select(
             'id, tenant_id, campaign_id, email, status, sent_at, delivered_at, opened_at, first_opened_at, open_count, clicked_at, click_count, bounced_at, bounce_reason, unsubscribed_at, error_message'
           )
-          .eq('provider_message_id', event.providerMessageId)
-          .maybeSingle();
+          .eq('provider_message_id', event.providerMessageId);
+        if (canonicalTenantId) campaignLookup = campaignLookup.eq('tenant_id', canonicalTenantId);
+        const { data: cr, error: campaignError } = await campaignLookup.maybeSingle();
+        if (campaignError) throw new Error('EMAIL_WEBHOOK_CAMPAIGN_MATCH_FAILED');
         if (cr) matchedCampaignRecipient = cr as any;
       }
 
@@ -295,16 +334,17 @@ export async function POST(
       }
 
       // 2) Backward compatible: legacy outreach reconciliation
+      if (!event.providerMessageId && !event.trackingId) { unmatched += 1; continue; }
       let lookup = admin
         .from('lead_outreach_log')
         .select('id, tenant_id, user_id, lead_email')
-        .eq('provider', event.provider)
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .eq('provider', event.provider);
+      if (canonicalTenantId) lookup = lookup.eq('tenant_id', canonicalTenantId);
       if (event.providerMessageId) lookup = lookup.eq('provider_message_id', event.providerMessageId);
       else if (event.trackingId) lookup = lookup.eq('tracking_id', event.trackingId);
 
-      const { data: logRow } = await lookup.maybeSingle();
+      const { data: logRow, error: legacyError } = await lookup.maybeSingle();
+      if (legacyError) throw new Error('EMAIL_WEBHOOK_LEGACY_MATCH_FAILED');
       if (!logRow) {
         unmatched += 1;
         continue;
