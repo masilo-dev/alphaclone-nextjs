@@ -133,8 +133,8 @@ function AuthorizeContent() {
 
     if (!redirectUri) {
         return (
-            <div className="min-h-screen bg-[var(--ws-canvas)] flex flex-col items-center justify-center p-6 text-white text-center">
-                <div className="bg-[var(--ws-panel)]/40 p-8 rounded-3xl border border-[var(--ws-border)] max-w-md w-full">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex flex-col items-center justify-center p-6 text-[var(--ws-text-primary)] text-center">
+                <div className="bg-[var(--ws-panel)] p-8 rounded-3xl border border-[var(--ws-border)] max-w-md w-full">
                     <X className="w-12 h-12 text-red-500 mx-auto mb-4" />
                     <h1 className="text-xl font-bold mb-2">Invalid Request</h1>
                     <p className="text-[var(--ws-text-muted)] mb-6">Missing redirect_uri parameter.</p>
@@ -147,18 +147,18 @@ function AuthorizeContent() {
     }
 
     return (
-        <div className="min-h-screen bg-[var(--ws-canvas)] flex flex-col items-center justify-center p-6 text-white relative overflow-hidden">
+        <div className="min-h-screen bg-[var(--ws-canvas)] flex flex-col items-center justify-center p-6 text-[var(--ws-text-primary)] relative overflow-hidden">
             <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute top-[20%] left-[30%] w-[40%] h-[40%] bg-teal-500/10 blur-[120px] rounded-full animate-pulse" />
             </div>
 
-            <div className="relative z-10 bg-[var(--ws-panel)]/60 backdrop-blur-xl border border-[var(--ws-border)] p-8 rounded-3xl shadow-2xl max-w-md w-full text-center">
+            <div className="relative z-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] p-6 sm:p-8 rounded-2xl shadow-xl max-w-md w-full text-center">
                 <div className="w-20 h-20 bg-teal-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-teal-500/20">
                     <Bot className="w-10 h-10 text-teal-400" />
                 </div>
 
-                <h1 className="text-2xl font-bold mb-2">Authorize Connection</h1>
-                <p className="text-[var(--ws-text-muted)] mb-2">
+                <h1 className="text-2xl font-bold tracking-tight text-[var(--ws-text-primary)] mb-2">Authorize Connection</h1>
+                <p className="text-[var(--ws-text-secondary)] text-[15px] leading-6 mb-2">
                     An AI assistant (ChatGPT, Claude, or another connector) is requesting access to your AlphaClone workspace.
                 </p>
 
@@ -169,9 +169,9 @@ function AuthorizeContent() {
                     </div>
                 )}
 
-                <div className="text-left bg-[var(--ws-surface-secondary)]/40 rounded-xl p-4 mb-6 type-ui space-y-2">
+                <div className="text-left bg-[var(--ws-surface-secondary)] rounded-xl border border-[var(--ws-border)] p-4 mb-6 text-sm leading-6 space-y-2">
                     <p className="text-[var(--ws-text-secondary)] font-medium">This will allow the connector to:</p>
-                    <ul className="text-[var(--ws-text-muted)] space-y-1 list-disc list-inside">
+                    <ul className="text-[var(--ws-text-secondary)] space-y-1.5 list-disc list-inside">
                         <li>Read your CRM, deals, and contacts</li>
                         <li>Manage tasks and projects on your behalf</li>
                         <li>Access your workspace tools via MCP</li>
@@ -191,7 +191,7 @@ function AuthorizeContent() {
                     <button
                         onClick={handleApprove}
                         disabled={approving}
-                        className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-slate-950 rounded-xl font-bold transition-all disabled:opacity-50"
+                        className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-700)] text-white rounded-xl font-semibold transition-colors disabled:opacity-50"
                     >
                         {approving ? (
                             <Loader2 className="w-5 h-5 animate-spin" />
