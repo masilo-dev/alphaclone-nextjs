@@ -16,6 +16,8 @@ interface StripeConnectStatus {
   chargesEnabled: boolean;
   payoutsEnabled: boolean;
   requirements?: unknown[];
+  replacementPending?: boolean;
+  replacementActivated?: boolean;
 }
 
 export const StripeConnectOnboarding: React.FC = () => {
@@ -136,6 +138,14 @@ export const StripeConnectOnboarding: React.FC = () => {
               <StatusCell label="Payments" value={status?.chargesEnabled ? 'Active' : 'Not active'} ok={Boolean(status?.chargesEnabled)} />
               <StatusCell label="Payouts" value={status?.payoutsEnabled ? 'Active' : 'Not active'} ok={Boolean(status?.payoutsEnabled)} />
             </div>
+
+            {status?.replacementPending && (
+              <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 p-4">
+                <p className="font-medium text-teal-300">Replacement account setup in progress</p>
+                <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">Your current Stripe account stays active for new invoices until the replacement account is fully enabled for payments.</p>
+                <Button onClick={() => startOnboarding(true)} disabled={loading || businessCountry.length !== 2} variant="outline" className="mt-3">Continue replacement setup</Button>
+              </div>
+            )}
 
             {needsAction && (
               <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4">
