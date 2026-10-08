@@ -41,7 +41,7 @@ export function buildLlmExecutionTruth(input: {
   const result = input.parsedResult as any;
   const readCompleted = result != null && result?.ok !== false && result?.success !== false && /^(get|list|search|fetch|inspect)_/.test(input.toolName);
   const rawStatus = receipt?.status || (readCompleted ? undefined : result?.status);
-  const mailboxPending = ['sync_all_inboxes','get_email_sync_status'].includes(input.toolName)
+  const mailboxPending = ['sync_all_inboxes','get_email_sync_status'].includes(String(result?.tool || input.toolName))
     && String(receipt?.status || result?.data?.status || result?.status).toLowerCase() === 'pending';
   const verificationState = result?.ok === false || result?.success === false ? 'FAILED'
     : mailboxPending ? 'REQUESTED'

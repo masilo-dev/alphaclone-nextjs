@@ -195,6 +195,17 @@ export class MailboxService {
         },
       }),
     );
+    const canonical = checked(
+      await this.db
+        .from('email_messages')
+        .select('provider_thread_id')
+        .eq('tenant_id', this.tenantId)
+        .eq('provider_account_id', account.id)
+        .eq('id', String(data))
+        .single(),
+    ).data;
+    if (canonical?.provider_thread_id)
+      message.thread_id = canonical.provider_thread_id;
     return String(data);
   }
 
