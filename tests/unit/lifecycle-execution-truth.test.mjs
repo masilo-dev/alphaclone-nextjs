@@ -30,3 +30,7 @@ test('structured provider failures carry FAILED execution truth',async()=>{
  const result=structuredErrorToMcpContent({ok:false,tool:'send_contract',data:null,receipt:null,error:{code:'EMAIL_SENDER_NOT_VERIFIED',message:'Activate the configured tenant sender',retryable:false},meta:{}});
  const parsed=JSON.parse(result.content[0].text);assert.equal(parsed.error.code,'EMAIL_SENDER_NOT_VERIFIED');assert.equal(parsed.execution_truth.status,'FAILED');assert.equal(parsed.execution_truth.may_claim_completed,false);
 });
+test('dispatched pending mailbox status remains resumable rather than executing', () => {
+ const pending=buildLlmExecutionTruth({toolName:'execute_internal_tool',parsedResult:{ok:true,tool:'get_email_sync_status',data:{status:'pending'},receipt:{status:'pending'}}});
+ assert.equal(pending.status,'REQUESTED');assert.equal(pending.may_claim_completed,false);assert.match(pending.next_action,/Resume sync_all_inboxes/);
+});

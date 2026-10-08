@@ -43,6 +43,15 @@ const migration = await readFile(
 );
 await db.exec(migration);
 await db.exec(migration); // Repeat deployment must be harmless.
+const threadingMigration = await readFile(
+  new URL(
+    '../supabase/migrations/20261008090001_mcp_mailbox_thread_identity.sql',
+    import.meta.url,
+  ),
+  'utf8',
+);
+await db.exec(threadingMigration);
+await db.exec(threadingMigration);
 const tenant = '00000000-0000-4000-8000-000000000001',
   account = '00000000-0000-4000-8000-000000000002',
   other = '00000000-0000-4000-8000-000000000003';
@@ -106,6 +115,23 @@ assert.equal(
     )
   ).rows[0].n,
   1,
+);
+// Provider-native reply readback must retain the original conversation root.
+await ingest(tenant, {
+  ...message,
+  id: 'reply-1',
+  thread_id: 'native-1',
+  direction: 'outbound',
+  folder_name: 'sent',
+  date: '2026-10-08T05:01:00Z',
+});
+assert.equal(
+  (
+    await db.query(
+      "SELECT provider_thread_id FROM email_messages WHERE provider_message_id='reply-1'",
+    )
+  ).rows[0].provider_thread_id,
+  'thread-1',
 );
 await assert.rejects(
   () => ingest(other, message),
