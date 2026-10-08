@@ -533,6 +533,7 @@ export async function sendWithProviderSdk(
                         source: provider as any,
                         external_id: result.emailId || `${provider}-outbound-${crypto.randomUUID()}`,
                         direction: 'outbound',
+                        folder: 'sent',
                         channel: 'email',
                         subject: input.subject,
                         body: input.text || input.html?.replace(/<[^>]*>/g, '') || '',

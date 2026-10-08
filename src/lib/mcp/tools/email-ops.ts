@@ -6,6 +6,7 @@ import {
 import { MailboxService } from '@/lib/email/mailboxService';
 import { explicitRecipients } from '@/lib/email/mailboxNormalization';
 import { emailReceiptEvidence } from '@/lib/email/emailReceiptEvidence';
+import { renderOutboundEmail } from '@/lib/email/emailRendering';
 /**
  * Individual email MCP actions — real provider sends (no fake success).
  */
@@ -511,12 +512,17 @@ defineConnectorTool({
       );
     }
 
+    const mailboxSvc = new MailboxService(tenantId, userId);
     const sendingMailbox =
       !args.provider || args.provider === 'zoho'
-        ? await new MailboxService(tenantId, userId).verify(
-            await new MailboxService(tenantId, userId).account(args.account_id),
-          )
+        ? await mailboxSvc.verify(
+            await mailboxSvc.account(args.account_id),
+          ).catch(() => null)
         : null;
+    const sentFolder = sendingMailbox
+      ? (await mailboxSvc.provider(sendingMailbox).getFolders().catch(() => []))
+          .find((f: any) => String(f.folderName || '').toLowerCase().includes('sent') || String(f.folderType || '').toLowerCase() === 'sent')
+      : null;
     const preferredOutbound: OutboundEmailProvider | undefined =
       args.provider === 'zoho' ||
       args.provider === 'brevo' ||
@@ -562,7 +568,7 @@ defineConnectorTool({
           bcc: args.bcc,
           subject: args.subject,
           message: args.text,
-          html: args.html,
+          html: args.html || (args.text ? renderOutboundEmail({ text: args.text }).html : undefined),
           preserveContent: true,
           skipRecipientGate: Boolean(directTo),
           recipientName: args.recipient_name || recipient.matches?.[0]?.name,
@@ -583,6 +589,8 @@ defineConnectorTool({
           auditMetadata: {
             action_id: actionId,
             mcp_tool: 'send_email',
+            folder_id: sentFolder?.folderId || (preferredOutbound === 'zoho' || sendingMailbox ? '8563655000000002022' : undefined),
+            folder_name: 'sent',
           },
           attachments: attachments.length
             ? attachments.map((a) => ({
@@ -856,11 +864,11 @@ defineConnectorTool({
       ctx.userId,
       args.attachments,
     );
-    const textHtml = String(args.text || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\n/g, '<br/>');
+    const renderedReply = renderOutboundEmail({
+      html: args.html,
+      text: args.text,
+    });
+    const textHtml = renderedReply.html || (args.text ? `<p>${args.text}</p>` : '');
     const result = await executeMcpWrite({
       tenantId: ctx.tenantId,
       userId: ctx.userId,
@@ -912,6 +920,8 @@ defineConnectorTool({
               accepted_at: new Date().toISOString(),
             };
             await checkpoint(data);
+            const sentFolder = (await mailbox.provider(account).getFolders().catch(() => []))
+              .find((f: any) => String(f.folderName || '').toLowerCase().includes('sent') || String(f.folderType || '').toLowerCase() === 'sent');
             await mailbox.ingest(
               account,
               {
@@ -925,13 +935,14 @@ defineConnectorTool({
                 date: data.accepted_at,
                 is_read: true,
                 body_html: args.html || textHtml,
-                body_text: args.text || '',
+                body_text: renderedReply.text || args.text || '',
                 attachments: attachments.map((item) => ({
                   filename: item.filename,
                 })),
                 headers: { native_reply_to: original.provider_message_id },
               },
               'sent',
+              sentFolder?.folderId,
             );
             return data;
           },
@@ -1359,7 +1370,7 @@ for (const name of ['read_emails', 'search_emails'] as const) {
     },
     handler: async (args, ctx) => {
       const mailbox = new MailboxService(ctx.tenantId, ctx.userId);
-      const result = await mailbox.list(args);
+      const result = await new MailboxService(ctx.tenantId, ctx.userId).list(args);
       const account = await mailbox.account(result.account_id);
       return okResult(name, result, {
         receipt: {

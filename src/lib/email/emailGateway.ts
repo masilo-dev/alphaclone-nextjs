@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { sendEmail, type OutboundEmailProvider, type SendEmailResult } from '@/lib/email/sendEmail';
+import { renderOutboundEmail } from '@/lib/email/emailRendering';
 import { loadTenantEmailBrandingProfile } from '@/lib/email/tenantEmailBranding';
 import {
   buildEmailContentHtml,
@@ -344,8 +345,12 @@ async function executeEmailGateway(request: EmailGatewayRequest): Promise<EmailG
       to: request.to,
       cc: request.cc, bcc: request.bcc, preserveContent: request.preserveContent,
       subject: request.subject,
-      html: request.preserveContent ? request.html : rendered.html,
-      text: request.preserveContent ? request.message : rendered.text,
+      html: request.preserveContent
+        ? (request.html || (request.message ? renderOutboundEmail({ text: request.message }).html : undefined))
+        : rendered.html,
+      text: request.preserveContent
+        ? (request.message || (request.html ? renderOutboundEmail({ html: request.html }).text : undefined))
+        : rendered.text,
       fromName: request.senderName || branding.senderDisplayName,
       userId: request.userId,
       replyTo: request.replyTo || branding.replyToEmail,

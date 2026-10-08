@@ -35,6 +35,13 @@ function parseZohoTime(raw: string): string {
 }
 
 function mapZohoMessage(row: Record<string, unknown>, folderId: string): UnifiedInboxMessage {
+  const rawTo = row.toAddress || row.toAddr || row.to;
+  const toList = rawTo
+    ? (Array.isArray(rawTo) ? rawTo : String(rawTo).split(','))
+        .map((s) => String(s).trim())
+        .filter(Boolean)
+    : undefined;
+
   return {
     id: String(row.messageId || row.id || ''),
     provider: 'zoho',
@@ -44,6 +51,7 @@ function mapZohoMessage(row: Record<string, unknown>, folderId: string): Unified
       address: String(row.fromAddress || row.from || ''),
       raw: String(row.sender || row.fromAddress || row.from || ''),
     }),
+    to: toList,
     // Zoho returns snippets HTML-escaped (&#39;, &amp;); the list renders text.
     snippet: decodeHtmlEntities(String(row.snippet || row.summary || '')),
     receivedAt: parseZohoTime(String(row.receivedTime || row.sentDateInGMT || '')),

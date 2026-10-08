@@ -29,6 +29,7 @@ export type AdminUnifiedMessageParams = {
   thread_id?: string | null;
   direction: AdminMessageDirection;
   channel: AdminMessageChannel;
+  folder?: string | null;
   subject?: string | null;
   body?: string | null;
   html_body?: string | null;
@@ -57,15 +58,16 @@ export async function syncExternalMessageAdmin(
   supabase: SupabaseClient,
   params: AdminUnifiedMessageParams
 ) {
+  const defaultFolder = params.folder ?? (params.direction === 'outbound' ? 'sent' : 'inbox');
   const base = {
     tenant_id: params.tenant_id,
     priority: params.priority ?? 'normal',
-    folder: 'inbox',
-    read: false,
+    folder: defaultFolder,
+    read: params.direction === 'outbound' ? true : false,
     replied: false,
     starred: false,
     archived: false,
-    needs_response: params.needs_response ?? true,
+    needs_response: params.needs_response ?? (params.direction === 'outbound' ? false : true),
     auto_replied: params.auto_replied ?? false,
     synced_at: new Date().toISOString(),
   };

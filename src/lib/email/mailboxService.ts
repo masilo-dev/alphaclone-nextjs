@@ -745,7 +745,9 @@ export class MailboxService {
     account: MailboxAccount,
     message: Record<string, unknown>,
     folderName: string,
+    folderId?: string,
   ) {
+    const resolvedFolderId = folderId || ((message.folder_id || message.folderId || null) as string | null);
     const { data } = checked(
       await this.db.rpc('ingest_mailbox_message', {
         p_tenant: this.tenantId,
@@ -753,6 +755,7 @@ export class MailboxService {
         p_message: {
           ...message,
           date: mailboxDate(message.date),
+          folder_id: resolvedFolderId,
           folder_name: folderName.toLowerCase(),
           direction: ['sent', 'drafts', 'templates', 'outbox'].includes(
             folderName.toLowerCase(),
@@ -853,7 +856,15 @@ export class MailboxService {
     if (!job) throw new Error('EMAIL_SYNC_JOB_REQUIRED');
     try {
       const provider = this.provider(account);
-      const folders = await provider.getFolders();
+      const rawFolders = await provider.getFolders();
+      // Ensure primary mailboxes (inbox and sent) are always first in rotation
+      const folders = [...rawFolders].sort((a, b) => {
+        const aName = a.folderName.toLowerCase();
+        const bName = b.folderName.toLowerCase();
+        const aRank = aName === 'inbox' ? 0 : aName === 'sent' ? 1 : 2;
+        const bRank = bName === 'inbox' ? 0 : bName === 'sent' ? 1 : 2;
+        return aRank - bRank;
+      });
       let folderIndex = Number(job.cursor.folder_index || 0);
       let start = Number(job.cursor.start || 1);
       let count = job.message_count;
@@ -887,6 +898,7 @@ export class MailboxService {
               folder.folderId,
             )) as unknown as Record<string, unknown>,
             folder.folderName,
+            folder.folderId,
           );
           count++;
         }
@@ -1008,6 +1020,7 @@ export class MailboxService {
         account,
         full as unknown as Record<string, unknown>,
         currentFolder.folderName,
+        currentFolder.folderId,
       );
       output.push({
         message_id: id,
@@ -1105,6 +1118,7 @@ export class MailboxService {
       account,
       payload as unknown as Record<string, unknown>,
       row.folder_name,
+      row.folder_id,
     );
     return {
       ...payload,

@@ -1167,7 +1167,11 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     </h3>
                     {/* From + provider badge */}
                     <div className="flex items-center gap-2 flex-wrap">
-                      {senderClientId ? (
+                      {folder === 'sent' && selectedEmail.to?.length ? (
+                        <p className="type-card-description text-[var(--ws-text-muted)] truncate">
+                          To: {selectedEmail.to.join(', ')}
+                        </p>
+                      ) : senderClientId ? (
                         <button type="button" onClick={() => openCustomer(senderClientId)} className="type-card-description text-left text-[var(--brand-blue-300)] hover:text-[var(--brand-blue-200)] hover:underline truncate" title="Open Customer 360">{selectedEmail.from}</button>
                       ) : (
                         <p className="type-card-description text-[var(--ws-text-muted)] truncate">{selectedEmail.from}</p>

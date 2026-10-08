@@ -41,6 +41,7 @@ export interface ZohoFolder {
     folderName: string;
     unreadCount: number;
     totalCount: number;
+    folderType?: string;
 }
 
 export interface ZohoAccount {
@@ -186,6 +187,19 @@ export class ZohoMailService extends ZohoService {
         const data = await this.callZohoAPI(`${base}/folders`);
         if (!Array.isArray(data?.data)) throw new Error('ZOHO_INVALID_FOLDER_RESPONSE');
         return data.data as ZohoFolder[];
+    }
+
+    async getSentFolderId(): Promise<string | null> {
+        try {
+            const folders = await this.getFolders();
+            const sent = folders.find((f) =>
+                String(f.folderName || '').toLowerCase().includes('sent') ||
+                String(f.folderType || '').toLowerCase() === 'sent'
+            );
+            return sent ? String(sent.folderId) : null;
+        } catch {
+            return null;
+        }
     }
 
     async getMessages(folderId: string, limit = 20, start = 1): Promise<ZohoMessage[]> {
@@ -390,9 +404,11 @@ export class ZohoMailService extends ZohoService {
                     source: 'zoho',
                     external_id: String(nativeMessageId),
                     direction: 'outbound',
+                    folder: 'sent',
                     channel: 'email',
                     subject,
-                    body: params.content,
+                    body: params.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(),
+                    html_body: params.content,
                     from_address: params.fromAddress,
                     to_address: toAddress,
                     cc_address: params.ccAddress,

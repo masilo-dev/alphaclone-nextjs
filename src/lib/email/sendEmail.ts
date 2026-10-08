@@ -11,6 +11,7 @@ import { OUTBOUND_EMAIL_SANITIZE_OPTIONS } from '@/lib/email/sanitizeEmailHtmlSe
 import { v4 as uuidv4 } from 'uuid';
 import { sanitizeBonnieOutboundText } from '@/lib/bonnie/bonnieBannedLanguage';
 import { persistCanonicalOutboundEmail } from '@/lib/email/persistCanonicalEmail';
+import { renderOutboundEmail } from '@/lib/email/emailRendering';
 import { toUnifiedEmailProvider } from '@/lib/email/unifiedEmailDomain';
 import { type EmailAttachment, normalizeEmailAttachments } from '@/lib/email/emailAttachment';
 import { explicitRecipients } from '@/lib/email/mailboxNormalization';
@@ -118,18 +119,20 @@ export async function sendEmail(
     const sanitizedHtmlSource = applyBonnieSanitizer && payload.html ? sanitizeBonnieOutboundText(String(payload.html)).clean : payload.html;
     const sanitizedTextSource = applyBonnieSanitizer && payload.text ? sanitizeBonnieOutboundText(String(payload.text)).clean : payload.text;
     const attachmentNames = (payload.attachments || []).map((a) => String(a.filename || '').trim()).filter(Boolean);
-    const rawHtml = String(sanitizedHtmlSource || '');
-    const isHtml = /<[a-z][\s\S]*>/i.test(rawHtml);
-    const htmlToSanitize = isHtml ? rawHtml : rawHtml.replace(/\r?\n/g, '<br />');
-    const sanitizeOptions = OUTBOUND_EMAIL_SANITIZE_OPTIONS;
 
-    let normalizedHtml = sanitizedHtmlSource
-      ? (shouldAppendFooter ? ensureFooter(sanitizeHtml(htmlToSanitize, sanitizeOptions), { unsubscribeUrl }) : sanitizeHtml(htmlToSanitize, sanitizeOptions))
+    // Centralized rendering pipeline: generates email-client-compatible HTML and clean plain text
+    const rendered = renderOutboundEmail({
+      html: sanitizedHtmlSource,
+      text: sanitizedTextSource,
+    });
+
+    let normalizedHtml = rendered.html
+      ? (shouldAppendFooter ? ensureFooter(rendered.html, { unsubscribeUrl }) : rendered.html)
       : undefined;
     if (normalizedHtml && attachmentNames.length) normalizedHtml = insertBeforeEmailFooter(normalizedHtml, buildAttachmentNoticeHtml(attachmentNames));
 
-    let normalizedText = sanitizedTextSource
-      ? (shouldAppendFooter ? ensureFooter(sanitizedTextSource, { unsubscribeUrl }) : sanitizedTextSource)
+    let normalizedText = rendered.text
+      ? (shouldAppendFooter ? ensureFooter(rendered.text, { unsubscribeUrl }) : rendered.text)
       : undefined;
     if (normalizedText && attachmentNames.length) {
       normalizedText = insertBeforeEmailFooter(normalizedText, ['Attachments:', ...attachmentNames.map((name) => `- ${name}`)].join('\n'));
@@ -261,6 +264,8 @@ export async function sendEmail(
           html: normalizedHtml,
           text: normalizedText,
           hasAttachments: attachmentNames.length > 0,
+          folderName: 'sent',
+          sentAt: new Date().toISOString(),
           metadata: payload.auditMetadata,
         });
       } catch (persistenceError) {

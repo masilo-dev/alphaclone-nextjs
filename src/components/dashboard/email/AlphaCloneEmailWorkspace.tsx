@@ -119,18 +119,23 @@ export interface Campaign {
 function mapUnifiedToThread(m: Record<string, any>): EmailThread {
   const rawBody: string = m.html_body || m.body || '';
   const clean = rawBody.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-  const domain = (m.from_address || '').split('@')[1] || '';
+  const isSent = (m.folder || '').toLowerCase() === 'sent' || m.direction === 'outbound';
+  const targetAddress = isSent ? (m.to_address || '') : (m.from_address || '');
+  const domain = targetAddress.split('@')[1] || '';
   const pri = (m.priority || '').toLowerCase();
+  const timeVal = m.sent_at || m.received_at || m.created_at;
   return {
     id: m.id,
-    senderName: m.from_name || (m.from_address || '').split('@')[0] || 'Unknown',
+    senderName: isSent
+      ? `To: ${m.to_name || m.to_address || 'Recipient'}`
+      : (m.from_name || (m.from_address || '').split('@')[0] || 'Unknown'),
     senderEmail: m.from_address || '',
     companyName: domain.replace(/\.(com|io|co|net|org|dev)$/, ''),
     crmStatus: 'Qualified Lead',
     priority: pri === 'urgent' || pri === 'high' ? 'high' : pri === 'low' ? 'normal' : 'medium',
     subject: m.subject || '(no subject)',
     preview: clean.slice(0, 140),
-    timestamp: m.received_at ? new Date(m.received_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+    timestamp: timeVal ? new Date(timeVal).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
     unread: !m.read,
     starred: Boolean(m.starred),
     hasAttachments: false,
@@ -147,7 +152,7 @@ function mapUnifiedToThread(m: Record<string, any>): EmailThread {
       fromName: m.from_name || m.from_address || 'Unknown',
       fromEmail: m.from_address || '',
       to: [m.to_address || ''],
-      timestamp: m.received_at ? new Date(m.received_at).toLocaleString() : '',
+      timestamp: timeVal ? new Date(timeVal).toLocaleString() : '',
       body: rawBody || clean,
     }],
   };
@@ -1311,8 +1316,12 @@ export default function AlphaCloneEmailWorkspace() {
                               {msg.fromName.charAt(0)}
                             </div>
                             <div>
-                              <h4 className="type-card-title font-bold text-[var(--ws-text-primary)]">{msg.fromName}</h4>
-                              <p className="type-card-description text-[var(--ws-text-muted)]">{msg.fromEmail}</p>
+                              <h4 className="type-card-title font-bold text-[var(--ws-text-primary)]">
+                                {selectedThread.folder === 'sent' && msg.to?.length ? `To: ${msg.to.join(', ')}` : msg.fromName}
+                              </h4>
+                              <p className="type-card-description text-[var(--ws-text-muted)]">
+                                {selectedThread.folder === 'sent' && msg.fromEmail ? `From: ${msg.fromEmail}` : msg.fromEmail}
+                              </p>
                             </div>
                           </div>
                           <span className="type-caption text-[var(--ws-text-muted)]">{msg.timestamp}</span>

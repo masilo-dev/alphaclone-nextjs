@@ -15,6 +15,7 @@ import { buildUnsubscribeUrl } from '@/lib/email/unsubscribeToken';
 import { buildEmail } from '@/lib/email/template';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { persistCanonicalOutboundEmail } from '@/lib/email/persistCanonicalEmail';
+import { renderOutboundEmail } from '@/lib/email/emailRendering';
 import sanitizeHtml from 'sanitize-html';
 import { validateRecipient } from '@/lib/email/validateRecipient';
 
@@ -218,10 +219,13 @@ export async function POST(request: Request) {
       }
     }
 
-    // 0.1 HTML Sanitization
+    // 0.1 HTML Sanitization & Markdown Conversion
     const isHtml = /<[a-z][\s\S]*>/i.test(emailBody);
-    const bodyToSanitize = isHtml ? emailBody : emailBody.replace(/\r?\n/g, '<br />');
-    const sanitizedBody = sanitizeHtml(bodyToSanitize, {
+    const renderedBody = renderOutboundEmail({
+      html: isHtml ? emailBody : undefined,
+      text: isHtml ? undefined : emailBody,
+    });
+    const sanitizedBody = renderedBody.html || sanitizeHtml(isHtml ? emailBody : emailBody.replace(/\r?\n/g, '<br />'), {
       allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'br', 'p', 'div', 'span']),
       allowedAttributes: {
         ...sanitizeHtml.defaults.allowedAttributes,

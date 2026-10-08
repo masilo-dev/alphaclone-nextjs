@@ -18,6 +18,9 @@ type PersistCanonicalOutboundParams = {
   text?: string;
   hasAttachments: boolean;
   metadata?: Record<string, unknown>;
+  folderId?: string | null;
+  folderName?: string | null;
+  sentAt?: string | null;
 };
 
 function normalizedSubject(subject: string): string {
@@ -154,7 +157,7 @@ export async function persistCanonicalOutboundEmail(params: PersistCanonicalOutb
   const provider = params.provider;
   let accountQuery = supabase
     .from('email_provider_accounts')
-    .select('id, tenant_id, provider, email_address, owner_user_id, account_type')
+    .select('id, tenant_id, provider, email_address, owner_user_id, account_type, settings')
     .eq('tenant_id', params.tenantId)
     .eq('provider', provider)
     .eq('connection_status', 'connected')
@@ -175,7 +178,7 @@ export async function persistCanonicalOutboundEmail(params: PersistCanonicalOutb
   if (!params.providerAccountId && params.userId && !account) {
     const { data: sharedRows, error: sharedError } = await supabase
       .from('email_provider_accounts')
-      .select('id, tenant_id, provider, email_address, owner_user_id, account_type')
+      .select('id, tenant_id, provider, email_address, owner_user_id, account_type, settings')
       .eq('tenant_id', params.tenantId)
       .eq('provider', provider)
       .eq('connection_status', 'connected')
@@ -224,6 +227,20 @@ export async function persistCanonicalOutboundEmail(params: PersistCanonicalOutb
   }
   const primaryCrm = crmByRecipient.get(params.recipients[0]?.trim().toLowerCase() || '');
 
+  const sentAt = params.sentAt || stringValue(metadata.sent_at) || stringValue(metadata.sentAt) || now;
+  const folderName = (params.folderName || stringValue(metadata.folder_name) || stringValue(metadata.folderName) || 'sent').toLowerCase();
+  let folderId = params.folderId || stringValue(metadata.folder_id) || stringValue(metadata.folderId) || null;
+
+  if (!folderId && account.settings && typeof account.settings === 'object') {
+    const s = account.settings as Record<string, unknown>;
+    if (typeof s.sentFolderId === 'string' && s.sentFolderId) {
+      folderId = s.sentFolderId;
+    }
+  }
+  if (!folderId && (params.provider === 'zoho' || account.provider === 'zoho')) {
+    folderId = '8563655000000002022';
+  }
+
   const { data: message, error: messageError } = await supabase.from('email_messages').insert({
     tenant_id: params.tenantId,
     thread_id: thread.id,
@@ -234,10 +251,13 @@ export async function persistCanonicalOutboundEmail(params: PersistCanonicalOutb
     purpose,
     subject: params.subject,
     body_preview: (params.text || params.html || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500),
-    sent_at: null,
+    sent_at: sentAt,
     provider_accepted_at: now,
     application_status: 'provider_accepted',
     delivery_status: 'accepted',
+    folder_id: folderId,
+    folder_name: folderName,
+    mailbox_synced_at: now,
     has_attachments: params.hasAttachments,
     created_by: params.userId || null,
     actor_id: actorId,
@@ -263,6 +283,9 @@ export async function persistCanonicalOutboundEmail(params: PersistCanonicalOutb
       execution_source: executionSource,
       body_html: params.html || null,
       body_text: params.text || null,
+      folder_id: folderId,
+      folder_name: folderName,
+      sent_at: sentAt,
     },
   }).select('id').single();
   if (messageError || !message) throw new Error(`Canonical email message creation failed: ${messageError?.message || 'no row returned'}`);
