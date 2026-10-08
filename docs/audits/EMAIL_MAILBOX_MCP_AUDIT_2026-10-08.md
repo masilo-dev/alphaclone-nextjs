@@ -23,7 +23,7 @@ No live reply or new conversation was sent. No arbitrary real contact was used f
 ## Local verification
 
 - TypeScript: `npm run typecheck` passed.
-- Email regressions, mailbox handler behavior, execution truth and static registry loading: 99 checks passed.
+- Email regressions, mailbox handler behavior, execution truth and static registry loading: 103 checks passed.
 - Broader contract run: 133 passed, two failed. Both failures also reproduce on the unchanged initial checkout: the execution-gateway source contract and invoice-entrypoint source contract. They are unrelated to mailbox behavior.
 - Local PostgreSQL (PGlite): migration applied twice; deduplication, shared thread identity, chronological ordering, tenant isolation and restricted RPC access passed.
 - Behavioral tests exercise actual production handlers/modules with controlled provider/database boundaries: read/content/search/conversation, empty inbox versus provider failure, credential/scope failure, sync continuation and retries, tenant/platform isolation, native replies/references, direct recipients absent from CRM, exact CC/BCC/content, attachment propagation and duplicate-safe sends.

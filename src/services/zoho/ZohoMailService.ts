@@ -450,7 +450,7 @@ export class ZohoMailService extends ZohoService {
                 body:new Uint8Array(Buffer.from(attachment.content,'base64')),
             });
             const data = Array.isArray(response.data) ? response.data[0] : response.data;
-            if (!data?.storeName || !data?.attachmentName || !data?.attachmentPath) throw new Error('ZOHO_ATTACHMENT_UPLOAD_FAILED');
+            if (!data?.storeName || !data?.attachmentName || !data?.attachmentPath) throw new Error('ZOHO_ATTACHMENT_UPLOAD_FAILED: Zoho did not return a complete attachment reference');
             uploaded.push({storeName:data.storeName,attachmentName:data.attachmentName,attachmentPath:data.attachmentPath});
         }
         return uploaded;
