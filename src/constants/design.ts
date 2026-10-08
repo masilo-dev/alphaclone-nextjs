@@ -95,15 +95,15 @@ export const BORDER_RADIUS = {
 } as const;
 
 export const TYPOGRAPHY = {
-  display: 'text-5xl md:text-6xl font-bold tracking-tight',
-  h1: 'text-3xl leading-9 font-bold tracking-tight',
-  h2: 'text-lg leading-ui font-semibold tracking-tight',
-  h3: 'text-base font-semibold',
+  display: 'text-3xl md:text-4xl font-bold tracking-tight',
+  h1: 'text-xl sm:text-2xl leading-7 font-bold tracking-tight',
+  h2: 'text-base sm:text-lg leading-6 font-semibold tracking-tight',
+  h3: 'text-sm sm:text-base font-semibold',
   h4: 'type-ui font-semibold',
   h5: 'type-ui font-medium',
-  body: 'type-ui leading-ui',
-  small: 'type-caption leading-ui',
-  tiny: 'type-ui leading-4',
+  body: 'type-ui leading-normal',
+  small: 'type-caption leading-normal',
+  tiny: 'type-caption leading-4',
 } as const;
 
 export const SHADOWS = {
@@ -188,26 +188,26 @@ export const ENTERPRISE = {
     wide: '1439px',
   },
   metricCard: {
-    valueSize: 'text-xl sm:text-2xl md:text-3xl font-semibold tabular-nums tracking-tight',
+    valueSize: 'text-lg sm:text-xl md:text-2xl font-bold tabular-nums tracking-tight',
     labelSize: 'type-caption font-semibold uppercase tracking-label text-[var(--ws-text-tertiary)]',
     trendSize: 'type-caption',
     comparisonSize: 'type-caption',
-    minHeight: 'min-h-[84px] md:min-h-[104px]',
+    minHeight: 'min-h-[72px] md:min-h-[84px]',
     defaultComparison: 'versus previous 30 days',
   },
   moduleLayout: {
     summaryGrid:
-      'grid grid-cols-1 min-[576px]:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4',
-    sectionGap: 'space-y-5 md:space-y-6',
+      'grid grid-cols-1 min-[576px]:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 md:gap-3.5',
+    sectionGap: 'space-y-3.5 md:space-y-4',
     stickyHeader:
       'sticky top-0 z-20 bg-[var(--ws-toolbar)] backdrop-blur-none border-b border-[var(--ws-border)]',
   },
   dataTable: {
-    cellPadding: 'px-3 py-3',
+    cellPadding: 'px-3 py-2',
     stickyHeader: 'sticky top-0 z-[1] bg-[var(--ws-panel)]',
     rowHover: 'hover:bg-[var(--ws-hover)]',
     rowAlt: 'even:bg-[var(--ws-surface-secondary)]',
-    rowHeight: 'h-[48px]',
+    rowHeight: 'h-[40px]',
   },
   touchTarget: 'min-h-11 min-w-11',
   drawer: {
@@ -228,21 +228,21 @@ export const WORKSPACE = {
   sidebar: {
     widthExpanded: 'w-56 md:w-52',
     widthCollapsed: 'md:w-14',
-    logoHeight: 'h-14',
+    logoHeight: 'h-12',
   },
   toolbar: {
-    height: 'h-12 md:h-14',
-    padding: 'px-3 sm:px-4 md:px-6',
+    height: 'h-11 md:h-12',
+    padding: 'px-3 sm:px-4 md:px-5',
   },
   canvas: {
     maxWidth: 'max-w-[1440px]',
-    padding: 'p-3 sm:p-4 md:p-6',
-    gap: 'gap-3 md:gap-5',
+    padding: 'p-2.5 sm:p-3.5 md:p-4',
+    gap: 'gap-2.5 md:gap-3.5',
   },
   panel: {
     base: 'ac-workspace-panel',
-    radius: 'rounded-[12px] md:rounded-[14px]',
-    padding: 'p-3 sm:p-4 md:p-5',
+    radius: 'rounded-[10px] md:rounded-[12px]',
+    padding: 'p-2.5 sm:p-3.5 md:p-4',
   },
   action: {
     primary: 'ac-workspace-action-btn ac-workspace-action-btn--primary',
@@ -260,11 +260,11 @@ export const WORKSPACE = {
     active: 'ac-workspace-tab--active',
   },
   typography: {
-    pageTitle: 'text-xl sm:text-2xl leading-7 font-bold text-[var(--ws-text-primary)] tracking-tight',
+    pageTitle: 'text-lg sm:text-xl leading-6 font-bold text-[var(--ws-text-primary)] tracking-tight',
     sectionLabel: 'type-caption font-semibold uppercase tracking-label text-[var(--ws-text-muted)]',
-    panelTitle: 'text-base sm:text-lg font-semibold text-[var(--ws-text-primary)]',
+    panelTitle: 'text-sm sm:text-base font-semibold text-[var(--ws-text-primary)]',
     panelSubtitle: 'type-caption text-[var(--ws-text-muted)]',
-    sectionTitle: 'text-base sm:text-lg font-semibold text-[var(--ws-text-primary)]',
+    sectionTitle: 'text-sm sm:text-base font-semibold text-[var(--ws-text-primary)]',
   },
 } as const;
 
@@ -273,33 +273,33 @@ export const WORKSPACE = {
  * Consistent layout, density, and disclosure tokens across all workspaces.
  */
 export const WORKSPACE_FOCUS = {
-  headerHeight: 'min-h-12 md:min-h-14',
-  toolbarHeight: 'min-h-11 md:min-h-12',
-  filterHeight: 'min-h-9 md:min-h-10',
-  contentGap: 'space-y-3.5 md:space-y-4',
-  sectionGap: 'space-y-4 md:space-y-5',
+  headerHeight: 'min-h-10 md:min-h-12',
+  toolbarHeight: 'min-h-9 md:min-h-10',
+  filterHeight: 'min-h-8 md:min-h-9',
+  contentGap: 'space-y-2.5 md:space-y-3.5',
+  sectionGap: 'space-y-3 md:space-y-4',
   container: 'w-full max-w-[1600px] mx-auto',
   density: {
     compact: {
-      header: 'py-2 px-3 sm:px-4',
-      toolbar: 'py-1.5 px-3',
+      header: 'py-1.5 px-3',
+      toolbar: 'py-1 px-2.5',
       gap: 'gap-2',
-      cell: 'px-2.5 py-2',
+      cell: 'px-2 py-1.5',
     },
     comfortable: {
-      header: 'py-3 px-4 md:px-6',
-      toolbar: 'py-2 px-4',
-      gap: 'gap-3',
-      cell: 'px-3 py-3',
+      header: 'py-2 px-3 sm:px-4',
+      toolbar: 'py-1.5 px-3',
+      gap: 'gap-2.5',
+      cell: 'px-2.5 py-2',
     },
   },
   typography: {
-    workspaceTitle: 'text-lg md:text-xl font-bold tracking-tight text-[var(--ws-text-primary)]',
+    workspaceTitle: 'text-base sm:text-lg font-bold tracking-tight text-[var(--ws-text-primary)]',
     workspaceSubtitle: 'type-caption text-[var(--ws-text-muted)] line-clamp-1',
     metaBadge: 'text-xs font-semibold px-2 py-0.5 rounded-md border border-[var(--ws-border)] bg-[var(--ws-surface)] text-[var(--ws-text-secondary)]',
   },
   help: {
     triggerButton: 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg type-ui font-medium text-[var(--ws-text-secondary)] border border-[var(--ws-border)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)] transition-colors',
-    panel: 'rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface)]/90 backdrop-blur-sm p-4 text-[var(--ws-text-secondary)] shadow-sm animate-fade-in',
+    panel: 'rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface)]/90 backdrop-blur-sm p-3.5 text-[var(--ws-text-secondary)] shadow-sm animate-fade-in',
   },
 } as const;

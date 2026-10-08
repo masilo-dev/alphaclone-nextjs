@@ -1,13 +1,28 @@
 /* Product-only finishing layer. No public-page selectors or root overrides. */
-.ac-product-system {
-  --type-page-title-size: 1.375rem;
-  --type-section-title-size: 1rem;
-  --ac-product-gap: 1rem;
-  --ac-product-control-height: 2.75rem;
+.ac-product-system,
+.ac-business-root,
+.ac-client-portal-root {
+  /* Global SaaS Typography Scale — Desktop (13-14px body, 17-22px headings) */
+  --type-page-title-size: 1.375rem;   /* 22px */
+  --type-section-title-size: 1rem;    /* 16px */
+  --type-card-title-size: 0.875rem;   /* 14px */
+  --type-body-size: 0.84375rem;       /* 13.5px */
+  --type-ui-size: 0.8125rem;          /* 13px */
+  --type-button-size: 0.8125rem;      /* 13px */
+  --type-table-cell-size: 0.8125rem;  /* 13px */
+  --type-table-header-size: 0.75rem;  /* 12px */
+  --type-caption-size: 0.75rem;       /* 12px */
+  --type-label-size: 0.8125rem;       /* 13px */
+  --type-form-label-size: 0.8125rem;  /* 13px */
+
+  /* Global Spacing & Density Scale (20-30% reduction) */
+  --ac-product-gap: 0.875rem;         /* 14px */
+  --ac-product-control-height: 2.25rem; /* 36px */
   color: var(--ws-text-primary);
 }
+
 .ac-product-system .ac-untitled-page__header,
-.ac-product-system .ac-workspace-toolbar { gap: .75rem; }
+.ac-product-system .ac-workspace-toolbar { gap: .625rem; }
 .ac-product-system .ac-workspace-sidebar svg { flex-shrink: 0; }
 .ac-product-system .ac-workspace-sidebar [aria-current="page"] {
   color: var(--ws-text-primary);
@@ -21,8 +36,47 @@
 .ac-product-system .ac-client-portal-root nav[aria-label="Mobile navigation"] {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .ac-product-system,
+  .ac-business-root,
+  .ac-client-portal-root {
+    /* Tablet Typography Scale (13-14px body, 15-20px headings) */
+    --type-page-title-size: 1.25rem;    /* 20px */
+    --type-section-title-size: 0.9375rem; /* 15px */
+    --type-card-title-size: 0.875rem;   /* 14px */
+    --type-body-size: 0.84375rem;       /* 13.5px */
+    --type-ui-size: 0.8125rem;          /* 13px */
+    --type-button-size: 0.78125rem;     /* 12.5px */
+    --type-table-cell-size: 0.78125rem; /* 12.5px */
+    --type-table-header-size: 0.71875rem; /* 11.5px */
+    --type-caption-size: 0.71875rem;    /* 11.5px */
+    --type-label-size: 0.8125rem;       /* 13px */
+    --type-form-label-size: 0.8125rem;  /* 13px */
+    --ac-product-gap: 0.75rem;          /* 12px */
+    --ac-product-control-height: 2.5rem; /* 40px */
+  }
+}
+
 @media (max-width: 767px) {
-  .ac-product-system { --type-page-title-size: 1.125rem; --ac-product-gap: .75rem; }
+  .ac-product-system,
+  .ac-business-root,
+  .ac-client-portal-root {
+    /* Mobile Typography Scale (12-13px body, 14-18px headings) */
+    --type-page-title-size: 1.125rem;   /* 18px */
+    --type-section-title-size: 0.875rem; /* 14px */
+    --type-card-title-size: 0.8125rem;  /* 13px */
+    --type-body-size: 0.78125rem;       /* 12.5px */
+    --type-ui-size: 0.75rem;            /* 12px */
+    --type-button-size: 0.75rem;        /* 12px */
+    --type-table-cell-size: 0.75rem;    /* 12px */
+    --type-table-header-size: 0.6875rem; /* 11px */
+    --type-caption-size: 0.6875rem;     /* 11px */
+    --type-label-size: 0.75rem;         /* 12px */
+    --type-form-label-size: 0.75rem;    /* 12px */
+    --ac-product-gap: 0.625rem;         /* 10px */
+    --ac-product-control-height: 2.75rem; /* 44px touch targets */
+  }
   .ac-product-system input:not([type="checkbox"]):not([type="radio"]),
   .ac-product-system select,
   .ac-product-system textarea { font-size: 1rem; } /* Prevent iOS form zoom. */
@@ -99,8 +153,36 @@
 }
 .ac-auth-root.light button[type="submit"]:hover:not(:disabled) { filter: brightness(1.15); }
 .ac-product-system [data-tour="business-setup-checklist"] { margin-bottom: .75rem; }
-.ac-product-system [data-ac-page-header] h1 {
+.ac-product-system [data-ac-page-header] h1,
+.ac-product-system h1,
+.ac-business-root h1 {
   font-size: var(--type-page-title-size);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.ac-product-system h2,
+.ac-business-root h2 {
+  font-size: var(--type-section-title-size);
   font-weight: 600;
   line-height: 1.4;
 }
+
+.ac-product-system h3,
+.ac-business-root h3 {
+  font-size: var(--type-card-title-size);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.ac-product-system p,
+.ac-business-root p {
+  font-size: var(--type-body-size);
+  line-height: 1.5;
+}
+
+.ac-product-system .ac-workspace-panel,
+.ac-business-root .ac-workspace-panel {
+  padding: var(--ac-product-gap);
+}
+

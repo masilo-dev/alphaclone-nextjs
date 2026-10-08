@@ -50,13 +50,13 @@ const SheetContent = React.forwardRef<
       ref={ref}
       className={cn(
         // Layout & scroll
-        'fixed ac-layer-panel flex flex-col gap-4 overflow-hidden ac-scroll-full',
+        'fixed ac-layer-panel flex flex-col gap-3 sm:gap-3.5 overflow-hidden ac-scroll-full',
         // Token-driven surface: adapts to dark / light theme
         'border-[var(--ws-border)] bg-[var(--ws-panel)] shadow-xl',
         // Transition
         'transition-transform duration-300 ease-out data-[state=closed]:duration-200',
         sheetSideClasses[side],
-        side === 'bottom' || side === 'top' ? 'p-4 pt-6 pb-safe' : 'p-6',
+        side === 'bottom' || side === 'top' ? 'p-3.5 pt-5 pb-safe' : 'p-4 sm:p-5',
         className
       )}
       {...props}

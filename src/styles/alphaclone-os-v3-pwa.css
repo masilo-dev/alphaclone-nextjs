@@ -57,63 +57,70 @@ html.ac-pwa-mobile .ac-workspace-tab {
  * browser/desktop layouts retain their authored presentation while every
  * module opened from the PWA gets one consistent, compact work surface.
  */
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame {
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame,
+:is(.ac-product-system, .ac-business-root) .ac-module-frame {
   min-width: 0;
   max-width: 100%;
 }
 
 html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace,
 html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame-native,
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) [data-native-workspace='true'] {
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) [data-native-workspace='true'],
+:is(.ac-product-system, .ac-business-root) .ac-native-workspace,
+:is(.ac-product-system, .ac-business-root) .ac-module-frame-native,
+:is(.ac-product-system, .ac-business-root) [data-native-workspace='true'] {
   min-width: 0;
   max-width: 100%;
   overflow-x: clip;
 }
 
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.p-8, .p-10, .p-12) {
-  padding: 1rem !important;
+@media (max-width: 1023px) {
+  html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.p-8, .p-10, .p-12),
+  html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(.p-8, .p-10, .p-12),
+  :is(.ac-product-system, .ac-business-root) :is(.ac-module-frame, .ac-native-workspace) :is(.p-8, .p-10, .p-12) {
+    padding: 0.875rem !important;
+  }
+
+  html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.px-8, .px-10, .px-12),
+  html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(.px-8, .px-10, .px-12),
+  :is(.ac-product-system, .ac-business-root) :is(.ac-module-frame, .ac-native-workspace) :is(.px-8, .px-10, .px-12) {
+    padding-left: 0.875rem !important;
+    padding-right: 0.875rem !important;
+  }
+
+  html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.py-8, .py-10, .py-12),
+  html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(.py-8, .py-10, .py-12),
+  :is(.ac-product-system, .ac-business-root) :is(.ac-module-frame, .ac-native-workspace) :is(.py-8, .py-10, .py-12) {
+    padding-top: 0.875rem !important;
+    padding-bottom: 0.875rem !important;
+  }
+
+  html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.gap-8, .gap-10, .gap-12),
+  html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(.gap-8, .gap-10, .gap-12),
+  :is(.ac-product-system, .ac-business-root) :is(.ac-module-frame, .ac-native-workspace) :is(.gap-8, .gap-10, .gap-12) {
+    gap: 0.875rem !important;
+  }
+
+  :is(.ac-product-system, .ac-business-root, html:is(.ac-pwa-mobile, .ac-pwa-tablet)) :is(.ac-module-frame, .ac-native-workspace) :is(.text-4xl, .text-5xl, .text-6xl) {
+    font-size: 1.25rem !important;
+    line-height: 1.35 !important;
+    letter-spacing: var(--tracking-display) !important;
+  }
+
+  :is(.ac-product-system, .ac-business-root, html:is(.ac-pwa-mobile, .ac-pwa-tablet)) :is(.ac-module-frame, .ac-native-workspace) :is(.text-3xl) {
+    font-size: 1.125rem !important;
+    line-height: 1.35 !important;
+    letter-spacing: var(--tracking-display) !important;
+  }
+
+  :is(.ac-product-system, .ac-business-root, html:is(.ac-pwa-mobile, .ac-pwa-tablet)) :is(.ac-module-frame, .ac-native-workspace) :is(.text-2xl) {
+    font-size: 1rem !important;
+    line-height: 1.4 !important;
+  }
 }
 
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(.p-8, .p-10, .p-12) {
-  padding: 1rem !important;
-}
-
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.px-8, .px-10, .px-12) {
-  padding-left: 1rem !important;
-  padding-right: 1rem !important;
-}
-
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(.px-8, .px-10, .px-12) {
-  padding-left: 1rem !important;
-  padding-right: 1rem !important;
-}
-
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.py-8, .py-10, .py-12) {
-  padding-top: 1rem !important;
-  padding-bottom: 1rem !important;
-}
-
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(.py-8, .py-10, .py-12) {
-  padding-top: 1rem !important;
-  padding-bottom: 1rem !important;
-}
-
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.gap-8, .gap-10, .gap-12) {
-  gap: 1rem !important;
-}
-
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(.gap-8, .gap-10, .gap-12) {
-  gap: 1rem !important;
-}
-
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.text-4xl, .text-5xl, .text-6xl) {
-  font-size: var(--text-2xl) !important;
-  line-height: var(--leading-heading) !important;
-  letter-spacing: var(--tracking-display) !important;
-}
-
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.rounded-3xl, .rounded-\[2rem\]) {
-  border-radius: 1rem !important;
+:is(.ac-product-system, .ac-business-root, html:is(.ac-pwa-mobile, .ac-pwa-tablet)) :is(.ac-module-frame, .ac-native-workspace) :is(.rounded-3xl, .rounded-\[2rem\]) {
+  border-radius: 0.875rem !important;
 }
 
 html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame [role='tablist'] {
@@ -174,7 +181,8 @@ html.ac-pwa-mobile :is([role='dialog'], dialog) :is(.grid-cols-3, .grid-cols-4, 
   grid-template-columns: minmax(0, 1fr) !important;
 }
 
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace table {
+:is(.ac-product-system, .ac-business-root, html:is(.ac-pwa-mobile, .ac-pwa-tablet)) .ac-native-workspace table,
+:is(.ac-product-system, .ac-business-root) table {
   display: block;
   width: max-content;
   min-width: 100%;
@@ -184,77 +192,125 @@ html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace table {
   -webkit-overflow-scrolling: touch;
 }
 
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(.recharts-responsive-container, .recharts-wrapper) {
+:is(.ac-product-system, .ac-business-root) .ac-data-table th,
+:is(.ac-product-system, .ac-business-root) table th {
+  padding: 7px 12px;
+  font-size: var(--type-table-header-size, 11px);
+  letter-spacing: var(--tracking-label);
+}
+
+:is(.ac-product-system, .ac-business-root) .ac-data-table td,
+:is(.ac-product-system, .ac-business-root) table td {
+  padding: 8px 12px;
+  font-size: var(--type-table-cell-size, 13px);
+}
+
+@media (max-width: 767px) {
+  :is(.ac-product-system, .ac-business-root) .ac-data-table th,
+  :is(.ac-product-system, .ac-business-root) table th {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  :is(.ac-product-system, .ac-business-root) .ac-data-table td,
+  :is(.ac-product-system, .ac-business-root) table td {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+}
+
+:is(.ac-product-system, .ac-business-root, html:is(.ac-pwa-mobile, .ac-pwa-tablet)) .ac-native-workspace :is(.recharts-responsive-container, .recharts-wrapper) {
   min-width: 0 !important;
   min-height: 132px !important;
 }
 
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(img, video, canvas, svg) {
+:is(.ac-product-system, .ac-business-root, html:is(.ac-pwa-mobile, .ac-pwa-tablet)) .ac-native-workspace :is(img, video, canvas, svg) {
   max-width: 100%;
 }
 
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(input, select, textarea) {
+:is(.ac-product-system, .ac-business-root, html:is(.ac-pwa-mobile, .ac-pwa-tablet)) .ac-native-workspace :is(input, select, textarea) {
   max-width: 100%;
   font-size: var(--type-input-size);
 }
 
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(.flex-row, [class*='justify-between']) {
+:is(.ac-product-system, .ac-business-root, html:is(.ac-pwa-mobile, .ac-pwa-tablet)) .ac-native-workspace :is(.flex-row, [class*='justify-between']) {
   min-width: 0;
 }
 
-html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(h1, h2, h3, p, span, a, button) {
+:is(.ac-product-system, .ac-business-root, html:is(.ac-pwa-mobile, .ac-pwa-tablet)) .ac-native-workspace :is(h1, h2, h3, p, span, a, button) {
   overflow-wrap: anywhere;
 }
 
-/* Laptop/desktop remains a multi-column work surface, while legacy
-   presentation-sized type, cards, and spacing are normalized everywhere. */
-html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) {
+/* Laptop/desktop: unified compact SaaS work surface across all modules */
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace),
+:is(.ac-product-system, .ac-business-root) :is(.ac-module-frame, .ac-native-workspace) {
   min-width: 0;
   max-width: 100%;
 }
 
-html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.text-4xl, .text-5xl, .text-6xl) {
-  font-size: var(--text-3xl) !important;
-  line-height: var(--leading-heading) !important;
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.text-4xl, .text-5xl, .text-6xl),
+:is(.ac-product-system, .ac-business-root) :is(.ac-module-frame, .ac-native-workspace) :is(.text-4xl, .text-5xl, .text-6xl) {
+  font-size: 1.375rem !important; /* 22px max heading */
+  line-height: 1.35 !important;
   letter-spacing: var(--tracking-display) !important;
 }
 
-html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.p-8, .p-10, .p-12) {
-  padding: 1.5rem !important;
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.text-3xl),
+:is(.ac-product-system, .ac-business-root) :is(.ac-module-frame, .ac-native-workspace) :is(.text-3xl) {
+  font-size: 1.25rem !important; /* 20px */
+  line-height: 1.35 !important;
+  letter-spacing: var(--tracking-display) !important;
 }
 
-html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.px-8, .px-10, .px-12) {
-  padding-left: 1.5rem !important;
-  padding-right: 1.5rem !important;
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.text-2xl),
+:is(.ac-product-system, .ac-business-root) :is(.ac-module-frame, .ac-native-workspace) :is(.text-2xl) {
+  font-size: 1.0625rem !important; /* 17px */
+  line-height: 1.4 !important;
 }
 
-html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.py-8, .py-10, .py-12) {
-  padding-top: 1.5rem !important;
-  padding-bottom: 1.5rem !important;
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.p-8, .p-10, .p-12),
+:is(.ac-product-system, .ac-business-root) :is(.ac-module-frame, .ac-native-workspace) :is(.p-8, .p-10, .p-12) {
+  padding: 1.125rem !important; /* 18px compact padding */
 }
 
-html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.gap-8, .gap-10, .gap-12) {
-  gap: 1.5rem !important;
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.px-8, .px-10, .px-12),
+:is(.ac-product-system, .ac-business-root) :is(.ac-module-frame, .ac-native-workspace) :is(.px-8, .px-10, .px-12) {
+  padding-left: 1.125rem !important;
+  padding-right: 1.125rem !important;
 }
 
-html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.rounded-3xl, .rounded-\[2rem\], .rounded-\[2\.5rem\]) {
-  border-radius: 1rem !important;
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.py-8, .py-10, .py-12),
+:is(.ac-product-system, .ac-business-root) :is(.ac-module-frame, .ac-native-workspace) :is(.py-8, .py-10, .py-12) {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
 }
 
-html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) .ac-native-workspace [role='tablist'] {
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.gap-8, .gap-10, .gap-12),
+:is(.ac-product-system, .ac-business-root) :is(.ac-module-frame, .ac-native-workspace) :is(.gap-8, .gap-10, .gap-12) {
+  gap: 1rem !important;
+}
+
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.rounded-3xl, .rounded-\[2rem\], .rounded-\[2\.5rem\]),
+:is(.ac-product-system, .ac-business-root) :is(.ac-module-frame, .ac-native-workspace) :is(.rounded-3xl, .rounded-\[2rem\], .rounded-\[2\.5rem\]) {
+  border-radius: 0.875rem !important;
+}
+
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) .ac-native-workspace [role='tablist'],
+:is(.ac-product-system, .ac-business-root) .ac-native-workspace [role='tablist'] {
   max-width: 100%;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scrollbar-width: thin;
 }
 
-html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) .ac-native-workspace [role='tablist'] > * {
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) .ac-native-workspace [role='tablist'] > *,
+:is(.ac-product-system, .ac-business-root) .ac-native-workspace [role='tablist'] > * {
   min-width: max-content;
   white-space: nowrap;
 }
 
-html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.space-y-10, .space-y-12) > :not([hidden]) ~ :not([hidden]) {
-  margin-top: 1.5rem !important;
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.space-y-10, .space-y-12) > :not([hidden]) ~ :not([hidden]),
+:is(.ac-product-system, .ac-business-root) :is(.ac-module-frame, .ac-native-workspace) :is(.space-y-10, .space-y-12) > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1rem !important;
 }
 
 @media (max-width: 767px) {

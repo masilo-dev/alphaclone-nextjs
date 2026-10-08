@@ -39,11 +39,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
   };
 
   const sizes: Record<string, string> = {
-    sm: "h-8 px-3 type-caption min-h-9 min-w-9 rounded-[8px]",
-    md: "h-10 px-4 py-2 type-ui min-h-11 min-w-11 rounded-[10px]",
-    lg: "h-12 px-6 text-base min-h-12 min-w-12 rounded-[12px]",
-    default: "h-10 px-4 py-2 type-ui min-h-11 min-w-11 rounded-[10px]",
-    icon: "h-10 w-10 p-0 min-h-11 min-w-11 rounded-[10px]",
+    sm: "h-8 px-2.5 type-caption rounded-[6px] max-sm:min-h-11 max-sm:min-w-11",
+    md: "h-9 px-3.5 py-1.5 type-ui rounded-[8px] max-sm:min-h-11 max-sm:min-w-11",
+    lg: "h-10 px-4.5 text-sm font-semibold rounded-[10px] max-sm:min-h-11 max-sm:min-w-11",
+    default: "h-9 px-3.5 py-1.5 type-ui rounded-[8px] max-sm:min-h-11 max-sm:min-w-11",
+    icon: "h-9 w-9 p-0 rounded-[8px] max-sm:min-h-11 max-sm:min-w-11",
   };
 
   const visualVariant = variant === 'default' ? 'outline' : variant;

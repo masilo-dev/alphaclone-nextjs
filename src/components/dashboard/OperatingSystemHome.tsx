@@ -444,19 +444,19 @@ export function OperatingSystemHome() {
   }
 
   return (
-    <div className="space-y-5 ac-scroll-full pb-24 ac-safe-bottom" data-tour="os-home">
+    <div className="space-y-3.5 sm:space-y-4 ac-scroll-full pb-20 ac-safe-bottom" data-tour="os-home">
       {user?.id ? <PlatformExecutionWelcome userId={user.id} surface="home" /> : null}
-      <header className="flex flex-wrap items-start justify-between gap-4">
+      <header className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
         <div className="min-w-0">
           <p className="type-card-description font-medium text-[var(--ws-text-muted)]">{todayLabel}</p>
-          <h1 className={cn(WORKSPACE.typography.pageTitle, 'mt-1')}>
+          <h1 className={cn(WORKSPACE.typography.pageTitle, 'mt-0.5')}>
             {greeting}, {firstName}
           </h1>
-          <p className="mt-1.5 type-caption text-[var(--ws-text-secondary)] max-w-2xl">
+          <p className="mt-1 type-caption text-[var(--ws-text-secondary)] max-w-2xl">
             {t('Here is what needs your attention across')} {businessName} {t('today.')}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           <DashboardHomeLayoutToggle />
           <MetricDateRangeSelector value={preset} onChange={setPeriod} compact className="mb-0" />
           <a
@@ -479,8 +479,8 @@ export function OperatingSystemHome() {
         className="ac-metric-enter"
       />
 
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 md:gap-5">
-        <div className="space-y-4 md:space-y-5 min-w-0">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-3 md:gap-3.5">
+        <div className="space-y-3 md:space-y-3.5 min-w-0">
           {attentionItems.length > 0 ? (
             <AttentionPanel items={attentionItems} />
           ) : null}
@@ -492,8 +492,8 @@ export function OperatingSystemHome() {
             loading={loading}
           />
 
-          <details className="group ac-workspace-panel p-4 md:p-5">
-            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 type-card-title text-[var(--ws-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)]">
+          <details className="group ac-workspace-panel p-3 md:p-3.5">
+            <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-2.5 type-card-title text-[var(--ws-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)]">
               {t('More business details')}
               <span className="type-ui font-medium text-[var(--ws-text-muted)] group-open:hidden">{t('Show')}</span>
               <span className="type-ui font-medium text-[var(--ws-text-muted)] hidden group-open:inline">{t('Hide')}</span>

@@ -1286,7 +1286,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         {mailToolsOpen ? t('Hide workspace tools') : t('Show workspace tools')}
                     </button>
                 ) : null}
-                <header id="business-workspace-tools" className={`h-12 md:h-14 border-b border-[var(--ws-border)] items-center justify-between ${WORKSPACE.toolbar.padding} sticky top-0 z-20 w-full ac-business-header ac-workspace-toolbar ${isMailWorkspace && !mailToolsOpen ? 'hidden' : route === '/dashboard/pwa-settings' ? 'hidden md:flex' : 'flex'}`}>
+                <header id="business-workspace-tools" className={`${WORKSPACE.toolbar.height} border-b border-[var(--ws-border)] items-center justify-between ${WORKSPACE.toolbar.padding} sticky top-0 z-20 w-full ac-business-header ac-workspace-toolbar ${isMailWorkspace && !mailToolsOpen ? 'hidden' : route === '/dashboard/pwa-settings' ? 'hidden md:flex' : 'flex'}`}>
                     {/* Left: Menu & Mobile Logo */}
                     <div className="flex items-center gap-3">
                         <div className="ac-pwa-touch-flex flex items-center md:hidden">

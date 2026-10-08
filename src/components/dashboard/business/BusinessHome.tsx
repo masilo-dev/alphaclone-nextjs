@@ -86,7 +86,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
   }
 
   return (
-    <div className="space-y-5 ac-scroll-full pb-24 ac-safe-bottom" data-tour="business-home">
+    <div className="space-y-3.5 sm:space-y-4 ac-scroll-full pb-20 ac-safe-bottom" data-tour="business-home">
       {checklist}
 
       {homeLayout === 'attention_first' ? <AttentionFirstDashboard /> : <OperatingSystemHome />}

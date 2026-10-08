@@ -70,7 +70,7 @@ export const Card: React.FC<CardProps> = ({
       tabIndex={tabIndex ?? (isClickable ? 0 : undefined)}
       onClick={onClick}
       onKeyDown={handleKeyDown}
-      className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-6 ${
+      className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-3.5 sm:p-4 md:p-4.5 ${
         hoverEffect || isClickable
           ? 'hover:bg-[var(--ws-hover)] transition-all duration-200 hover:border-[var(--ws-border-strong)]'
           : ''
@@ -175,8 +175,8 @@ export const Input: React.FC<InputProps> = ({
 
   const baseInputClass = `w-full bg-[var(--ws-surface-primary,var(--surface-primary))] border ${
     error ? 'border-[var(--danger)]' : 'border-[var(--ws-border,var(--border-default))]'
-  } rounded-[10px] px-3.5 py-2.5 type-ui leading-normal text-[var(--ws-text-primary,var(--text-primary))] placeholder:text-[var(--ws-text-tertiary,var(--text-muted))] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-[var(--ac-accent)] transition-colors ${
-    icon ? 'pl-10' : ''
+  } rounded-[8px] px-3 py-1.5 sm:py-2 type-ui leading-normal text-[var(--ws-text-primary,var(--text-primary))] placeholder:text-[var(--ws-text-tertiary,var(--text-muted))] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-[var(--ac-accent)] transition-colors ${
+    icon ? 'pl-9' : ''
   } ${className}`;
 
   return (
@@ -309,8 +309,8 @@ export const Modal: React.FC<ModalProps> = ({
         style={{ backgroundColor: 'var(--surface-primary, var(--ws-panel))' }}
         className={`relative ${WORKSPACE.panel.base} rounded-t-2xl sm:rounded-xl w-full ${maxWidth} shadow-none animate-fade-in overflow-hidden max-h-[92dvh] sm:max-h-[85vh] flex flex-col ${className}`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-[var(--ws-border)] flex-shrink-0">
-          <h3 id={titleId} className="text-lg font-semibold text-[var(--text-primary)]">{renderedTitle}</h3>
+        <div className="flex items-center justify-between p-3 sm:p-3.5 border-b border-[var(--ws-border)] flex-shrink-0">
+          <h3 id={titleId} className="text-base sm:text-lg font-semibold text-[var(--text-primary)]">{renderedTitle}</h3>
           <button
             type="button"
             onClick={onClose}
@@ -320,7 +320,7 @@ export const Modal: React.FC<ModalProps> = ({
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
-        <div className="min-h-0 flex-1 p-4 overflow-y-auto overscroll-contain">
+        <div className="min-h-0 flex-1 p-3 sm:p-3.5 overflow-y-auto overscroll-contain">
           {children}
         </div>
       </div>
@@ -331,7 +331,7 @@ export const Modal: React.FC<ModalProps> = ({
 
 // --- Card Subcomponents ---
 export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className = '', ...props }) => (
-  <div className={`p-6 pb-2 ${className}`} {...props} />
+  <div className={`p-3.5 pb-1.5 sm:p-4 sm:pb-2 ${className}`} {...props} />
 );
 
 export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({ className = '', ...props }) => (
@@ -339,7 +339,7 @@ export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({ 
 );
 
 export const CardContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className = '', ...props }) => (
-  <div className={`p-6 pt-0 ${className}`} {...props} />
+  <div className={`p-3.5 pt-0 sm:p-4 sm:pt-0 ${className}`} {...props} />
 );
 
 // --- Avatar ---

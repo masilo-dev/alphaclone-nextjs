@@ -259,10 +259,10 @@ export function AttentionFirstDashboard() {
   return (
     <div className="space-y-4 ac-module-section ac-home-feed">
       {/* First viewport: greeting + money — one clean, compact composition */}
-      <header className="ac-workspace-panel px-3 py-3 sm:px-4 sm:py-3.5 md:px-5 md:py-4">
-        <div className="flex items-center justify-between gap-3">
+      <header className="ac-workspace-panel px-3 py-2.5 sm:px-3.5 sm:py-3 md:px-4 md:py-3.5">
+        <div className="flex items-center justify-between gap-2.5">
           <div className="min-w-0">
-            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-[var(--ws-text-primary)]">
+            <h2 className="text-base sm:text-lg font-bold tracking-tight text-[var(--ws-text-primary)]">
               {greeting}
             </h2>
             <p className="type-caption text-[var(--ws-text-secondary)] truncate">
@@ -272,7 +272,7 @@ export function AttentionFirstDashboard() {
           <div className="hidden sm:flex items-center gap-2 shrink-0">
             <Link
               href="/dashboard/bonnie"
-              className={cn(WORKSPACE.action.primary, 'inline-flex items-center justify-center gap-1.5 h-9 px-3 shrink-0 type-caption font-semibold')}
+              className={cn(WORKSPACE.action.primary, 'inline-flex items-center justify-center gap-1.5 h-8.5 px-3 shrink-0 type-caption font-semibold')}
             >
               <Bot className="w-3.5 h-3.5" aria-hidden />
               {t('Ask Bonnie')}
@@ -280,10 +280,10 @@ export function AttentionFirstDashboard() {
           </div>
         </div>
 
-        <div className="mt-2.5 grid grid-cols-2 gap-2 sm:gap-3">
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:gap-2.5">
           <Link
             href="/dashboard/business/billing"
-            className="rounded-xl border border-[var(--success-border)] bg-[var(--success-surface)] p-2.5 sm:p-3 transition-colors hover:border-[var(--success)]"
+            className="rounded-lg border border-[var(--success-border)] bg-[var(--success-surface)] p-2 sm:p-2.5 transition-colors hover:border-[var(--success)]"
           >
             <p className="text-[11px] sm:type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-tertiary)] flex items-center gap-1 truncate">
               <DollarSign className="w-3 h-3 text-[var(--success-text)] shrink-0" aria-hidden />
@@ -292,12 +292,12 @@ export function AttentionFirstDashboard() {
             {loading && !stats ? <div className="mt-1.5 h-6 w-20 rounded bg-[var(--ws-hover)] ac-skeleton-pulse" /> : statsError || !stats ? (
               <p className="mt-1 text-xs text-[var(--ws-text-secondary)]">{t('Unavailable')}</p>
             ) : (
-              <p className="mt-1 text-lg sm:text-xl md:text-2xl font-bold tabular-nums tracking-tight text-[var(--success-text)] truncate">{formatCurrency(revenue)}</p>
+              <p className="mt-1 text-base sm:text-lg md:text-xl font-bold tabular-nums tracking-tight text-[var(--success-text)] truncate">{formatCurrency(revenue)}</p>
             )}
           </Link>
           <Link
             href="/dashboard/business/billing/manage"
-            className="rounded-xl border border-[var(--info-border)] bg-[var(--info-surface)] p-2.5 sm:p-3 transition-colors hover:border-[var(--info)]"
+            className="rounded-lg border border-[var(--info-border)] bg-[var(--info-surface)] p-2 sm:p-2.5 transition-colors hover:border-[var(--info)]"
           >
             <p className="text-[11px] sm:type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-tertiary)] flex items-center gap-1 truncate">
               <Receipt className="w-3 h-3 text-[var(--info-text)] shrink-0" aria-hidden />
@@ -306,14 +306,14 @@ export function AttentionFirstDashboard() {
             {loading && !stats ? <div className="mt-1.5 h-6 w-20 rounded bg-[var(--ws-hover)] ac-skeleton-pulse" /> : statsError || !stats ? (
               <p className="mt-1 text-xs text-[var(--ws-text-secondary)]">{t('Unavailable')}</p>
             ) : (
-              <p className="mt-1 text-lg sm:text-xl md:text-2xl font-bold tabular-nums tracking-tight text-[var(--ws-text-primary)] truncate">{formatCurrency(outstanding)}</p>
+              <p className="mt-1 text-base sm:text-lg md:text-xl font-bold tabular-nums tracking-tight text-[var(--ws-text-primary)] truncate">{formatCurrency(outstanding)}</p>
             )}
           </Link>
         </div>
       </header>
 
       {/* Primary job: needs attention */}
-      <section className="ac-workspace-panel p-4 md:p-5" aria-labelledby="home-attention-heading">
+      <section className="ac-workspace-panel p-3 md:p-3.5" aria-labelledby="home-attention-heading">
         <div className="mb-3 flex items-center justify-between gap-3">
           <h3
             id="home-attention-heading"
@@ -402,11 +402,11 @@ export function AttentionFirstDashboard() {
       </section>
 
       {/* Secondary: Bonnie + activity side-by-side on desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <section className="ac-workspace-panel p-4 md:p-5" aria-labelledby="home-bonnie-heading">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-3.5">
+        <section className="ac-workspace-panel p-3 md:p-3.5" aria-labelledby="home-bonnie-heading">
           <h3
             id="home-bonnie-heading"
-            className={cn(WORKSPACE.typography.panelTitle, 'mb-3 flex items-center gap-2')}
+            className={cn(WORKSPACE.typography.panelTitle, 'mb-2.5 flex items-center gap-2')}
           >
             <Bot className="w-4 h-4 text-[var(--ac-accent)]" aria-hidden />
             {HUMAN_LABELS.whatBonnieDid}
@@ -442,13 +442,13 @@ export function AttentionFirstDashboard() {
           )}
           <Link
             href="/dashboard/bonnie"
-            className="inline-flex mt-4 type-ui font-medium text-[var(--ac-accent)] hover:text-[var(--ac-accent-hover)]"
+            className="inline-flex mt-3 type-ui font-medium text-[var(--ac-accent)] hover:text-[var(--ac-accent-hover)]"
           >
             {t('Open Bonnie')}
           </Link>
         </section>
 
-        <section className="ac-workspace-panel p-4 md:p-5" aria-labelledby="home-activity-heading">
+        <section className="ac-workspace-panel p-3 md:p-3.5" aria-labelledby="home-activity-heading">
           <h3
             id="home-activity-heading"
             className={cn(WORKSPACE.typography.panelTitle, 'mb-3 flex items-center gap-2')}

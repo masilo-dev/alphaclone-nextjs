@@ -90,12 +90,12 @@ export function StandardStatCard({
   const content = (
     <div className="flex flex-col h-full justify-between">
       {/* Top: label + value + icon */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1 min-w-0">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-0.5 min-w-0">
           <p className="type-caption font-semibold uppercase tracking-label text-[var(--ws-text-tertiary)] truncate">
             {label}
           </p>
-          <p className="text-2xl font-bold text-[var(--ws-text-primary)] tracking-tight leading-none mt-1 tabular-nums">
+          <p className="text-xl sm:text-2xl font-bold text-[var(--ws-text-primary)] tracking-tight leading-none mt-1 tabular-nums">
             {value}
           </p>
         </div>
@@ -103,21 +103,21 @@ export function StandardStatCard({
         {icon && (
           <span
             className={cn(
-              'w-9 h-9 rounded-[10px] flex items-center justify-center border border-[var(--ws-border)] shrink-0',
+              'w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-[8px] flex items-center justify-center border border-[var(--ws-border)] shrink-0',
               theme.iconBg,
               theme.textClass
             )}
           >
             {React.isValidElement(icon)
               ? icon
-              : React.createElement(icon as React.ElementType, { className: 'w-4 h-4' })}
+              : React.createElement(icon as React.ElementType, { className: 'w-3.5 h-3.5 sm:w-4 sm:h-4' })}
           </span>
         )}
       </div>
 
       {/* Bottom: delta badge + comparison text */}
-      <div className="mt-4 pt-3 border-t border-[var(--ws-border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="mt-2.5 pt-2 border-t border-[var(--ws-border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
+        <div className="flex items-center gap-1.5 min-w-0">
           {delta !== undefined && (
             <span
               className={cn(
@@ -145,7 +145,7 @@ export function StandardStatCard({
   const cardClasses = cn(
     // Use the standard OS panel class — provides surface + border via CSS
     'ac-workspace-panel',
-    'relative text-left w-full p-4 rounded-xl transition-colors duration-200',
+    'relative text-left w-full p-3 sm:p-3.5 rounded-[10px] sm:rounded-xl transition-colors duration-200',
     isClickable && 'cursor-pointer hover:border-[var(--ws-border-strong)]',
     className
   );

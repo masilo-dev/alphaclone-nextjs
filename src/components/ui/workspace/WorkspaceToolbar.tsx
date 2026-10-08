@@ -36,7 +36,7 @@ export function WorkspaceToolbar({
   viewMode,
   moreMenu,
   className,
-  density = 'comfortable',
+  density = 'compact',
 }: WorkspaceToolbarProps) {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const densityStyles = WORKSPACE_FOCUS.density[density];
@@ -44,7 +44,7 @@ export function WorkspaceToolbar({
   return (
     <div
       className={cn(
-        'w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 py-2 px-3 sm:px-4 bg-[var(--ws-surface)] border-b border-[var(--ws-border)]',
+        'w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-1.5 px-3 bg-[var(--ws-surface)] border-b border-[var(--ws-border)]',
         densityStyles.toolbar,
         className
       )}
@@ -52,9 +52,9 @@ export function WorkspaceToolbar({
       {/* Left: Search input + Primary filters */}
       <div className="flex flex-1 flex-wrap items-center gap-2 min-w-0">
         {onSearchChange ? (
-          <div className="relative flex-1 min-w-[160px] sm:max-w-xs">
+          <div className="relative flex-1 min-w-[150px] sm:max-w-xs">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]"
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--ws-text-muted)]"
               aria-hidden="true"
             />
             <input
@@ -62,7 +62,7 @@ export function WorkspaceToolbar({
               value={search ?? ''}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={searchPlaceholder}
-              className="w-full h-9 pl-9 pr-3 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] text-sm text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--brand-blue-500)] focus:border-[var(--brand-blue-500)]"
+              className="w-full h-8 sm:h-8.5 pl-8 pr-3 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] type-ui text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--brand-blue-500)] focus:border-[var(--brand-blue-500)]"
             />
             {search ? (
               <button

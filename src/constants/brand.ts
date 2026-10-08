@@ -226,15 +226,15 @@ export const CHART_COLORS = {
 } as const;
 
 export const OS_TYPOGRAPHY = {
-  pageTitle: { size: '28px', lineHeight: '36px', weight: 700 },
-  sectionTitle: { size: '18px', lineHeight: '26px', weight: 650 },
+  pageTitle: { size: '22px', lineHeight: '28px', weight: 700 },
+  sectionTitle: { size: '16px', lineHeight: '22px', weight: 650 },
   cardTitle: { size: '14px', lineHeight: '20px', weight: 600 },
-  body: { size: '14px', lineHeight: '22px', weight: 400 },
-  bodyStrong: { size: '14px', lineHeight: '22px', weight: 600 },
-  caption: { size: '12px', lineHeight: '18px', weight: 500 },
-  kpiLarge: { size: '28px', lineHeight: '34px', weight: 700 },
-  kpiMedium: { size: '22px', lineHeight: '28px', weight: 700 },
-  table: { size: '13px', lineHeight: '20px', weight: 400 },
+  body: { size: '13.5px', lineHeight: '20px', weight: 400 },
+  bodyStrong: { size: '13.5px', lineHeight: '20px', weight: 600 },
+  caption: { size: '11.5px', lineHeight: '16px', weight: 500 },
+  kpiLarge: { size: '24px', lineHeight: '30px', weight: 700 },
+  kpiMedium: { size: '18px', lineHeight: '24px', weight: 700 },
+  table: { size: '12.5px', lineHeight: '18px', weight: 400 },
 } as const;
 
 export const OS_SPACE = {
