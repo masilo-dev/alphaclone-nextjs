@@ -103,8 +103,12 @@ export async function POST(req: Request) {
     const signature = req.headers.get('stripe-signature') || '';
     
 
-    let event;
+    // Synthetic monitoring probes or unauthenticated requests without a signature
+    if (!signature) {
+        return NextResponse.json({ error: 'Webhook signature verification failed', code: 'STRIPE_WEBHOOK_SIGNATURE' }, { status: 400 });
+    }
 
+    let event;
 
     // Step 1: Verify webhook signature
     try {
@@ -118,7 +122,8 @@ export async function POST(req: Request) {
         if (!event) throw new Error('Invalid signature');
         if (process.env.NODE_ENV === 'production' && !event.livemode) throw new Error('Test events are not accepted in production');
     } catch (err: unknown) {
-        console.error('Webhook signature verification failed');
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`[stripe/webhook] Signature verification failed: ${message}`);
         return NextResponse.json({ error: 'Webhook signature verification failed', code: 'STRIPE_WEBHOOK_SIGNATURE' }, { status: 400 });
     }
 

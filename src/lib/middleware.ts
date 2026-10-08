@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { rateLimitMiddleware, rateLimitConfigs } from './rateLimit'
+import { isTransientDatabaseError, withTransientDbRetry } from './transientDbError'
 
 export async function updateSession(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
@@ -156,13 +157,21 @@ export async function updateSession(request: NextRequest) {
                 return withRequestIdHeader(NextResponse.redirect(url));
             }
 
-            const { data: profile, error: profileError } = await supabase
-                .from('profiles')
-                .select('account_status')
-                .eq('id', user.id)
-                .maybeSingle();
+            const { data: profile, error: profileError } = await withTransientDbRetry(async () => {
+                return await supabase
+                    .from('profiles')
+                    .select('account_status')
+                    .eq('id', user.id)
+                    .maybeSingle();
+            });
 
-            if (profileError) throw profileError;
+            if (profileError) {
+                if (isTransientDatabaseError(profileError)) {
+                    console.warn('[middleware] Transient DB error querying account status; passing through to route:', (profileError as any)?.code || (profileError as any)?.message);
+                    return response;
+                }
+                throw profileError;
+            }
 
             if (!profile || profile.account_status === 'deleted' || profile.account_status === 'pending_deletion') {
                 const url = request.nextUrl.clone();
@@ -203,7 +212,11 @@ export async function updateSession(request: NextRequest) {
             // Tenant membership and subscription authorization are enforced by
             // tenant-scoped server routes. Never trust user_metadata.tenant_id here.
         }
-    } catch (e) {
+    } catch (e: any) {
+        if (isTransientDatabaseError(e)) {
+            console.warn('[middleware] Transient DB error caught; proceeding without maintenance redirect:', e?.code || e?.message);
+            return response;
+        }
         console.error('Middleware Logic Error:', e);
         if (isDashboardNavigation) {
             const url = request.nextUrl.clone();

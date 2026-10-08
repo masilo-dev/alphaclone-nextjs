@@ -5,6 +5,7 @@ import { RouteAuthError } from './api/routeAuthError';
 import { ENV } from '@/config/env';
 import { isPlatformAdminRole } from '@/lib/platformAdmin';
 import { normalizePlatformRole } from '@/lib/platformAdmin';
+import { isTransientDatabaseError, withTransientDbRetry } from './transientDbError';
 
 export { RouteAuthError };
 
@@ -83,6 +84,7 @@ type CachedProfile = {
 const profileCache = new Map<string, CachedProfile>();
 const membershipCache = new Map<string, { membership: TenantMembership; cachedAt: number }>();
 const AUTH_CACHE_TTL_MS = 15_000;
+const AUTH_CACHE_STALE_TTL_MS = 300_000; // 5-minute stale-while-revalidate grace during transient DB schema reloads
 
 async function requireActiveProfile(
     supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>,
@@ -94,17 +96,26 @@ async function requireActiveProfile(
     let profile = cached && (now - cached.cachedAt < AUTH_CACHE_TTL_MS) ? cached.profile : null;
 
     if (!profile) {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('id, role, account_status, scheduled_deletion_at')
-            .eq('id', userId)
-            .maybeSingle();
+        const { data, error } = await withTransientDbRetry(async () => {
+            return await supabase
+                .from('profiles')
+                .select('id, role, account_status, scheduled_deletion_at')
+                .eq('id', userId)
+                .maybeSingle();
+        });
 
         if (error) {
-            console.error('[apiAuth] Failed to verify account status:', error);
-            throw new RouteAuthError(503, 'Account verification is temporarily unavailable', 'INTERNAL_ERROR');
+            if (isTransientDatabaseError(error) && cached && (now - cached.cachedAt < AUTH_CACHE_STALE_TTL_MS)) {
+                console.warn('[apiAuth] Serving stale cached profile during transient DB error:', error.message || error.code);
+                profile = cached.profile;
+            } else {
+                console.error('[apiAuth] Failed to verify account status:', error);
+                throw new RouteAuthError(503, 'Account verification is temporarily unavailable', 'INTERNAL_ERROR');
+            }
+        } else {
+            profile = data;
         }
-        profile = data;
+
         if (profile) {
             if (profileCache.size > 500) {
                 const oldest = profileCache.keys().next().value;
@@ -147,28 +158,36 @@ export async function requireTenantAccess(tenantId: string, req?: Request) {
     let membership = cached && (now - cached.cachedAt < AUTH_CACHE_TTL_MS) ? cached.membership : null;
 
     if (!membership) {
-        const { data, error } = await supabase
-            .from('tenant_users')
-            .select('tenant_id, role')
-            .eq('tenant_id', cleanTenantId)
-            .eq('user_id', user.id)
-            .maybeSingle();
+        const { data, error } = await withTransientDbRetry(async () => {
+            return await supabase
+                .from('tenant_users')
+                .select('tenant_id, role')
+                .eq('tenant_id', cleanTenantId)
+                .eq('user_id', user.id)
+                .maybeSingle();
+        });
 
         if (error) {
-            console.error('[apiAuth] Failed to verify tenant membership:', error);
-            throw new RouteAuthError(500, 'Failed to verify tenant access', 'INTERNAL_ERROR');
-        }
-
-        if (!data) {
+            if (isTransientDatabaseError(error) && cached && (now - cached.cachedAt < AUTH_CACHE_STALE_TTL_MS)) {
+                console.warn('[apiAuth] Serving stale cached membership during transient DB error:', error.message || error.code);
+                membership = cached.membership;
+            } else {
+                console.error('[apiAuth] Failed to verify tenant membership:', error);
+                throw new RouteAuthError(500, 'Failed to verify tenant access', 'INTERNAL_ERROR');
+            }
+        } else if (!data) {
             throw new RouteAuthError(403, 'Forbidden', 'FORBIDDEN');
+        } else {
+            membership = data as TenantMembership;
         }
 
-        membership = data as TenantMembership;
-        if (membershipCache.size > 500) {
-            const oldest = membershipCache.keys().next().value;
-            if (oldest) membershipCache.delete(oldest);
+        if (membership) {
+            if (membershipCache.size > 500) {
+                const oldest = membershipCache.keys().next().value;
+                if (oldest) membershipCache.delete(oldest);
+            }
+            membershipCache.set(cacheKey, { membership, cachedAt: now });
         }
-        membershipCache.set(cacheKey, { membership, cachedAt: now });
     }
 
     return {
