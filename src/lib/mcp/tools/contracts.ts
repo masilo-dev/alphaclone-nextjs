@@ -1,3 +1,4 @@
+import { attachLlmExecutionTruth, buildLlmExecutionTruth } from '@/lib/mcp/llmTruthfulResponse';
 import { resolveCanonicalLifecycleClient } from '@/lib/crm/resolveCanonicalLifecycleClient';
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
@@ -44,7 +45,8 @@ registerTool('contracts', {
     if (args.contract_id) {
       const contract = (data || [])[0];
       if (!contract) throw new Error('Contract not found');
-      return { ...contract, lifecycle_issues: inspectContractLifecycle(contract) };
+      const result = { ...contract, lifecycle_issues: inspectContractLifecycle(contract) };
+      return attachLlmExecutionTruth(result, buildLlmExecutionTruth({toolName: 'get_contracts', parsedResult: result}));
     }
     return (data || []).map((contract) => ({
       ...contract,
@@ -119,7 +121,8 @@ registerTool('contracts', {
       console.error('[create_contract] notify failed:', err)
     );
 
-    return { ...data, receipt: {action_id: data.id, status: 'verified', entity_type: 'contract', entity_id: data.id, timestamp: new Date().toISOString()} };
+    const result = { ...data, receipt: {action_id: data.id, status: 'verified', entity_type: 'contract', entity_id: data.id, timestamp: new Date().toISOString()} };
+    return attachLlmExecutionTruth(result, buildLlmExecutionTruth({toolName: 'create_contract', parsedResult: result}));
   },
 });
 
@@ -306,7 +309,7 @@ registerTool('contracts', {
     });
 
     if (!execution.ok || !execution.result?.success) {
-      throw new Error(execution.error?.message || execution.result?.error || 'Failed to send contract');
+      throw Object.assign(new Error(execution.error?.message || execution.result?.error || 'Failed to send contract'), {code: execution.result?.code || execution.error?.code || 'EXECUTION_FAILED'});
     }
 
     return {

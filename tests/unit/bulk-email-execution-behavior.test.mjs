@@ -218,3 +218,17 @@ test('Zoho verifies sender identities on the selected account without silent sub
   service.getMailBase = async () => ({ base:'https://mail.zoho.eu/api/accounts/chosen', accountId:'chosen' });
   await assert.rejects(() => service.sendEmail({ fromAddress:'other@example.com', toAddress:'owner@example.com', subject:'Test', content:'Test' }), /EMAIL_SENDER_NOT_VERIFIED/);
 });
+
+test('Zoho uploads PDF bytes before sending only file-store references',async()=>{
+ const calls=[];
+ class Base {async getConfig(){return {accountId:'chosen',mailApiHost:'mail.zoho.eu'}};async callZohoAPI(url,options){calls.push({url,options});if(url.includes('/attachments?'))return {data:{storeName:'store',attachmentName:'TEST_ONLY.pdf',attachmentPath:'/Mail/test.pdf'}};return {data:{messageId:'provider-1'}}}}
+ const {ZohoMailService}=load('src/services/zoho/ZohoMailService.ts',{'./ZohoService':{ZohoService:Base},'@/lib/email/emailComposition':{normalizeEmailSubject:v=>v,ensureFooter:v=>v},'@/lib/email/parseEmailHeader':{extractEmailAddress:v=>v},__globals:{Buffer}});
+ const service=new ZohoMailService();service.getSenderAddresses=async()=>['chosen@example.com'];
+ await service.sendEmail({fromAddress:'chosen@example.com',toAddress:'bonniiehendrix@gmail.com',subject:'TEST ONLY',content:'Nonbinding test',attachments:[{filename:'TEST_ONLY.pdf',content:Buffer.from('%PDF-test').toString('base64'),contentType:'application/pdf'}]});
+ assert.equal(calls.length,2);assert.match(calls[0].url,/accounts\/chosen\/messages\/attachments\?fileName=TEST_ONLY.pdf/);assert.equal(Buffer.from(calls[0].options.body).toString(),'%PDF-test');const body=JSON.parse(calls[1].options.body);assert.deepEqual(body.attachments,[{storeName:'store',attachmentName:'TEST_ONLY.pdf',attachmentPath:'/Mail/test.pdf'}]);assert.equal(body.toAddress,'bonniiehendrix@gmail.com');assert.equal(body.attachments[0].content,undefined);
+});
+test('incomplete Zoho upload evidence prevents the send POST',async()=>{
+ let requests=0;class Base{async getConfig(){return {accountId:'chosen',mailApiHost:'mail.zoho.eu'}};async callZohoAPI(){requests++;return {data:{storeName:'incomplete'}}}}
+ const {ZohoMailService}=load('src/services/zoho/ZohoMailService.ts',{'./ZohoService':{ZohoService:Base},'@/lib/email/emailComposition':{normalizeEmailSubject:v=>v,ensureFooter:v=>v},'@/lib/email/parseEmailHeader':{extractEmailAddress:v=>v},__globals:{Buffer}});const service=new ZohoMailService();service.getSenderAddresses=async()=>['chosen@example.com'];
+ await assert.rejects(()=>service.sendEmail({fromAddress:'chosen@example.com',toAddress:'bonniiehendrix@gmail.com',subject:'TEST ONLY',content:'Test',attachments:[{filename:'TEST_ONLY.pdf',content:'JVBERi10ZXN0'}]}),/complete attachment reference/);assert.equal(requests,1);
+});

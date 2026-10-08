@@ -306,6 +306,21 @@ export class ZohoMailService extends ZohoService {
             throw new Error('Recipient email address is invalid.');
         }
 
+        // Zoho requires uploaded file-store references, not inline base64 in messages.
+        const uploadedAttachments: Array<{storeName: string; attachmentName: string; attachmentPath: string}> = [];
+        for (const attachment of params.attachments || []) {
+            const bytes = Buffer.from(attachment.content, 'base64');
+            if (!bytes.length) throw new Error('EMAIL_ATTACHMENT_INVALID: Attachment content is empty');
+            const uploaded = await this.callZohoAPI(`${base}/messages/attachments?fileName=${encodeURIComponent(attachment.filename)}&isInline=false`, {
+                method: 'POST', headers: {'Content-Type': attachment.contentType || 'application/octet-stream'},
+                body: new Uint8Array(bytes),
+            });
+            const reference = Array.isArray(uploaded?.data) ? uploaded.data[0] : uploaded?.data;
+            if (!reference?.storeName || !reference?.attachmentName || !reference?.attachmentPath) {
+                throw new Error('EMAIL_ATTACHMENT_UPLOAD_FAILED: Zoho did not return a complete attachment reference');
+            }
+            uploadedAttachments.push({storeName: String(reference.storeName), attachmentName: String(reference.attachmentName), attachmentPath: String(reference.attachmentPath)});
+        }
         const result = await this.callZohoAPI(`${base}/messages`, {
             method: 'POST',
             body: JSON.stringify({
@@ -313,11 +328,7 @@ export class ZohoMailService extends ZohoService {
                 toAddress,
                 subject,
                 content: ensureFooter(String(params.content || '')),
-                attachments: params.attachments?.map((attachment) => ({
-                    fileName: attachment.filename,
-                    content: attachment.content,
-                    contentType: attachment.contentType || 'application/octet-stream',
-                })),
+                attachments: uploadedAttachments.length ? uploadedAttachments : undefined,
             }),
         });
 

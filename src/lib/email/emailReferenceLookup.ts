@@ -9,3 +9,13 @@ export function emailReceiptReferenceFields(type: EmailReferenceType, reference:
   if (type !== 'auto') return [type];
   return ['provider_reference', 'idempotency_key', ...(isUuidEmailReference(reference) ? ['action_id'] : [])];
 }
+
+/** Resolve only an actual email recipient, never a contract/project resource ID. */
+export function emailReceiptRecipient(receipt?: Record<string, any>, tracking?: Record<string, any> | null): string | null {
+  const output = receipt?.sanitized_output || {};
+  const target = receipt?.sanitized_input?.target || {};
+  const candidates = [output.sent_to, output.recipient, output.data?.recipient,
+    ['email', 'email_message'].includes(target.resource_type) ? target.resource_id : undefined,
+    tracking?.lead_email];
+  return candidates.find(value => typeof value === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) || null;
+}

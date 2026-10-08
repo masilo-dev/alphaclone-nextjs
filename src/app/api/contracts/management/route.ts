@@ -803,7 +803,8 @@ export async function sendContract(
       tenantId,
       userId: actorUserId || undefined,
       fromName: tenantName,
-      preferredProvider: (provider as any) || undefined,
+      preferredProvider: senderConfig.provider,
+      providerAccountId: senderConfig.providerAccountId,
       skipFooter: true,
       idempotencyKey: `contract-email:${config.idempotencyKey || `${tenantId}:${contractId}:${recipientEmail}:${contract.current_version_id || "latest"}`}`,
       relatedRecord: {type: "contract", id: contractId},
@@ -858,7 +859,7 @@ export async function sendContract(
         tenant_id: tenantId, contract_id: contractId, party_id: signingParty.id,
         event_type: "requested", signer_email: recipientEmail, signing_order: signingParty.signing_order || null,
         provider: emailResult.provider || "email", provider_event_id: providerReceipt,
-        evidence: { provider_accepted: true, delivery_verified: false, signing_url_created: true, token_expires_at: expiresAt, recipient: recipientEmail },
+        evidence: { review_only: isDraftReview, signature_requested: !isDraftReview, provider_accepted: true, delivery_verified: false, signing_url_created: true, token_expires_at: expiresAt, recipient: recipientEmail },
       }),
       supabase.from("contract_lifecycle_events").insert({
         tenant_id: tenantId, contract_id: contractId, from_status: fromLifecycle, to_status: "sent",

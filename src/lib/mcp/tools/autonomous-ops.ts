@@ -1,5 +1,5 @@
 import { emailReceiptEvidence } from '@/lib/email/emailReceiptEvidence';
-import { emailReceiptReferenceFields, isUuidEmailReference } from '@/lib/email/emailReferenceLookup';
+import { emailReceiptReferenceFields, emailReceiptRecipient, isUuidEmailReference } from '@/lib/email/emailReferenceLookup';
 /**
  * Autonomous MCP write tools — model-independent business actions.
  * Shared by ChatGPT, Claude, Cursor, Gemini, DeepSeek, Bonnie, and any MCP client.
@@ -685,7 +685,7 @@ defineConnectorTool({
     const output = receipt?.sanitized_output;
     const acceptance = output?.deliveryStatus || output?.delivery_status || output?.data?.delivery_status;
     const reconciled = durable?.delivery_evidence?.status;
-    return {message_id: args.message_id, delivery_status: (reconciled && reconciled !== 'unknown' ? reconciled : null) || data?.status || acceptance || receipt?.final_status || 'unknown', provider: data?.provider || receipt?.provider || null, evidence: durable || data || null, recipient: output?.sent_to || output?.recipient || output?.data?.recipient || (receipt?.sanitized_input?.target?.resource_type === 'email' ? receipt?.sanitized_input?.target?.resource_id : null) || data?.lead_email || null, limitation: 'Provider acceptance is not proof of inbox delivery. Final delivery may be unavailable.'};
+    return {message_id: args.message_id, delivery_status: (reconciled && reconciled !== 'unknown' ? reconciled : null) || data?.status || acceptance || receipt?.final_status || 'unknown', provider: data?.provider || receipt?.provider || null, evidence: durable || data || null, recipient: emailReceiptRecipient(receipt, data), limitation: 'Provider acceptance is not proof of inbox delivery. Final delivery may be unavailable.'};
   },
 });
 

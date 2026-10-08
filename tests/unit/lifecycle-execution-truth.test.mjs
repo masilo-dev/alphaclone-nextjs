@@ -19,3 +19,14 @@ test('numeric provider IDs never enter UUID tracking or action columns', () => {
  assert.deepEqual(emailReceiptReferenceFields('action_id','91ffb42b-a672-4b8e-917f-9ce4c02b567d'),['action_id']);
  assert.throws(()=>emailReceiptReferenceFields('tracking_id','1791401742485001200'),/UUID/);
 });
+test('provider receipts resolve the recipient without mistaking business IDs for email',async()=>{
+ const {emailReceiptRecipient}=await import('../../src/lib/email/emailReferenceLookup.ts');
+ assert.equal(emailReceiptRecipient({sanitized_input:{target:{resource_type:'email_message',resource_id:'bonniiehendrix@gmail.com'}}}),'bonniiehendrix@gmail.com');
+ assert.equal(emailReceiptRecipient({sanitized_input:{target:{resource_type:'contract',resource_id:'9d4ad497-7b90-4e46-a6c0-2f3b1671a4f2'}}}),null);
+ assert.equal(emailReceiptRecipient({sanitized_output:{sent_to:'bonniiehendrix@gmail.com'}}),'bonniiehendrix@gmail.com');
+});
+test('structured provider failures carry FAILED execution truth',async()=>{
+ const {structuredErrorToMcpContent}=await import('../../src/lib/mcp/formatMcpError.ts');
+ const result=structuredErrorToMcpContent({ok:false,tool:'send_contract',data:null,receipt:null,error:{code:'EMAIL_SENDER_NOT_VERIFIED',message:'Activate the configured tenant sender',retryable:false},meta:{}});
+ const parsed=JSON.parse(result.content[0].text);assert.equal(parsed.error.code,'EMAIL_SENDER_NOT_VERIFIED');assert.equal(parsed.execution_truth.status,'FAILED');assert.equal(parsed.execution_truth.may_claim_completed,false);
+});

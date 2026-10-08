@@ -1,3 +1,4 @@
+import { buildLlmExecutionTruth } from '@/lib/mcp/llmTruthfulResponse';
 import { ZodError } from 'zod';
 import { standardError, type StandardMcpError } from '@/lib/mcp/standardResponse';
 import { sanitizeUserFacingError } from '@/lib/copy/businessFriendlyErrors';
@@ -77,7 +78,7 @@ export function formatToolExecutionError(tool: string, err: unknown): StandardMc
 
 export function structuredErrorToMcpContent(result: StandardMcpError) {
   return {
-    content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
+    content: [{ type: 'text' as const, text: JSON.stringify({...result, execution_truth: buildLlmExecutionTruth({toolName: result.tool, parsedResult: result})}, null, 2) }],
     isError: true,
   };
 }

@@ -30,3 +30,34 @@ Recovered the lifecycle patch onto master base ac834834 after the prior temporar
 Zoho provider message 1791401742485001200; action 91ffb42b-a672-4b8e-917f-9ce4c02b567d; audit ce2b72dc-d655-4c76-834c-906d87486847; receipt 739e013f-3360-4eb4-8661-e6b0e343d121; canonical message d9336392-e72b-49d7-a5d9-93864212cfc8; provider account 7b0edca8-df8c-450d-acb1-2ddb14bc9603. Evidence supports provider acceptance, not final delivery.
 
 Existing draft contract 9d4ad497-7b90-4e46-a6c0-2f3b1671a4f2 was draft with no successful send/PDF/token evidence in the original audit. No claim that the full production lifecycle is fixed until post-deployment verification establishes it.
+
+## Post-deployment production MCP verification
+
+First release 9430b820 deployed successfully as Railway deployment d988fb17-811f-4278-91fd-64babbbde074. Railway completed compilation, static generation, final TypeScript check and startup validation of 20 critical settings. The first local build process encountered workspace memory pressure after compiling; its final TypeScript check passed separately.
+
+| Acceptance item | Result | Evidence / limitation |
+| --- | --- | --- |
+| Existing canonical client | Passed | Live get_client_by_id returned the supplied ID, authenticated tenant and authorized email. Read truth VERIFIED. |
+| Explicit-status project | Passed | 31ab2f8b-4e8b-482c-8337-3951f96a7854, Active with no invented due date. |
+| Default-status project | Passed | 84f55026-857b-416d-aca6-7403e186c2a5, Active, same canonical client. |
+| Description and status updates/readback | Passed | First project read back Completed with the updated TEST ONLY description. |
+| Linked draft contract creation/readback | Passed | 358f0a73-ee1a-47dd-8f5e-c08a4c8f5186, draft, linked canonical client, explicitly nonbinding. |
+| Business sender discovery | Passed | Zoho and tenant Brevo now report bonnie@alphaclonesystems.com; platform notification accounts are separately labeled. Five historic platform duplicates retained/reported. |
+| One test email and durable evidence | Passed for acceptance | Zoho message 1791438893060013400; action 7bb4c5cc-f1da-4ae7-a382-fc5ad10a3760; audit 7ce1d465-25a7-4a41-821b-6596acc45d2b; receipt 8c96f86a-c621-4065-85b9-4fabd1500336; canonical message 87c61bec-0ede-4f00-94c0-fe875bdec464. No final delivery evidence. |
+| Existing/new provider ID delivery lookup | Passed for acceptance | Both Zoho provider IDs resolve provider_accepted and durable acceptance. Followup corrects recipient extraction for email_message target records; verify after its deployment without resending. |
+| Nonbinding contract send | Failed / configuration blocked | One attempt; no resend. Zoho logged a messages endpoint 404 for the PDF request, then Brevo rejected its inactive configured sender. Correlation 8a931d94-ae58-404a-ae6b-43a73ffd7098; durable action 9a07dabf-bf94-46ee-b844-4f6d4b4901d4. |
+| Failed-send safety | Passed for unsent state | Contract remained draft, sent_at null, both signatures null, no related canonical outbound message. One unused review_only token 00650a89-de76-4217-b58a-db137a5bc4b1 exists and is reusable. Do not interpret token/PDF generation as a successful send. |
+| PDF/link/send evidence | Blocked for accepted contract send | Code reached PDF generation and created a review-only link before provider rejection. No durable PDF URL or accepted contract send; dependent delivery/signature tests stopped. |
+| Duplicate-safe project retry | Passed | Repeated identical default-status create returned the original project and receipt; SQL found exactly one matching project. No repeated email sends. |
+| Tenant isolation | Passed in selected tests and live reassignment check | Tenant-scoped canonical resolution and foreign-tenant rejection tests passed. Live update with a foreign tenant field retained the authenticated tenant (normalizer discarded the supplied tenant field). This does not establish every cross-tenant endpoint. |
+| Authenticated client portal visibility | Blocked | Service filters both tenant_id and canonical client_id; no authenticated client portal session was verified. |
+
+### Findings from the real PDF send path
+
+Zoho plain email succeeds, but the existing attachment adapter placed base64 content directly in the send-message attachments array. Zoho's documented API requires uploading binary data first and sending storeName/attachmentName/attachmentPath references. The followup implements that protocol and tests successful upload ordering and failure-before-send when references are incomplete. The logged 404 is observed evidence; the exact provider reason for that 404 is not established by the response alone. No new contract message is sent to force a pass.
+
+Primary provider documentation: https://www.zoho.com/mail/help/api/post-upload-attachments.html and https://www.zoho.com/mail/help/api/post-send-email-attachment.html.
+
+Contract preflight selected Zoho, but the actual gateway fell through to Brevo after the Zoho rejection. The followup pins the gateway to the exact tenant account checked during preflight, preserves provider error codes, supplies explicit contract read/write truth, and attaches FAILED truth to structured failures. It also corrects recipient extraction for email_message receipts. These additions require deployment and read-only verification; the corrected PDF transmission remains unverified live because the authorized one-attempt send has already failed.
+
+Remaining account action: activate bonnie@alphaclonesystems.com in the connected Brevo business account, or select an active business sender for that account. Shared notifications@alphaclonesystems.com is not used as a workaround. A properly authorized client portal session is also needed for authenticated visibility verification. Historical duplicates and broader CRM/platform provisioning concurrency require separate remediation; no automatic cleanup was performed.
