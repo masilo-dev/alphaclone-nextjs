@@ -605,14 +605,17 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
     return () => {
       cancelled = true;
     };
-  }, [selectedEmail?.id, provider, folder, selectedEmail]);
+  }, [selectedEmail?.id, selectedEmail?.threadId, provider, folder]);
+
+  const selectedEmailId = selectedEmail?.id;
+  const hasSelectedBody = Boolean(selectedEmail?.body);
+  const loadMessageBody = zoho.loadMessageBody;
 
   useEffect(() => {
     if (!selectedEmail || selectedEmail.body || provider !== 'zoho') return;
     let cancelled = false;
     setLoadingBody(true);
-    zoho
-      .loadMessageBody(selectedEmail)
+    loadMessageBody(selectedEmail)
       .catch((err) => {
         if (!cancelled) toast.error(err instanceof Error ? err.message : 'Failed to load message');
       })
@@ -622,7 +625,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
     return () => {
       cancelled = true;
     };
-  }, [selectedEmail?.id, provider, zoho, selectedEmail]);
+  }, [selectedEmailId, hasSelectedBody, provider, loadMessageBody]);
 
   useEffect(() => {
     if (!selectedEmail?.from) {
@@ -1074,7 +1077,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                               {senderDisplay}
                             </p>
                           </div>
-                          <span className="type-ui text-[var(--ws-text-muted)] font-medium shrink-0">
+                          <span suppressHydrationWarning className="type-ui text-[var(--ws-text-muted)] font-medium shrink-0">
                             {new Date(email.receivedAt).toLocaleDateString(undefined, {
                               month: 'short',
                               day: 'numeric',
@@ -1328,7 +1331,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     <div key={msg.id} className="border-b border-[var(--ws-border)] pb-6 last:border-0">
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{msg.from}</p>
-                        <span className="type-ui text-[var(--ws-text-muted)]">
+                        <span suppressHydrationWarning className="type-ui text-[var(--ws-text-muted)]">
                           {new Date(msg.receivedAt).toLocaleString()}
                         </span>
                       </div>

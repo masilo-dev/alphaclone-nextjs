@@ -47,3 +47,39 @@ A direct new conversation to a tagged alias on the authorized owner Gmail accoun
 Live readback exposed a canonical thread key mismatch: Zoho can return a native source-message ID for a sent reply while the source uses an RFC root. A follow-up restricted ingestion migration resolves the known parent and retains the established canonical root, and read results use that identity. It also corrects pending sync status truth through the compatibility dispatcher. Local PostgreSQL tests cover the observed thread-key drift.
 
 The initial historical sync is genuinely resumable and remains pending while processing bounded batches. It has a durable job ID, cursor and message count, and no successful-full-sync timestamp has been fabricated. Complete historical coverage must not be claimed before the job completes. Credential/scope/provider-failure cases are covered by controlled tests, without deliberately invalidating production credentials.
+
+## Unified multi-provider mailbox architecture & reliability repairs
+
+### 1. Multi-Provider Mailbox Adapter Support
+- Unified `MailboxAdapter` interface implemented in `src/lib/email/mailboxService.ts`:
+  - `ZohoMailService`: Native Zoho Mail API integration.
+  - `MicrosoftGraphMailboxAdapter`: Microsoft Graph API integration (`/me/mailFolders`, `/me/messages`, reply endpoints) with token auto-refresh and graceful `EMAIL_RECONNECT_REQUIRED` detection.
+  - `GmailMailboxAdapter`: Gmail IMAP/SMTP integration with MIME parsing, folder discovery, and threading support.
+  - Transactional/sending-only providers (`brevo`, `resend`, `sendgrid`) cleanly rejected with `EMAIL_MAILBOX_NOT_SUPPORTED`.
+- Updated MCP tools (`reply_to_email`, `list_emails`, `search_emails`) in `src/lib/mcp/tools/email-ops.ts` to dynamically dispatch according to the target account's configured provider rather than assuming Zoho.
+- Migration `supabase/migrations/20261008090002_mcp_mailbox_lookup_indexes.sql` added with idempotent lookup indexes (`idx_email_messages_tenant_account_message`, `idx_email_messages_tenant_account_thread`, `idx_email_sync_jobs_tenant_account_status`) to accelerate message queries and prevent job scans.
+
+### 2. Rate Limiting & Auth Request Storm Mitigation
+- **Proxy Rate-Limit Exemption (`src/proxy.ts`)**:
+  - Reclassified third-party OAuth/integration endpoints (`/api/auth/zoho/`, `/api/auth/google/`, `/api/auth/microsoft/`, `/api/auth/cal`) into the standard API bucket (100 req/min) rather than the strict `auth.login` bucket (5 req/15 min).
+- **In-Flight Request Coalescing & Caching**:
+  - In `/api/auth/zoho/status/route.ts`, implemented single-flight promise de-duplication per `userId` and 30-second in-memory response caching.
+  - In `/api/auth/zoho/refresh/route.ts`, implemented single-flight token refresh pooling and proactive expiration buffer checks to eliminate redundant refresh calls and Zoho HTTP 429 errors.
+
+### 3. Hydration & Navigation Stability
+- Fixed React hydration error #418 across inbox components (`UnifiedInboxView.tsx`, `UnifiedInboxTab.tsx`) using `suppressHydrationWarning` on locale-formatted date strings.
+- Stabilized `useEffect` hook dependencies in `UnifiedInboxView.tsx` to prevent cascading mailbox fetch storms on initial load and folder switching.
+- Standardized `/mail` routing:
+  - Added Next.js server redirect page `src/app/mail/page.tsx` redirecting to `/dashboard/mail`.
+  - Added permanent redirect configuration in `next.config.ts`.
+  - Registered `/mail` under authenticated routes in `isPublicMarketingRoute.ts` and `MarketingShell.tsx` to ensure proper layout shells.
+
+### 4. PWA Installation Script Capture
+- Added an inline script in `src/app/layout.tsx` `<head>` capturing the early `beforeinstallprompt` event into `window.deferredPrompt` before hydration.
+
+### 5. Final Verification Status
+- `npm run typecheck`: 0 errors.
+- Unit tests (`tests/unit/mcp-mailbox-paths.test.mjs`): 17/17 passing.
+- Production guards (`npm run validate:prod-guards`): OK (`guard:design-system`, `guard:no-raw-hex: OK`, canonical route validation passed).
+- Repository changes are clean, strictly non-destructive to credentials, and Vercel-ready.
+

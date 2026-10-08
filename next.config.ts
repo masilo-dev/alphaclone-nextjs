@@ -105,6 +105,7 @@ const nextConfig: NextConfig = {
       // Retire public URLs that previously appeared in the XML sitemap. Keep
       // these as permanent, one-hop redirects so old Google records and
       // external links consolidate onto the current canonical pages.
+      { source: '/mail', destination: '/dashboard/mail', permanent: false },
       { source: '/portfolio', destination: '/results', permanent: true },
       { source: '/compare', destination: '/pricing', permanent: true },
       { source: '/login', destination: '/auth/login', permanent: true },

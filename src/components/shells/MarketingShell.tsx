@@ -18,7 +18,7 @@ export default function MarketingShell({ children }: { children: React.ReactNode
   const isRouteOrChild = (route: string) => pathname === route || pathname?.startsWith(`${route}/`);
 
   const isDashboardOrApp =
-    ['/dashboard', '/auth', '/login', '/register', '/account', '/billing', '/contract', '/project', '/invoice', '/form', '/portal', '/private-docs', '/p', '/bp']
+    ['/dashboard', '/auth', '/login', '/register', '/account', '/billing', '/contract', '/project', '/invoice', '/form', '/portal', '/private-docs', '/p', '/bp', '/mail']
       .some(isRouteOrChild);
 
   useLayoutEffect(() => {

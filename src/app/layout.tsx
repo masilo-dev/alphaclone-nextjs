@@ -115,6 +115,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             __html: buildConsentBootstrapScript(),
           }}
         />
+        <script
+          id="ac-pwa-deferred-prompt"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){if(typeof window!=='undefined'){window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.deferredPrompt=e;});}})();`,
+          }}
+        />
       </head>
       <body suppressHydrationWarning className="antialiased text-base font-sans touch-action-manipulation overscroll-behavior-none" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'none', touchAction: 'manipulation', WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale', textRendering: 'optimizeLegibility' }}>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationSchema) }} />

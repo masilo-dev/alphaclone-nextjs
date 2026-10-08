@@ -1119,7 +1119,7 @@ export default function UnifiedInboxTab({
                         {msg.from_name || msg.from_address || "Unknown"}
                       </span>
                     </div>
-                    <span className="type-ui text-[var(--ws-text-muted)] font-mono">
+                    <span suppressHydrationWarning className="type-ui text-[var(--ws-text-muted)] font-mono">
                       {msg.received_at
                         ? new Date(msg.received_at).toLocaleTimeString([], {
                             hour: "2-digit",
@@ -1405,7 +1405,7 @@ export default function UnifiedInboxTab({
                               </span>
                             )}
                           </div>
-                          <span className="type-caption text-[var(--ws-text-muted)] font-mono">
+                          <span suppressHydrationWarning className="type-caption text-[var(--ws-text-muted)] font-mono">
                             {threadMsg.received_at || threadMsg.sent_at
                               ? new Date(
                                   threadMsg.received_at || threadMsg.sent_at!,

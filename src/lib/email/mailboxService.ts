@@ -1,6 +1,65 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
-import { mailboxDate } from './mailboxNormalization';
+import { mailboxDate, replyRecipients } from './mailboxNormalization';
+
+export interface MailboxFolder {
+  folderId: string;
+  folderName: string;
+}
+
+export interface MailboxRawMessage {
+  messageId: string;
+  folderId?: string;
+  receivedTime?: string;
+  [key: string]: unknown;
+}
+
+export interface MailboxFullMessage {
+  id: string;
+  thread_id: string | null;
+  subject: string;
+  from: string;
+  to: string[];
+  cc: string[];
+  date: string | null;
+  is_read: boolean;
+  body_html: string;
+  body_text: string;
+  attachments: Array<{ filename: string; size?: number; attachment_id?: string }>;
+  folder_id?: string;
+  headers?: Record<string, unknown>;
+  reply_to?: string;
+}
+
+export interface MailboxVerification {
+  account_id: string;
+  address: string;
+  folders: MailboxFolder[];
+  verified_at: string;
+  send_scope_granted: boolean | null;
+}
+
+export interface MailboxAdapter {
+  verifyMailboxAccess(): Promise<MailboxVerification>;
+  getFolders(): Promise<MailboxFolder[]>;
+  getMessages(folderId: string, limit?: number, start?: number): Promise<any[]>;
+  searchMessages(query: string, limit?: number, start?: number): Promise<any[]>;
+  getFullMessagePayload(message: any, folderId?: string): Promise<MailboxFullMessage>;
+  replyToMessage(params: {
+    messageId: string;
+    original?: MailboxFullMessage;
+    bodyHtml: string;
+    bodyText?: string;
+    replyAll?: boolean;
+    attachments?: Array<{ filename: string; content: string; contentType?: string }>;
+  }): Promise<{
+    messageId: string;
+    data?: { messageId: string };
+    original: { subject: string };
+    recipients: { to: string[]; cc: string[] };
+    [key: string]: unknown;
+  }>;
+}
 
 type MailboxAccount = {
   id: string;
@@ -26,18 +85,27 @@ type MailboxSyncJob = {
   next_action?: string | null;
 };
 export function mailboxError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
+  const message =
+    error instanceof Error
+      ? error.message
+      : (error as { message?: string })?.message || String(error);
   const status = (error as { status?: number })?.status;
-  const explicit = message.match(/^(EMAIL_[A-Z_]+|ZOHO_[A-Z_]+):?/);
+  const explicit = message.match(
+    /(?:^|:\s*)(EMAIL_[A-Z_]+|ZOHO_[A-Z_]+|MICROSOFT_[A-Z_]+):?/,
+  );
   const code =
-    explicit?.[1] ||
-    (status === 403 || /scope|permission/i.test(message)
-      ? 'EMAIL_PERMISSION_MISSING'
-      : /auth.*expired|refresh token|invalid_grant/i.test(message)
-        ? 'EMAIL_AUTH_EXPIRED'
-        : /timeout|abort/i.test(message)
-          ? 'EMAIL_PROVIDER_TIMEOUT'
-          : 'EMAIL_MAILBOX_FAILED');
+    explicit?.[1] === 'MICROSOFT_RECONNECT_REQUIRED'
+      ? 'EMAIL_RECONNECT_REQUIRED'
+      : explicit?.[1] ||
+        (status === 403 || /scope|permission/i.test(message)
+          ? 'EMAIL_PERMISSION_MISSING'
+          : /reconnect|auth.*expired|refresh token|invalid_grant|decrypted with any configured secret/i.test(
+                message,
+              )
+            ? 'EMAIL_AUTH_EXPIRED'
+            : /timeout|abort/i.test(message)
+              ? 'EMAIL_PROVIDER_TIMEOUT'
+              : 'EMAIL_MAILBOX_FAILED');
   return { code, message };
 }
 function checked<T extends { error: unknown }>(result: T): T {
@@ -46,6 +114,475 @@ function checked<T extends { error: unknown }>(result: T): T {
       `EMAIL_STORAGE_FAILED: ${(result.error as { message?: string }).message || String(result.error)}`,
     );
   return result;
+}
+
+export class MicrosoftGraphMailboxAdapter implements MailboxAdapter {
+  constructor(
+    readonly userId: string,
+    readonly tenantId: string,
+    readonly db: ReturnType<typeof createSupabaseAdminClient>,
+  ) {}
+
+  private async getValidAccessToken(): Promise<string> {
+    try {
+      const {
+        getMicrosoftTokens,
+        refreshMicrosoftAccessToken,
+      } = await import('@/services/microsoft/microsoftConnectionService');
+      const { connection } = await getMicrosoftTokens(this.db, this.userId);
+      if (!connection) {
+        throw new Error('EMAIL_MAILBOX_NOT_CONNECTED: Microsoft 365 is not connected.');
+      }
+      const { accessToken } = await refreshMicrosoftAccessToken(this.db, this.userId);
+      if (!accessToken) {
+        throw new Error('EMAIL_AUTH_EXPIRED: Microsoft 365 access token could not be obtained.');
+      }
+      return accessToken;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (
+        (err as { code?: string })?.code === 'MICROSOFT_RECONNECT_REQUIRED' ||
+        /reconnect|secret|decrypt|malformed/i.test(message)
+      ) {
+        throw new Error(
+          'EMAIL_RECONNECT_REQUIRED: Microsoft 365 session expired. Reconnect in Settings → Integrations.',
+        );
+      }
+      throw err;
+    }
+  }
+
+  private async graphFetch(path: string, options: RequestInit = {}): Promise<any> {
+    const accessToken = await this.getValidAccessToken();
+    const url = path.startsWith('https://')
+      ? path
+      : `https://graph.microsoft.com/v1.0${path.startsWith('/') ? path : `/${path}`}`;
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      if (res.status === 401 || res.status === 403 || /invalid.*token|expired/i.test(text)) {
+        throw new Error('EMAIL_AUTH_EXPIRED: Microsoft Graph access token rejected.');
+      }
+      throw new Error(`MICROSOFT_GRAPH_ERROR_${res.status}: ${text || res.statusText}`);
+    }
+    if (res.status === 204) return {};
+    return res.json().catch(() => ({}));
+  }
+
+  async verifyMailboxAccess(): Promise<MailboxVerification> {
+    const profile = await this.graphFetch('/me');
+    const address = profile.mail || profile.userPrincipalName;
+    if (!address || !String(address).includes('@')) {
+      throw new Error('EMAIL_MAILBOX_ADDRESS_UNAVAILABLE');
+    }
+    const folders = await this.getFolders();
+    const inbox = folders.find((f) => f.folderName.toLowerCase() === 'inbox');
+    if (!inbox) throw new Error('EMAIL_INBOX_NOT_FOUND');
+    await this.getMessages(inbox.folderId, 1, 1);
+    return {
+      account_id: String(profile.id),
+      address: String(address),
+      folders,
+      verified_at: new Date().toISOString(),
+      send_scope_granted: true,
+    };
+  }
+
+  async getFolders(): Promise<MailboxFolder[]> {
+    const data = await this.graphFetch('/me/mailFolders?$top=50');
+    const list = Array.isArray(data?.value) ? data.value : [];
+    return list.map((f: any) => ({
+      folderId: String(f.id),
+      folderName: String(f.displayName || 'Folder'),
+    }));
+  }
+
+  async getMessages(folderId: string, limit = 20, start = 1): Promise<MailboxRawMessage[]> {
+    const skip = Math.max(0, start - 1);
+    const select = [
+      'id',
+      'conversationId',
+      'subject',
+      'from',
+      'toRecipients',
+      'ccRecipients',
+      'receivedDateTime',
+      'isRead',
+      'hasAttachments',
+      'bodyPreview',
+      'body',
+      'internetMessageHeaders',
+    ].join(',');
+    const data = await this.graphFetch(
+      `/me/mailFolders/${encodeURIComponent(folderId)}/messages?$top=${limit}&$skip=${skip}&$orderby=receivedDateTime%20desc&$select=${select}`,
+    );
+    const list = Array.isArray(data?.value) ? data.value : [];
+    return list.map((msg: any) => ({
+      ...msg,
+      messageId: String(msg.id),
+      folderId,
+      receivedTime: String(msg.receivedDateTime || ''),
+    }));
+  }
+
+  async searchMessages(query: string, limit = 20, start = 1): Promise<MailboxRawMessage[]> {
+    const skip = Math.max(0, start - 1);
+    const select = [
+      'id',
+      'conversationId',
+      'subject',
+      'from',
+      'toRecipients',
+      'ccRecipients',
+      'receivedDateTime',
+      'isRead',
+      'hasAttachments',
+      'bodyPreview',
+      'body',
+      'parentFolderId',
+      'internetMessageHeaders',
+    ].join(',');
+    const data = await this.graphFetch(
+      `/me/messages?$search="${encodeURIComponent(query)}"&$top=${limit}&$skip=${skip}&$select=${select}`,
+    );
+    const list = Array.isArray(data?.value) ? data.value : [];
+    return list.map((msg: any) => ({
+      ...msg,
+      messageId: String(msg.id),
+      folderId: String(msg.parentFolderId || ''),
+      receivedTime: String(msg.receivedDateTime || ''),
+    }));
+  }
+
+  async getFullMessagePayload(message: any, folderId?: string): Promise<MailboxFullMessage> {
+    let full = message;
+    if (!full.body?.content) {
+      const select = [
+        'id',
+        'conversationId',
+        'subject',
+        'from',
+        'toRecipients',
+        'ccRecipients',
+        'receivedDateTime',
+        'isRead',
+        'hasAttachments',
+        'bodyPreview',
+        'body',
+        'parentFolderId',
+        'internetMessageHeaders',
+      ].join(',');
+      full = await this.graphFetch(
+        `/me/messages/${encodeURIComponent(message.id || message.messageId)}?$select=${select}`,
+      );
+    }
+    const html = full.body?.contentType === 'html' ? String(full.body?.content || '') : '';
+    const text =
+      full.body?.contentType === 'text'
+        ? String(full.body?.content || '')
+        : (html
+            .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
+            .replace(/<[^>]*>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim() || String(full.bodyPreview || ''));
+
+    const headers: Record<string, string> = {};
+    if (Array.isArray(full.internetMessageHeaders)) {
+      for (const h of full.internetMessageHeaders) {
+        if (h?.name && h?.value) {
+          headers[String(h.name).toLowerCase()] = String(h.value);
+        }
+      }
+    }
+
+    const fromAddress = full.from?.emailAddress?.address || '';
+    const fromName = full.from?.emailAddress?.name || '';
+    const fromStr = fromName && fromAddress ? `${fromName} <${fromAddress}>` : fromAddress || fromName;
+
+    const toAddresses = Array.isArray(full.toRecipients)
+      ? full.toRecipients.map((r: any) => r.emailAddress?.address).filter(Boolean)
+      : [];
+    const ccAddresses = Array.isArray(full.ccRecipients)
+      ? full.ccRecipients.map((r: any) => r.emailAddress?.address).filter(Boolean)
+      : [];
+
+    return {
+      id: String(full.id),
+      thread_id: String(full.conversationId || headers['references'] || headers['in-reply-to'] || full.id),
+      subject: String(full.subject || ''),
+      from: fromStr,
+      to: toAddresses,
+      cc: ccAddresses,
+      date: mailboxDate(full.receivedDateTime),
+      is_read: Boolean(full.isRead),
+      body_html: html,
+      body_text: text,
+      attachments: [],
+      folder_id: folderId || full.parentFolderId,
+      headers,
+      reply_to: headers['reply-to'],
+    };
+  }
+
+  async replyToMessage(params: {
+    messageId: string;
+    bodyHtml: string;
+    bodyText?: string;
+    original?: MailboxFullMessage;
+    replyAll?: boolean;
+    attachments?: Array<{ filename: string; content: string; contentType?: string }>;
+  }) {
+    const action = params.replyAll ? 'createReplyAll' : 'createReply';
+    const draft = await this.graphFetch(`/me/messages/${encodeURIComponent(params.messageId)}/${action}`, {
+      method: 'POST',
+    });
+    const draftId = String(draft?.id || params.messageId);
+
+    await this.graphFetch(`/me/messages/${encodeURIComponent(draftId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        body: {
+          contentType: params.bodyHtml ? 'html' : 'text',
+          content: params.bodyHtml || params.bodyText || '',
+        },
+      }),
+    });
+
+    await this.graphFetch(`/me/messages/${encodeURIComponent(draftId)}/send`, {
+      method: 'POST',
+    });
+
+    const original = params.original || {
+      subject: String(draft.subject || ''),
+      from: '',
+      to: [],
+      cc: [],
+    };
+    const own = [draft.from?.emailAddress?.address || ''];
+    const recipients = replyRecipients(original, own, Boolean(params.replyAll));
+
+    return {
+      messageId: draftId,
+      data: { messageId: draftId },
+      original: { subject: original.subject },
+      recipients,
+    };
+  }
+}
+
+export class GmailMailboxAdapter implements MailboxAdapter {
+  constructor(
+    readonly userId: string,
+    readonly tenantId: string,
+    readonly db: ReturnType<typeof createSupabaseAdminClient>,
+  ) {}
+
+  private async getImapClient() {
+    const { resolveEmailProviderConfig } = await import(
+      '@/lib/email/providerIntegrationResolver'
+    );
+    const config = await resolveEmailProviderConfig({
+      preferredUserId: this.userId,
+      preferredProvider: 'gmail',
+    });
+    if (!config || config.provider !== 'gmail' || !config.apiKey) {
+      throw new Error(
+        'EMAIL_AUTH_EXPIRED: Gmail integration not configured with App Password.',
+      );
+    }
+    const { gmailServerService } = await import(
+      '@/services/server/gmailServerService'
+    );
+    return { client: await gmailServerService.getImapClient(this.userId), config };
+  }
+
+  async verifyMailboxAccess(): Promise<MailboxVerification> {
+    const { client, config } = await this.getImapClient();
+    await client.connect();
+    try {
+      const lock = await client.getMailboxLock('INBOX');
+      lock.release();
+      const folders: MailboxFolder[] = [
+        { folderId: 'INBOX', folderName: 'Inbox' },
+        { folderId: '[Gmail]/Sent Mail', folderName: 'Sent' },
+      ];
+      return {
+        account_id: config.fromEmail!,
+        address: config.fromEmail!,
+        folders,
+        verified_at: new Date().toISOString(),
+        send_scope_granted: true,
+      };
+    } finally {
+      await client.logout();
+    }
+  }
+
+  async getFolders(): Promise<MailboxFolder[]> {
+    const { client } = await this.getImapClient();
+    await client.connect();
+    try {
+      const list = await client.list();
+      return list.map((box: any) => ({
+        folderId: box.path,
+        folderName: box.name,
+      }));
+    } finally {
+      await client.logout();
+    }
+  }
+
+  async getMessages(folderId = 'INBOX', limit = 20, _start = 1): Promise<MailboxRawMessage[]> {
+    const { client } = await this.getImapClient();
+    await client.connect();
+    try {
+      const lock = await client.getMailboxLock(folderId);
+      try {
+        const messages: MailboxRawMessage[] = [];
+        // @ts-ignore
+        for await (const msg of client.fetch({ last: limit }, { envelope: true, source: false, gmThreadId: true })) {
+          const env = msg.envelope;
+          if (!env) continue;
+          messages.push({
+            messageId: msg.uid.toString(),
+            id: msg.uid.toString(),
+            // @ts-ignore
+            threadId: msg.gmThreadId || msg.uid.toString(),
+            subject: env.subject || '',
+            from: env.from?.[0] ? `${env.from[0].name || ''} <${env.from[0].address}>`.trim() : 'Unknown',
+            to: (env.to || []).map((t: any) => t.address).filter(Boolean),
+            cc: (env.cc || []).map((c: any) => c.address).filter(Boolean),
+            receivedTime: env.date?.toISOString(),
+            date: env.date?.toISOString(),
+            folderId,
+          });
+        }
+        return messages.reverse();
+      } finally {
+        lock.release();
+      }
+    } finally {
+      await client.logout();
+    }
+  }
+
+  async searchMessages(query: string, limit = 20, _start = 1): Promise<MailboxRawMessage[]> {
+    const { client } = await this.getImapClient();
+    await client.connect();
+    try {
+      const lock = await client.getMailboxLock('INBOX');
+      try {
+        const uids = await client.search({ body: query });
+        if (!uids || !uids.length) return [];
+        const messages: MailboxRawMessage[] = [];
+        // @ts-ignore
+        for await (const msg of client.fetch(uids.slice(-limit), { envelope: true, gmThreadId: true })) {
+          const env = msg.envelope;
+          if (!env) continue;
+          messages.push({
+            messageId: msg.uid.toString(),
+            id: msg.uid.toString(),
+            // @ts-ignore
+            threadId: msg.gmThreadId || msg.uid.toString(),
+            subject: env.subject || '',
+            from: env.from?.[0] ? `${env.from[0].name || ''} <${env.from[0].address}>`.trim() : 'Unknown',
+            receivedTime: env.date?.toISOString(),
+            folderId: 'INBOX',
+          });
+        }
+        return messages.reverse();
+      } finally {
+        lock.release();
+      }
+    } finally {
+      await client.logout();
+    }
+  }
+
+  async getFullMessagePayload(message: any, folderId = 'INBOX'): Promise<MailboxFullMessage> {
+    const { client } = await this.getImapClient();
+    await client.connect();
+    try {
+      const lock = await client.getMailboxLock(folderId);
+      try {
+        const uid = Number(message.id || message.messageId);
+        const fetched = (await client.fetchOne(uid, { envelope: true, source: true, threadId: true, gmThreadId: true } as any)) as any;
+        const env = (fetched && typeof fetched === 'object' && 'envelope' in fetched && fetched.envelope) ? (fetched.envelope as any) : {};
+        const rawSource = (fetched && typeof fetched === 'object' && 'source' in fetched && fetched.source) ? fetched.source.toString() : '';
+        const html = rawSource.includes('<html') ? rawSource : '';
+        const text = rawSource.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+        return {
+          id: String(uid),
+          thread_id: String((fetched && typeof fetched === 'object' && (fetched.threadId || fetched.gmThreadId)) || message.threadId || uid),
+          subject: String(env.subject || message.subject || ''),
+          from: env.from?.[0] ? `${env.from[0].name || ''} <${env.from[0].address}>`.trim() : String(message.from || 'Unknown'),
+          to: (env.to || []).map((t: any) => t.address).filter(Boolean),
+          cc: (env.cc || []).map((c: any) => c.address).filter(Boolean),
+          date: mailboxDate(env.date || message.receivedTime),
+          is_read: true,
+          body_html: html,
+          body_text: text || message.snippet || '',
+          attachments: [],
+          folder_id: folderId,
+        };
+      } finally {
+        lock.release();
+      }
+    } finally {
+      await client.logout();
+    }
+  }
+
+  async replyToMessage(params: {
+    messageId: string;
+    bodyHtml: string;
+    bodyText?: string;
+    original?: MailboxFullMessage;
+    replyAll?: boolean;
+    attachments?: Array<{ filename: string; content: string; contentType?: string }>;
+  }) {
+    const { gmailServerService } = await import(
+      '@/services/server/gmailServerService'
+    );
+    const { config } = await this.getImapClient();
+    const original: MailboxFullMessage = params.original || {
+      id: params.messageId,
+      thread_id: null,
+      subject: 'Re: Conversation',
+      from: '',
+      to: [],
+      cc: [],
+      date: null,
+      is_read: true,
+      body_html: '',
+      body_text: '',
+      attachments: [],
+    };
+    const own = [config.fromEmail!];
+    const recipients = replyRecipients(original, own, Boolean(params.replyAll));
+    const result = await gmailServerService.sendEmail(this.userId, {
+      to: recipients.to.join(','),
+      subject: original.subject.startsWith('Re:') ? original.subject : `Re: ${original.subject}`,
+      messageBody: params.bodyHtml || params.bodyText || '',
+      threadId: original.thread_id || params.messageId,
+      cc: recipients.cc.join(','),
+      attachments: params.attachments,
+    });
+    return {
+      messageId: String(result.id),
+      data: { messageId: String(result.id) },
+      original: { subject: original.subject },
+      recipients,
+    };
+  }
 }
 
 export class MailboxService {
@@ -72,7 +609,7 @@ export class MailboxService {
     );
   }
 
-  async account(id?: string) {
+  async account(id?: string): Promise<MailboxAccount> {
     const accounts = (await this.accounts()).filter((row) =>
       ['user', 'shared_mailbox'].includes(row.account_type),
     );
@@ -83,14 +620,45 @@ export class MailboxService {
           ? 'EMAIL_ACCOUNT_SELECTION_REQUIRED: pass account_id from list_email_accounts'
           : 'EMAIL_MAILBOX_NOT_CONNECTED',
       );
-    if (matches[0].provider !== 'zoho')
-      throw new Error(`EMAIL_READ_ADAPTER_UNAVAILABLE: ${matches[0].provider}`);
-    return matches[0];
+    const target = matches[0];
+    const sendingOnlyProviders = ['brevo', 'resend', 'sendgrid'];
+    if (sendingOnlyProviders.includes(target.provider.toLowerCase())) {
+      throw new Error(
+        `EMAIL_MAILBOX_NOT_SUPPORTED: ${target.provider} is a sending-only provider and does not support mailbox sync or reading.`,
+      );
+    }
+    const supportedProviders = [
+      'zoho',
+      'microsoft',
+      'microsoft_graph',
+      'outlook',
+      'gmail',
+      'imap',
+    ];
+    if (!supportedProviders.includes(target.provider.toLowerCase())) {
+      throw new Error(`EMAIL_READ_ADAPTER_UNAVAILABLE: ${target.provider}`);
+    }
+    return target;
   }
 
-  provider(account: MailboxAccount) {
+  provider(account: MailboxAccount): MailboxAdapter {
     if (!account.owner_user_id) throw new Error('EMAIL_ACCOUNT_OWNER_REQUIRED');
-    return new ZohoMailService(account.owner_user_id, this.tenantId);
+    const p = (account.provider || '').toLowerCase();
+    if (p === 'zoho') {
+      return new ZohoMailService(account.owner_user_id, this.tenantId);
+    }
+    if (['microsoft', 'microsoft_graph', 'outlook'].includes(p)) {
+      return new MicrosoftGraphMailboxAdapter(account.owner_user_id, this.tenantId, this.db);
+    }
+    if (['gmail', 'imap'].includes(p)) {
+      return new GmailMailboxAdapter(account.owner_user_id, this.tenantId, this.db);
+    }
+    if (['brevo', 'resend', 'sendgrid'].includes(p)) {
+      throw new Error(
+        `EMAIL_MAILBOX_NOT_SUPPORTED: ${account.provider} is a sending-only provider and does not support mailbox sync or reading.`,
+      );
+    }
+    throw new Error(`EMAIL_READ_ADAPTER_UNAVAILABLE: ${account.provider}`);
   }
 
   async verify(account: MailboxAccount) {
@@ -134,9 +702,17 @@ export class MailboxService {
   async discover() {
     const accounts = await this.accounts();
     const results = [];
+    const supportedProviders = [
+      'zoho',
+      'microsoft',
+      'microsoft_graph',
+      'outlook',
+      'gmail',
+      'imap',
+    ];
     for (const account of accounts) {
-      if (account.provider !== 'zoho') {
-        results.push({ ...account, read_access: 'unverified' });
+      if (!supportedProviders.includes(account.provider.toLowerCase())) {
+        results.push({ ...account, read_access: 'unsupported' });
         continue;
       }
       try {

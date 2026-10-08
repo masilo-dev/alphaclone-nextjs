@@ -34,6 +34,7 @@ function load(path, dependencies = {}) {
       setTimeout,
       clearTimeout,
       Date,
+      Error,
     },
     { filename: path },
   );
@@ -687,3 +688,115 @@ test('provider long IDs survive JSON parsing without precision loss', () => {
   assert.equal(result.data.messageId, '1791409299569005601');
   assert.equal(result.data.folderId, '8563655000000002014');
 });
+
+test('multi-provider adapter dispatch supports Zoho, Microsoft Graph and Gmail; sending-only providers rejected', async () => {
+  const db = memoryDb();
+  db.tables.email_provider_accounts.push(
+    {
+      id: 'ms-account',
+      tenant_id: 'tenant',
+      owner_user_id: 'owner',
+      provider: 'microsoft_graph',
+      account_type: 'user',
+      email_address: 'owner@outlook.com',
+      deleted_at: null,
+      capabilities: {},
+      sync_status: 'not_started',
+    },
+    {
+      id: 'gmail-account',
+      tenant_id: 'tenant',
+      owner_user_id: 'owner',
+      provider: 'gmail',
+      account_type: 'user',
+      email_address: 'owner@gmail.com',
+      deleted_at: null,
+      capabilities: {},
+      sync_status: 'not_started',
+    },
+    {
+      id: 'brevo-account',
+      tenant_id: 'tenant',
+      owner_user_id: 'owner',
+      provider: 'brevo',
+      account_type: 'user',
+      email_address: 'notifications@alphaclonesystems.com',
+      deleted_at: null,
+      capabilities: {},
+      sync_status: 'not_started',
+    },
+    {
+      id: 'unknown-account',
+      tenant_id: 'tenant',
+      owner_user_id: 'owner',
+      provider: 'some_smtp_only',
+      account_type: 'user',
+      email_address: 'other@example.com',
+      deleted_at: null,
+      capabilities: {},
+      sync_status: 'not_started',
+    },
+  );
+
+  const {
+    MailboxService,
+    MicrosoftGraphMailboxAdapter,
+    GmailMailboxAdapter,
+    mailboxError,
+  } = load('src/lib/email/mailboxService.ts', {
+    '@/lib/supabase-admin': { createSupabaseAdminClient: () => db },
+    './mailboxNormalization': normalization,
+  });
+
+  const service = new MailboxService('tenant', 'owner', db);
+
+  // 1. Microsoft Graph account resolves correctly
+  const msAccount = await service.account('ms-account');
+  assert.equal(msAccount.provider, 'microsoft_graph');
+  const msAdapter = service.provider(msAccount);
+  assert.ok(msAdapter instanceof MicrosoftGraphMailboxAdapter);
+
+  // 2. Gmail account resolves correctly
+  const gmAccount = await service.account('gmail-account');
+  assert.equal(gmAccount.provider, 'gmail');
+  const gmAdapter = service.provider(gmAccount);
+  assert.ok(gmAdapter instanceof GmailMailboxAdapter);
+
+  // 3. Sending-only provider (Brevo) rejected with EMAIL_MAILBOX_NOT_SUPPORTED
+  await assert.rejects(
+    () => service.account('brevo-account'),
+    (err) => {
+      assert.match(err.message, /^EMAIL_MAILBOX_NOT_SUPPORTED:/);
+      assert.match(err.message, /sending-only/);
+      return true;
+    },
+  );
+
+  // 4. Unknown provider rejected with EMAIL_READ_ADAPTER_UNAVAILABLE
+  await assert.rejects(
+    () => service.account('unknown-account'),
+    (err) => {
+      assert.match(err.message, /^EMAIL_READ_ADAPTER_UNAVAILABLE:/);
+      return true;
+    },
+  );
+
+  // 5. Error mapping translates Microsoft reconnect and secret mismatch errors
+  const errReconnect = mailboxError(
+    new Error('MICROSOFT_RECONNECT_REQUIRED: Token invalid'),
+  );
+  assert.equal(errReconnect.code, 'EMAIL_RECONNECT_REQUIRED');
+
+  const errSecretMismatch = mailboxError(
+    new Error(
+      'Stored token could not be decrypted with any configured secret',
+    ),
+  );
+  assert.equal(errSecretMismatch.code, 'EMAIL_AUTH_EXPIRED');
+
+  // 6. Discover reports sending-only as unsupported
+  const discovered = await service.discover();
+  const brevoDiscovered = discovered.find((d) => d.account_id === 'brevo-account');
+  assert.equal(brevoDiscovered?.read_access, 'unsupported');
+});
+

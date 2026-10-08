@@ -62,6 +62,7 @@ export function isAppShellRoute(pathname: string | null | undefined): boolean {
     pathname.startsWith('/call') ||
     pathname.startsWith('/contract') ||
     (pathname === '/project' || pathname.startsWith('/project/')) ||
+    (pathname === '/mail' || pathname.startsWith('/mail/')) ||
     pathname.startsWith('/p/') ||
     pathname.startsWith('/bp/')
   );

@@ -126,10 +126,17 @@ async function applyGlobalApiRateLimit(
   }
 
   const ip = clientIp(request);
+  const isIntegrationAuth =
+    pathname.startsWith("/api/auth/zoho/") ||
+    pathname.startsWith("/api/auth/google/") ||
+    pathname.startsWith("/api/auth/microsoft/") ||
+    pathname.startsWith("/api/auth/cal/") ||
+    pathname.startsWith("/api/auth/cal");
   const isAuth =
-    pathname.startsWith("/api/auth/") ||
-    pathname.includes("/login") ||
-    pathname.includes("/signup");
+    !isIntegrationAuth &&
+    (pathname.startsWith("/api/auth/") ||
+      pathname.includes("/login") ||
+      pathname.includes("/signup"));
   const isMcp = pathname === "/api/mcp" || pathname.startsWith("/api/mcp/");
   const config = isAuth
     ? rateLimitConfigs.auth.login
@@ -139,7 +146,7 @@ async function applyGlobalApiRateLimit(
   // Bucket MCP by IP only (not path) so initialize + tools/list share one generous budget
   const key = isMcp
     ? `mcp:${ip}`
-    : `${isAuth ? "auth" : "api"}:${ip}:${pathname.split("/").slice(0, 4).join("/")}`;
+    : `${isAuth ? "auth" : isIntegrationAuth ? "integration-auth" : "api"}:${ip}:${pathname.split("/").slice(0, 4).join("/")}`;
 
   const result = await rateLimit(request, config, key);
   if (result.success) return null;
@@ -215,6 +222,11 @@ export async function proxy(request: NextRequest) {
   const policy = await fetchPlatformPolicy();
 
   // Canonical route consolidation to close legacy entry points.
+  if (pathname === "/mail") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard/mail";
+    return applyRequiredOwaspHeaders(NextResponse.redirect(url));
+  }
   if (pathname === "/dashboard/gmail") {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard/mail";

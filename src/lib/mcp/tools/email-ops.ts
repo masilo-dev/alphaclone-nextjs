@@ -823,7 +823,11 @@ defineConnectorTool({
         receipt: {
           action_id: String(existing.action_id),
           status: String(existing.final_status),
-          provider: 'zoho',
+          provider: String(
+            (existing.sanitized_output as any)?.provider ||
+              existing.provider ||
+              'zoho',
+          ),
           provider_reference: existing.provider_reference as string,
         },
         meta: { deduplicated: true },
@@ -866,7 +870,7 @@ defineConnectorTool({
       idempotencyKey: args.idempotency_key,
       target: {
         workspace_id: ctx.tenantId,
-        integration: 'zoho',
+        integration: account.provider,
         identity_id: account.id,
         resource_type: 'email_message',
         resource_id: original.provider_message_id,
@@ -882,8 +886,7 @@ defineConnectorTool({
           execute: async (_actionId, checkpoint) => {
             const response = await mailbox.provider(account).replyToMessage({
               messageId: original.provider_message_id,
-              original:
-                original as unknown as import('@/services/zoho/ZohoMailService').ZohoFullMessage,
+              original: original as any,
               bodyHtml: args.html || textHtml,
               bodyText: args.text,
               replyAll: args.reply_all,
@@ -898,7 +901,7 @@ defineConnectorTool({
               success: true,
               emailId: reference,
               deliveryStatus: 'provider_accepted',
-              provider: 'zoho',
+              provider: account.provider,
               message_id: reference,
               account_id: account.id,
               thread_id: original.thread_id,
@@ -946,7 +949,7 @@ defineConnectorTool({
       buildReceipt: (data) => ({
         action_id: '',
         status: 'provider_accepted',
-        provider: 'zoho',
+        provider: account.provider,
         provider_reference: data.message_id,
         timestamp: data.accepted_at,
         entity_type: 'email',
@@ -1354,18 +1357,18 @@ for (const name of ['read_emails', 'search_emails'] as const) {
       properties: { ...mailboxJson, query: { type: 'string' } },
       required: name === 'search_emails' ? ['query'] : [],
     },
-    handler: async (args, ctx) =>
-      okResult(
-        name,
-        await new MailboxService(ctx.tenantId, ctx.userId).list(args),
-        {
-          receipt: {
-            status: 'completed',
-            provider: 'zoho',
-            verification: { scope: 'mailbox_read' },
-          },
+    handler: async (args, ctx) => {
+      const mailbox = new MailboxService(ctx.tenantId, ctx.userId);
+      const result = await mailbox.list(args);
+      const account = await mailbox.account(result.account_id);
+      return okResult(name, result, {
+        receipt: {
+          status: 'completed',
+          provider: account.provider,
+          verification: { scope: 'mailbox_read' },
         },
-      ),
+      });
+    },
   });
 }
 

@@ -10,6 +10,8 @@ function tokenNeedsRefresh(expiryDate: string | undefined, force: boolean): bool
   return Date.now() + 5 * 60 * 1000 >= expiresAt;
 }
 
+const inFlightRefresh = new Map<string, Promise<{ success: boolean; refreshed: boolean }>>();
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const force = body?.force === true;
@@ -17,6 +19,8 @@ export async function POST(req: NextRequest) {
   try {
     const tenantId = String(body?.tenantId || '').trim();
     const { user } = await requireTenantAccess(tenantId, req);
+    const key = `${user.id}:${tenantId}`;
+
     const zohoService = new ZohoService(user.id, tenantId);
     const config = await zohoService.getConfig();
     if (!config?.refreshToken) {
@@ -30,19 +34,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, refreshed: false });
     }
 
-    const token = await zohoService.refreshAccessToken();
-    if (!token) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Could not refresh Zoho token. Try again in a moment.',
-          reconnect: false,
-        },
-        { status: 503 }
-      );
+    const existingFlight = inFlightRefresh.get(key);
+    if (existingFlight) {
+      const result = await existingFlight;
+      return NextResponse.json(result);
     }
 
-    return NextResponse.json({ success: true, refreshed: true });
+    const refreshPromise = (async () => {
+      const token = await zohoService.refreshAccessToken();
+      if (!token) {
+        throw new Error('Could not refresh Zoho token. Try again in a moment.');
+      }
+      return { success: true, refreshed: true };
+    })();
+
+    inFlightRefresh.set(key, refreshPromise);
+    try {
+      const result = await refreshPromise;
+      return NextResponse.json(result);
+    } finally {
+      inFlightRefresh.delete(key);
+    }
   } catch (err: unknown) {
     console.error('[Zoho Refresh] Error:', err);
     const expired = err instanceof ZohoAuthExpiredError;
