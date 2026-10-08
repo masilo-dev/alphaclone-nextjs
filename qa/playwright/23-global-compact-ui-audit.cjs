@@ -39,6 +39,9 @@ async function measurePage(page) {
     const tableHeader = document.querySelector('th');
     const tableCell = document.querySelector('td');
 
+    const button = document.querySelector('button.ac-workspace-action-btn, button:not([aria-hidden="true"])');
+    const input = document.querySelector('input:not([type="hidden"])');
+
     const getComputed = (el, prop) => (el ? window.getComputedStyle(el).getPropertyValue(prop) : null);
 
     const clientWidth = root.clientWidth;
@@ -65,6 +68,8 @@ async function measurePage(page) {
       density: {
         headerHeight: header ? header.offsetHeight : null,
         cardPadding: getComputed(card, 'padding'),
+        buttonHeight: button ? button.offsetHeight : null,
+        inputHeight: input ? input.offsetHeight : null,
       },
     };
   });

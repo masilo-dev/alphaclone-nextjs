@@ -175,7 +175,7 @@ export const Input: React.FC<InputProps> = ({
 
   const baseInputClass = `w-full bg-[var(--ws-surface-primary,var(--surface-primary))] border ${
     error ? 'border-[var(--danger)]' : 'border-[var(--ws-border,var(--border-default))]'
-  } rounded-[8px] px-3 py-1.5 sm:py-2 type-ui leading-normal text-[var(--ws-text-primary,var(--text-primary))] placeholder:text-[var(--ws-text-tertiary,var(--text-muted))] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-[var(--ac-accent)] transition-colors ${
+  } rounded-[8px] px-3 py-1.5 sm:py-1.5 type-ui leading-normal text-[var(--ws-text-primary,var(--text-primary))] placeholder:text-[var(--ws-text-tertiary,var(--text-muted))] focus:outline-none focus:ring-1.5 focus:ring-[var(--focus-ring)] focus:border-[var(--ac-accent)] transition-colors ${
     icon ? 'pl-9' : ''
   } ${className}`;
 
@@ -186,7 +186,7 @@ export const Input: React.FC<InputProps> = ({
       )}
       <div className="relative group">
         {icon && (
-          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted,var(--text-muted))] group-focus-within:text-[var(--interactive-secondary)] transition-colors pointer-events-none" aria-hidden="true">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted,var(--text-muted))] group-focus-within:text-[var(--interactive-secondary)] transition-colors pointer-events-none" aria-hidden="true">
             {icon}
           </div>
         )}
@@ -195,7 +195,7 @@ export const Input: React.FC<InputProps> = ({
             id={fieldId}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy}
-            className={`${baseInputClass} min-h-[80px] resize-y`}
+            className={`${baseInputClass} min-h-[72px] resize-y`}
             {...(validate || isControlled
               ? { ...props, ...fieldProps }
               : fieldProps as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
@@ -205,7 +205,7 @@ export const Input: React.FC<InputProps> = ({
             id={fieldId}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy}
-            className={`${baseInputClass} min-h-11`}
+            className={`${baseInputClass} min-h-[34px] sm:min-h-[32px] md:min-h-[34px] max-sm:min-h-10`}
             {...(validate || isControlled
               ? { ...props, ...fieldProps }
               : fieldProps as React.InputHTMLAttributes<HTMLInputElement>)}
@@ -310,14 +310,14 @@ export const Modal: React.FC<ModalProps> = ({
         className={`relative ${WORKSPACE.panel.base} rounded-t-2xl sm:rounded-xl w-full ${maxWidth} shadow-none animate-fade-in overflow-hidden max-h-[92dvh] sm:max-h-[85vh] flex flex-col ${className}`}
       >
         <div className="flex items-center justify-between p-3 sm:p-3.5 border-b border-[var(--ws-border)] flex-shrink-0">
-          <h3 id={titleId} className="text-base sm:text-lg font-semibold text-[var(--text-primary)]">{renderedTitle}</h3>
+          <h3 id={titleId} className="text-sm sm:text-base font-semibold text-[var(--text-primary)]">{renderedTitle}</h3>
           <button
             type="button"
             onClick={onClose}
             aria-label={t('Close dialog')}
-            className={`text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-2 min-h-11 min-w-11 hover:bg-[var(--surface-hover)] ${WORKSPACE.panel.radius}`}
+            className={`text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-1.5 h-8 w-8 inline-flex items-center justify-center hover:bg-[var(--surface-hover)] rounded-md`}
           >
-            <X className="w-5 h-5" aria-hidden="true" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
         <div className="min-h-0 flex-1 p-3 sm:p-3.5 overflow-y-auto overscroll-contain">
@@ -389,14 +389,14 @@ export const TableHead: React.FC<React.ThHTMLAttributes<HTMLTableCellElement>> =
   const { t } = useLanguage();
   const renderedChildren = typeof children === 'string' ? t(children) : children;
   return (
-    <th className={`h-11 px-4 text-left align-middle font-semibold type-caption tracking-wider uppercase text-[var(--ws-text-muted)] [&:has([role=checkbox])]:pr-0 ${className}`} {...props}>
+    <th className={`h-8.5 sm:h-9 px-3 text-left align-middle font-semibold type-caption tracking-wider uppercase text-[var(--ws-text-muted)] [&:has([role=checkbox])]:pr-0 ${className}`} {...props}>
       {renderedChildren}
     </th>
   );
 };
 
 export const TableCell: React.FC<React.TdHTMLAttributes<HTMLTableCellElement>> = ({ className = '', ...props }) => (
-  <td className={`px-4 py-3 align-middle type-table-cell text-[var(--ws-text-primary)] [&:has([role=checkbox])]:pr-0 ${className}`} {...props} />
+  <td className={`px-3 py-2 align-middle type-table-cell text-[var(--ws-text-primary)] [&:has([role=checkbox])]:pr-0 ${className}`} {...props} />
 );
 
 // --- Dropdown ---
@@ -529,14 +529,14 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
               item.onClick();
               setIsOpen(false);
             }}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 sm:py-2 min-h-11 sm:min-h-9 type-ui font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${
+            className={`w-full flex items-center gap-2 px-2.5 py-1.5 min-h-[30px] sm:min-h-[28px] text-[13px] font-medium rounded-md transition-colors focus:outline-none focus-visible:ring-1.5 focus-visible:ring-[var(--focus-ring)] ${
               item.variant === 'danger'
                 ? 'text-[var(--state-danger,var(--error-500))] hover:bg-[color-mix(in_srgb,var(--state-danger,var(--error-500))_10%,transparent)]'
                 : 'text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
             }`}
           >
-            {item.icon && <span className="shrink-0">{item.icon}</span>}
-            {t(item.label)}
+            {item.icon && <span className="shrink-0 [&_svg]:size-3.5 sm:[&_svg]:size-4">{item.icon}</span>}
+            <span className="truncate">{t(item.label)}</span>
           </button>
         ))}
       </div>

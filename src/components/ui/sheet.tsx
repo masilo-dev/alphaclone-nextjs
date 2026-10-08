@@ -5,7 +5,7 @@ import * as SheetPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const ENTERPRISE_TOUCH = 'min-h-11 min-w-11 flex items-center justify-center';
+const ENTERPRISE_TOUCH = 'min-h-11 min-w-11 sm:min-h-8 sm:min-w-8 sm:h-8 sm:w-8 flex items-center justify-center';
 
 const Sheet = SheetPrimitive.Root;
 const SheetTrigger = SheetPrimitive.Trigger;
@@ -71,7 +71,7 @@ const SheetContent = React.forwardRef<
           ENTERPRISE_TOUCH
         )}
       >
-        <X className="h-5 w-5" />
+        <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </SheetPrimitive.Close>
     </SheetPrimitive.Content>

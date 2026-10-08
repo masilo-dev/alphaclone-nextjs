@@ -17,8 +17,53 @@
 
   /* Global Spacing & Density Scale (20-30% reduction) */
   --ac-product-gap: 0.875rem;         /* 14px */
-  --ac-product-control-height: 2.25rem; /* 36px */
+  --ac-product-control-height: 2rem;  /* 32px standard compact control height */
   color: var(--ws-text-primary);
+}
+
+.ac-product-system button,
+.ac-business-root button {
+  white-space: nowrap;
+}
+
+/* Compact standard checkboxes and radios in product system */
+.ac-product-system input[type="checkbox"],
+.ac-business-root input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  accent-color: var(--brand-teal);
+  cursor: pointer;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.ac-product-system input[type="radio"],
+.ac-business-root input[type="radio"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--brand-teal);
+  cursor: pointer;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* Compact oversized button heights inside authenticated views */
+:is(.ac-product-system, .ac-business-root) button:is(.h-12) {
+  height: 2.125rem !important;
+  min-height: 2.125rem !important;
+}
+:is(.ac-product-system, .ac-business-root) button:is(.h-14) {
+  height: 2.375rem !important;
+  min-height: 2.375rem !important;
+}
+
+/* Compact tabs and segmented controls in product system */
+:is(.ac-product-system, .ac-business-root) .ac-workspace-tab {
+  min-height: 1.875rem; /* 30px */
+  padding: 0.25rem 0.625rem;
+  font-size: var(--type-ui-size, 13px);
+  border-radius: 6px;
 }
 
 .ac-product-system .ac-untitled-page__header,
@@ -28,7 +73,8 @@
   color: var(--ws-text-primary);
   background: var(--color-bg-active);
 }
-.ac-product-system :focus-visible {
+.ac-product-system :focus-visible,
+.ac-business-root :focus-visible {
   outline: 2px solid var(--color-border-brand, var(--brand-teal));
   outline-offset: 2px;
 }
@@ -54,7 +100,7 @@
     --type-label-size: 0.8125rem;       /* 13px */
     --type-form-label-size: 0.8125rem;  /* 13px */
     --ac-product-gap: 0.75rem;          /* 12px */
-    --ac-product-control-height: 2.5rem; /* 40px */
+    --ac-product-control-height: 2.125rem; /* 34px */
   }
 }
 
@@ -75,7 +121,7 @@
     --type-label-size: 0.75rem;         /* 12px */
     --type-form-label-size: 0.75rem;    /* 12px */
     --ac-product-gap: 0.625rem;         /* 10px */
-    --ac-product-control-height: 2.75rem; /* 44px touch targets */
+    --ac-product-control-height: 2.375rem; /* 38px touch targets */
   }
   .ac-product-system input:not([type="checkbox"]):not([type="radio"]),
   .ac-product-system select,

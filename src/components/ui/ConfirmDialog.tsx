@@ -57,16 +57,17 @@ export function ConfirmDialogProvider({ children }: { children: React.ReactNode 
         maxWidth="max-w-lg"
         containerClassName="ac-layer-confirm"
       >
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-3.5">
           {options?.description ? (
             <p className="type-caption text-[var(--text-secondary)]">{options.description}</p>
           ) : null}
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
-            <Button type="button" variant="outline" onClick={() => close(false)}>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => close(false)}>
               {options?.cancelLabel || 'Cancel'}
             </Button>
             <Button
               type="button"
+              size="sm"
               variant={options?.variant === 'danger' ? 'danger' : 'primary'}
               onClick={() => close(true)}
             >

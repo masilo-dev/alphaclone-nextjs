@@ -2587,8 +2587,9 @@ html.light .ac-kpi-card--interactive:hover {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 32px;
+  padding: 0 11px;
+  white-space: nowrap;
   border-radius: var(--ws-radius);
   border: 1px solid var(--ws-border-strong);
   background: var(--ws-panel-hover);

@@ -24,7 +24,7 @@ html.pwa-standalone .ac-business-root {
 
 /* Installed mobile app */
 html.ac-pwa-mobile {
-  --ac-app-control-height: 44px;
+  --ac-app-control-height: 38px;
   --ac-app-page-pad-x: 16px;
   --ac-app-page-pad-y: 14px;
 }
@@ -422,7 +422,7 @@ html.pwa-standalone [data-ac-surface='intelligence'] {
 @media (pointer: fine) {
   html.ac-pwa-desktop .ac-workspace-action-btn,
   html.ac-pwa-desktop .ac-workspace-tab {
-    min-height: 36px;
+    min-height: 32px;
   }
 }
 
@@ -431,7 +431,7 @@ html.pwa-standalone [data-ac-surface='intelligence'] {
   html.pwa-standalone [role='button'],
   html.pwa-standalone .ac-workspace-action-btn,
   html.pwa-standalone .ac-workspace-tab {
-    min-height: 44px;
+    min-height: 38px;
   }
 }
 

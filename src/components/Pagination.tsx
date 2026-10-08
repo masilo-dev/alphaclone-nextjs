@@ -32,12 +32,12 @@ const Pagination: React.FC<PaginationProps> = ({
         <div className={`flex items-center justify-between ${className}`}>
             {/* Items per page selector */}
             {onItemsPerPageChange && (
-                <div className="flex items-center gap-2 type-ui text-[var(--ws-text-muted)]">
+                <div className="flex items-center gap-1.5 type-caption text-[var(--ws-text-muted)]">
                     <span>Show</span>
                     <select
                         value={itemsPerPage}
                         onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
-                        className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg px-3 py-1 text-white focus:outline-none focus:border-teal-500"
+                        className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-md px-2 py-0.5 text-xs text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-teal)]"
                     >
                         <option value={10}>10</option>
                         <option value={25}>25</option>
@@ -50,48 +50,48 @@ const Pagination: React.FC<PaginationProps> = ({
 
             {/* Page info */}
             {totalItems !== undefined && (
-                <div className="type-ui text-[var(--ws-text-muted)]">
+                <div className="type-caption text-[var(--ws-text-muted)]">
                     Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)} to{' '}
                     {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} items
                 </div>
             )}
 
             {/* Page navigation */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-1.5">
                 {/* First page */}
                 <button
                     onClick={() => goToPage(1)}
                     disabled={currentPage === 1}
-                    className="p-2 rounded-lg text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-secondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-1 sm:p-1.5 rounded-md text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     title="First page"
                 >
-                    <ChevronsLeft className="w-4 h-4" />
+                    <ChevronsLeft className="w-3.5 h-3.5" />
                 </button>
 
                 {/* Previous page */}
                 <button
                     onClick={() => goToPage(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="p-2 rounded-lg text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-secondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-1 sm:p-1.5 rounded-md text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     title="Previous page"
                 >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
 
                 {/* Page numbers */}
                 <div className="flex items-center gap-1">
                     {pages.map((page, index) =>
                         page === '...' ? (
-                            <span key={`ellipsis-${index}`} className="px-3 py-1 text-[var(--ws-text-muted)]">
+                            <span key={`ellipsis-${index}`} className="px-2 py-0.5 text-xs text-[var(--ws-text-muted)]">
                                 ...
                             </span>
                         ) : (
                             <button
                                 key={page}
                                 onClick={() => goToPage(Number(page))}
-                                className={`px-3 py-1 rounded-lg type-ui font-medium transition-colors ${currentPage === page
-                                        ? 'bg-teal-500 text-white'
-                                        : 'text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-secondary)]'
+                                className={`min-w-[28px] h-7 px-2 rounded-md text-xs font-semibold transition-colors ${currentPage === page
+                                        ? 'bg-[var(--interactive-secondary,var(--brand-teal))] text-[var(--text-inverse)]'
+                                        : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)]'
                                     }`}
                             >
                                 {page}
@@ -104,20 +104,20 @@ const Pagination: React.FC<PaginationProps> = ({
                 <button
                     onClick={() => goToPage(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="p-2 rounded-lg text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-secondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-1 sm:p-1.5 rounded-md text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     title="Next page"
                 >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-3.5 h-3.5" />
                 </button>
 
                 {/* Last page */}
                 <button
                     onClick={() => goToPage(totalPages)}
                     disabled={currentPage === totalPages}
-                    className="p-2 rounded-lg text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-secondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-1 sm:p-1.5 rounded-md text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     title="Last page"
                 >
-                    <ChevronsRight className="w-4 h-4" />
+                    <ChevronsRight className="w-3.5 h-3.5" />
                 </button>
             </div>
         </div>
