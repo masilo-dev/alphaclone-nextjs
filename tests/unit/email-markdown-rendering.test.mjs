@@ -107,3 +107,77 @@ test('handles empty or missing inputs safely', () => {
   assert.equal(renderedBlank.html, '');
   assert.equal(renderedBlank.text, '');
 });
+
+test('prevents nested anchors when markdown link text contains a full url', () => {
+  const input = 'Booking: [https://cal.com/alphaclonesystems/30min](https://cal.com/alphaclonesystems/30min)';
+  const rendered = renderOutboundEmail({ text: input });
+
+  assert.match(rendered.html, /<a\s+href="https:\/\/cal\.com\/alphaclonesystems\/30min"/);
+  assert.doesNotMatch(rendered.html, /<a[^>]*>\s*<a/);
+  assert.doesNotMatch(rendered.html, /<\/a>\s*<\/a>/);
+});
+
+test('appends compliant footer with privacy and unsubscribe links when requested or unsubscribeUrl is present', () => {
+  const input = 'Hello Bonnie,\n\nThis is a test message.';
+  const unsubUrl = 'https://alphaclonesystems.com/api/unsubscribe?token=test_token_123';
+  const rendered = renderOutboundEmail({
+    text: input,
+    unsubscribeUrl: unsubUrl,
+    includeFooter: true,
+  });
+
+  assert.ok(rendered.html.includes('Privacy Policy'), 'HTML should contain Privacy Policy link');
+  assert.ok(rendered.html.includes('https://alphaclonesystems.com/privacy-policy'), 'HTML should contain privacy policy URL');
+  assert.ok(rendered.html.includes('Unsubscribe'), 'HTML should contain Unsubscribe link');
+  assert.ok(rendered.html.includes(unsubUrl), 'HTML should contain specific unsubscribe URL');
+  assert.ok(rendered.html.includes('Terms'), 'HTML should contain Terms link');
+  assert.ok(rendered.html.includes('Alphaclone Systems, LLC'), 'HTML should contain legal company name');
+  assert.ok(rendered.html.includes('30 N Gould St, Sheridan, WY 82801, USA'), 'HTML should contain physical address');
+
+  assert.ok(rendered.text.includes('Privacy Policy: https://alphaclonesystems.com/privacy-policy'), 'Text should contain Privacy Policy link');
+  assert.ok(rendered.text.includes(`Unsubscribe: ${unsubUrl}`), 'Text should contain Unsubscribe URL');
+  assert.ok(rendered.text.includes('30 N Gould St, Sheridan, WY 82801, USA'), 'Text should contain physical address');
+});
+
+test('appends compliant footer even when body text mentions Privacy Policy and Unsubscribe', () => {
+  const input = `Hello Bonnie,
+
+Here is our review:
+* Compliant footer containing Privacy Policy and Unsubscribe links
+* Recipient display in Unified Inbox & Sent views
+
+Best regards,
+Bonnie Masilo`;
+
+  const unsubUrl = 'https://alphaclonesystems.com/api/unsubscribe?token=my_secret_token';
+  const rendered = renderOutboundEmail({
+    text: input,
+    unsubscribeUrl: unsubUrl,
+    includeFooter: true,
+  });
+
+  assert.ok(rendered.html.includes('Privacy Policy'), 'HTML should contain Privacy Policy link');
+  assert.ok(rendered.html.includes(unsubUrl), 'HTML should contain unsubscribe URL');
+  assert.ok(rendered.html.includes('<ul'), 'HTML should contain unordered list');
+  assert.ok(rendered.html.includes('<li'), 'HTML should contain list items');
+  assert.ok(rendered.html.includes('>Hello Bonnie,</p>'), 'HTML should have separate Hello paragraph');
+});
+
+test('sanitizeBonnieOutboundText preserves newlines and paragraph structure', async () => {
+  const { sanitizeBonnieOutboundText } = await import('../../src/lib/bonnie/bonnieBannedLanguage.ts');
+  const input = `Hello Bonnie,
+
+This is a multi-paragraph email.
+
+* Bullet 1
+* Bullet 2
+
+Best regards,
+Bonnie Masilo`;
+
+  const { clean } = sanitizeBonnieOutboundText(input);
+  assert.ok(clean.includes('\n\n'), 'Double newlines must be preserved for paragraph rendering');
+  assert.ok(clean.includes('* Bullet 1\n* Bullet 2'), 'Bullet lines must not be collapsed onto a single line');
+  assert.ok(clean.includes('Best regards,\nBonnie Masilo'), 'Sign-off line break must be preserved');
+});
+

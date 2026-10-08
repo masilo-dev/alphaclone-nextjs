@@ -65,6 +65,7 @@ export interface EmailGatewayRequest {
   listUnsubscribeUrl?: string;
   idempotencyKey?: string;
   skipRecipientGate?: boolean;
+  skipFooter?: boolean;
   auditMetadata?: Record<string, unknown>;
 }
 
@@ -346,20 +347,20 @@ async function executeEmailGateway(request: EmailGatewayRequest): Promise<EmailG
       cc: request.cc, bcc: request.bcc, preserveContent: request.preserveContent,
       subject: request.subject,
       html: request.preserveContent
-        ? (request.html || (request.message ? renderOutboundEmail({ text: request.message }).html : undefined))
+        ? (request.html || (request.message ? renderOutboundEmail({ text: request.message, unsubscribeUrl }).html : undefined))
         : rendered.html,
       text: request.preserveContent
-        ? (request.message || (request.html ? renderOutboundEmail({ html: request.html }).text : undefined))
+        ? (request.message || (request.html ? renderOutboundEmail({ html: request.html, unsubscribeUrl }).text : undefined))
         : rendered.text,
       fromName: request.senderName || branding.senderDisplayName,
       userId: request.userId,
       replyTo: request.replyTo || branding.replyToEmail,
       attachments: request.attachments,
       isPlatformNotification: request.isPlatformNotification,
-      skipFooter: true,
+      skipFooter: request.preserveContent ? Boolean(request.skipFooter) : true,
       skipBonnieQualityCheck: Boolean(request.preserveContent),
       skipRecipientGate: request.skipRecipientGate,
-      listUnsubscribeUrl: compliance.unsubscribeRequired ? unsubscribeUrl : undefined,
+      listUnsubscribeUrl: unsubscribeUrl,
       auditMetadata: {
         ...(request.auditMetadata || {}),
         idempotency_key: request.idempotencyKey,

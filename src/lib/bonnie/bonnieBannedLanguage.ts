@@ -150,7 +150,11 @@ export function sanitizeBonnieOutboundText(
     const re = new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
     clean = clean.replace(re, '');
   }
-  clean = clean.replace(/\s{2,}/g, ' ').trim();
+  // Collapse excessive horizontal spaces while strictly preserving line and paragraph breaks
+  clean = clean
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
   return {
     clean,
     warnings: banned.map((b) => `Banned phrase removed: "${b}"`),

@@ -133,6 +133,7 @@ export async function sendEmailServer(params: SendEmailServerParams): Promise<Se
     listUnsubscribeUrl: params.listUnsubscribeUrl,
     idempotencyKey: params.idempotencyKey,
     skipRecipientGate: params.skipRecipientGate,
+    skipFooter: params.skipFooter,
     isPlatformNotification: params.isPlatformNotification,
     isReply: params.isReply,
     auditMetadata: {

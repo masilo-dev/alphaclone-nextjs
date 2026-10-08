@@ -139,3 +139,33 @@ test('mailbox ingest passes resolved folder_id to ingest_mailbox_message RPC', a
   assert.equal(capturedRpcArgs.args.p_message.folder_id, 'folder-sent-888');
   assert.equal(capturedRpcArgs.args.p_message.folder_name, 'sent');
 });
+
+test('hasEmailComplianceFooter does not falsely flag casual signatures with website links', async () => {
+  const { hasEmailComplianceFooter } = await import('../../src/lib/email/emailComposition.ts');
+
+  const casualSignature = `Hi Bonnie,
+Here is a test link: https://alphaclonesystems.com.
+Best regards,
+Bonnie Masilo
+Alphaclone Systems, LLC`;
+
+  assert.equal(hasEmailComplianceFooter(casualSignature), false, 'Casual signature should not be treated as compliance footer');
+});
+
+test('ensureFooter guarantees privacy policy and unsubscribe links on HTML and text', async () => {
+  const { ensureFooter } = await import('../../src/lib/email/emailComposition.ts');
+
+  const htmlFragment = '<p>Hello world from AlphaClone.</p>';
+  const customUnsub = 'https://alphaclonesystems.com/api/unsubscribe?token=my_test_token';
+  const htmlWithFooter = ensureFooter(htmlFragment, { unsubscribeUrl: customUnsub });
+
+  assert.ok(htmlWithFooter.includes('Privacy Policy'), 'HTML should contain Privacy Policy link');
+  assert.ok(htmlWithFooter.includes('Unsubscribe'), 'HTML should contain Unsubscribe link');
+  assert.ok(htmlWithFooter.includes(customUnsub), 'HTML should contain specific unsubscribe link');
+
+  const textBody = 'Hello world from AlphaClone.';
+  const textWithFooter = ensureFooter(textBody, { unsubscribeUrl: customUnsub });
+
+  assert.ok(textWithFooter.includes('Privacy: https://alphaclonesystems.com/privacy-policy'), 'Text should contain Privacy link');
+  assert.ok(textWithFooter.includes(`Unsubscribe: ${customUnsub}`), 'Text should contain Unsubscribe link');
+});

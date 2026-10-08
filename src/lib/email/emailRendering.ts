@@ -12,6 +12,8 @@ export interface RenderOutboundEmailParams {
   html?: string;
   text?: string;
   preserveContent?: boolean;
+  unsubscribeUrl?: string;
+  includeFooter?: boolean;
 }
 
 function escapeAttribute(value: string): string {
@@ -34,16 +36,29 @@ function isSafeUrl(url: string): boolean {
   return /^(https?:\/\/|mailto:)/i.test(trimmed);
 }
 
+function renderInlineFormattingOnly(text: string): string {
+  let out = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // Bold
+  out = out.replace(/\*\*([^*]+)\*\*/g, (_m, b) => `<strong style="font-weight: 600; color: #0f172a;">${b}</strong>`);
+  out = out.replace(/__([^_]+)__/g, (_m, b) => `<strong style="font-weight: 600; color: #0f172a;">${b}</strong>`);
+  // Italic
+  out = out.replace(/(^|[^\w*])\*([^*\n]+)\*([^\w*]|$)/g, (_m, pre, it, post) => `${pre}<em>${it}</em>${post}`);
+  out = out.replace(/(^|[^\w_])_([^_\n]+)_([^\w_]|$)/g, (_m, pre, it, post) => `${pre}<em>${it}</em>${post}`);
+  return out;
+}
+
 /**
  * Converts inline Markdown (bold, italic, code, links, autolinks) to HTML.
+ * Uses placeholder tokens to prevent nested anchors and double-replacement.
  */
 function renderInlineMarkdown(text: string): string {
-  // Protect already-escaped or special placeholders
-  let out = text;
+  const tokens: string[] = [];
 
   // 1. Inline code: `code`
-  out = out.replace(/`([^`]+)`/g, (_match, code) => {
-    return `<code style="background-color: #f1f5f9; padding: 2px 5px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; color: #0f172a;">${escapeHtmlText(code)}</code>`;
+  let out = text.replace(/`([^`]+)`/g, (_match, code) => {
+    const idx = tokens.length;
+    tokens.push(`<code style="background-color: #f1f5f9; padding: 2px 5px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; color: #0f172a;">${escapeHtmlText(code)}</code>`);
+    return `__INLINE_TOKEN_${idx}__`;
   });
 
   // 2. Markdown links: [label](url)
@@ -54,22 +69,26 @@ function renderInlineMarkdown(text: string): string {
       return escapeHtmlText(label);
     }
     const safeHref = escapeAttribute(cleanUrl);
-    const innerLabel = renderInlineMarkdown(label);
-    return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline; font-weight: 500;">${innerLabel}</a>`;
+    // Format label without converting bare URLs inside label into links
+    const safeLabel = renderInlineFormattingOnly(label);
+    const idx = tokens.length;
+    tokens.push(`<a href="${safeHref}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline; font-weight: 500;">${safeLabel}</a>`);
+    return `__INLINE_TOKEN_${idx}__`;
   });
 
   // 3. Autolinks: <https://...>
   out = out.replace(/<((https?:\/\/|mailto:)[^>\s]+)>/g, (_match, url) => {
     const safeHref = escapeAttribute(url.trim());
     const safeText = url.trim().replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline; font-weight: 500;">${safeText}</a>`;
+    const idx = tokens.length;
+    tokens.push(`<a href="${safeHref}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline; font-weight: 500;">${safeText}</a>`);
+    return `__INLINE_TOKEN_${idx}__`;
   });
 
-  // 4. Standalone bare URLs (https://... or http://...) not already in href or tags
+  // 4. Standalone bare URLs (https://... or http://...)
   out = out.replace(
     /(^|[\s(])((https?:\/\/)[^\s<>)"]+)(?=$|[\s)])/g,
     (_match, prefix, url) => {
-      // Strip trailing punctuation that belongs to the sentence
       let cleanUrl = url;
       let trailingPunct = '';
       const punctMatch = cleanUrl.match(/[.,;:!?]+$/);
@@ -80,25 +99,20 @@ function renderInlineMarkdown(text: string): string {
       if (!isSafeUrl(cleanUrl)) return prefix + url;
       const safeHref = escapeAttribute(cleanUrl);
       const safeText = cleanUrl.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      return `${prefix}<a href="${safeHref}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline; font-weight: 500;">${safeText}</a>${trailingPunct}`;
+      const idx = tokens.length;
+      tokens.push(`${prefix}<a href="${safeHref}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline; font-weight: 500;">${safeText}</a>${trailingPunct}`);
+      return `__INLINE_TOKEN_${idx}__`;
     }
   );
 
-  // 5. Bold: **text** or __text__
-  out = out.replace(/\*\*([^*]+)\*\*/g, (_match, bold) => {
-    return `<strong style="font-weight: 600; color: #0f172a;">${renderInlineMarkdown(bold)}</strong>`;
-  });
-  out = out.replace(/__([^_]+)__/g, (_match, bold) => {
-    return `<strong style="font-weight: 600; color: #0f172a;">${renderInlineMarkdown(bold)}</strong>`;
-  });
+  // 5. Bold & Italic on remaining text
+  out = out.replace(/\*\*([^*]+)\*\*/g, (_match, bold) => `<strong style="font-weight: 600; color: #0f172a;">${renderInlineFormattingOnly(bold)}</strong>`);
+  out = out.replace(/__([^_]+)__/g, (_match, bold) => `<strong style="font-weight: 600; color: #0f172a;">${renderInlineFormattingOnly(bold)}</strong>`);
+  out = out.replace(/(^|[^\w*])\*([^*\n]+)\*([^\w*]|$)/g, (_match, pre, italic, post) => `${pre}<em>${renderInlineFormattingOnly(italic)}</em>${post}`);
+  out = out.replace(/(^|[^\w_])_([^_\n]+)_([^\w_]|$)/g, (_match, pre, italic, post) => `${pre}<em>${renderInlineFormattingOnly(italic)}</em>${post}`);
 
-  // 6. Italic: *text* or _text_ (excluding word-internal underscores like variable_name)
-  out = out.replace(/(^|[^\w*])\*([^*\n]+)\*([^\w*]|$)/g, (_match, pre, italic, post) => {
-    return `${pre}<em>${renderInlineMarkdown(italic)}</em>${post}`;
-  });
-  out = out.replace(/(^|[^\w_])_([^_\n]+)_([^\w_]|$)/g, (_match, pre, italic, post) => {
-    return `${pre}<em>${renderInlineMarkdown(italic)}</em>${post}`;
-  });
+  // 6. Restore all tokens
+  out = out.replace(/__INLINE_TOKEN_(\d+)__/g, (_match, idx) => tokens[Number(idx)]);
 
   return out;
 }
@@ -178,13 +192,19 @@ export function convertMarkdownToEmailHtml(markdown: string): string {
     // Unordered List: lines starting with - or * (either entire block or following intro text)
     const lines = trimmed.split('\n');
     const firstUnorderedIdx = lines.findIndex((l) => /^[-*]\s+/.test(l.trim()));
-    if (firstUnorderedIdx !== -1 && lines.slice(firstUnorderedIdx).every((l) => /^[-*]\s+/.test(l.trim()))) {
-      if (firstUnorderedIdx > 0) {
-        const leadLines = lines.slice(0, firstUnorderedIdx);
-        const paraHtml = leadLines.map((l) => renderInlineMarkdown(escapeHtmlText(l))).join('<br />\n');
-        renderedBlocks.push(`<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${paraHtml}</p>`);
+    if (firstUnorderedIdx !== -1) {
+      let lastUnorderedIdx = firstUnorderedIdx;
+      while (lastUnorderedIdx + 1 < lines.length && /^[-*]\s+/.test(lines[lastUnorderedIdx + 1].trim())) {
+        lastUnorderedIdx++;
       }
-      const listLines = lines.slice(firstUnorderedIdx);
+      if (firstUnorderedIdx > 0) {
+        const leadLines = lines.slice(0, firstUnorderedIdx).filter((l) => l.trim().length > 0);
+        if (leadLines.length > 0) {
+          const paraHtml = leadLines.map((l) => renderInlineMarkdown(escapeHtmlText(l))).join('<br />\n');
+          renderedBlocks.push(`<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${paraHtml}</p>`);
+        }
+      }
+      const listLines = lines.slice(firstUnorderedIdx, lastUnorderedIdx + 1);
       const items = listLines.map((l) => {
         const itemText = l.trim().replace(/^[-*]\s+/, '');
         return `<li style="margin-bottom: 6px;">${renderInlineMarkdown(escapeHtmlText(itemText))}</li>`;
@@ -192,18 +212,31 @@ export function convertMarkdownToEmailHtml(markdown: string): string {
       renderedBlocks.push(
         `<ul style="margin: 0 0 16px 0; padding-left: 24px; color: #1e293b; line-height: 1.6;">${items.join('')}</ul>`
       );
+      if (lastUnorderedIdx + 1 < lines.length) {
+        const trailLines = lines.slice(lastUnorderedIdx + 1).filter((l) => l.trim().length > 0);
+        if (trailLines.length > 0) {
+          const paraHtml = trailLines.map((l) => renderInlineMarkdown(escapeHtmlText(l))).join('<br />\n');
+          renderedBlocks.push(`<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${paraHtml}</p>`);
+        }
+      }
       continue;
     }
 
     // Ordered List: lines starting with 1. 2. etc.
     const firstOrderedIdx = lines.findIndex((l) => /^\d+\.\s+/.test(l.trim()));
-    if (firstOrderedIdx !== -1 && lines.slice(firstOrderedIdx).every((l) => /^\d+\.\s+/.test(l.trim()))) {
-      if (firstOrderedIdx > 0) {
-        const leadLines = lines.slice(0, firstOrderedIdx);
-        const paraHtml = leadLines.map((l) => renderInlineMarkdown(escapeHtmlText(l))).join('<br />\n');
-        renderedBlocks.push(`<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${paraHtml}</p>`);
+    if (firstOrderedIdx !== -1) {
+      let lastOrderedIdx = firstOrderedIdx;
+      while (lastOrderedIdx + 1 < lines.length && /^\d+\.\s+/.test(lines[lastOrderedIdx + 1].trim())) {
+        lastOrderedIdx++;
       }
-      const listLines = lines.slice(firstOrderedIdx);
+      if (firstOrderedIdx > 0) {
+        const leadLines = lines.slice(0, firstOrderedIdx).filter((l) => l.trim().length > 0);
+        if (leadLines.length > 0) {
+          const paraHtml = leadLines.map((l) => renderInlineMarkdown(escapeHtmlText(l))).join('<br />\n');
+          renderedBlocks.push(`<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${paraHtml}</p>`);
+        }
+      }
+      const listLines = lines.slice(firstOrderedIdx, lastOrderedIdx + 1);
       const items = listLines.map((l) => {
         const itemText = l.trim().replace(/^\d+\.\s+/, '');
         return `<li style="margin-bottom: 6px;">${renderInlineMarkdown(escapeHtmlText(itemText))}</li>`;
@@ -211,6 +244,13 @@ export function convertMarkdownToEmailHtml(markdown: string): string {
       renderedBlocks.push(
         `<ol style="margin: 0 0 16px 0; padding-left: 24px; color: #1e293b; line-height: 1.6;">${items.join('')}</ol>`
       );
+      if (lastOrderedIdx + 1 < lines.length) {
+        const trailLines = lines.slice(lastOrderedIdx + 1).filter((l) => l.trim().length > 0);
+        if (trailLines.length > 0) {
+          const paraHtml = trailLines.map((l) => renderInlineMarkdown(escapeHtmlText(l))).join('<br />\n');
+          renderedBlocks.push(`<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${paraHtml}</p>`);
+        }
+      }
       continue;
     }
 
@@ -312,45 +352,129 @@ export function isHtmlContent(content: string): boolean {
   return /<[a-z][\s\S]*>/i.test(content);
 }
 
+export interface OutboundComplianceFooterOptions {
+  unsubscribeUrl?: string;
+  privacyUrl?: string;
+  termsUrl?: string;
+  companyName?: string;
+  address?: string;
+}
+
+export function buildOutboundComplianceFooter(options?: OutboundComplianceFooterOptions): { html: string; text: string } {
+  const unsubUrl = options?.unsubscribeUrl || 'https://alphaclonesystems.com/unsubscribe';
+  const privacyUrl = options?.privacyUrl || 'https://alphaclonesystems.com/privacy-policy';
+  const termsUrl = options?.termsUrl || 'https://alphaclonesystems.com/terms-of-service';
+  const companyName = options?.companyName || 'Alphaclone Systems, LLC';
+  const address = options?.address || '30 N Gould St, Sheridan, WY 82801, USA';
+
+  const html = [
+    '<div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.6; color: #64748b; text-align: center;">',
+    '  <p style="margin: 0 0 10px 0; color: #64748b;">',
+    `    <a href="${privacyUrl}" target="_blank" rel="noopener noreferrer" style="color: #64748b; text-decoration: underline;">Privacy Policy</a> &nbsp;&bull;&nbsp;`,
+    `    <a href="${termsUrl}" target="_blank" rel="noopener noreferrer" style="color: #64748b; text-decoration: underline;">Terms</a> &nbsp;&bull;&nbsp;`,
+    `    <a href="${unsubUrl}" target="_blank" rel="noopener noreferrer" style="color: #64748b; text-decoration: underline;">Unsubscribe</a> &nbsp;&bull;&nbsp;`,
+    '    <a href="https://alphaclonesystems.com" target="_blank" rel="noopener noreferrer" style="color: #64748b; text-decoration: underline;">Website</a>',
+    '  </p>',
+    `  <p style="margin: 0 0 4px 0; font-weight: 600; color: #0f172a;">${companyName}</p>`,
+    `  <p style="margin: 0 0 8px 0; color: #64748b;">${address}</p>`,
+    '  <p style="margin: 0; font-size: 11px; color: #94a3b8;">If you received this email in error, please disregard and delete it.</p>',
+    '</div>',
+  ].join('\n');
+
+  const text = [
+    '',
+    '---',
+    `Privacy Policy: ${privacyUrl}`,
+    `Terms: ${termsUrl}`,
+    `Unsubscribe: ${unsubUrl}`,
+    `${companyName} — a Wyoming registered company`,
+    address,
+    'If you received this email in error, please disregard and delete it.',
+  ].join('\n');
+
+  return { html, text };
+}
+
+export function hasComplianceFooterMarkers(content: string): boolean {
+  const text = String(content || '');
+  if (!text.trim()) return false;
+
+  // HTML structural footer containers or anchors
+  if (/<div[^>]+border-top:\s*1px\s+solid/i.test(text) && (/privacy-policy/i.test(text) || /unsubscribe/i.test(text))) return true;
+  if (/<table[^>]+role=["']presentation["']/i.test(text) && (/privacy-policy/i.test(text) || /unsubscribe/i.test(text))) return true;
+  if (/<a[^>]+href=["'][^"']*\/privacy-policy/i.test(text) && /<a[^>]+href=["'][^"']*(?:\/unsubscribe|\/api\/unsubscribe|\{\{\{unsubscribe_url\}\}\})/i.test(text)) return true;
+
+  // Plain text footer markers (must be structured footer prefixes, not casual body mentions)
+  const hasUnsubPrefix = /(?:Unsubscribe|unsubscribe):\s*(?:https?:\/\/|\{\{\{)/i.test(text) || text.includes('{{{unsubscribe_url}}}');
+  const hasPrivacyPrefix = /(?:Privacy(?:\s+Policy)?):\s*https?:\/\//i.test(text);
+  if (hasUnsubPrefix && hasPrivacyPrefix) return true;
+  if (text.includes('---') && hasUnsubPrefix) return true;
+
+  return false;
+}
+
 /**
  * Centralized email rendering pipeline for outbound emails.
  * Guarantees that every outbound email has:
  * 1. Clean, email-client-compatible, sanitized `html`
  * 2. High-fidelity, readable `text`
+ * 3. Standard compliance footer when requested or when an unsubscribe URL is provided.
  */
 export function renderOutboundEmail(params: RenderOutboundEmailParams): OutboundEmailRenderResult {
   const rawHtml = String(params.html || '').trim();
   const rawText = String(params.text || '').trim();
 
+  let resultHtml = '';
+  let resultText = '';
+  let isMarkdownConverted = false;
+
   // Case 1: HTML is provided and actually contains HTML tags
   if (rawHtml && isHtmlContent(rawHtml)) {
     const sanitizedHtml = sanitizeHtml(rawHtml, OUTBOUND_EMAIL_SANITIZE_OPTIONS);
-    const text = rawText || convertHtmlToPlainText(sanitizedHtml);
-    return {
-      html: sanitizedHtml,
-      text,
-      isMarkdownConverted: false,
-    };
+    resultHtml = sanitizedHtml;
+    resultText = rawText || convertHtmlToPlainText(sanitizedHtml);
+    isMarkdownConverted = false;
+  } else {
+    // Case 2: Only Markdown / plain text is provided (or HTML is just text without tags)
+    const sourceText = rawText || rawHtml;
+    if (!sourceText) {
+      return {
+        html: '',
+        text: '',
+        isMarkdownConverted: false,
+      };
+    }
+
+    // Convert Markdown to clean email HTML
+    const rawRenderedHtml = convertMarkdownToEmailHtml(sourceText);
+    const sanitizedHtml = sanitizeHtml(rawRenderedHtml, OUTBOUND_EMAIL_SANITIZE_OPTIONS);
+    resultHtml = sanitizedHtml;
+    resultText = convertMarkdownToPlainText(sourceText);
+    isMarkdownConverted = true;
   }
 
-  // Case 2: Only Markdown / plain text is provided (or HTML is just text without tags)
-  const sourceText = rawText || rawHtml;
-  if (!sourceText) {
-    return {
-      html: '',
-      text: '',
-      isMarkdownConverted: false,
-    };
-  }
+  // Attach compliant footer if requested or when unsubscribe URL is provided (unless explicitly skipped)
+  const shouldAttachFooter = params.includeFooter !== false && (params.includeFooter === true || Boolean(params.unsubscribeUrl));
+  if (shouldAttachFooter) {
+    const hasExistingFooter = hasComplianceFooterMarkers(resultHtml) || hasComplianceFooterMarkers(resultText);
+    if (!hasExistingFooter) {
+      const footer = buildOutboundComplianceFooter({
+        unsubscribeUrl: params.unsubscribeUrl,
+      });
 
-  // Convert Markdown to clean email HTML
-  const rawRenderedHtml = convertMarkdownToEmailHtml(sourceText);
-  const sanitizedHtml = sanitizeHtml(rawRenderedHtml, OUTBOUND_EMAIL_SANITIZE_OPTIONS);
-  const plainText = convertMarkdownToPlainText(sourceText);
+      if (resultHtml.endsWith('</div>')) {
+        resultHtml = `${resultHtml.slice(0, -6)}\n${footer.html}\n</div>`;
+      } else {
+        resultHtml = `${resultHtml}\n${footer.html}`;
+      }
+
+      resultText = `${resultText.trimEnd()}${footer.text}`;
+    }
+  }
 
   return {
-    html: sanitizedHtml,
-    text: plainText,
-    isMarkdownConverted: true,
+    html: resultHtml,
+    text: resultText,
+    isMarkdownConverted,
   };
 }

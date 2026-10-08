@@ -559,8 +559,12 @@ defineConnectorTool({
         account_id: args.account_id,
         provider: preferredOutbound,
       },
-      execute: async ({ actionId }) =>
-        sendEmailServer({
+      execute: async ({ actionId }) => {
+        const directRecipientEmail = directTo?.[0] || recipient.email;
+        const { buildUnsubscribeUrl } = await import('@/lib/email/unsubscribeToken');
+        const unsubUrl = buildUnsubscribeUrl(directRecipientEmail, tenantId);
+
+        return sendEmailServer({
           tenantId,
           userId,
           to: directTo || recipient.email,
@@ -568,8 +572,10 @@ defineConnectorTool({
           bcc: args.bcc,
           subject: args.subject,
           message: args.text,
-          html: args.html || (args.text ? renderOutboundEmail({ text: args.text }).html : undefined),
+          html: args.html || (args.text ? renderOutboundEmail({ text: args.text, unsubscribeUrl: unsubUrl }).html : undefined),
           preserveContent: true,
+          listUnsubscribeUrl: unsubUrl,
+          skipFooter: false,
           skipRecipientGate: Boolean(directTo),
           recipientName: args.recipient_name || recipient.matches?.[0]?.name,
           headline: args.headline,
@@ -601,7 +607,8 @@ defineConnectorTool({
             : undefined,
           preferredProvider: preferredOutbound,
           providerAccountId: sendingMailbox?.id || args.account_id,
-        }),
+        });
+      },
       isSuccess: (result) => result.success,
       mapError: (result) => ({
         code: result.code || 'PROVIDER_REJECTED',

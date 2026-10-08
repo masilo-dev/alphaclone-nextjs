@@ -142,6 +142,11 @@ function renderEmailFooter(input: {
     }
   } else if (input.footerType === 'transactional') {
     links.push(link(legal.privacyRequest, 'Privacy Request'));
+    if (input.unsubscribeUrl) {
+      links.push(link(input.unsubscribeUrl, 'Unsubscribe'));
+    }
+  } else if (input.unsubscribeUrl) {
+    links.push(link(input.unsubscribeUrl, 'Unsubscribe'));
   }
 
   links.push(link(legal.website, 'Website'));

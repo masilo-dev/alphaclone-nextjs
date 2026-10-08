@@ -82,7 +82,7 @@ export function renderEmailShell(input: EmailShellInput): { html: string; text: 
     content: input.contentHtml,
     contentIsHtml: true,
     footerType,
-    unsubscribeUrl: input.compliance.unsubscribeRequired ? input.unsubscribeUrl : undefined,
+    unsubscribeUrl: input.unsubscribeUrl || (input.compliance.unsubscribeRequired ? input.unsubscribeUrl : undefined),
     preferencesUrl: input.preferencesUrl,
     reasonText: `You are receiving this message because ${input.purpose.reasonText}.`,
     tenantName: input.brand.tradingName || input.brand.legalCompanyName,

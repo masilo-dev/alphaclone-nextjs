@@ -24,14 +24,18 @@ const HTML_FOOTER_STYLE = [
   'text-align:center',
 ].join(';');
 
-const FOOTER_MARKERS = [
-  'alphaclonesystems.com',
-  'AlphaClone Systems LLC',
+const COMPLIANCE_CORE_MARKERS = [
   'Privacy Policy',
+  '/privacy-policy',
   'Privacy Request',
   'Manage Preferences',
   'If you received this email in error',
-  COMPANY_LEGAL.legalName,
+];
+
+const COMPLIANCE_UNSUBSCRIBE_MARKERS = [
+  'Unsubscribe',
+  '/unsubscribe',
+  '{{{unsubscribe_url}}}',
 ];
 
 export function normalizeEmailSubject(subject: string): string {
@@ -89,14 +93,20 @@ function resolveUnsubscribePlaceholder(footer: string, ctx?: FooterContext): str
 export function hasEmailComplianceFooter(content: string): boolean {
   const text = String(content || '');
   if (!text.trim()) return false;
-  let hits = 0;
-  for (const marker of FOOTER_MARKERS) {
-    if (text.includes(marker)) hits++;
-  }
-  if (hits >= 2) return true;
+
+  // Explicit structural footer containers
+  if (/<table[^>]+role=["']presentation["'][^>]*>[\s\S]*(?:href=["'][^"']*(?:\/privacy-policy|\/unsubscribe)|Privacy Policy|Unsubscribe)/i.test(text)) return true;
+  if (/<div[^>]+border-top:\s*1px\s+solid/i.test(text) && (text.includes('/privacy-policy') || text.includes('/unsubscribe') || (text.includes('Privacy Policy') && text.includes('Unsubscribe')))) return true;
   if (/background-color:#0d1b2a/i.test(text) && text.includes('Alphaclone Systems')) return true;
-  if (/<table[^>]+role=["']presentation["'][^>]*>[\s\S]*Alphaclone Systems/i.test(text)) return true;
-  if (/<div[^>]+border-top:1px solid #e2e8f0/i.test(text) && text.includes('Unsubscribe')) return true;
+
+  // Explicit link anchors to both privacy policy and unsubscribe
+  if (/<a[^>]+href=["'][^"']*\/privacy-policy/i.test(text) && /<a[^>]+href=["'][^"']*(?:\/unsubscribe|\/api\/unsubscribe|\{\{\{unsubscribe_url\}\}\})/i.test(text)) return true;
+
+  // Plain text footer markers (must be structured footer prefixes, not casual body mentions)
+  const hasUnsubPrefix = /(?:Unsubscribe|unsubscribe):\s*(?:https?:\/\/|\{\{\{)/i.test(text) || text.includes('{{{unsubscribe_url}}}');
+  const hasPrivacyPrefix = /(?:Privacy(?:\s+Policy)?):\s*https?:\/\//i.test(text);
+  if (hasUnsubPrefix && hasPrivacyPrefix) return true;
+
   return false;
 }
 
@@ -154,7 +164,14 @@ export function buildAttachmentNoticeHtml(files: string[]): string {
 
 export function ensureFooter(content: string, ctx?: FooterContext): string {
   const body = String(content || '').trim();
-  if (!body) return getSystemFooter().trim();
+  const effectiveUnsubscribeUrl = ctx?.unsubscribeUrl && ctx.unsubscribeUrl.trim().length > 0
+    ? ctx.unsubscribeUrl.trim()
+    : FALLBACK_UNSUBSCRIBE_URL;
+
+  if (!body) {
+    const emptyFooter = getSystemFooter().trim();
+    return resolveUnsubscribePlaceholder(emptyFooter, { unsubscribeUrl: effectiveUnsubscribeUrl });
+  }
 
   if (hasEmailComplianceFooter(body) || isFullEmailDocument(body)) {
     return body;
@@ -163,18 +180,18 @@ export function ensureFooter(content: string, ctx?: FooterContext): string {
   const isHtml = /<[a-z][\s\S]*>/i.test(body);
   if (isHtml) {
     const wrapped = renderEmail({
-      type: (ctx?.unsubscribeUrl ? 'outreach' : 'transactional') as EmailTemplateType,
+      type: 'outreach',
       subject: 'Message from AlphaClone Systems',
       content: body,
       contentIsHtml: true,
-      footerType: ctx?.unsubscribeUrl ? 'outreach' : 'transactional',
-      unsubscribeUrl: ctx?.unsubscribeUrl,
+      footerType: 'outreach',
+      unsubscribeUrl: effectiveUnsubscribeUrl,
     });
     return wrapped.html;
   }
 
   let footer = getSystemFooter().trim();
   if (!footer) return body;
-  footer = resolveUnsubscribePlaceholder(footer, ctx);
+  footer = resolveUnsubscribePlaceholder(footer, { unsubscribeUrl: effectiveUnsubscribeUrl });
   return `${body}\n\n${footer}`;
 }

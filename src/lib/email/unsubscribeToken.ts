@@ -4,7 +4,13 @@ import { isAbsoluteHttpsUrl, publicEmailUrl } from '@/lib/siteUrl';
 const TOKEN_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 
 function getUnsubscribeSecret(): string {
-  return process.env.UNSUBSCRIBE_SECRET || process.env.EMAIL_UNSUBSCRIBE_SECRET || '';
+  return (
+    process.env.UNSUBSCRIBE_SECRET ||
+    process.env.EMAIL_UNSUBSCRIBE_SECRET ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.ZOHO_ENCRYPTION_SECRET ||
+    ''
+  );
 }
 
 function base64UrlEncode(input: string | Buffer): string {
@@ -98,7 +104,7 @@ export function buildUnsubscribeUrl(email: string, tenantId: string): string {
   const legacy = buildLegacySignedUnsubscribeUrl(email, tenantId);
   if (legacy && isAbsoluteHttpsUrl(legacy)) return legacy;
 
-  return publicEmailUrl('/preferences/email');
+  return publicEmailUrl('/unsubscribe');
 }
 
 /** Legacy HMAC link verification (tenantId + email + sig query params) */

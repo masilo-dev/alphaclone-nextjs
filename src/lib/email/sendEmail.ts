@@ -124,6 +124,8 @@ export async function sendEmail(
     const rendered = renderOutboundEmail({
       html: sanitizedHtmlSource,
       text: sanitizedTextSource,
+      unsubscribeUrl,
+      includeFooter: shouldAppendFooter,
     });
 
     let normalizedHtml = rendered.html

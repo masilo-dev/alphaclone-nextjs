@@ -41,6 +41,7 @@ export type EmailExecutionRequest = {
   listUnsubscribeUrl?: string;
   idempotencyKey?: string;
   skipRecipientGate?: boolean;
+  skipFooter?: boolean;
   isPlatformNotification?: boolean;
   isReply?: boolean;
   auditMetadata?: Record<string, unknown>;
@@ -118,6 +119,7 @@ export const EmailExecutionService = {
       listUnsubscribeUrl: request.listUnsubscribeUrl,
       idempotencyKey,
       skipRecipientGate: request.skipRecipientGate,
+      skipFooter: request.skipFooter,
       auditMetadata: {
         ...(request.auditMetadata || {}),
         source_module: request.sourceModule,
