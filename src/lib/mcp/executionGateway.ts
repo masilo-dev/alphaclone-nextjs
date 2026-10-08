@@ -26,6 +26,7 @@ export type ExecuteMcpWriteParams<TResult> = Omit<
 > & {
   tool: string;
   executionSource?: PolicySource | string;
+  mirrorToDurableRuntime?: boolean;
 };
 
 export type ExecuteMcpWriteResult<TResult> = ExecuteDomainExternalWriteResult<TResult>;

@@ -177,7 +177,7 @@ test('send_email normalizes body aliases and auto idempotency', async () => {
     { tenantId: TENANT, userId: USER }
   );
   assert.equal(args.text, 'Body text');
-  assert.match(String(args.idempotency_key), /^mcp-send_email-/);
+  assert.match(String(args.idempotency_key), /^mcp[:-].*send_email/);
 });
 
 test('structured validation errors are machine-readable (no vague Bonnie copy)', async () => {

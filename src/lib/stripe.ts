@@ -11,7 +11,7 @@ function createStripeClient() {
     }
 
     return new Stripe(stripeKey, {
-        apiVersion: '2026-09-30.endive',
+        apiVersion: '2025-12-15.clover',
         appInfo: {
             name: 'AlphaClone OS',
             version: '1.0.0',

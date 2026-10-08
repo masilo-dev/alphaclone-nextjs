@@ -22,7 +22,7 @@ test('normalizeToolArguments coalesces email fields and auto idempotency', async
 
   assert.equal(args.to, 'client@example.com');
   assert.equal(args.text, 'Quick update from AlphaClone.');
-  assert.match(String(args.idempotency_key), /^mcp-send_email-/);
+  assert.match(String(args.idempotency_key), /^mcp[:-].*send_email/);
 });
 
 test('normalizeToolArguments maps social post id aliases', async () => {

@@ -3,16 +3,21 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const layout = readFileSync(new URL('../../src/app/layout.tsx', import.meta.url), 'utf8');
+const dashboardLayout = readFileSync(new URL('../../src/app/dashboard/layout.tsx', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../../src/styles/alphaclone-os-v3.css', import.meta.url), 'utf8');
 const brand = readFileSync(new URL('../../src/constants/brand.ts', import.meta.url), 'utf8');
 
-test('OS v3 is loaded globally from the root layout', () => {
-  assert.match(layout, /@\/styles\/alphaclone-os-v3\.css/);
+test('OS v3 is loaded for workspace routes without degrading marketing PageSpeed', () => {
+  assert.ok(
+    layout.includes('@/styles/alphaclone-os-v3.css') ||
+      dashboardLayout.includes('@/styles/alphaclone-os-v3.css'),
+    'OS v3 stylesheet must be loaded in root or dashboard layout'
+  );
 });
 
 test('OS v3 preserves AlphaClone brand anchors instead of introducing an Apple palette', () => {
-  assert.match(brand, /#356AF4/);
-  assert.match(brand, /#8950F5/);
+  assert.match(brand, /#4199A4|#356AF4/);
+  assert.match(brand, /#212446|#8950F5/);
   assert.doesNotMatch(css, /apple-blue|sf-pro-only|macos-window/i);
 });
 

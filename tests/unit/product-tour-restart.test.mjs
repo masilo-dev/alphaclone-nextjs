@@ -33,7 +33,7 @@ describe('ProductTour can always be (re)started', () => {
 
   it('shows every step tooltip immediately (no beacon-only steps)', () => {
     const matches = tour.match(/disableBeacon: true/g) ?? [];
-    assert.match(tour, /\{ \.\.\.step, target, placement, disableBeacon: true \}/);
+    assert.match(tour, /\{ \.\.\.step, (?:target: step\.target, |target, )placement, disableBeacon: true \}/);
     assert.ok(matches.length >= 2, 'mounted steps must force disableBeacon');
   });
 
@@ -51,7 +51,7 @@ describe('ProductTour can always be (re)started', () => {
   it('turns whole-page anchors into centred cards instead of pointing below the fold', () => {
     assert.match(tour, /function isOversizedAnchor\(element: HTMLElement\)/);
     assert.match(tour, /rect\.height > window\.innerHeight \|\| rect\.width > window\.innerWidth/);
-    assert.match(tour, /isOversizedAnchor\(target\) \? 'center' : step\.placement/);
+    assert.match(tour, /isOversizedAnchor\((?:target|el)\) \? 'center' : step\.placement/);
   });
 
   for (const [name, source] of Object.entries(parents)) {

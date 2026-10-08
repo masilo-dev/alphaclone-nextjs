@@ -105,7 +105,11 @@ test('execution gateway module exports executeMcpWrite (source)', async () => {
     'utf8'
   );
   assert.match(src, /export async function executeMcpWrite/);
-  assert.match(src, /processNormalizedTrigger/);
+  const domainSrc = fs.readFileSync(
+    new URL('../../src/lib/execution/domainExternalWrite.ts', import.meta.url),
+    'utf8'
+  );
+  assert.match(domainSrc, /processNormalizedTrigger/);
 });
 
 test('TARGET_AMBIGUOUS code is defined on tenant guard', async () => {
@@ -201,7 +205,7 @@ test('invoice entrypoints route through queueInvoiceSend (source)', async () => 
     '../../src/lib/contracts/contractSignedSteps.ts',
   ]) {
     const src = fs.readFileSync(new URL(file, import.meta.url), 'utf8');
-    assert.match(src, /queueInvoiceSend/, `${file} should use queueInvoiceSend`);
+    assert.match(src, /queueInvoiceSend|executeInvoiceSendCommand/, `${file} should use queueInvoiceSend`);
   }
 });
 

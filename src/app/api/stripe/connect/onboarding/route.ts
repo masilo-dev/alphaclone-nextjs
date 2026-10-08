@@ -71,6 +71,7 @@ export async function POST(req: Request) {
     const accountLink = await stripe.v2.core.accountLinks.create({
       account: accountId,
       use_case: { type: 'account_onboarding', account_onboarding: {
+        configurations: ['merchant'],
         refresh_url: safeUrl(refreshUrl, `${fallback}&connect=refresh`),
         return_url: safeUrl(returnUrl, `${fallback}&connect=success`),
       } },

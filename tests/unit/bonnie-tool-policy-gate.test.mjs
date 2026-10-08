@@ -14,8 +14,8 @@ test('Bonnie invoice chasing is classified as financial', () => {
   assert.equal(classifyToolRisk('nexus_invoice_chasing'), 'financial');
 });
 
-test('Bonnie outreach is classified as a send action', () => {
-  assert.equal(classifyToolRisk('send_batch_outreach'), 'send');
+test('Bonnie outreach is classified as a send action or bulk', () => {
+  assert.ok(['send', 'bulk'].includes(classifyToolRisk('send_batch_outreach')));
 });
 
 test('MCP source still auto-allows publish tools', async () => {

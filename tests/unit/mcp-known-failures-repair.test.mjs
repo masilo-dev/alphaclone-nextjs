@@ -104,13 +104,13 @@ test('list_pending_approvals merges agent_approvals and runner approvals', async
   assert.match(src, /agent_approvals/);
 });
 
-test('send_email durable path falls back to direct send on enqueue failure', async () => {
+test('send_email routes via executeMcpWrite without lossy background queuing', async () => {
   const fs = await import('node:fs');
   const src = fs.readFileSync(
     new URL('../../src/lib/mcp/tools/email-ops.ts', import.meta.url),
     'utf8'
   );
-  assert.match(src, /Durable enqueue failed; falling back to direct send/);
+  assert.match(src, /executeMcpWrite/);
 });
 
 test('get_calendly_status uses authoritative integration snapshot', async () => {

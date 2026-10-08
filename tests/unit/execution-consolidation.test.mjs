@@ -83,7 +83,7 @@ describe('Bonnie user language', () => {
 describe('ToolPolicyGate control model', () => {
   it('auto-allows MCP only; Bonnie send/bulk/financial still hit the gate', () => {
     const source = read('../../src/lib/ai/ToolPolicyGate.ts');
-    assert.match(source, /if \(source === 'mcp'\)/);
+    assert.match(source, /if \(source === 'mcp'/);
     assert.equal(source.includes("source === 'mcp' || source === 'bonnie'"), false);
     assert.match(source, /nexus_sales_campaign/);
   });
@@ -150,8 +150,10 @@ describe('Signed contract workflow idempotency', () => {
 describe('create_project client link', () => {
   it('writes client_id on the canonical insert path', () => {
     const source = read('../../src/lib/mcp/tools/projects.ts');
+    const command = read('../../src/lib/execution/commands/projectCreateCommand.ts');
     const create = source.slice(source.indexOf("name: 'create_project'"), source.indexOf("name: 'update_project'"));
-    assert.match(create, /client_id: args.client_id \|\| null/);
+    assert.match(create, /clientId:\s*args\.client_id/);
+    assert.match(command, /client_id:\s*clientId/);
   });
 });
 

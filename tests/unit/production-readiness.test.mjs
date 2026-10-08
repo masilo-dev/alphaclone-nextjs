@@ -40,7 +40,7 @@ test("readiness fails closed without soft mode (source)", async () => {
     new URL("../../src/app/api/readiness/route.ts", import.meta.url),
     "utf8",
   );
-  assert.match(src, /status = soft \|\| healthy \? 200 : 503/);
+  assert.match(src, /status = soft \|\| (?:healthy|appReady) \? 200 : 503/);
   assert.match(src, /READINESS_ALWAYS_200/);
 });
 

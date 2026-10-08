@@ -16,7 +16,9 @@ test('one-shot social publishing is not swallowed by the global durable switch',
 });
 
 test('normal MCP writes do not create agent runs implicitly', () => {
-  const source = read('src/lib/mcp/executionGateway.ts');
+  const gateway = read('src/lib/mcp/executionGateway.ts');
+  const source = read('src/lib/execution/domainExternalWrite.ts');
+  assert.match(gateway, /mirrorToDurableRuntime\?: boolean/);
   assert.match(source, /mirrorToDurableRuntime\?: boolean/);
   assert.match(source, /params\.mirrorToDurableRuntime === true/);
   assert.doesNotMatch(source, /import \{ processNormalizedTrigger \} from/);
