@@ -21,12 +21,22 @@ export function okResult<T>(
       ? null
       : options?.receipt
         ? {
-            action_id: options.receipt.action_id || crypto.randomUUID(),
-            status: options.receipt.status || 'completed',
+            action_id: options.receipt.action_id || options.receipt.execution_id || crypto.randomUUID(),
+            execution_id: options.receipt.execution_id || options.receipt.action_id || crypto.randomUUID(),
+            correlation_id: options.receipt.correlation_id || options.receipt.action_id,
+            status: options.receipt.status || 'succeeded',
+            operation: options.receipt.operation || tool,
+            resource_id: options.receipt.resource_id ?? options.receipt.entity_id ?? null,
             provider: options.receipt.provider ?? null,
             provider_reference: options.receipt.provider_reference ?? null,
+            started_at: options.receipt.started_at || options.receipt.timestamp || new Date().toISOString(),
+            completed_at: options.receipt.completed_at ?? null,
+            verified_at: options.receipt.verified_at ?? null,
+            error_code: options.receipt.error_code ?? null,
+            error_message: options.receipt.error_message ?? null,
+            verification_status: options.receipt.verification_status ?? (options.receipt.status === 'succeeded' || options.receipt.status === 'verified' ? 'verified' : 'pending'),
             timestamp: options.receipt.timestamp || new Date().toISOString(),
-            entity_id: options.receipt.entity_id ?? null,
+            entity_id: options.receipt.entity_id ?? options.receipt.resource_id ?? null,
             entity_type: options.receipt.entity_type ?? null,
             live_url: options.receipt.live_url ?? null,
             verification: options.receipt.verification || {},
@@ -51,19 +61,49 @@ export function errorResult(
   code: string,
   message: string,
   details?: unknown,
-  options?: { retryable?: boolean; approval_id?: string; meta?: Record<string, unknown> }
+  options?: { retryable?: boolean; approval_id?: string; meta?: Record<string, unknown>; receipt?: Partial<ActionReceipt> | null }
 ): ConnectorErrorBody {
   const safeMessage = sanitizeUserFacingError(message, { tool });
+  const receipt: ActionReceipt | null | undefined =
+    options?.receipt === null
+      ? null
+      : options?.receipt
+        ? {
+            action_id: options.receipt.action_id || options.receipt.execution_id || crypto.randomUUID(),
+            execution_id: options.receipt.execution_id || options.receipt.action_id || crypto.randomUUID(),
+            correlation_id: options.receipt.correlation_id || options.receipt.action_id,
+            status: options.receipt.status || 'failed',
+            operation: options.receipt.operation || tool,
+            resource_id: options.receipt.resource_id ?? options.receipt.entity_id ?? null,
+            provider: options.receipt.provider ?? null,
+            provider_reference: options.receipt.provider_reference ?? null,
+            started_at: options.receipt.started_at || options.receipt.timestamp || new Date().toISOString(),
+            completed_at: options.receipt.completed_at ?? null,
+            verified_at: options.receipt.verified_at ?? null,
+            error_code: code,
+            error_message: safeMessage,
+            verification_status: options.receipt.verification_status ?? 'failed',
+            timestamp: options.receipt.timestamp || new Date().toISOString(),
+            entity_id: options.receipt.entity_id ?? options.receipt.resource_id ?? null,
+            entity_type: options.receipt.entity_type ?? null,
+            live_url: options.receipt.live_url ?? null,
+            verification: options.receipt.verification || {},
+            rollback_available: options.receipt.rollback_available ?? false,
+            retry_available: options.receipt.retry_available ?? false,
+          }
+        : null;
+
   return {
     ok: false,
     tool,
     data: null,
-    receipt: null,
+    receipt,
     error: {
       code,
       message: safeMessage,
       retryable: options?.retryable ?? false,
       ...(options?.approval_id ? { approval_id: options.approval_id } : {}),
+      ...(details !== undefined ? { details } : {}),
     },
     ...(options?.meta ? { meta: options.meta } : {}),
   };

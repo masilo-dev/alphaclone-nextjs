@@ -13,11 +13,13 @@ export type ToolGovernance = {
  * replacement. Removing an entry requires a separately announced migration.
  */
 export const MCP_TOOL_ALIASES: Readonly<Record<string, string>> = Object.freeze({
+  check_execution_status: 'get_execution_status',
   compare_versions: 'compare_document_versions',
   create_post: 'publish_social_post',
   create_linkedin_post: 'publish_social_post',
   email_send: 'send_email',
   execute_action: 'dispatch_tool',
+  execution_status: 'get_execution_status',
   get_clients: 'get_contacts',
   get_post_analytics: 'get_social_post_insights',
   get_post_status: 'verify_social_post_published',

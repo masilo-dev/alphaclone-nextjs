@@ -165,6 +165,18 @@ export async function dispatchBusinessNotification(
 
   // 3. LEVEL 2 & LEVEL 3: In-Platform Notification
   if (target.userId) {
+    const correlationId =
+      (typeof options.technicalDetails?.correlationId === 'string' && options.technicalDetails.correlationId) ||
+      (typeof options.technicalDetails?.correlation_id === 'string' && options.technicalDetails.correlation_id) ||
+      (typeof options.technicalDetails?.execution_id === 'string' && options.technicalDetails.execution_id) ||
+      (typeof options.technicalDetails?.actionId === 'string' && options.technicalDetails.actionId) ||
+      null;
+
+    const dedupeKey =
+      (typeof options.technicalDetails?.dedupeKey === 'string' && options.technicalDetails.dedupeKey) ||
+      (typeof options.technicalDetails?.dedupe_key === 'string' && options.technicalDetails.dedupe_key) ||
+      (correlationId ? `exec:${correlationId}` : null);
+
     const inserted = await insertTenantNotification(admin, {
       tenantId: options.tenantId,
       recipientUserId: target.userId,
@@ -177,6 +189,8 @@ export async function dispatchBusinessNotification(
       severity: options.level === 'level3_urgent_email' ? 'urgent' : 'medium',
       channel: 'in_app',
       actionUrl: options.actionUrl || null,
+      correlationId,
+      dedupeKey,
       metadata: {
         clientName: options.clientName,
         projectName: options.projectName,
@@ -185,7 +199,7 @@ export async function dispatchBusinessNotification(
       },
     });
 
-    if (inserted.created) {
+    if (inserted.created || inserted.updated) {
       result.inAppCreated = true;
 
       // Deliver Web Push to recipient's registered devices so they receive it on phone/PWA

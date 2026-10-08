@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-10-08T07:54:46.821Z",
-  "total_tools": 587,
-  "passed": 528,
+  "generated_at": "2026-10-08T16:44:09.604Z",
+  "total_tools": 588,
+  "passed": 529,
   "failed": 0,
   "skipped": 59,
   "before_failure_count": 8,
@@ -1908,6 +1908,15 @@
     },
     {
       "tool": "get_execution_assurance_report",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_execution_status",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,

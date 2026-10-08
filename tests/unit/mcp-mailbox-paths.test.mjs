@@ -560,6 +560,9 @@ function handlerFixture() {
     '@/lib/email/emailReceiptEvidence': {
       emailReceiptEvidence: async () => ({}),
     },
+    '@/lib/email/unsubscribeToken': {
+      buildUnsubscribeUrl: (email, tenantId) => `https://app.example.com/api/unsubscribe?token=${email}`,
+    },
     '@/lib/email/sendEmailServer': {
       sendEmailServer: async (input) => {
         sent.push(input);

@@ -168,6 +168,15 @@ export async function emitTenantBusinessEvent(input: TenantBusinessEventInput) {
     businessContext: input.message,
     technicalDetails: {
       source: input.source,
+      correlationId:
+        (input.metadata?.correlation_id as string) ||
+        (input.metadata?.execution_id as string) ||
+        (input.metadata?.action_id as string) ||
+        undefined,
+      dedupeKey:
+        (input.metadata?.dedupe_key as string) ||
+        (input.metadata?.idempotency_key as string) ||
+        undefined,
       ...(input.metadata || {}),
     },
   });

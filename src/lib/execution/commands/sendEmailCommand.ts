@@ -99,15 +99,27 @@ export async function executeSendEmailCommand(
       message: r.error || 'Email send failed',
       details: r.errorDetails,
     }),
-    buildReceipt: (r) => ({
-      action_id: '',
-      status: r.deliveryStatus === 'unknown' ? 'unknown_execution_state' : r.success ? 'provider_accepted' : 'failed',
-      provider: r.provider,
-      provider_reference: r.emailId || r.canonicalMessageId,
-      timestamp: new Date().toISOString(),
-      entity_type: 'email_message',
-      entity_id: r.emailId || r.canonicalMessageId,
-    }),
+    buildReceipt: (r) => {
+      const canonicalStatus =
+        r.deliveryStatus === 'unknown'
+          ? 'pending_verification'
+          : r.success
+          ? 'succeeded'
+          : 'failed';
+      return {
+        action_id: '',
+        execution_id: '',
+        status: canonicalStatus,
+        operation: 'send_email',
+        resource_id: r.emailId || r.canonicalMessageId || null,
+        provider: r.provider,
+        provider_reference: r.emailId || r.canonicalMessageId,
+        timestamp: new Date().toISOString(),
+        entity_type: 'email_message',
+        entity_id: r.emailId || r.canonicalMessageId,
+        verification_status: r.success ? 'provider_accepted' : 'failed',
+      };
+    },
   });
 
   return domainResultFromGateway({

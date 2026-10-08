@@ -63,9 +63,19 @@ export type PaginationMeta = {
 
 export type ActionReceipt = {
   action_id: string;
+  execution_id?: string;
+  correlation_id?: string;
   status: string;
+  operation?: string;
+  resource_id?: string | null;
   provider?: string | null;
   provider_reference?: string | null;
+  started_at?: string;
+  completed_at?: string | null;
+  verified_at?: string | null;
+  error_code?: string | null;
+  error_message?: string | null;
+  verification_status?: string | null;
   timestamp: string;
   entity_id?: string | null;
   entity_type?: string | null;
@@ -89,7 +99,7 @@ export type ConnectorErrorBody = {
   ok: false;
   tool: string;
   data?: null;
-  receipt?: null;
+  receipt?: ActionReceipt | null;
   error: {
     code: string;
     message: string;

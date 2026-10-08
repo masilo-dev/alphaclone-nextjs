@@ -150,7 +150,7 @@ export const notificationService = {
             .on(
                 'postgres_changes',
                 {
-                    event: 'INSERT',
+                    event: '*',
                     schema: 'public',
                     table: 'notifications',
                     filter: `user_id=eq.${userId}`, // Note: Realtime filter only supports one column usually, but we check tenant in client if needed. However, since we filter by user_id AND it's a private channel name, it's safer.

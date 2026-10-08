@@ -6,10 +6,15 @@
 import { randomUUID } from 'node:crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { persistActionReceipt, findReceiptByIdempotency } from '@/lib/mcp/actionReceipts';
-import type { ActionReceipt } from '@/lib/mcp/standardResponse';
+import type { ActionReceipt } from '@/lib/mcp/connector/types';
 import { stripHeavyPayloadFields } from '@/lib/media/stripHeavyPayload';
 import type { PolicySource } from '@/lib/ai/ToolPolicyGate';
 import { normalizeExecutionErrorCode } from '@/lib/execution/executionErrorTaxonomy';
+import {
+  type CanonicalExecutionState,
+  normalizeCanonicalExecutionState,
+  isAmbiguousTransportError,
+} from '@/lib/execution/executionStates';
 
 export type ExecutionTarget = {
   workspace_id: string;
@@ -53,6 +58,7 @@ export type ExecuteDomainExternalWriteResult<TResult> = {
   actionId: string;
   auditLogId: string | null;
   idempotencyKey: string;
+  status: CanonicalExecutionState;
   result?: TResult;
   receipt?: ActionReceipt | null;
   error?: DomainExecutionError;
@@ -170,6 +176,25 @@ async function mirrorWriteToDurableRuntime(params: {
   }
 }
 
+function toDbExternalActionStatus(state: CanonicalExecutionState): string {
+  switch (state) {
+    case 'queued':
+      return 'queued';
+    case 'executing':
+      return 'running';
+    case 'pending_verification':
+      return 'outcome_unknown';
+    case 'succeeded':
+      return 'completed';
+    case 'failed':
+      return 'failed';
+    case 'cancelled':
+      return 'cancelled';
+    default:
+      return 'outcome_unknown';
+  }
+}
+
 export async function executeDomainExternalWrite<TResult>(
   params: ExecuteDomainExternalWriteParams<TResult>
 ): Promise<ExecuteDomainExternalWriteResult<TResult>> {
@@ -184,28 +209,52 @@ export async function executeDomainExternalWrite<TResult>(
       tool: params.capability,
       idempotencyKey,
     });
-    if (existing && ['unknown_execution_state', 'outcome_unknown', 'executing', 'provider_processing'].includes(String(existing.final_status))) {
-      return {ok: false, actionId: String(existing.action_id || actionId), auditLogId: String(existing.id), idempotencyKey,
-        error: enrichError({code: 'PROVIDER_TIMEOUT', message: 'Previous execution is unresolved. Reconcile the existing action before retrying.', retryable: false})};
-    }
-    if (existing?.success && existing.sanitized_output) {
-      return {
-        ok: true,
-        actionId: String(existing.action_id || actionId),
-        auditLogId: String(existing.id || ''),
-        idempotencyKey,
-        result: existing.sanitized_output as TResult,
-        receipt: {
-          action_id: String(existing.action_id || actionId),
-          status: String(existing.final_status || 'completed'),
-          provider: (existing.provider as string) || undefined,
-          provider_reference: (existing.provider_reference as string) || undefined,
-          timestamp: String(existing.completed_at || existing.created_at || new Date().toISOString()),
-          live_url: (existing.live_url as string) || undefined,
-          entity_id: (existing.entity_id as string) || undefined,
-          entity_type: (existing.entity_type as string) || undefined,
-        },
-      };
+    if (existing) {
+      const existingCanonical = normalizeCanonicalExecutionState(
+        existing.final_status as string | null | undefined
+      );
+      if (existingCanonical === 'pending_verification' || existingCanonical === 'executing') {
+        return {
+          ok: false,
+          actionId: String(existing.action_id || actionId),
+          auditLogId: String(existing.id),
+          idempotencyKey,
+          status: existingCanonical,
+          error: enrichError({
+            code: 'PENDING_VERIFICATION',
+            message: 'Previous execution is unresolved or in-flight. Check execution status or reconcile before retrying.',
+            retryable: false,
+          }),
+        };
+      }
+      if (existingCanonical === 'succeeded' && existing.sanitized_output) {
+        return {
+          ok: true,
+          actionId: String(existing.action_id || actionId),
+          auditLogId: String(existing.id || ''),
+          idempotencyKey,
+          status: 'succeeded',
+          result: existing.sanitized_output as TResult,
+          receipt: {
+            action_id: String(existing.action_id || actionId),
+            execution_id: String(existing.action_id || actionId),
+            correlation_id: String(existing.correlation_id || existing.action_id || actionId),
+            status: 'succeeded',
+            operation: params.capability,
+            resource_id: (existing.entity_id as string) || undefined,
+            provider: (existing.provider as string) || undefined,
+            provider_reference: (existing.provider_reference as string) || undefined,
+            started_at: String(existing.created_at || new Date().toISOString()),
+            completed_at: String(existing.completed_at || existing.created_at || new Date().toISOString()),
+            verified_at: String(existing.completed_at || existing.created_at || new Date().toISOString()),
+            verification_status: 'verified',
+            timestamp: String(existing.completed_at || existing.created_at || new Date().toISOString()),
+            live_url: (existing.live_url as string) || undefined,
+            entity_id: (existing.entity_id as string) || undefined,
+            entity_type: (existing.entity_type as string) || undefined,
+          },
+        };
+      }
     }
   }
 
@@ -231,20 +280,30 @@ export async function executeDomainExternalWrite<TResult>(
     mode: params.mode,
     target: params.target,
     idempotencyKey,
-    status: 'running',
-    payload: params.payload,
+    status: toDbExternalActionStatus('executing'),
+    payload: {
+      ...params.payload,
+      canonical_state: 'executing',
+    },
     executionSource: String(params.executionSource),
   });
 
+  const nowIso = new Date().toISOString();
   await persistActionReceipt({
     tenantId: params.tenantId,
     userId: params.userId,
     tool: params.capability,
     idempotencyKey,
+    correlationId,
     receipt: {
       action_id: actionId,
-      status: 'running',
-      timestamp: new Date().toISOString(),
+      execution_id: actionId,
+      correlation_id: correlationId,
+      status: 'executing',
+      operation: params.capability,
+      resource_id: params.target.resource_id || undefined,
+      started_at: nowIso,
+      timestamp: nowIso,
       entity_type: params.target.resource_type || undefined,
     },
     success: false,
@@ -266,59 +325,105 @@ export async function executeDomainExternalWrite<TResult>(
         }
       );
       const outcomeUnknown =
+        isAmbiguousTransportError(error) ||
         error.code === 'OUTCOME_UNKNOWN' ||
         error.code === 'UNKNOWN_EXECUTION_STATE' ||
         normalizeExecutionErrorCode(error.code) === 'UNKNOWN_EXECUTION_STATE';
+
+      const canonicalStatus: CanonicalExecutionState = outcomeUnknown ? 'pending_verification' : 'failed';
+      const dbStatus = toDbExternalActionStatus(canonicalStatus);
+
       await updateExternalAction(actionId, {
-        status: outcomeUnknown ? 'unknown_execution_state' : 'failed',
+        status: dbStatus,
         failure_reason: error.message,
+        payload: {
+          ...params.payload,
+          canonical_state: canonicalStatus,
+        },
       }).catch(() => undefined);
+
+      const errorReceipt: ActionReceipt = {
+        action_id: actionId,
+        execution_id: actionId,
+        correlation_id: correlationId,
+        status: canonicalStatus,
+        operation: params.capability,
+        resource_id: params.target.resource_id || undefined,
+        started_at: nowIso,
+        timestamp: new Date().toISOString(),
+        entity_type: params.target.resource_type || undefined,
+        error_code: error.code,
+        error_message: error.message,
+        verification_status: outcomeUnknown ? 'pending' : 'failed',
+      };
+
       await persistActionReceipt({
         tenantId: params.tenantId,
         userId: params.userId,
         tool: params.capability,
         idempotencyKey,
-        receipt: {
-          action_id: actionId,
-          status: outcomeUnknown ? 'unknown_execution_state' : 'failed',
-          timestamp: new Date().toISOString(),
-          entity_type: params.target.resource_type || undefined,
-        },
+        correlationId,
+        receipt: errorReceipt,
         success: false,
         sanitizedInput: { target: params.target, mode: params.mode },
         sanitizedOutput: result,
         errorCode: error.code,
         errorMessage: error.message,
       }).catch(() => undefined);
+
       return {
         ok: false,
         actionId,
         auditLogId,
         idempotencyKey,
+        status: canonicalStatus,
         result,
-        error,
+        receipt: errorReceipt,
+        error: outcomeUnknown
+          ? enrichError({
+              code: 'PENDING_VERIFICATION',
+              message: 'Execution submitted but provider confirmation is pending verification. Do not retry without checking status.',
+              retryable: false,
+            })
+          : error,
       };
     }
 
     const receipt = params.buildReceipt(result);
+    const completedIso = new Date().toISOString();
     if (receipt) {
       receipt.action_id = receipt.action_id || actionId;
+      receipt.execution_id = receipt.execution_id || receipt.action_id || actionId;
+      receipt.correlation_id = receipt.correlation_id || correlationId;
+      receipt.status = 'succeeded';
+      receipt.operation = receipt.operation || params.capability;
+      receipt.started_at = receipt.started_at || nowIso;
+      receipt.completed_at = completedIso;
+      receipt.verified_at = completedIso;
+      receipt.verification_status = 'verified';
+
       await persistActionReceipt({
         tenantId: params.tenantId,
         userId: params.userId,
         tool: params.capability,
         idempotencyKey,
+        correlationId,
         receipt,
         success: true,
         sanitizedInput: { target: params.target, mode: params.mode },
         sanitizedOutput: result,
       }).catch(() => undefined);
+
       await updateExternalAction(actionId, {
-        status: receipt.status === 'published' ? 'completed' : receipt.status,
+        status: toDbExternalActionStatus('succeeded'),
         provider: receipt.provider || null,
         provider_reference: receipt.provider_reference || null,
         live_url: receipt.live_url || null,
-        completed_at: new Date().toISOString(),
+        completed_at: completedIso,
+        payload: {
+          ...params.payload,
+          canonical_state: 'succeeded',
+        },
       }).catch(() => undefined);
     }
 
@@ -327,6 +432,7 @@ export async function executeDomainExternalWrite<TResult>(
       actionId,
       auditLogId,
       idempotencyKey,
+      status: 'succeeded',
       result,
       receipt,
     };
@@ -337,33 +443,63 @@ export async function executeDomainExternalWrite<TResult>(
         ? String((err as Error & { code: string }).code)
         : 'EXECUTION_FAILED';
     const error = enrichError({ code, message, retryable: /network|timeout|ECONN/i.test(message) });
-    const outcomeUnknown = error.code === 'UNKNOWN_EXECUTION_STATE' || error.code === 'OUTCOME_UNKNOWN'
-      || /network|timeout|abort|socket|ECONN/i.test(message);
+    const outcomeUnknown =
+      isAmbiguousTransportError(err) ||
+      error.code === 'UNKNOWN_EXECUTION_STATE' ||
+      error.code === 'OUTCOME_UNKNOWN' ||
+      /network|timeout|abort|socket|ECONN/i.test(message);
+
+    const canonicalStatus: CanonicalExecutionState = outcomeUnknown ? 'pending_verification' : 'failed';
+    const dbStatus = toDbExternalActionStatus(canonicalStatus);
+
     await updateExternalAction(actionId, {
-      status: outcomeUnknown ? 'unknown_execution_state' : 'failed',
+      status: dbStatus,
       failure_reason: message,
+      payload: {
+        ...params.payload,
+        canonical_state: canonicalStatus,
+      },
     }).catch(() => undefined);
+
+    const errorReceipt: ActionReceipt = {
+      action_id: actionId,
+      execution_id: actionId,
+      correlation_id: correlationId,
+      status: canonicalStatus,
+      operation: params.capability,
+      resource_id: params.target.resource_id || undefined,
+      started_at: nowIso,
+      timestamp: new Date().toISOString(),
+      error_code: error.code,
+      error_message: message,
+      verification_status: outcomeUnknown ? 'pending' : 'failed',
+    };
+
     await persistActionReceipt({
       tenantId: params.tenantId,
       userId: params.userId,
       tool: params.capability,
       idempotencyKey,
-      receipt: {
-        action_id: actionId,
-        status: outcomeUnknown ? 'unknown_execution_state' : 'failed',
-        timestamp: new Date().toISOString(),
-      },
+      correlationId,
+      receipt: errorReceipt,
       success: false,
       errorCode: error.code,
       errorMessage: error.message,
     }).catch(() => undefined);
+
     return {
       ok: false,
       actionId,
       auditLogId,
       idempotencyKey,
+      status: canonicalStatus,
+      receipt: errorReceipt,
       error: outcomeUnknown
-        ? enrichError({ code: 'OUTCOME_UNKNOWN', message, retryable: false })
+        ? enrichError({
+            code: 'PENDING_VERIFICATION',
+            message: 'Execution request timed out or network disconnected. The action is pending verification.',
+            retryable: false,
+          })
         : error,
     };
   }

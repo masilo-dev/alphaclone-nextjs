@@ -173,15 +173,26 @@ export async function executeSocialPublishCommand(
         : { code: 'PUBLISH_FAILED', message: 'Publish failed' },
     buildReceipt: (result) => {
       if (!result.receipt && !result.data) return null;
+      const canonicalStatus =
+        result.data?.status === 'published'
+          ? 'succeeded'
+          : result.data?.status === 'outcome_unknown'
+          ? 'pending_verification'
+          : result.data?.status || 'failed';
       return {
         action_id: result.receipt?.action_id || '',
-        status: result.data?.status === 'published' ? 'verified' : result.data?.status || 'failed',
+        execution_id: result.receipt?.action_id || '',
+        correlation_id: result.receipt?.action_id || '',
+        status: canonicalStatus,
+        operation: 'publish_social_post',
+        resource_id: result.data?.social_post_id,
         timestamp: result.receipt?.verified_at || new Date().toISOString(),
         provider: result.receipt?.provider || platform,
         provider_reference: result.receipt?.provider_reference || result.data?.provider_post_id || undefined,
         live_url: result.receipt?.live_url || result.data?.live_url || undefined,
         entity_id: result.data?.social_post_id,
         entity_type: 'social_post',
+        verification_status: canonicalStatus === 'succeeded' ? 'verified' : 'pending',
       };
     },
   });

@@ -1,12 +1,13 @@
-import type { ActionReceipt } from '@/lib/mcp/standardResponse';
-import type { ExecutionState } from '@/lib/execution/executionStates';
-import { normalizeExecutionState } from '@/lib/execution/executionStates';
+import type { ActionReceipt } from '@/lib/mcp/connector/types';
+import type { ExecutionState, CanonicalExecutionState } from '@/lib/execution/executionStates';
+import { normalizeExecutionState, normalizeCanonicalExecutionState } from '@/lib/execution/executionStates';
 import type { NormalizedExecutionError } from '@/lib/execution/executionErrorTaxonomy';
 
 /** Source-neutral execution truth — adapters map this for MCP, UI, Bonnie, and API JSON. */
 export type DomainExecutionResult<TResult = unknown> = {
   execution_id: string;
   status: ExecutionState;
+  canonical_status?: CanonicalExecutionState;
   verification_state: ExecutionState;
   business_object_type?: string;
   business_object_id?: string;
@@ -31,6 +32,7 @@ export function domainResultFromGateway<TResult>(params: {
     actionId: string;
     auditLogId: string | null;
     idempotencyKey: string;
+    status?: string;
     result?: TResult;
     receipt?: ActionReceipt | null;
     error?: { code: string; message: string; retryable?: boolean; remediation?: string; details?: unknown };
@@ -38,11 +40,16 @@ export function domainResultFromGateway<TResult>(params: {
   businessObject?: { type?: string; id?: string };
   approvalState?: string;
 }): DomainExecutionResult<TResult> {
-  const receiptStatus = params.gateway.receipt?.status || (params.gateway.ok ? 'completed' : 'failed');
+  const receiptStatus =
+    params.gateway.receipt?.status ||
+    params.gateway.status ||
+    (params.gateway.ok ? 'completed' : 'failed');
   const status = normalizeExecutionState(receiptStatus);
+  const canonical_status = normalizeCanonicalExecutionState(receiptStatus);
   return {
     execution_id: params.gateway.actionId,
     status,
+    canonical_status,
     verification_state: status,
     // ActionReceipt allows null; DomainExecutionResult uses optional string only.
     business_object_type:

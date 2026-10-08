@@ -106,17 +106,52 @@ export async function notifyAfterMcpToolExecution(params: {
     effectiveSuccess,
   );
 
-  const eventType = eventTypeForTool(params.toolName, effectiveSuccess);
+  const receipt = (output.receipt || {}) as Record<string, unknown>;
+  const executionStatus = String(receipt.status || output.status || '').toLowerCase();
+  const isPending =
+    executionStatus === 'pending_verification' ||
+    executionStatus === 'unknown_execution_state' ||
+    executionStatus === 'outcome_unknown' ||
+    executionStatus === 'executing' ||
+    receipt.verification_status === 'pending';
+
+  const correlationId =
+    (typeof receipt.correlation_id === 'string' && receipt.correlation_id) ||
+    (typeof receipt.execution_id === 'string' && receipt.execution_id) ||
+    (typeof receipt.action_id === 'string' && receipt.action_id) ||
+    (typeof output.action_id === 'string' && output.action_id) ||
+    (typeof output.execution_id === 'string' && output.execution_id) ||
+    (typeof params.args.idempotency_key === 'string' && params.args.idempotency_key) ||
+    undefined;
+
+  const eventType = isPending
+    ? 'mcp.action_verifying'
+    : eventTypeForTool(params.toolName, effectiveSuccess);
+
   const entityId =
     (output.id as string) ||
     (output.lead_id as string) ||
     (output.invoice_id as string) ||
     (params.args.entity_id as string) ||
+    (receipt.entity_id as string) ||
+    (receipt.resource_id as string) ||
     undefined;
 
-  const failureMessage = !effectiveSuccess
+  const eventTitle = isPending
+    ? `${translated.event} (Verifying)`
+    : translated.event;
+
+  const eventMessage = isPending
+    ? 'Operation submitted. Provider confirmation is pending verification in background.'
+    : !effectiveSuccess
     ? sanitizeUserFacingError(rawError, { tool: params.toolName, preferGeneric: true })
     : translated.result;
+
+  const eventStatus: TenantBusinessEventInput['status'] = isPending
+    ? 'at_risk'
+    : effectiveSuccess
+    ? 'success'
+    : 'failed';
 
   await emitTenantBusinessEvent({
     eventType,
@@ -124,19 +159,22 @@ export async function notifyAfterMcpToolExecution(params: {
     userId: params.userId,
     actor: formatAttributionLabel(attribution),
     source: params.source || 'mcp',
-    title: translated.event,
-    message: failureMessage || USER_FACING_SERVER_ERROR_MESSAGE,
+    title: eventTitle,
+    message: eventMessage || USER_FACING_SERVER_ERROR_MESSAGE,
     actionUrl: actionUrlForTool(params.toolName),
     entityType: eventType.split('.')[0],
     entityId,
     clientName: (params.args.client_name as string) || (params.args.clientName as string),
-    status: effectiveSuccess ? 'success' : 'failed',
+    status: eventStatus,
     metadata: {
       tool: params.toolName,
-      next_action: translated.nextAction,
+      next_action: isPending ? 'Awaiting background verification' : translated.nextAction,
       succeeded_count: output.succeeded_count,
       failed_count: output.failed_count,
       partial,
+      correlation_id: correlationId,
+      execution_id: correlationId,
+      execution_status: executionStatus,
     },
   }).catch((err) => {
     console.warn('[mcpToolNotificationHook]', params.toolName, err);

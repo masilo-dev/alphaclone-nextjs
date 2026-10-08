@@ -114,7 +114,15 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
         loadNotifications();
 
         const unsubscribe = notificationService.subscribeToNotifications(userId, tenantId, (newNotif: Notification) => {
-            setNotifications(prev => [newNotif, ...prev.filter(notification => notification.id !== newNotif.id)]);
+            setNotifications(prev => {
+                const existingIndex = prev.findIndex(notification => notification.id === newNotif.id);
+                if (existingIndex >= 0) {
+                    const next = [...prev];
+                    next[existingIndex] = newNotif;
+                    return next;
+                }
+                return [newNotif, ...prev];
+            });
 
             // Also push to native OS notifications if permissions are granted
             // (so users on other tabs / PWA standalone still see it instantly)

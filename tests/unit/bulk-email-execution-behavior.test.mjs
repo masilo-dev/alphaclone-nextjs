@@ -175,6 +175,7 @@ function providerFixture() {
     ] },
     '@/lib/email/providerSenderIdentity': { assertBrevoSender: async () => {} },
     '@/lib/email/emailAttachment': { normalizeEmailAttachments: () => [] },
+    '@/lib/email/emailRendering': { renderOutboundEmail: (opts) => ({ html: opts?.html, text: opts?.text }) },
     '@/lib/email/providerSdk': { sendWithProviderSdk: async (provider) => { calls.push(provider); return { ok: false, error: 'network timeout' }; } },
   });
   const payload = { to: 'owner@example.com', subject: 'Test', text: 'Test', skipFooter: true, skipBonnieQualityCheck: true, listUnsubscribeUrl: 'https://example.com/unsubscribe' };

@@ -60,18 +60,46 @@ export async function persistActionReceipt(params: {
       .maybeSingle();
 
     // Mirror to tenant_operational_events for universal event timeline
+    const isPending =
+      params.receipt.status === 'pending_verification' ||
+      params.receipt.status === 'running' ||
+      params.receipt.status === 'executing' ||
+      params.receipt.status === 'outcome_unknown' ||
+      params.receipt.status === 'unknown_execution_state' ||
+      params.receipt.verification_status === 'pending';
+
+    const eventStatus = params.success
+      ? 'SUCCESS'
+      : isPending
+      ? 'EXECUTING'
+      : 'FAILED';
+
+    const eventTitle = isPending
+      ? `MCP In Progress: ${params.tool}`
+      : `MCP Executed: ${params.tool}`;
+
+    const eventDescription = params.success
+      ? `Executed successfully. Entity: ${params.receipt.entity_type || 'N/A'} (${params.receipt.entity_id || 'N/A'})`
+      : isPending
+      ? `Execution in-flight or pending provider verification. Entity: ${params.receipt.entity_type || 'N/A'} (${params.receipt.entity_id || 'N/A'})`
+      : `Execution failed: ${params.errorMessage || 'Unknown error'}`;
+
+    const notificationLevel = params.success
+      ? 'LEVEL_1_RECORD'
+      : isPending
+      ? 'LEVEL_1_RECORD'
+      : 'LEVEL_3_IMMEDIATE';
+
     recordTenantEvent({
       tenantId: params.tenantId,
       actorId: params.userId || null,
       actorType: 'MCP',
       sourceModule: inferSourceModule(params.tool),
       action: params.tool,
-      title: `MCP Executed: ${params.tool}`,
-      description: params.success
-        ? `Executed successfully. Entity: ${params.receipt.entity_type || 'N/A'} (${params.receipt.entity_id || 'N/A'})`
-        : `Execution failed: ${params.errorMessage || 'Unknown error'}`,
-      status: params.success ? 'SUCCESS' : 'FAILED',
-      notificationLevel: params.success ? 'LEVEL_1_RECORD' : 'LEVEL_3_IMMEDIATE',
+      title: eventTitle,
+      description: eventDescription,
+      status: eventStatus,
+      notificationLevel,
       evidence: {
         actionId: params.receipt.action_id,
         provider: params.receipt.provider,
@@ -80,7 +108,11 @@ export async function persistActionReceipt(params: {
         verification: params.receipt.verification,
       },
       nextAction: {
-        recommendedAction: params.success ? 'Action verified' : 'Review failed tool execution details',
+        recommendedAction: params.success
+          ? 'Action verified'
+          : isPending
+          ? 'Awaiting provider receipt'
+          : 'Review failed tool execution details',
       },
     }).catch((evtErr) => console.warn('[actionReceipts] Failed to record tenant operational event:', evtErr));
 

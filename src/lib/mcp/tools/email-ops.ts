@@ -628,30 +628,56 @@ defineConnectorTool({
 
     if (!gatewayResult.ok) {
       const result = gatewayResult.result;
+      const isPending =
+        gatewayResult.status === 'pending_verification' ||
+        gatewayResult.error?.code === 'PENDING_VERIFICATION' ||
+        gatewayResult.error?.code === 'OUTCOME_UNKNOWN' ||
+        gatewayResult.error?.code === 'PROVIDER_TIMEOUT';
+
+      const receipt = gatewayResult.receipt || {
+        action_id: gatewayResult.actionId,
+        execution_id: gatewayResult.actionId,
+        correlation_id: gatewayResult.actionId,
+        status: isPending ? 'pending_verification' : 'failed',
+        operation: 'send_email',
+        resource_id: result?.emailId || null,
+        provider: result?.provider || null,
+        provider_reference: result?.emailId || null,
+        started_at: new Date().toISOString(),
+        timestamp: new Date().toISOString(),
+        error_code: gatewayResult.error?.code || (isPending ? 'PENDING_VERIFICATION' : 'PROVIDER_REJECTED'),
+        error_message: gatewayResult.error?.message || (isPending ? 'Email request accepted; delivery confirmation is pending.' : 'Email provider rejected the send'),
+        verification_status: isPending ? 'pending' : 'failed',
+      };
+
       await recordExternalAction({
         tenantId,
         userId,
         tool: 'send_email',
-        status: 'failed',
+        status: isPending ? 'outcome_unknown' : 'failed',
         provider: result?.provider,
         idempotencyKey,
         metadata: {
           code: gatewayResult.error?.code,
           error: gatewayResult.error?.message,
+          canonical_state: isPending ? 'pending_verification' : 'failed',
         },
       });
+
       return {
         ...okResult('send_email', {
           ...result,
           action_id: gatewayResult.actionId,
-          delivery_status: result?.deliveryStatus || 'failed',
+          execution_id: gatewayResult.actionId,
+          status: isPending ? 'pending_verification' : 'failed',
+          delivery_status: isPending ? 'pending_verification' : (result?.deliveryStatus || 'failed'),
           provider_message_id: result?.emailId || null,
-        }),
+        }, { receipt }),
         ok: false as const,
         error: {
-          code: gatewayResult.error?.code || 'PROVIDER_REJECTED',
+          code: gatewayResult.error?.code || (isPending ? 'PENDING_VERIFICATION' : 'PROVIDER_REJECTED'),
           message:
-            gatewayResult.error?.message || 'Email provider rejected the send',
+            gatewayResult.error?.message || (isPending ? 'Email request accepted; delivery confirmation is pending.' : 'Email provider rejected the send'),
           retryable: false,
         },
       };
