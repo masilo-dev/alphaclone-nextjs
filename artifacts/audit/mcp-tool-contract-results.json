@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-10-04T07:21:41.665Z",
-  "total_tools": 585,
-  "passed": 526,
+  "generated_at": "2026-10-08T07:34:23.567Z",
+  "total_tools": 587,
+  "passed": 528,
   "failed": 0,
   "skipped": 59,
   "before_failure_count": 8,
@@ -1881,6 +1881,15 @@
     },
     {
       "tool": "get_email_campaign_stats",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_email_sync_status",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -3789,6 +3798,15 @@
     },
     {
       "tool": "read_email_content",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "read_email_conversation",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,

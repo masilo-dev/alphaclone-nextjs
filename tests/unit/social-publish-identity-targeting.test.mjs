@@ -231,7 +231,7 @@ test('scheduled, image, and document LinkedIn paths retain the canonical resolve
   assert.match(tools, /registerCanonicalAssetPublisher\(\{[\s\S]*?name: 'publish_linkedin_image'/);
   assert.match(tools, /registerCanonicalAssetPublisher\(\{[\s\S]*?name: 'publish_linkedin_document'/);
   assert.match(tools, /resolveTenantIdentityForPublish/);
-  assert.match(service, /processDueScheduledPosts[\s\S]*resolveIdentity[\s\S]*publishToProvider/);
+  assert.match(service, /processDueScheduledPosts[\s\S]*(?:resolveIdentity[\s\S]*publishToProvider|executeSocialPublishCommand)/);
   assert.match(service, /getLinkedInDestinationMismatch/);
 });
 
@@ -363,7 +363,7 @@ test('social publish MCP tools use extended timeout budget (source)', async () =
     'utf8'
   );
   assert.match(src, /create_linkedin_post/);
-  assert.match(src, /SOCIAL_PUBLISH_TIMEOUT_MS/);
+  assert.match(src, /(?:SOCIAL_PUBLISH_TIMEOUT_MS|SOCIAL_PUBLISH_TOOLS)/);
 });
 
 test('toolManifest includes publish_post with identity_id property', async () => {

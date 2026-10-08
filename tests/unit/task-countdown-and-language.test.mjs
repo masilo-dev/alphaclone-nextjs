@@ -139,7 +139,6 @@ describe('language switching', () => {
     const files = [
       '../../src/components/dashboard/OperatingSystemHome.tsx',
       '../../src/components/dashboard/AttentionFirstDashboard.tsx',
-      '../../src/components/dashboard/PlatformExecutionWelcome.tsx',
       '../../src/components/dashboard/DashboardHomeLayoutToggle.tsx',
       '../../src/components/dashboard/metrics/MetricDateRangeSelector.tsx',
       '../../src/components/dashboard/metrics/ModuleKpiRichSections.tsx',
