@@ -126,7 +126,9 @@ export function defineConnectorTool<T extends z.ZodObject<any>>(
           })
         );
       } catch (err: any) {
-        const code = err?.code || 'TOOL_ERROR';
+        const emailFailure = options.module === 'email-ops' || options.name === 'zoho_health'
+          ? (await import('@/lib/email/mailboxService')).mailboxError(err) : null;
+        const code = err?.code || emailFailure?.code || 'TOOL_ERROR';
         const message = sanitizeUserFacingError(err?.message || 'Tool execution failed', {
           tool: options.name,
         });

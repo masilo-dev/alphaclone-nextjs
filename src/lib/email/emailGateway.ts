@@ -39,6 +39,9 @@ export interface EmailGatewayRequest {
   userId?: string;
   to: string | string[];
   subject: string;
+  cc?: string[];
+  bcc?: string[];
+  preserveContent?: boolean;
   message?: string;
   html?: string;
   category: EmailGatewayCategory;
@@ -339,16 +342,17 @@ async function executeEmailGateway(request: EmailGatewayRequest): Promise<EmailG
     request.tenantId,
     {
       to: request.to,
+      cc: request.cc, bcc: request.bcc, preserveContent: request.preserveContent,
       subject: request.subject,
-      html: rendered.html,
-      text: rendered.text,
+      html: request.preserveContent ? request.html : rendered.html,
+      text: request.preserveContent ? request.message : rendered.text,
       fromName: request.senderName || branding.senderDisplayName,
       userId: request.userId,
       replyTo: request.replyTo || branding.replyToEmail,
       attachments: request.attachments,
       isPlatformNotification: request.isPlatformNotification,
       skipFooter: true,
-      skipBonnieQualityCheck: false,
+      skipBonnieQualityCheck: Boolean(request.preserveContent),
       skipRecipientGate: request.skipRecipientGate,
       listUnsubscribeUrl: compliance.unsubscribeRequired ? unsubscribeUrl : undefined,
       auditMetadata: {

@@ -1,3 +1,10 @@
+import { createHash } from 'node:crypto';
+import {
+  emailOperationStore,
+  runEmailOperation,
+} from '@/lib/email/emailOperation';
+import { MailboxService } from '@/lib/email/mailboxService';
+import { explicitRecipients } from '@/lib/email/mailboxNormalization';
 import { emailReceiptEvidence } from '@/lib/email/emailReceiptEvidence';
 /**
  * Individual email MCP actions — real provider sends (no fake success).
@@ -9,12 +16,11 @@ import { okResult, throwConnectorError } from '@/lib/mcp/connector/response';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import type { OutboundEmailProvider } from '@/lib/email/sendEmail';
-import { findReceiptByIdempotency, persistActionReceipt } from '@/lib/mcp/actionReceipts';
+import {
+  findReceiptByIdempotency,
+  persistActionReceipt,
+} from '@/lib/mcp/actionReceipts';
 import { executeMcpWrite } from '@/lib/mcp/executionGateway';
-import { isDurableRuntimeEnabled } from '@/lib/bonnie/runtime/types';
-import { shouldUseMcpDirectExecution } from '@/lib/mcp/mcpDirectExecution';
-import { enqueueEmailSendTask } from '@/lib/email/durableEmailTask';
-import { processNormalizedTrigger } from '@/lib/bonnie/runtime/triggerGateway';
 import { ingestMediaInput } from '@/lib/media/ingestMedia';
 import type { MediaInput } from '@/lib/media/types';
 
@@ -28,17 +34,26 @@ async function resolveRecipientByNameOrEmail(params: {
   recipient_name?: string;
   contact_id?: string;
   lead_id?: string;
-}): Promise<{ email: string; source: string; matches?: Array<{ id: string; name: string; email: string }> }> {
+}): Promise<{
+  email: string;
+  source: string;
+  matches?: Array<{ id: string; name: string; email: string }>;
+}> {
   const supabase = createSupabaseAdminClient();
-  const { resolveMcpEmailRecipient } = await import('@/lib/email/resolveMcpEmailRecipient');
+  const { resolveMcpEmailRecipient } =
+    await import('@/lib/email/resolveMcpEmailRecipient');
 
   if (params.to || params.contact_id || params.lead_id) {
     try {
-      const resolved = await resolveMcpEmailRecipient(supabase, params.tenantId, {
-        to: params.to,
-        contact_id: params.contact_id,
-        lead_id: params.lead_id,
-      });
+      const resolved = await resolveMcpEmailRecipient(
+        supabase,
+        params.tenantId,
+        {
+          to: params.to,
+          contact_id: params.contact_id,
+          lead_id: params.lead_id,
+        },
+      );
       return { email: resolved.email, source: resolved.source };
     } catch {
       // fall through to name search
@@ -47,7 +62,10 @@ async function resolveRecipientByNameOrEmail(params: {
 
   const name = String(params.recipient_name || params.to || '').trim();
   if (!name) {
-    throwConnectorError('RESOURCE_NOT_FOUND', 'Recipient email or name is required');
+    throwConnectorError(
+      'RESOURCE_NOT_FOUND',
+      'Recipient email or name is required',
+    );
   }
   if (name.includes('@')) {
     return { email: name, source: 'to' };
@@ -60,20 +78,26 @@ async function resolveRecipientByNameOrEmail(params: {
       .select('id, first_name, last_name, email')
       .eq('tenant_id', params.tenantId)
       .is('deleted_at', null)
-      .or(`first_name.ilike.${pattern},last_name.ilike.${pattern},email.ilike.${pattern}`)
+      .or(
+        `first_name.ilike.${pattern},last_name.ilike.${pattern},email.ilike.${pattern}`,
+      )
       .limit(10),
     supabase
       .from('leads')
       .select('id, business_name, contact_name, email')
       .eq('tenant_id', params.tenantId)
-      .or(`business_name.ilike.${pattern},contact_name.ilike.${pattern},email.ilike.${pattern}`)
+      .or(
+        `business_name.ilike.${pattern},contact_name.ilike.${pattern},email.ilike.${pattern}`,
+      )
       .limit(10),
   ]);
 
   const matches: Array<{ id: string; name: string; email: string }> = [];
   for (const c of contacts || []) {
     const legacyEmails = (c as { emails?: unknown }).emails;
-    const email = String(c.email || (Array.isArray(legacyEmails) ? legacyEmails[0] : '') || '').trim();
+    const email = String(
+      c.email || (Array.isArray(legacyEmails) ? legacyEmails[0] : '') || '',
+    ).trim();
     if (!email.includes('@')) continue;
     matches.push({
       id: c.id,
@@ -83,7 +107,9 @@ async function resolveRecipientByNameOrEmail(params: {
   }
   for (const l of leads || []) {
     const legacyEmails = (l as { emails?: unknown }).emails;
-    const email = String(l.email || (Array.isArray(legacyEmails) ? legacyEmails[0] : '') || '').trim();
+    const email = String(
+      l.email || (Array.isArray(legacyEmails) ? legacyEmails[0] : '') || '',
+    ).trim();
     if (!email.includes('@')) continue;
     matches.push({
       id: l.id,
@@ -92,32 +118,54 @@ async function resolveRecipientByNameOrEmail(params: {
     });
   }
 
-  const uniqueByEmail = Array.from(new Map(matches.map((m) => [m.email.toLowerCase(), m])).values());
+  const uniqueByEmail = Array.from(
+    new Map(matches.map((m) => [m.email.toLowerCase(), m])).values(),
+  );
   if (uniqueByEmail.length === 0) {
-    throwConnectorError('RESOURCE_NOT_FOUND', `No contact/lead email found for "${name}"`);
+    throwConnectorError(
+      'RESOURCE_NOT_FOUND',
+      `No contact/lead email found for "${name}"`,
+    );
   }
   if (uniqueByEmail.length > 1) {
-    throwConnectorError('RECIPIENT_AMBIGUOUS', `Multiple contacts matched "${name}".`, {
-      matches: uniqueByEmail,
-    });
+    throwConnectorError(
+      'RECIPIENT_AMBIGUOUS',
+      `Multiple contacts matched "${name}".`,
+      {
+        matches: uniqueByEmail,
+      },
+    );
   }
-  return { email: uniqueByEmail[0].email, source: 'crm_name', matches: uniqueByEmail };
+  return {
+    email: uniqueByEmail[0].email,
+    source: 'crm_name',
+    matches: uniqueByEmail,
+  };
 }
 
 async function attachmentsFromMedia(
   tenantId: string,
   userId: string,
-  attachments?: Array<Record<string, unknown>>
+  attachments?: Array<Record<string, unknown>>,
 ): Promise<Array<{ filename: string; content: string; contentType?: string }>> {
   if (!Array.isArray(attachments) || attachments.length === 0) return [];
-  const out: Array<{ filename: string; content: string; contentType?: string }> = [];
+  const out: Array<{
+    filename: string;
+    content: string;
+    contentType?: string;
+  }> = [];
   for (const raw of attachments) {
     // 1. Direct base64 content / data payload
     if (raw.content && typeof raw.content === 'string') {
       out.push({
         filename: String(raw.filename || 'attachment.bin'),
         content: String(raw.content),
-        contentType: String(raw.contentType || raw.mime_type || raw.mimeType || 'application/octet-stream'),
+        contentType: String(
+          raw.contentType ||
+            raw.mime_type ||
+            raw.mimeType ||
+            'application/octet-stream',
+        ),
       });
       continue;
     }
@@ -125,7 +173,12 @@ async function attachmentsFromMedia(
       out.push({
         filename: String(raw.filename || 'attachment.bin'),
         content: String(raw.data),
-        contentType: String(raw.contentType || raw.mime_type || raw.mimeType || 'application/octet-stream'),
+        contentType: String(
+          raw.contentType ||
+            raw.mime_type ||
+            raw.mimeType ||
+            'application/octet-stream',
+        ),
       });
       continue;
     }
@@ -145,22 +198,37 @@ async function attachmentsFromMedia(
     // 2. Fallback to media resolution for asset_id or remote url
     let media: MediaInput | null = null;
     if (raw.type === 'asset_id' || raw.asset_id) {
-      media = { type: 'asset_id', assetId: String(raw.assetId || raw.asset_id) };
+      media = {
+        type: 'asset_id',
+        assetId: String(raw.assetId || raw.asset_id),
+      };
     } else if (raw.type === 'base64') {
       media = {
         type: 'base64',
         data: String(raw.data || raw.content),
-        mimeType: String(raw.mime_type || raw.mimeType || 'application/octet-stream'),
+        mimeType: String(
+          raw.mime_type || raw.mimeType || 'application/octet-stream',
+        ),
         filename: String(raw.filename || 'attachment.bin'),
       };
     } else if (raw.type === 'url' || raw.url) {
-      media = { type: 'url', url: String(raw.url), filename: raw.filename ? String(raw.filename) : undefined };
+      media = {
+        type: 'url',
+        url: String(raw.url),
+        filename: raw.filename ? String(raw.filename) : undefined,
+      };
     }
-    if (!media) continue;
+    if (!media) throw new Error('EMAIL_ATTACHMENT_INVALID');
 
     try {
-      const asset = await ingestMediaInput({ tenantId, userId, media, purpose: 'email_attachment' });
+      const asset = await ingestMediaInput({
+        tenantId,
+        userId,
+        media,
+        purpose: 'email_attachment',
+      });
       const res = await fetch(asset.url);
+      if (!res.ok) throw new Error('EMAIL_ATTACHMENT_DOWNLOAD_FAILED');
       const buf = Buffer.from(await res.arrayBuffer());
       out.push({
         filename: asset.filename,
@@ -168,7 +236,7 @@ async function attachmentsFromMedia(
         contentType: asset.mime_type,
       });
     } catch (err: any) {
-      console.warn('[MCP send_email] failed to ingest attachment via media:', err?.message || err);
+      throw new Error(`EMAIL_ATTACHMENT_FAILED: ${err?.message || err}`);
     }
   }
   return out;
@@ -202,7 +270,10 @@ async function recordExternalAction(params: {
           ? new Date().toISOString()
           : null,
       },
-      { onConflict: 'tenant_id,tool_name,idempotency_key', ignoreDuplicates: false }
+      {
+        onConflict: 'tenant_id,tool_name,idempotency_key',
+        ignoreDuplicates: false,
+      },
     );
   } catch {
     // table may not exist yet
@@ -225,38 +296,21 @@ defineConnectorTool({
     required: [],
   },
   handler: async (_args, ctx) => {
-    const tenantId = ctx.tenantId;
-    if (!tenantId) throwConnectorError('TENANT_ACCESS_DENIED', 'Active workspace required');
-    const supabase = createSupabaseAdminClient();
-    const { data: accounts, error: accountError } = await supabase
-      .from('email_provider_accounts')
-      .select('id, provider, connection_status, email_address, display_name, account_type, capabilities, legacy_integration_id, created_at')
-      .eq('tenant_id', tenantId).is('deleted_at', null);
-    const { data: integrations, error: integrationError } = await supabase
-      .from('integrations').select('id, type, enabled')
-      .eq('tenant_id', tenantId).in('type', ['zoho', 'gmail', 'brevo', 'sendgrid', 'resend', 'outlook', 'microsoft', 'microsoft365']);
-    const { data: senders, error: senderError } = await supabase
-      .from('email_sender_addresses')
-      .select('id, provider, email_address, display_name, is_default, is_verified, region')
-      .eq('tenant_id', tenantId);
-    if (accountError || integrationError || senderError) {
-      throw new Error(`EMAIL_ACCOUNT_DISCOVERY_FAILED: ${accountError?.message || integrationError?.message || senderError?.message}`);
-    }
-    const { resolveAllConnectedEmailProviders } = await import('@/lib/email/providerIntegrationResolver');
-    const resolved = await resolveAllConnectedEmailProviders({tenantId, preferredUserId: ctx.userId, fallbackToEnv: false});
-    const byAccount = new Map(resolved.map(config => [config.providerAccountId, config]));
-    return okResult('list_email_accounts', {
-      accounts: (accounts || []).map((row) => ({
-        account_id: row.id, provider: row.provider, status: row.connection_status,
-        sender: row.email_address || byAccount.get(row.id)?.fromEmail || null, sender_configured: Boolean(row.email_address || byAccount.get(row.id)?.fromEmail),
-        sender_verification_error: byAccount.get(row.id)?.senderVerificationError || null,
-        account_type: row.account_type, business_sending: row.account_type !== 'platform', capabilities: {...row.capabilities, send: row.account_type === 'platform' ? true : Boolean(byAccount.get(row.id)?.fromEmail), platform_notification_only: row.account_type === 'platform'}, connected_at: row.created_at,
-      })),
-      integrations: integrations || [],
-      sender_addresses: [...(senders || []), ...resolved.filter(config => config.fromEmail && !(senders || []).some(row => row.provider === config.provider && row.email_address === config.fromEmail)).map(config => ({provider: config.provider, account_id: config.providerAccountId, email_address: config.fromEmail, source: 'execution_resolver', is_verified: null}))],
-      duplicate_platform_groups: Object.values((accounts || []).filter(row => row.account_type === 'platform').reduce<Record<string, string[]>>((groups, row) => {const key = `${row.provider}:${row.email_address}`; (groups[key] ||= []).push(row.id); return groups;}, {})).filter(ids => ids.length > 1),
-      limitation: 'Connected configuration does not prove sender verification or inbox delivery.',
-    });
+    const mailbox = new MailboxService(ctx.tenantId, ctx.userId);
+    return okResult(
+      'list_email_accounts',
+      {
+        accounts: await mailbox.discover(),
+        limitation:
+          'Read verification calls the provider. Send scope/identity availability is separate from a successful send or delivery.',
+      },
+      {
+        receipt: {
+          status: 'completed',
+          verification: { scope: 'mailbox_discovery' },
+        },
+      },
+    );
   },
 });
 
@@ -265,14 +319,16 @@ defineConnectorTool({
   module: 'email-ops',
   name: 'send_email',
   description:
-    'Send an individual email via the tenant connected provider. Resolve CRM contacts by contact_id/lead_id or exact email. If a person name matches multiple contacts, returns RECIPIENT_AMBIGUOUS. Supports attachments via media asset_id/base64/url.',
+    'Start an email conversation with explicit to/cc/bcc email addresses; CRM records are optional and are never auto-created. Supports verified mailbox selection, exact text/HTML content, attachments, durable receipts and duplicate-safe retries.',
   permission: 'sales:write',
   rateLimitClass: 'write',
   auditAction: 'mcp_send_email',
   inputSchema: z.object({
     tenant_id: tenantIdField.optional(),
     account_id: z.string().uuid().optional(),
-    to: z.string().optional(),
+    to: z
+      .union([z.string(), z.array(z.string().email()).min(1).max(100)])
+      .optional(),
     recipient_name: z.string().optional(),
     contact_id: z.string().uuid().optional(),
     lead_id: z.string().uuid().optional(),
@@ -310,18 +366,36 @@ defineConnectorTool({
     type: 'object',
     properties: {
       account_id: { type: 'string', format: 'uuid' },
-      to: { type: 'string', description: 'Recipient email or leave blank and use recipient_name/contact_id' },
+      to: {
+        anyOf: [
+          { type: 'string' },
+          { type: 'array', items: { type: 'string' } },
+        ],
+        description: 'Explicit recipient addresses; CRM record optional',
+      },
       recipient_name: { type: 'string' },
       contact_id: { type: 'string', format: 'uuid' },
       lead_id: { type: 'string', format: 'uuid' },
       cc: { type: 'array', items: { type: 'string' } },
       bcc: { type: 'array', items: { type: 'string' } },
       subject: { type: 'string' },
-      text: { type: 'string', description: 'Plain text message body (gateway renders branded HTML)' },
-      html: { type: 'string', description: 'Rejected unless text is also provided — use text and let the gateway render HTML' },
+      text: {
+        type: 'string',
+        description: 'Plain text message body (gateway renders branded HTML)',
+      },
+      html: { type: 'string', description: 'Optional HTML body' },
       category: {
         type: 'string',
-        enum: ['marketing', 'outreach', 'transactional', 'account_security', 'invoice_payment', 'contract_document', 'booking_calendar', 'internal_notification'],
+        enum: [
+          'marketing',
+          'outreach',
+          'transactional',
+          'account_security',
+          'invoice_payment',
+          'contract_document',
+          'booking_calendar',
+          'internal_notification',
+        ],
       },
       headline: { type: 'string' },
       cta_label: { type: 'string' },
@@ -338,10 +412,19 @@ defineConnectorTool({
   handler: async (args, ctx) => {
     const tenantId = ctx.tenantId;
     const userId = ctx.userId;
-    if (!tenantId || !userId) throwConnectorError('AUTH_REQUIRED', 'Authenticated workspace session required');
+    if (!tenantId || !userId)
+      throwConnectorError(
+        'AUTH_REQUIRED',
+        'Authenticated workspace session required',
+      );
 
     const idempotencyKey =
-      args.idempotency_key?.trim() || `mcp-send_email-${crypto.randomUUID()}`;
+      args.idempotency_key?.trim() ||
+      `mcp-send_email-${createHash('sha256')
+        .update(
+          JSON.stringify({ tenantId, userId, ...args, tenant_id: undefined }),
+        )
+        .digest('hex')}`;
 
     const existing = await findReceiptByIdempotency({
       tenantId,
@@ -350,47 +433,90 @@ defineConnectorTool({
     });
     if (existing) {
       const evidence = await emailReceiptEvidence(tenantId, userId, existing);
-      const replay = okResult('send_email', { ...existing.sanitized_output as Record<string, unknown>, ...evidence,
-        idempotent_replay: true }, {
-        receipt: { action_id: String(existing.action_id), status: String(existing.final_status),
-          provider: existing.provider as string, provider_reference: existing.provider_reference as string, entity_type: 'email' },
-        meta: { deduplicated: true, idempotency_key: idempotencyKey },
-      });
-      if (!existing.success || evidence.delivery_evidence?.status === 'failed') {
-        return { ...replay, ok: false as const, error: { code: String(existing.error_code || 'PREVIOUS_EMAIL_EXECUTION_FAILED'),
-          message: 'The previous email attempt was not successful. Review its persisted outcome; no new send was made.', retryable: false } };
+      const replay = okResult(
+        'send_email',
+        {
+          ...(existing.sanitized_output as Record<string, unknown>),
+          ...evidence,
+          idempotent_replay: true,
+        },
+        {
+          receipt: {
+            action_id: String(existing.action_id),
+            status: String(existing.final_status),
+            provider: existing.provider as string,
+            provider_reference: existing.provider_reference as string,
+            entity_type: 'email',
+          },
+          meta: { deduplicated: true, idempotency_key: idempotencyKey },
+        },
+      );
+      if (
+        !existing.success ||
+        evidence.delivery_evidence?.status === 'failed'
+      ) {
+        return {
+          ...replay,
+          ok: false as const,
+          error: {
+            code: String(
+              existing.error_code || 'PREVIOUS_EMAIL_EXECUTION_FAILED',
+            ),
+            message:
+              'The previous email attempt was not successful. Review its persisted outcome; no new send was made.',
+            retryable: false,
+          },
+        };
       }
       return replay;
     }
 
-    const recipient = await resolveRecipientByNameOrEmail({
-      tenantId,
-      to: args.to,
-      recipient_name: args.recipient_name,
-      contact_id: args.contact_id,
-      lead_id: args.lead_id,
-    });
+    const directTo = args.to ? explicitRecipients(args.to) : null;
+    const recipient = directTo
+      ? { email: directTo[0], source: 'to', matches: undefined }
+      : await resolveRecipientByNameOrEmail({
+          tenantId,
+          to: typeof args.to === 'string' ? args.to : undefined,
+          recipient_name: args.recipient_name,
+          contact_id: args.contact_id,
+          lead_id: args.lead_id,
+        });
 
     if (!args.text && !args.html) {
-      throwConnectorError('INVALID_MEDIA', 'Email message body is required (plain text). Raw HTML bypass is not permitted.');
-    }
-    if (args.html && !args.text) {
-      throwConnectorError('INVALID_MEDIA', 'Provide plain text message content. The email gateway renders branded HTML automatically.');
+      throwConnectorError(
+        'INVALID_MEDIA',
+        'Email text or HTML body is required.',
+      );
     }
 
-    const attachments = await attachmentsFromMedia(tenantId, userId, args.attachments);
+    const attachments = await attachmentsFromMedia(
+      tenantId,
+      userId,
+      args.attachments,
+    );
 
-    const { resolveMcpActionReadiness } = await import('@/lib/mcp/actionReadiness');
-    const readiness = await resolveMcpActionReadiness({ tenantId, userId, action: 'email_send' });
+    const { resolveMcpActionReadiness } =
+      await import('@/lib/mcp/actionReadiness');
+    const readiness = await resolveMcpActionReadiness({
+      tenantId,
+      userId,
+      action: 'email_send',
+    });
     if (!readiness.email_send?.executable) {
       throwConnectorError(
         'PROVIDER_MISSING',
         readiness.email_send?.setup_hint ||
           'Connect Zoho, Gmail, Brevo, or another email provider in Settings → Integrations before sending.',
-        { missing: readiness.email_send?.missing }
+        { missing: readiness.email_send?.missing },
       );
     }
 
+    const sendingMailbox =
+      !args.provider || args.provider === 'zoho'
+        ? await new MailboxService(tenantId, userId).verify(
+            await new MailboxService(tenantId, userId).account(args.account_id),
+          )
+        : null;
     const preferredOutbound: OutboundEmailProvider | undefined =
       args.provider === 'zoho' ||
       args.provider === 'brevo' ||
@@ -399,56 +525,9 @@ defineConnectorTool({
       args.provider === 'outlook' ||
       args.provider === 'gmail'
         ? args.provider
-        : undefined;
-
-    if (isDurableRuntimeEnabled() && !shouldUseMcpDirectExecution('send_email')) {
-      try {
-        await processNormalizedTrigger({
-          tenant_id: tenantId,
-          user_id: userId,
-          trigger_type: 'api_request',
-          event_type: 'email.send',
-          source: 'mcp:send_email',
-          correlation_id: idempotencyKey,
-          deduplication_key: idempotencyKey,
-          payload: {
-            to: recipient.email,
-            subject: args.subject,
-            durable: true,
-          },
-        }).catch(() => undefined);
-
-        const enqueued = await enqueueEmailSendTask({
-          tenantId,
-          userId,
-          idempotencyKey,
-          payload: {
-            to: recipient.email,
-            subject: args.subject,
-            text: args.text,
-            provider: preferredOutbound,
-            recipient_name: args.recipient_name,
-          },
-        });
-
-        return okResult(
-          'send_email',
-          {
-            status: 'queued',
-            run_id: enqueued.runId,
-            task_id: enqueued.taskId,
-            durable: true,
-            poll_tool: 'get_outcome_status',
-            delivery_status: 'queued',
-            recipient: recipient.email,
-            idempotency_key: idempotencyKey,
-          },
-          { meta: { durable: true, idempotency_key: idempotencyKey } }
-        );
-      } catch (durableErr) {
-        console.warn('[send_email] Durable enqueue failed; falling back to direct send:', durableErr);
-      }
-    }
+        : sendingMailbox
+          ? 'zoho'
+          : undefined;
 
     const gatewayResult = await executeMcpWrite({
       tenantId,
@@ -465,19 +544,30 @@ defineConnectorTool({
       },
       payload: {
         subject: args.subject,
-        to: recipient.email,
+        to: directTo || recipient.email,
+        cc: args.cc,
+        bcc: args.bcc,
+        text: args.text,
+        html: args.html,
+        attachments: args.attachments,
+        account_id: args.account_id,
         provider: preferredOutbound,
       },
       execute: async ({ actionId }) =>
         sendEmailServer({
           tenantId,
           userId,
-          to: recipient.email,
+          to: directTo || recipient.email,
+          cc: args.cc,
+          bcc: args.bcc,
           subject: args.subject,
           message: args.text,
+          html: args.html,
+          preserveContent: true,
+          skipRecipientGate: Boolean(directTo),
           recipientName: args.recipient_name || recipient.matches?.[0]?.name,
           headline: args.headline,
-          category: args.category || 'outreach',
+          category: args.category || 'transactional',
           cta:
             args.cta_label && args.cta_url
               ? { label: args.cta_label, url: args.cta_url }
@@ -502,7 +592,7 @@ defineConnectorTool({
               }))
             : undefined,
           preferredProvider: preferredOutbound,
-          providerAccountId: args.account_id,
+          providerAccountId: sendingMailbox?.id || args.account_id,
         }),
       isSuccess: (result) => result.success,
       mapError: (result) => ({
@@ -530,12 +620,26 @@ defineConnectorTool({
         status: 'failed',
         provider: result?.provider,
         idempotencyKey,
-        metadata: { code: gatewayResult.error?.code, error: gatewayResult.error?.message },
+        metadata: {
+          code: gatewayResult.error?.code,
+          error: gatewayResult.error?.message,
+        },
       });
-      return { ...okResult('send_email', { ...result, action_id: gatewayResult.actionId,
-        delivery_status: result?.deliveryStatus || 'failed', provider_message_id: result?.emailId || null }),
-        ok: false as const, error: { code: gatewayResult.error?.code || 'PROVIDER_REJECTED',
-          message: gatewayResult.error?.message || 'Email provider rejected the send', retryable: false } };
+      return {
+        ...okResult('send_email', {
+          ...result,
+          action_id: gatewayResult.actionId,
+          delivery_status: result?.deliveryStatus || 'failed',
+          provider_message_id: result?.emailId || null,
+        }),
+        ok: false as const,
+        error: {
+          code: gatewayResult.error?.code || 'PROVIDER_REJECTED',
+          message:
+            gatewayResult.error?.message || 'Email provider rejected the send',
+          retryable: false,
+        },
+      };
     }
 
     const result = gatewayResult.result!;
@@ -543,6 +647,11 @@ defineConnectorTool({
     const delivery = {
       provider: result.provider,
       message_id: result.emailId,
+      recipients: directTo || [recipient.email],
+      cc: args.cc || [],
+      bcc: args.bcc || [],
+      canonical_message_id: result.canonicalMessageId,
+      account_id: result.providerAccountId,
       recipient: recipient.email,
       recipient_source: recipient.source,
       accepted_at: acceptedAt,
@@ -558,7 +667,7 @@ defineConnectorTool({
 
     const receipt = gatewayResult.receipt || {
       action_id: gatewayResult.actionId,
-      status: 'completed' as const,
+      status: 'provider_accepted' as const,
       provider: result.provider || null,
       provider_reference: result.emailId || null,
       entity_id: result.emailId || null,
@@ -572,13 +681,30 @@ defineConnectorTool({
       tenantId,
       userId,
       tool: 'send_email',
-      status: 'completed',
+      status: 'provider_accepted',
       provider: result.provider,
       providerReference: result.emailId,
       idempotencyKey,
-      metadata: { recipient_source: recipient.source, action_id: gatewayResult.actionId },
+      metadata: {
+        recipient_source: recipient.source,
+        action_id: gatewayResult.actionId,
+      },
     });
 
+    if (sendingMailbox)
+      await createSupabaseAdminClient()
+        .from('email_provider_accounts')
+        .update({
+          capabilities: {
+            ...sendingMailbox.capabilities,
+            send: true,
+            send_verified: true,
+            send_verified_at: acceptedAt,
+          },
+          last_successful_send_at: acceptedAt,
+        })
+        .eq('tenant_id', tenantId)
+        .eq('id', sendingMailbox.id);
     return okResult('send_email', delivery, {
       receipt,
       meta: { idempotency_key: idempotencyKey, tenant_id: tenantId },
@@ -590,7 +716,8 @@ defineConnectorTool({
 defineConnectorTool({
   module: 'email-ops',
   name: 'create_email_draft',
-  description: 'Create an email draft in Zoho Mail for the authenticated tenant (does not send).',
+  description:
+    'Create an email draft in Zoho Mail for the authenticated tenant (does not send).',
   permission: 'sales:write',
   rateLimitClass: 'write',
   auditAction: 'mcp_create_email_draft',
@@ -618,7 +745,11 @@ defineConnectorTool({
   handler: async (args, ctx) => {
     const tenantId = ctx.tenantId;
     const userId = ctx.userId;
-    if (!tenantId || !userId) throwConnectorError('AUTH_REQUIRED', 'Authenticated workspace session required');
+    if (!tenantId || !userId)
+      throwConnectorError(
+        'AUTH_REQUIRED',
+        'Authenticated workspace session required',
+      );
 
     const recipient = await resolveRecipientByNameOrEmail({
       tenantId,
@@ -654,85 +785,202 @@ defineConnectorTool({
   auditAction: 'mcp_reply_to_email',
   inputSchema: z.object({
     tenant_id: tenantIdField.optional(),
+    account_id: z.string().uuid().optional(),
     message_id: z.string().min(1),
     text: z.string().optional(),
     html: z.string().optional(),
+    reply_all: z.boolean().default(false),
+    attachments: z.array(z.record(z.string(), z.unknown())).optional(),
     idempotency_key: z.string().min(1),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
+      account_id: { type: 'string' },
       message_id: { type: 'string' },
       text: { type: 'string' },
       html: { type: 'string' },
+      reply_all: { type: 'boolean' },
+      attachments: { type: 'array', items: { type: 'object' } },
       idempotency_key: { type: 'string' },
     },
     required: ['message_id', 'idempotency_key'],
   },
   handler: async (args, ctx) => {
-    const tenantId = ctx.tenantId;
-    const userId = ctx.userId;
-    if (!tenantId || !userId) throwConnectorError('AUTH_REQUIRED', 'Authenticated workspace session required');
-
+    if (!args.text && !args.html)
+      throwConnectorError(
+        'EMAIL_BODY_REQUIRED',
+        'Reply text or HTML is required',
+      );
+    const mailbox = new MailboxService(ctx.tenantId, ctx.userId);
     const existing = await findReceiptByIdempotency({
-      tenantId,
+      tenantId: ctx.tenantId,
       tool: 'reply_to_email',
       idempotencyKey: args.idempotency_key,
     });
     if (existing) {
-      return okResult('reply_to_email', existing.sanitized_output, {
+      const replay = okResult('reply_to_email', existing.sanitized_output, {
         receipt: {
           action_id: String(existing.action_id),
           status: String(existing.final_status),
-          provider: existing.provider as string,
+          provider: 'zoho',
           provider_reference: existing.provider_reference as string,
         },
         meta: { deduplicated: true },
       });
+      return existing.success
+        ? replay
+        : {
+            ...replay,
+            ok: false,
+            error: {
+              code: String(
+                existing.error_code || 'EMAIL_PREVIOUS_ATTEMPT_PENDING',
+              ),
+              message:
+                'Previous reply is pending or failed; reconcile get_action_status before retrying.',
+              retryable: false,
+            },
+          };
     }
-
-    if (!args.text && !args.html) {
-      throwConnectorError('INVALID_MEDIA', 'Reply text or html is required');
-    }
-
-    const { ZohoMailService } = await import('@/services/zoho/ZohoMailService');
-    const zoho = new ZohoMailService(userId, tenantId);
-    const result = await zoho.replyToMessage({
-      messageId: args.message_id,
-      bodyHtml: args.html || `<p>${args.text}</p>`,
-      bodyText: args.text,
-    });
-
-    const providerRef =
-      result?.data?.messageId || result?.messageId || `zoho-reply-${Date.now()}`;
-    const acceptedAt = new Date().toISOString();
-    const data = {
-      provider: 'zoho',
-      message_id: providerRef,
-      in_reply_to: args.message_id,
-      delivery_status: 'provider_accepted',
-      accepted_at: acceptedAt,
-    };
-    const receipt = {
-      action_id: newActionId(),
-      status: 'completed' as const,
-      provider: 'zoho',
-      provider_reference: String(providerRef),
-      entity_type: 'email',
-      timestamp: acceptedAt,
-      verification: { verified: true, verified_at: acceptedAt },
-    };
-    await persistActionReceipt({
-      tenantId,
-      userId,
+    const original = await mailbox.content(args.message_id, args.account_id);
+    const account = await mailbox.verify(
+      await mailbox.account(original.account_id),
+    );
+    const attachments = await attachmentsFromMedia(
+      ctx.tenantId,
+      ctx.userId,
+      args.attachments,
+    );
+    const textHtml = String(args.text || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br/>');
+    const result = await executeMcpWrite({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
       tool: 'reply_to_email',
+      action: 'email.reply',
+      mode: 'execute_now',
       idempotencyKey: args.idempotency_key,
-      receipt,
-      success: true,
-      sanitizedInput: { message_id: args.message_id },
-      sanitizedOutput: data,
+      target: {
+        workspace_id: ctx.tenantId,
+        integration: 'zoho',
+        identity_id: account.id,
+        resource_type: 'email_message',
+        resource_id: original.provider_message_id,
+      },
+      payload: { ...args, account_id: account.id },
+      execute: async () =>
+        runEmailOperation({
+          store: emailOperationStore(
+            ctx.tenantId,
+            'canonical_email_reply',
+            args.idempotency_key,
+          ),
+          execute: async (_actionId, checkpoint) => {
+            const response = await mailbox.provider(account).replyToMessage({
+              messageId: original.provider_message_id,
+              original:
+                original as unknown as import('@/services/zoho/ZohoMailService').ZohoFullMessage,
+              bodyHtml: args.html || textHtml,
+              bodyText: args.text,
+              replyAll: args.reply_all,
+              attachments,
+            });
+            const reference = String(
+              response.data?.messageId || response.messageId,
+            );
+            // Provider acceptance is persisted before any follow-up read, so a read
+            // failure cannot trigger another external send.
+            const data = {
+              success: true,
+              emailId: reference,
+              deliveryStatus: 'provider_accepted',
+              provider: 'zoho',
+              message_id: reference,
+              account_id: account.id,
+              thread_id: original.thread_id,
+              in_reply_to: original.provider_message_id,
+              threading: 'provider_native_reply',
+              recipients: response.recipients,
+              delivery_status: 'provider_accepted',
+              accepted_at: new Date().toISOString(),
+            };
+            await checkpoint(data);
+            await mailbox.ingest(
+              account,
+              {
+                id: reference,
+                application_status: 'provider_accepted',
+                thread_id: original.thread_id,
+                subject: response.original.subject,
+                from: account.email_address,
+                to: response.recipients.to,
+                cc: response.recipients.cc,
+                date: data.accepted_at,
+                is_read: true,
+                body_html: args.html || textHtml,
+                body_text: args.text || '',
+                attachments: attachments.map((item) => ({
+                  filename: item.filename,
+                })),
+                headers: { native_reply_to: original.provider_message_id },
+              },
+              'sent',
+            );
+            return data;
+          },
+        }),
+      isSuccess: (data) => data.success === true,
+      mapError: (data) => ({
+        code: String(
+          (data as Record<string, unknown>).code || 'OUTCOME_UNKNOWN',
+        ),
+        message: String(
+          (data as Record<string, unknown>).error ||
+            'Reply outcome must be reconciled',
+        ),
+      }),
+      buildReceipt: (data) => ({
+        action_id: '',
+        status: 'provider_accepted',
+        provider: 'zoho',
+        provider_reference: data.message_id,
+        timestamp: data.accepted_at,
+        entity_type: 'email',
+        verification: { scope: 'provider_acceptance', delivered: false },
+      }),
     });
-    return okResult('reply_to_email', data, { receipt });
+    if (!result.ok)
+      return {
+        ...okResult(
+          'reply_to_email',
+          { action_id: result.actionId },
+          {
+            receipt: {
+              action_id: result.actionId,
+              status:
+                result.error?.code === 'UNKNOWN_EXECUTION_STATE' ||
+                result.error?.code === 'OUTCOME_UNKNOWN'
+                  ? 'unknown_execution_state'
+                  : 'failed',
+            },
+          },
+        ),
+        ok: false,
+        error: result.error || {
+          code: 'EMAIL_REPLY_FAILED',
+          message: 'Reply failed',
+          retryable: false,
+        },
+      };
+    return okResult(
+      'reply_to_email',
+      { ...result.result, action_id: result.actionId },
+      { receipt: result.receipt },
+    );
   },
 });
 
@@ -762,7 +1010,8 @@ defineConnectorTool({
   },
   handler: async (args, ctx) => {
     const tenantId = ctx.tenantId;
-    if (!tenantId) throwConnectorError('TENANT_ACCESS_DENIED', 'Active workspace required');
+    if (!tenantId)
+      throwConnectorError('TENANT_ACCESS_DENIED', 'Active workspace required');
     const supabase = createSupabaseAdminClient();
 
     const actionId = args.action_id?.trim();
@@ -771,7 +1020,10 @@ defineConnectorTool({
     const providerRef = args.provider_reference?.trim();
 
     if (!actionId && !idempotencyKey && !providerRef) {
-      throwConnectorError('RESOURCE_NOT_FOUND', 'Provide action_id, idempotency_key, or provider_reference');
+      throwConnectorError(
+        'RESOURCE_NOT_FOUND',
+        'Provide action_id, idempotency_key, or provider_reference',
+      );
     }
 
     // 1. Check mcp_action_receipts by idempotency_key (with tool or general)
@@ -781,7 +1033,11 @@ defineConnectorTool({
         tool,
         idempotencyKey,
       });
-      if (row) return okResult('get_action_status', await emailReceiptEvidence(tenantId, ctx.userId, row));
+      if (row)
+        return okResult(
+          'get_action_status',
+          await emailReceiptEvidence(tenantId, ctx.userId, row),
+        );
     }
 
     if (idempotencyKey) {
@@ -793,7 +1049,11 @@ defineConnectorTool({
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (byIdemp) return okResult('get_action_status', await emailReceiptEvidence(tenantId, ctx.userId, byIdemp));
+      if (byIdemp)
+        return okResult(
+          'get_action_status',
+          await emailReceiptEvidence(tenantId, ctx.userId, byIdemp),
+        );
     }
 
     // 2. Check mcp_action_receipts by action_id
@@ -804,7 +1064,11 @@ defineConnectorTool({
         .eq('tenant_id', tenantId)
         .or(`action_id.eq.${actionId},id.eq.${actionId}`)
         .maybeSingle();
-      if (byAction) return okResult('get_action_status', await emailReceiptEvidence(tenantId, ctx.userId, byAction));
+      if (byAction)
+        return okResult(
+          'get_action_status',
+          await emailReceiptEvidence(tenantId, ctx.userId, byAction),
+        );
     }
 
     // 3. Check social_publish_operations (handles Instagram, Facebook, LinkedIn operations)
@@ -822,7 +1086,10 @@ defineConnectorTool({
         orConditions.push(`idempotency_key.eq.${idempotencyKey}`);
       }
       if (providerRef) {
-        orConditions.push(`provider_post_id.eq.${providerRef}`, `provider_container_id.eq.${providerRef}`);
+        orConditions.push(
+          `provider_post_id.eq.${providerRef}`,
+          `provider_container_id.eq.${providerRef}`,
+        );
       }
 
       if (orConditions.length > 0) {
@@ -836,12 +1103,19 @@ defineConnectorTool({
           // If operation is in in-flight/reconcilable state, reconcile on demand
           let currentOp = socialOp;
           if (
-            ['provider_processing', 'verifying', 'reconciliation_required'].includes(socialOp.state) &&
+            [
+              'provider_processing',
+              'verifying',
+              'reconciliation_required',
+            ].includes(socialOp.state) &&
             socialOp.platform === 'instagram'
           ) {
             try {
-              const { reconcileInstagramPublishOperation } = await import('@/lib/social/providerAssetPublishers');
-              const reconciled = await reconcileInstagramPublishOperation(socialOp.id);
+              const { reconcileInstagramPublishOperation } =
+                await import('@/lib/social/providerAssetPublishers');
+              const reconciled = await reconcileInstagramPublishOperation(
+                socialOp.id,
+              );
               if (reconciled) {
                 const { data: refreshed } = await supabase
                   .from('social_publish_operations')
@@ -852,7 +1126,10 @@ defineConnectorTool({
                 if (refreshed) currentOp = refreshed;
               }
             } catch (err) {
-              console.warn('[get_action_status] live instagram reconciliation attempt:', err);
+              console.warn(
+                '[get_action_status] live instagram reconciliation attempt:',
+                err,
+              );
             }
           }
 
@@ -863,7 +1140,8 @@ defineConnectorTool({
             tool: `publish_${currentOp.platform}_post`,
             provider: currentOp.platform,
             final_status: currentOp.state,
-            provider_reference: currentOp.provider_post_id || currentOp.provider_container_id,
+            provider_reference:
+              currentOp.provider_post_id || currentOp.provider_container_id,
             live_url: currentOp.provider_permalink,
             entity_id: currentOp.social_post_id,
             entity_type: 'social_post',
@@ -884,9 +1162,12 @@ defineConnectorTool({
     // 4. Check external_actions table
     if (actionId || idempotencyKey || providerRef) {
       const orConditions: string[] = [];
-      if (actionId) orConditions.push(`action_id.eq.${actionId}`, `id.eq.${actionId}`);
-      if (idempotencyKey) orConditions.push(`idempotency_key.eq.${idempotencyKey}`);
-      if (providerRef) orConditions.push(`provider_reference.eq.${providerRef}`);
+      if (actionId)
+        orConditions.push(`action_id.eq.${actionId}`, `id.eq.${actionId}`);
+      if (idempotencyKey)
+        orConditions.push(`idempotency_key.eq.${idempotencyKey}`);
+      if (providerRef)
+        orConditions.push(`provider_reference.eq.${providerRef}`);
 
       if (orConditions.length > 0) {
         const { data: extAction } = await supabase
@@ -909,7 +1190,9 @@ defineConnectorTool({
             provider_reference: extAction.provider_reference,
             live_url: extAction.live_url,
             entity_type: extAction.action_type,
-            success: extAction.status === 'completed' || extAction.status === 'published',
+            success:
+              extAction.status === 'completed' ||
+              extAction.status === 'published',
             created_at: extAction.created_at,
             completed_at: extAction.completed_at,
             failure_reason: extAction.failure_reason,
@@ -942,7 +1225,10 @@ defineConnectorTool({
             tenant_id: emailLog.tenant_id,
             tool: 'send_email',
             provider: emailLog.provider,
-            final_status: emailLog.status === 'sent' ? 'provider_accepted' : emailLog.status,
+            final_status:
+              emailLog.status === 'sent'
+                ? 'provider_accepted'
+                : emailLog.status,
             provider_reference: emailLog.email_id,
             recipient: emailLog.to_email,
             subject: emailLog.subject,
@@ -966,7 +1252,8 @@ defineConnectorTool({
 defineConnectorTool({
   module: 'email-ops',
   name: 'get_media_asset',
-  description: 'Fetch a tenant-scoped media asset by ID (no storage credentials).',
+  description:
+    'Fetch a tenant-scoped media asset by ID (no storage credentials).',
   permission: 'integrations:read',
   inputSchema: z.object({
     tenant_id: tenantIdField.optional(),
@@ -979,7 +1266,8 @@ defineConnectorTool({
   },
   handler: async (args, ctx) => {
     const tenantId = ctx.tenantId;
-    if (!tenantId) throwConnectorError('TENANT_ACCESS_DENIED', 'Active workspace required');
+    if (!tenantId)
+      throwConnectorError('TENANT_ACCESS_DENIED', 'Active workspace required');
     const asset = await ingestMediaInput({
       tenantId,
       userId: ctx.userId || '00000000-0000-0000-0000-000000000000',
@@ -1005,11 +1293,14 @@ defineConnectorTool({
   },
   handler: async (args, ctx) => {
     const tenantId = ctx.tenantId;
-    if (!tenantId) throwConnectorError('TENANT_ACCESS_DENIED', 'Active workspace required');
+    if (!tenantId)
+      throwConnectorError('TENANT_ACCESS_DENIED', 'Active workspace required');
     const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase
       .from('media_assets')
-      .select('id, file_name, file_type, file_size_bytes, public_url, width, height, created_at')
+      .select(
+        'id, file_name, file_type, file_size_bytes, public_url, width, height, created_at',
+      )
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(args.limit || 20);
@@ -1030,351 +1321,210 @@ defineConnectorTool({
   },
 });
 
-// ── read_emails / list_received_emails ───────────────────────────────────────
-defineConnectorTool({
-  module: 'email-ops',
-  name: 'read_emails',
-  description:
-    'List received emails and recent email dispatches/threads for the authenticated workspace. Returns message IDs, senders, subjects, dates, and preview snippets.',
-  permission: 'integrations:read',
-  inputSchema: z.object({
-    tenant_id: tenantIdField.optional(),
-    limit: z.coerce.number().int().min(1).max(50).optional().default(20),
-    folder: z.string().optional().default('inbox'),
-  }),
-  jsonSchema: {
-    type: 'object',
-    properties: {
-      limit: { type: 'number' },
-      folder: { type: 'string' },
+// Canonical mailbox operations; project notification logs are not an inbox.
+const mailboxFields = {
+  tenant_id: tenantIdField.optional(),
+  account_id: z.string().uuid().optional(),
+  folder: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  start: z.coerce.number().int().min(1).default(1),
+};
+const mailboxJson = {
+  account_id: { type: 'string', format: 'uuid' },
+  folder: { type: 'string' },
+  limit: { type: 'number' },
+  start: { type: 'number' },
+};
+for (const name of ['read_emails', 'search_emails'] as const) {
+  defineConnectorTool({
+    module: 'email-ops',
+    name,
+    description:
+      name === 'read_emails'
+        ? 'Read connected mailbox folders with bounded provider pagination and freshness; does not mark emails read.'
+        : 'Search the actual connected mailbox. Supports provider query syntax, subject, sender, recipients and content.',
+    permission: 'integrations:read',
+    inputSchema: z.object({
+      ...mailboxFields,
+      query:
+        name === 'search_emails' ? z.string().min(1) : z.string().optional(),
+    }),
+    jsonSchema: {
+      type: 'object',
+      properties: { ...mailboxJson, query: { type: 'string' } },
+      required: name === 'search_emails' ? ['query'] : [],
     },
-    required: [],
-  },
-  handler: async (args, ctx) => {
-    const tenantId = ctx.tenantId;
-    if (!tenantId) throwConnectorError('TENANT_ACCESS_DENIED', 'Active workspace required');
-    const supabase = createSupabaseAdminClient();
+    handler: async (args, ctx) =>
+      okResult(
+        name,
+        await new MailboxService(ctx.tenantId, ctx.userId).list(args),
+        {
+          receipt: {
+            status: 'completed',
+            provider: 'zoho',
+            verification: { scope: 'mailbox_read' },
+          },
+        },
+      ),
+  });
+}
 
-    const { data: dispatches } = await supabase
-      .from('project_email_dispatches')
-      .select('id, project_id, client_id, stage, recipient_email, subject, body_text, sent_at, approval_status, created_at')
-      .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false })
-      .limit(args.limit || 20);
-
-    const messages = (dispatches || []).map((row) => ({
-      message_id: row.id,
-      project_id: row.project_id,
-      client_id: row.client_id,
-      stage: row.stage,
-      sender_email: 'system@alphaclone.ai',
-      recipient_email: row.recipient_email,
-      subject: row.subject,
-      snippet: (row.body_text || '').slice(0, 150),
-      sent_at: row.sent_at || row.created_at,
-      approval_status: row.approval_status,
-    }));
-
-    return okResult('read_emails', {
-      total: messages.length,
-      folder: args.folder || 'inbox',
-      messages,
-    });
-  },
-});
-
-// ── read_email_content ───────────────────────────────────────────────────────
 defineConnectorTool({
   module: 'email-ops',
   name: 'read_email_content',
   description:
-    'Read full body text, HTML, headers, and attachments of a specific email message by message_id.',
+    'Read full text/HTML, safe headers and attachment metadata from the original mailbox. No read flag mutation.',
   permission: 'integrations:read',
   inputSchema: z.object({
     tenant_id: tenantIdField.optional(),
+    account_id: z.string().uuid().optional(),
     message_id: z.string().min(1),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
+      account_id: { type: 'string' },
       message_id: { type: 'string' },
     },
     required: ['message_id'],
   },
-  handler: async (args, ctx) => {
-    const tenantId = ctx.tenantId;
-    if (!tenantId) throwConnectorError('TENANT_ACCESS_DENIED', 'Active workspace required');
-    const supabase = createSupabaseAdminClient();
-
-    const { data: dispatch } = await supabase
-      .from('project_email_dispatches')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('id', args.message_id)
-      .maybeSingle();
-
-    if (!dispatch) {
-      throwConnectorError('RESOURCE_NOT_FOUND', `Email message with ID "${args.message_id}" not found`);
-    }
-
-    return okResult('read_email_content', {
-      message_id: dispatch.id,
-      tenant_id: dispatch.tenant_id,
-      project_id: dispatch.project_id,
-      client_id: dispatch.client_id,
-      recipient_email: dispatch.recipient_email,
-      subject: dispatch.subject,
-      body_text: dispatch.body_text,
-      body_html: dispatch.body_text ? `<p>${dispatch.body_text.replace(/\n/g, '<br/>')}</p>` : '',
-      autonomy_level: dispatch.autonomy_level,
-      approval_status: dispatch.approval_status,
-      sent_at: dispatch.sent_at || dispatch.created_at,
-    });
-  },
+  handler: async (args, ctx) =>
+    okResult(
+      'read_email_content',
+      await new MailboxService(ctx.tenantId, ctx.userId).content(
+        args.message_id,
+        args.account_id,
+      ),
+      {
+        receipt: {
+          status: 'completed',
+          verification: { scope: 'mailbox_content' },
+        },
+      },
+    ),
 });
 
-// ── search_emails ─────────────────────────────────────────────────────────────
 defineConnectorTool({
   module: 'email-ops',
-  name: 'search_emails',
+  name: 'read_email_conversation',
   description:
-    'Search workspace outbound emails and drafts across provider dispatches (email_logs, receipts, external actions, project workflows) by recipient email, subject, keyword, action_id, or provider message ID.',
+    'Read synced conversation messages in chronological order with pagination and explicit cache completeness.',
   permission: 'integrations:read',
   inputSchema: z.object({
     tenant_id: tenantIdField.optional(),
-    query: z.string().min(1),
-    limit: z.number().int().min(1).max(50).optional().default(20),
+    account_id: z.string().uuid().optional(),
+    thread_id: z.string().min(1),
+    limit: z.number().int().min(1).max(100).default(50),
+    offset: z.number().int().min(0).default(0),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
-      query: { type: 'string' },
+      account_id: { type: 'string' },
+      thread_id: { type: 'string' },
       limit: { type: 'number' },
+      offset: { type: 'number' },
     },
-    required: ['query'],
+    required: ['thread_id'],
+  },
+  handler: async (args, ctx) =>
+    okResult(
+      'read_email_conversation',
+      await new MailboxService(ctx.tenantId, ctx.userId).conversation(
+        args.thread_id,
+        args.account_id,
+        args.limit,
+        args.offset,
+      ),
+      {
+        receipt: {
+          status: 'completed',
+          verification: { scope: 'cached_conversation' },
+        },
+      },
+    ),
+});
+
+defineConnectorTool({
+  module: 'email-ops',
+  name: 'sync_all_inboxes',
+  description:
+    'Perform a bounded real mailbox sync. Pending jobs must be resumed with account_id/job_id; completed only after all provider pages persist.',
+  permission: 'integrations:read',
+  inputSchema: z.object({
+    tenant_id: tenantIdField.optional(),
+    account_id: z.string().uuid().optional(),
+    job_id: z.string().uuid().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: { account_id: { type: 'string' }, job_id: { type: 'string' } },
   },
   handler: async (args, ctx) => {
-    const tenantId = ctx.tenantId;
-    if (!tenantId) throwConnectorError('TENANT_ACCESS_DENIED', 'Active workspace required');
-    const supabase = createSupabaseAdminClient();
-
-    const rawQuery = args.query.trim();
-    const cleanPattern = rawQuery.replace(/[%_]/g, '');
-    const pattern = `%${cleanPattern}%`;
-    const limit = args.limit || 20;
-
-    type UnifiedEmailMatch = {
-      message_id: string;
-      action_id?: string;
-      recipient_email: string;
-      subject: string;
-      snippet: string;
-      provider?: string;
-      delivery_status: string;
-      sent_at: string;
-      source: string;
-      evidence: {
-        provider_reference?: string;
-        action_id?: string;
-        verified: boolean;
-        metadata?: unknown;
+    const mailbox = new MailboxService(ctx.tenantId, ctx.userId);
+    const accounts = args.account_id
+      ? [await mailbox.account(args.account_id)]
+      : (await mailbox.accounts()).filter((row) =>
+          ['user', 'shared_mailbox'].includes(row.account_type),
+        );
+    if (!accounts.length) throw new Error('EMAIL_MAILBOX_NOT_CONNECTED');
+    if (args.job_id && accounts.length !== 1)
+      throw new Error('EMAIL_ACCOUNT_SELECTION_REQUIRED');
+    const jobs = [];
+    for (const account of accounts)
+      jobs.push(await mailbox.sync(account.id, args.job_id));
+    const status = jobs.some((job) => job.status === 'failed')
+      ? 'failed'
+      : jobs.every((job) => job.status === 'completed')
+        ? 'completed'
+        : jobs.some((job) => job.status === 'running')
+          ? 'running'
+          : 'pending';
+    const response = okResult(
+      'sync_all_inboxes',
+      { status, jobs },
+      {
+        receipt: { status, verification: { scope: 'persisted_mailbox_sync' } },
+      },
+    );
+    if (status === 'failed')
+      return {
+        ...response,
+        ok: false,
+        error: {
+          code: 'EMAIL_SYNC_FAILED',
+          message: 'Mailbox sync failed; inspect jobs for the provider error.',
+          retryable: false,
+        },
       };
-    };
+    return response;
+  },
+});
 
-    const matches: UnifiedEmailMatch[] = [];
-    const seenKeys = new Set<string>();
-
-    // 1. Search email_logs (direct provider outbound dispatches via Brevo, Zoho, Gmail, etc.)
-    try {
-      const { data: logs } = await supabase
-        .from('email_logs')
-        .select('id, to_email, subject, status, email_id, provider, created_at, metadata')
-        .eq('tenant_id', tenantId)
-        .or(`to_email.ilike.${pattern},subject.ilike.${pattern},email_id.ilike.${pattern}`)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      for (const log of logs || []) {
-        const key = log.email_id || log.id;
-        if (seenKeys.has(key)) continue;
-        seenKeys.add(key);
-
-        const statusNormalized =
-          log.status === 'sent'
-            ? 'provider_accepted'
-            : log.status || 'unknown';
-
-        matches.push({
-          message_id: log.email_id || log.id,
-          action_id: (log.metadata as { action_id?: string })?.action_id,
-          recipient_email: log.to_email || '',
-          subject: log.subject || '(no subject)',
-          snippet: `Provider: ${log.provider || 'unknown'}, status: ${statusNormalized}`,
-          provider: log.provider || undefined,
-          delivery_status: statusNormalized,
-          sent_at: log.created_at,
-          source: 'email_logs',
-          evidence: {
-            provider_reference: log.email_id || undefined,
-            verified: Boolean(log.email_id),
-            metadata: log.metadata,
-          },
-        });
-      }
-    } catch (err) {
-      console.warn('[search_emails] email_logs query error:', err);
-    }
-
-    // 2. Search mcp_action_receipts (where tool = 'send_email')
-    try {
-      const { data: receipts } = await supabase
-        .from('mcp_action_receipts')
-        .select('id, action_id, idempotency_key, tool, final_status, provider, provider_reference, sanitized_input, sanitized_output, created_at')
-        .eq('tenant_id', tenantId)
-        .eq('tool', 'send_email')
-        .order('created_at', { ascending: false })
-        .limit(limit * 2);
-
-      const qLower = cleanPattern.toLowerCase();
-      for (const rec of receipts || []) {
-        const inputStr = JSON.stringify(rec.sanitized_input || '').toLowerCase();
-        const outputStr = JSON.stringify(rec.sanitized_output || '').toLowerCase();
-        const actionMatches =
-          (rec.action_id && rec.action_id.toLowerCase().includes(qLower)) ||
-          (rec.provider_reference && rec.provider_reference.toLowerCase().includes(qLower)) ||
-          inputStr.includes(qLower) ||
-          outputStr.includes(qLower);
-
-        if (!actionMatches) continue;
-
-        const key = rec.provider_reference || rec.action_id || rec.id;
-        if (seenKeys.has(key)) {
-          // If we already saw this from email_logs, enrich action_id
-          const existing = matches.find((m) => m.evidence.provider_reference === rec.provider_reference || m.message_id === rec.provider_reference);
-          if (existing && !existing.action_id && rec.action_id) {
-            existing.action_id = rec.action_id;
-            existing.evidence.action_id = rec.action_id;
-          }
-          continue;
-        }
-        seenKeys.add(key);
-
-        const target = (rec.sanitized_input as { target?: { resource_id?: string }; to?: string })?.target;
-        const recipient = target?.resource_id || (rec.sanitized_input as { to?: string })?.to || '';
-
-        matches.push({
-          message_id: rec.provider_reference || rec.action_id || rec.id,
-          action_id: rec.action_id || undefined,
-          recipient_email: recipient,
-          subject: (rec.sanitized_input as { subject?: string })?.subject || '(action receipt)',
-          snippet: `Action ID: ${rec.action_id}, Status: ${rec.final_status}`,
-          provider: rec.provider || undefined,
-          delivery_status: rec.final_status === 'completed' ? 'provider_accepted' : rec.final_status || 'unknown',
-          sent_at: rec.created_at,
-          source: 'mcp_action_receipts',
-          evidence: {
-            provider_reference: rec.provider_reference || undefined,
-            action_id: rec.action_id || undefined,
-            verified: Boolean(rec.provider_reference),
-          },
-        });
-      }
-    } catch (err) {
-      console.warn('[search_emails] mcp_action_receipts query error:', err);
-    }
-
-    // 3. Search external_actions (where action_type = 'email' or tool_name = 'send_email')
-    try {
-      const { data: actions } = await supabase
-        .from('external_actions')
-        .select('id, action_id, tool_name, action_type, status, provider, provider_reference, payload, target, created_at, completed_at')
-        .eq('tenant_id', tenantId)
-        .or('action_type.eq.email,tool_name.eq.send_email')
-        .order('created_at', { ascending: false })
-        .limit(limit * 2);
-
-      const qLower = cleanPattern.toLowerCase();
-      for (const act of actions || []) {
-        const payloadStr = JSON.stringify(act.payload || '').toLowerCase();
-        const actMatches =
-          (act.action_id && act.action_id.toLowerCase().includes(qLower)) ||
-          (act.provider_reference && act.provider_reference.toLowerCase().includes(qLower)) ||
-          payloadStr.includes(qLower);
-
-        if (!actMatches) continue;
-
-        const key = act.provider_reference || act.action_id || act.id;
-        if (seenKeys.has(key)) {
-          const existing = matches.find((m) => m.evidence.provider_reference === act.provider_reference || m.action_id === act.action_id);
-          if (existing && !existing.action_id && act.action_id) {
-            existing.action_id = act.action_id;
-            existing.evidence.action_id = act.action_id;
-          }
-          continue;
-        }
-        seenKeys.add(key);
-
-        const payload = (act.payload as { to?: string; subject?: string }) || {};
-        matches.push({
-          message_id: act.provider_reference || act.action_id || act.id,
-          action_id: act.action_id || undefined,
-          recipient_email: payload.to || (act.target as { resource_id?: string })?.resource_id || '',
-          subject: payload.subject || '(external action)',
-          snippet: `Action: ${act.tool_name}, Status: ${act.status}`,
-          provider: act.provider || undefined,
-          delivery_status: act.status === 'completed' ? 'provider_accepted' : act.status,
-          sent_at: act.completed_at || act.created_at,
-          source: 'external_actions',
-          evidence: {
-            provider_reference: act.provider_reference || undefined,
-            action_id: act.action_id || undefined,
-            verified: Boolean(act.provider_reference),
-          },
-        });
-      }
-    } catch (err) {
-      console.warn('[search_emails] external_actions query error:', err);
-    }
-
-    // 4. Search project_email_dispatches (internal workflow emails and drafts)
-    try {
-      const { data: dispatches } = await supabase
-        .from('project_email_dispatches')
-        .select('id, project_id, client_id, stage, recipient_email, subject, body_text, sent_at, approval_status, created_at')
-        .eq('tenant_id', tenantId)
-        .or(`subject.ilike.${pattern},recipient_email.ilike.${pattern},body_text.ilike.${pattern}`)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      for (const row of dispatches || []) {
-        if (seenKeys.has(row.id)) continue;
-        seenKeys.add(row.id);
-
-        matches.push({
-          message_id: row.id,
-          recipient_email: row.recipient_email,
-          subject: row.subject,
-          snippet: (row.body_text || '').slice(0, 150),
-          sent_at: row.sent_at || row.created_at,
-          delivery_status: row.approval_status === 'sent' ? 'provider_accepted' : row.approval_status || 'draft',
-          source: 'project_email_dispatches',
-          evidence: {
-            verified: Boolean(row.sent_at),
-          },
-        });
-      }
-    } catch (err) {
-      console.warn('[search_emails] project_email_dispatches query error:', err);
-    }
-
-    // Sort all matches by timestamp descending and apply limit
-    matches.sort((a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime());
-    const finalMatches = matches.slice(0, limit);
-
-    return okResult('search_emails', {
-      query: args.query,
-      count: finalMatches.length,
-      matches: finalMatches,
+defineConnectorTool({
+  module: 'email-ops',
+  name: 'get_email_sync_status',
+  description:
+    'Read tenant-scoped mailbox job progress, completion, counts and actionable errors.',
+  permission: 'integrations:read',
+  inputSchema: z.object({
+    tenant_id: tenantIdField.optional(),
+    job_id: z.string().uuid(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: { job_id: { type: 'string' } },
+    required: ['job_id'],
+  },
+  handler: async (args, ctx) => {
+    const job = await new MailboxService(ctx.tenantId, ctx.userId).syncStatus(
+      args.job_id,
+    );
+    return okResult('get_email_sync_status', job, {
+      receipt: {
+        status: job.status,
+        action_id: job.id,
+      },
     });
   },
 });

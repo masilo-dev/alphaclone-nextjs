@@ -15,6 +15,12 @@ export interface ZohoConfig {
     booksOrgId?: string;  // Zoho Books organization ID
     authExpiredAt?: string;
     authExpiredReason?: string;
+    scopes?: string[];
+}
+
+/** Zoho's long numeric IDs must not pass through JavaScript number rounding. */
+export function parseZohoPayload(raw: string) {
+    return JSON.parse(raw.replace(/("(?:messageId|accountId|folderId|threadId|attachmentId)"\s*:\s*)(\d{16,})(?=\s*[,}])/g, '$1"$2"'));
 }
 
 export class ZohoAuthExpiredError extends Error {
@@ -101,7 +107,8 @@ export class ZohoService {
             .limit(1)
             .maybeSingle();
 
-        if (error || !data) return null;
+        if (error) throw new Error(`ZOHO_CONFIGURATION_LOOKUP_FAILED: ${error.message}`);
+        if (!data || !data.enabled) return null;
 
         const config = data.config as any;
 
@@ -113,7 +120,7 @@ export class ZohoService {
                 config.accessToken = await decrypt(config.accessToken, this.encryptionSecret);
             }
         } catch (e) {
-            console.error('Failed to decrypt Zoho tokens:', e);
+            throw new Error('ZOHO_CREDENTIAL_DECRYPTION_FAILED: stored credentials could not be decrypted');
         }
 
         config.mailApiHost = ZohoService.normalizeHost(config.mailApiHost);
@@ -177,6 +184,7 @@ export class ZohoService {
             if (updateError) {
                 throw new Error(`Failed to update Zoho integration config: ${updateError.message}`);
             }
+            this.invalidateConfigCache();
             return;
         }
 
@@ -266,6 +274,7 @@ export class ZohoService {
             response = await fetch(`${accountsServer}/oauth/v2/token`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                signal:AbortSignal.timeout(10000),
                 body: new URLSearchParams({
                     refresh_token: config.refreshToken,
                     client_id: clientId,
@@ -274,8 +283,7 @@ export class ZohoService {
                 }),
             });
         } catch (networkErr) {
-            console.error('Zoho token refresh network error:', networkErr);
-            return null;
+            throw new ZohoAPIError(503,'Zoho token refresh is temporarily unavailable; credentials were retained.');
         }
 
         const data = await response.json();
@@ -329,6 +337,7 @@ export class ZohoService {
         const makeRequest = async (token: string): Promise<Response> => {
             return fetch(url, {
                 ...options,
+                signal: options.signal || AbortSignal.timeout(10_000),
                 headers: {
                     'Content-Type': 'application/json',
                     ...options.headers,
@@ -377,7 +386,13 @@ export class ZohoService {
             throw new ZohoAPIError(response.status, `Zoho API error ${response.status}: ${errBody}`);
         }
 
-        return response.json();
+        const payload = parseZohoPayload(await response.text());
+        // Zoho may return an application failure in an HTTP 200 response.
+        const code = Number(payload?.status?.code || 200);
+        if (code >= 400 || payload?.error || payload?.status?.status === 'failure') {
+            throw new ZohoAPIError(code >= 400 ? code : 502, `Zoho API rejected operation: ${JSON.stringify(payload.status || payload.error)}`);
+        }
+        return payload;
     }
 
     static getHostsByRegion(region: string) {

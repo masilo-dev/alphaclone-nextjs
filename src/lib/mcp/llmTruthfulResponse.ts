@@ -41,7 +41,10 @@ export function buildLlmExecutionTruth(input: {
   const result = input.parsedResult as any;
   const readCompleted = result != null && result?.ok !== false && result?.success !== false && /^(get|list|search|fetch|inspect)_/.test(input.toolName);
   const rawStatus = receipt?.status || (readCompleted ? undefined : result?.status);
+  const mailboxPending = ['sync_all_inboxes','get_email_sync_status'].includes(input.toolName)
+    && String(receipt?.status || result?.data?.status || result?.status).toLowerCase() === 'pending';
   const verificationState = result?.ok === false || result?.success === false ? 'FAILED'
+    : mailboxPending ? 'REQUESTED'
     : readCompleted ? 'VERIFIED'
     : rawStatus ? normalizeExecutionState(rawStatus) : 'REQUESTED';
 
@@ -56,7 +59,8 @@ export function buildLlmExecutionTruth(input: {
 
   const may_claim = llmSafeCompletionClaim(verificationState);
 
-  let user_message = readCompleted ? 'Read completed. This confirms the lookup, not completion of any action described in the returned data.'
+  let user_message = mailboxPending ? 'Mailbox sync has unfinished batches. Resume sync_all_inboxes with the returned account_id and job_id; no background completion is promised.'
+    : readCompleted ? 'Read completed. This confirms the lookup, not completion of any action described in the returned data.'
     : String(rawStatus).toLowerCase() === 'provider_accepted' ? 'Provider accepted the request. Final delivery has not been verified.'
     : llmStatusPhrase(verificationState);
   if (approval_state === 'queued') {
@@ -80,7 +84,8 @@ export function buildLlmExecutionTruth(input: {
         ? { type: receipt.entity_type || undefined, id: receipt.entity_id || undefined }
         : null,
     next_action:
-      verificationState === 'UNKNOWN_EXECUTION_STATE'
+      mailboxPending ? 'Resume sync_all_inboxes with account_id and job_id.'
+        : verificationState === 'UNKNOWN_EXECUTION_STATE'
         ? 'Reconcile execution state with get_action_status or provider verification before retrying.'
         : approval_state === 'queued'
           ? 'Use approve_pending_action or the Approval Center.'

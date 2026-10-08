@@ -25,43 +25,14 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 
 async function syncUserInbox(userId: string, tenantId: string) {
   try {
-    const admin = createSupabaseAdminClient();
-    const zoho = new ZohoMailService(userId, tenantId);
-    const folders = await withTimeout(zoho.getFolders(), PER_USER_TIMEOUT_MS);
-    const inbox = folders.find((f) => f.folderName?.toLowerCase() === 'inbox') || folders[0];
-    if (!inbox) {
-      return { userId, tenantId, synced: 0, skipped: 'no_inbox_folder' };
-    }
-
-    const messages = await withTimeout(zoho.getMessages(inbox.folderId, 20, 1), PER_USER_TIMEOUT_MS);
-    const messageIds = messages.map((msg) => msg.messageId).filter(Boolean);
-    const { data: processedLogs } = messageIds.length
-      ? await admin
-          .from('zoho_auto_responder_logs')
-          .select('message_id')
-          .eq('user_id', userId)
-          .in('message_id', messageIds)
-      : { data: [] as Array<{ message_id: string }> };
-    const processedIds = new Set(
-      ((processedLogs || []) as Array<{ message_id: string }>).map((row) => row.message_id)
-    );
-    let synced = 0;
-
-    for (const msg of messages) {
-      if (processedIds.has(msg.messageId)) continue;
-      try {
-        await withTimeout(zoho.triageIncomingEmail(msg.messageId, inbox.folderId), PER_USER_TIMEOUT_MS);
-        synced++;
-      } catch (err) {
-        console.warn(`[sync-zoho-inbox] triage failed for ${msg.messageId}:`, err);
-      }
-    }
-
-    return { userId, tenantId, synced };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'unknown error';
-    const code = err instanceof ZohoAuthExpiredError ? 'auth_expired' : 'error';
-    return { userId, tenantId, synced: 0, error: message, code };
+    const { MailboxService } = await import('@/lib/email/mailboxService');
+    const mailbox = new MailboxService(tenantId,userId);
+    const accounts = (await mailbox.accounts()).filter((row) => row.provider === 'zoho' && row.account_type !== 'platform');
+    const jobs = [];
+    for (const account of accounts) jobs.push(await mailbox.sync(account.id));
+    return {userId,tenantId,jobs};
+  } catch (err) {
+    return {userId,tenantId,error:err instanceof Error ? err.message : String(err)};
   }
 }
 

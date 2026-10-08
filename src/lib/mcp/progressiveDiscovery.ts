@@ -29,7 +29,7 @@ export const CORE_TOOL_NAMES = new Set([
   'update_contract_status', 'get_contracts',
   // Email & Outreach
   'send_email', 'send_outreach_email', 'reply_to_email', 'generate_outreach_draft',
-  'read_emails', 'search_emails', 'create_email_draft', 'list_email_accounts',
+  'read_emails', 'read_email_content', 'read_email_conversation', 'get_email_sync_status', 'sync_all_inboxes', 'search_emails', 'create_email_draft', 'list_email_accounts',
   'send_transactional_email',
   // Social scheduling, media library & LinkedIn/Instagram publish
   'schedule_social_post', 'create_social_post', 'get_social_posts', 'get_social_post',

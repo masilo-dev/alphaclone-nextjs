@@ -7,6 +7,9 @@ import { EmailExecutionService } from '@/lib/email/emailExecutionService';
 export interface SendEmailServerParams {
   to: string | string[];
   subject: string;
+  cc?: string[];
+  bcc?: string[];
+  preserveContent?: boolean;
   html?: string;
   text?: string;
   message?: string;
@@ -108,6 +111,7 @@ export async function sendEmailServer(params: SendEmailServerParams): Promise<Se
     sourceAction: source.action,
     to: params.to,
     subject: params.subject,
+    cc: params.cc, bcc: params.bcc, preserveContent:params.preserveContent,
     message: params.message || params.text,
     html: params.html,
     category,

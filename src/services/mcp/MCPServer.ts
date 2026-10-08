@@ -7533,47 +7533,11 @@ Return ONLY a JSON array of 60 objects:
 
         // â”€â”€ sync_all_inboxes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         case 'sync_all_inboxes': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const { limit = 10 } = a;
-          const user_id = a.user_id ? this.requireProfileUser(a) : this.ctx?.userId || null;
-
-          // Fetch recent messages across channels
-          const { data: messages } = await supabaseAdmin
-            .from('messages')
-            .select('*')
-            .eq('tenant_id', tenant_id)
-            .order('created_at', { ascending: false })
-            .limit(limit);
-
-          const { data: leads } = await supabaseAdmin
-              .from('leads')
-              .select('id, business_name, notes, created_at')
-              .eq('tenant_id', tenant_id)
-              .eq('status', 'new')
-              .limit(5);
-
-          let zohoMessages: any[] = [];
-          if (user_id) {
-            try {
-              const zoho = new ZohoMailService(user_id, tenant_id);
-              const folders = await zoho.getFolders();
-              const inbox = folders.find((folder) => /inbox/i.test(folder.folderName)) || folders[0];
-              if (inbox) {
-                const rawMessages = await zoho.getMessages(inbox.folderId, Math.min(Number(limit) || 10, 50), 1);
-                zohoMessages = await Promise.all(rawMessages.map((message: any) => zoho.getFullMessagePayload(message, inbox.folderId)));
-              }
-            } catch (error) {
-              zohoMessages = [{ error: error instanceof Error ? error.message : 'Zoho sync failed' }];
-            }
-          }
-
-          result = { content: [{ type: 'text', text: JSON.stringify({
-            messages: messages || [],
-            zoho_mail: zohoMessages,
-            new_leads: leads || [],
-            summary: `Synced ${messages?.length || 0} internal messages, ${zohoMessages.length} Zoho messages, and ${leads?.length || 0} hot leads for processing.`
-          }, null, 2) }] };
+          const { getTool } = await import('@/lib/mcp/tool-registry');
+          const tool = getTool('sync_all_inboxes');
+          if (!tool || !this.ctx?.userId) throw new Error('EMAIL_SYNC_HANDLER_UNAVAILABLE');
+          const tenantId = this.requireTenant(args as Record<string,any>);
+          result = await tool.handler(tool.inputSchema.parse(args), {tenantId,userId:this.ctx.userId});
           break;
         }
 

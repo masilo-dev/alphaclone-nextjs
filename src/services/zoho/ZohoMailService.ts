@@ -5,6 +5,7 @@ import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailCompositio
 import { extractEmailAddress, formatMailFrom } from '@/lib/email/parseEmailHeader';
 import { syncExternalMessageAdmin, resolveContactByEmailAdmin } from '@/services/unified/unifiedMessageAdmin';
 import { isAIProviderUnavailableError } from '@/lib/ai/providerHealth';
+import { mailboxDate, replyRecipients } from '@/lib/email/mailboxNormalization';
 
 export interface ZohoMessage {
     messageId: string;
@@ -31,6 +32,8 @@ export interface ZohoFullMessage {
     body_text: string;
     attachments: Array<{ filename: string; size?: number; attachment_id?: string }>;
     folder_id?: string;
+    headers?: Record<string, unknown>;
+    reply_to?: string;
 }
 
 export interface ZohoFolder {
@@ -123,9 +126,34 @@ export class ZohoMailService extends ZohoService {
     }
 
     async getAccounts() {
-        const config = await this.getConfig();
+        let config = await this.getConfig();
+        if (config && !config.mailApiHost && config.accountsServer) {
+            const server = config.accountsServer;
+            const region = server.includes('.com.au') ? 'AU' : server.includes('.eu') ? 'EU' : server.includes('.in') ? 'IN' : server.includes('.jp') ? 'JP' : server.includes('.ca') ? 'CA' : 'US';
+            await this.saveConfig({ mailApiHost: ZohoService.getHostsByRegion(region).mail });
+            config = await this.getConfig();
+        }
         if (!config?.mailApiHost) throw new Error('Zoho Mail not configured: missing mailApiHost');
         return await this.callZohoAPI(`https://${config.mailApiHost}/api/accounts`);
+    }
+
+    async verifyMailboxAccess() {
+        const result = await this.getAccounts();
+        if (!Array.isArray(result?.data)) throw new Error('ZOHO_INVALID_ACCOUNT_RESPONSE');
+        const config = await this.getConfig();
+        const matches = config?.accountId ? result.data.filter((row: any) => String(row.accountId) === String(config.accountId)) : result.data;
+        if (matches.length !== 1) throw new Error(matches.length ? 'ZOHO_ACCOUNT_SELECTION_REQUIRED' : 'ZOHO_MAILBOX_NOT_FOUND');
+        const selected = matches[0];
+        const address = selected.primaryEmailAddress || selected.mailAddress || selected.incomingUserName;
+        if (!address || !String(address).includes('@')) throw new Error('ZOHO_MAILBOX_ADDRESS_UNAVAILABLE');
+        if (!config?.accountId) await this.saveConfig({accountId:String(selected.accountId)});
+        const folders = await this.getFolders();
+        const inbox = folders.find((row) => row.folderName.toLowerCase() === 'inbox');
+        if (!inbox) throw new Error('ZOHO_INBOX_NOT_FOUND');
+        // Folder/config discovery alone is not proof of message read access.
+        await this.getMessages(inbox.folderId, 1, 1);
+        return {account_id:String(selected.accountId),address:String(address),folders,verified_at:new Date().toISOString(),
+            send_scope_granted: config?.scopes ? config.scopes.some((scope) => ['ZohoMail.messages.ALL','ZohoMail.messages.CREATE'].includes(scope)) : null};
     }
 
     async getSenderAddresses(): Promise<string[]> {
@@ -149,22 +177,24 @@ export class ZohoMailService extends ZohoService {
             
             return [...new Set(addresses)].filter(Boolean);
         } catch (err) {
-            console.error('[ZohoMailService] Failed to fetch sender addresses:', err);
-            return [];
+            throw err;
         }
     }
 
     async getFolders(): Promise<ZohoFolder[]> {
         const { base } = await this.getMailBase();
         const data = await this.callZohoAPI(`${base}/folders`);
-        return (data?.data ?? []) as ZohoFolder[];
+        if (!Array.isArray(data?.data)) throw new Error('ZOHO_INVALID_FOLDER_RESPONSE');
+        return data.data as ZohoFolder[];
     }
 
     async getMessages(folderId: string, limit = 20, start = 1): Promise<ZohoMessage[]> {
         const { base } = await this.getMailBase();
-        const url = `${base}/messages/view?folderId=${encodeURIComponent(folderId)}&limit=${limit}&start=${start}`;
+        const url = `${base}/messages/view?folderId=${encodeURIComponent(folderId)}&limit=${limit}&start=${start}&includeto=true`;
         const data = await this.callZohoAPI(url);
-        return (data?.data ?? []) as ZohoMessage[];
+        if (!Array.isArray(data?.data)) throw new Error('ZOHO_INVALID_MESSAGE_RESPONSE');
+        return data.data.map((message: any) => ({...message,messageId:String(message.messageId),folderId:String(message.folderId || folderId),
+            receivedTime:String(message.receivedTime || message.receivedtime || message.sentDateInGMT || '')})) as ZohoMessage[];
     }
 
     async getMessageContent(messageId: string, folderId: string) {
@@ -188,8 +218,7 @@ export class ZohoMailService extends ZohoService {
             return { content: contentStr };
         } catch (err: any) {
             if (err?.status === 404) {
-                console.warn('[ZohoMailService] Message not found:', messageId);
-                return { content: '', error: 'Retrieved failed.', status: 404 };
+                throw err;
             }
             throw err;
         }
@@ -218,8 +247,10 @@ export class ZohoMailService extends ZohoService {
             ? await this.getMessageContent(id, resolvedFolderId)
             : { content: message.content || message.body || '' };
         const html = String(content || message.htmlContent || message.body_html || '');
-        const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-        const attachments = Array.isArray(message.attachments || message.attachmentInfo)
+        const text = html.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi,'')
+            .replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi,' ').replace(/&lt;/gi,'<').replace(/&gt;/gi,'>')
+            .replace(/&quot;/gi,'"').replace(/&#39;/g,"'").replace(/&amp;/gi,'&').replace(/\s+/g, ' ').trim();
+        let attachments = Array.isArray(message.attachments || message.attachmentInfo)
             ? (message.attachments || message.attachmentInfo).map((attachment: any) => ({
                 filename: attachment.fileName || attachment.filename || attachment.name || 'attachment',
                 size: Number(attachment.size || attachment.fileSize || 0) || undefined,
@@ -227,23 +258,49 @@ export class ZohoMailService extends ZohoService {
             }))
             : [];
 
+        if (message.hasAttachment && !attachments.length && resolvedFolderId) {
+            attachments = (await this.getAttachmentInfo(id, resolvedFolderId)).map((item: any) => ({
+                filename:item.fileName,size:item.fileSize,attachment_id:item.attachmentId,
+            }));
+        }
+        const { base } = await this.getMailBase();
+        const headerData = resolvedFolderId ? await this.callZohoAPI(`${base}/folders/${encodeURIComponent(resolvedFolderId)}/messages/${encodeURIComponent(id)}/header`) : null;
+        const rawHeaders = headerData?.data?.headerContent || headerData?.data?.headers || headerData?.data || {};
+        const headers: Record<string,string> = {};
+        if (typeof rawHeaders === 'string') {
+            for (const line of rawHeaders.replace(/\r?\n[ \t]+/g,' ').split(/\r?\n/)) {
+                const match = line.match(/^(Message-ID|In-Reply-To|References|Reply-To):\s*(.*)$/i);
+                if (match) headers[match[1].toLowerCase()] = match[2];
+            }
+        } else {
+            for (const [key,value] of Object.entries(rawHeaders)) {
+                if (/^(message-id|in-reply-to|references|reply-to)$/i.test(key)) headers[key.toLowerCase()] = String(value);
+            }
+        }
+        const addresses = (value: unknown): string[] => (Array.isArray(value) ? value : String(value || '').split(','))
+            .map((item: any) => String(item).replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim())
+            .filter((item: string) => item.includes('@'));
+
         return {
             id,
-            thread_id: String(message.threadId || message.thread_id || message.conversationId || id || '') || null,
+            thread_id: String(message.threadId || message.thread_id || message.conversationId || headers.references?.match(/<[^>]+>/)?.[0] || headers['in-reply-to'] || headers['message-id'] || id || '') || null,
             subject: String(message.subject || ''),
             from: formatMailFrom({
                 name: String(message.sender || ''),
                 address: String(message.fromAddress || message.from || ''),
                 raw: String(message.sender || message.fromAddress || message.from || ''),
             }),
-            to: String(message.toAddress || message.to || '').split(',').map((item) => item.trim()).filter(Boolean),
-            cc: String(message.ccAddress || message.cc || '').split(',').map((item) => item.trim()).filter(Boolean),
-            date: String(message.receivedTime || message.sentDateInGMT || message.date || message.createdTime || '') || null,
-            is_read: Boolean(message.isRead ?? message.read ?? !message.unread),
+            to: addresses(message.toAddress || message.to),
+            cc: addresses(message.ccAddress || message.cc),
+            date: mailboxDate(message.receivedTime || message.receivedtime || message.sentDateInGMT || message.date || message.createdTime),
+            // Zoho status: 0 = read, 1 = unread. Do not mutate provider flags.
+            is_read: message.status != null ? ['0','read'].includes(String(message.status).toLowerCase()) : Boolean(message.isRead ?? message.read ?? !message.unread),
             body_html: html,
             body_text: text,
             attachments,
             folder_id: resolvedFolderId || undefined,
+            headers,
+            reply_to: headers['reply-to'] || message.replyTo || message.reply_to || undefined,
         };
     }
 
@@ -251,7 +308,7 @@ export class ZohoMailService extends ZohoService {
         const folders = await this.getFolders();
         const allMessages: ZohoFullMessage[] = [];
         for (const folder of folders.slice(0, 8)) {
-            const messages = await this.getMessages(folder.folderId, 100, 1).catch(() => []);
+            const messages = await this.getMessages(folder.folderId, 100, 1);
             const matches = messages.filter((message: any) =>
                 String(message.threadId || message.conversationId || message.messageId) === threadId
             );
@@ -306,36 +363,23 @@ export class ZohoMailService extends ZohoService {
             throw new Error('Recipient email address is invalid.');
         }
 
-        // Zoho requires uploaded file-store references, not inline base64 in messages.
-        const uploadedAttachments: Array<{storeName: string; attachmentName: string; attachmentPath: string}> = [];
-        for (const attachment of params.attachments || []) {
-            const bytes = Buffer.from(attachment.content, 'base64');
-            if (!bytes.length) throw new Error('EMAIL_ATTACHMENT_INVALID: Attachment content is empty');
-            const uploaded = await this.callZohoAPI(`${base}/messages/attachments?fileName=${encodeURIComponent(attachment.filename)}&isInline=false`, {
-                method: 'POST', headers: {'Content-Type': attachment.contentType || 'application/octet-stream'},
-                body: new Uint8Array(bytes),
-            });
-            const reference = Array.isArray(uploaded?.data) ? uploaded.data[0] : uploaded?.data;
-            if (!reference?.storeName || !reference?.attachmentName || !reference?.attachmentPath) {
-                throw new Error('EMAIL_ATTACHMENT_UPLOAD_FAILED: Zoho did not return a complete attachment reference');
-            }
-            uploadedAttachments.push({storeName: String(reference.storeName), attachmentName: String(reference.attachmentName), attachmentPath: String(reference.attachmentPath)});
-        }
+        const uploadedAttachments = await this.uploadMailAttachments(params.attachments);
         const result = await this.callZohoAPI(`${base}/messages`, {
             method: 'POST',
             body: JSON.stringify({
                 ...params,
                 toAddress,
                 subject,
-                content: ensureFooter(String(params.content || '')),
-                attachments: uploadedAttachments.length ? uploadedAttachments : undefined,
+                content: String(params.content || ''),
+                attachments: uploadedAttachments,
             }),
         });
 
         // Log the outbound email in unified_messages for contact/CRM sync
         try {
             const tenantId = this.tenantId;
-            if (tenantId) {
+            const nativeMessageId = result?.data?.messageId || result?.messageId;
+            if (tenantId && nativeMessageId) {
                 const supabase = this.getSupabaseClient();
                 const { contact_id, company_id } = await resolveContactByEmailAdmin(supabase, tenantId, toAddress);
                 
@@ -344,7 +388,7 @@ export class ZohoMailService extends ZohoService {
                     contact_id,
                     company_id,
                     source: 'zoho',
-                    external_id: result?.data?.messageId || result?.messageId || `zoho-outbound-${Date.now()}`,
+                    external_id: String(nativeMessageId),
                     direction: 'outbound',
                     channel: 'email',
                     subject,
@@ -397,48 +441,63 @@ export class ZohoMailService extends ZohoService {
         });
     }
 
+    async uploadMailAttachments(attachments?: Array<{ filename: string; content: string; contentType?: string }>) {
+        const { base } = await this.getMailBase();
+        const uploaded = [];
+        for (const attachment of attachments || []) {
+            const response = await this.callZohoAPI(`${base}/messages/attachments?fileName=${encodeURIComponent(attachment.filename)}&isInline=false`, {
+                method:'POST', headers:{'Content-Type':attachment.contentType || 'application/octet-stream'},
+                body:new Uint8Array(Buffer.from(attachment.content,'base64')),
+            });
+            const data = Array.isArray(response.data) ? response.data[0] : response.data;
+            if (!data?.storeName || !data?.attachmentName || !data?.attachmentPath) throw new Error('ZOHO_ATTACHMENT_UPLOAD_FAILED: Zoho did not return a complete attachment reference');
+            uploaded.push({storeName:data.storeName,attachmentName:data.attachmentName,attachmentPath:data.attachmentPath});
+        }
+        return uploaded;
+    }
+
     async replyToMessage(params: {
         messageId: string;
         bodyHtml: string;
         bodyText?: string;
+        original?: ZohoFullMessage;
+        replyAll?: boolean;
         attachments?: Array<{ filename: string; content: string; contentType?: string }>;
     }) {
-        const folders = await this.getFolders();
-        let original: ZohoFullMessage | null = null;
-        for (const folder of folders.slice(0, 8)) {
-            const messages = await this.getMessages(folder.folderId, 100, 1).catch(() => []);
-            const hit = messages.find((message: any) => String(message.messageId || message.id) === params.messageId);
-            if (hit) {
-                original = await this.getFullMessagePayload(hit, folder.folderId);
-                break;
+        let original = params.original;
+        if (!original) {
+            // Legacy callers must supply a native ID; errors must remain errors.
+            const folders = await this.getFolders();
+            for (const folder of folders) {
+                const hits = await this.getMessages(folder.folderId,100,1);
+                const hit = hits.find((message) => String(message.messageId) === params.messageId && String(message.folderId) === folder.folderId);
+                if (hit) { original = await this.getFullMessagePayload(hit,folder.folderId); break; }
             }
         }
-        if (!original) throw new Error('Original Zoho message not found');
-        const sentResult = await this.sendEmail({
-            toAddress: original.from,
-            subject: normalizeReplySubject(original.subject),
-            content: params.bodyHtml || params.bodyText || '',
-            inReplyTo: original.id,
-            references: original.thread_id || original.id,
-            attachments: params.attachments,
+        if (!original) throw new Error('EMAIL_MESSAGE_NOT_FOUND');
+        const own = await this.getSenderAddresses();
+        const recipients = replyRecipients(original,own,Boolean(params.replyAll));
+        const { base } = await this.getMailBase();
+        const attachments = await this.uploadMailAttachments(params.attachments);
+        const result = await this.callZohoAPI(`${base}/messages/${encodeURIComponent(params.messageId)}`, {
+            method:'POST', body:JSON.stringify({action:'reply',fromAddress:own[0],toAddress:recipients.to.join(','),
+                ccAddress:recipients.cc.join(','),subject:normalizeReplySubject(original.subject),
+                content:params.bodyHtml || params.bodyText || '',mailFormat:params.bodyHtml ? 'html' : 'plaintext',attachments}),
         });
-        return { ...sentResult, original };
+        const providerId = String(result?.data?.messageId || result?.messageId || '');
+        if (!providerId) throw Object.assign(new Error('Zoho accepted reply without a message reference; reconcile before retrying'),{code:'OUTCOME_UNKNOWN'});
+        return { ...result,original,recipients };
     }
 
-    async searchMessages(query: string): Promise<ZohoMessage[]> {
+    async searchMessages(query: string, limit = 20, start = 1): Promise<ZohoMessage[]> {
         const { base } = await this.getMailBase();
         const normalized = String(query || '').trim();
-        if (!normalized) return [];
-        const searchKey = normalized.includes('@') ? `from:${normalized}` : normalized;
-        try {
-            const data = await this.callZohoAPI(`${base}/messages/search?searchKey=${encodeURIComponent(searchKey)}`);
-            return (data?.data ?? []) as ZohoMessage[];
-        } catch (error: any) {
-            // Zoho rejects free-form addresses with 400/Invalid search query.
-            // A search miss is not an application failure for inbox lookup.
-            if (error?.status === 400 || /invalid search query/i.test(String(error?.message || ''))) return [];
-            throw error;
-        }
+        if (!normalized) throw new Error('EMAIL_SEARCH_QUERY_REQUIRED');
+        const searchKey = /[:]/.test(normalized) ? normalized : `entire:${normalized}`;
+        const data = await this.callZohoAPI(`${base}/messages/search?searchKey=${encodeURIComponent(searchKey)}&limit=${limit}&start=${start}&includeto=true`);
+        if (!Array.isArray(data?.data)) throw new Error('ZOHO_INVALID_SEARCH_RESPONSE');
+        return data.data.map((message: any) => ({...message,messageId:String(message.messageId),folderId:String(message.folderId || ''),
+            receivedTime:String(message.receivedTime || message.receivedtime || message.sentDateInGMT || '')})) as ZohoMessage[];
     }
 
     async deleteMessage(messageId: string, folderId: string) {

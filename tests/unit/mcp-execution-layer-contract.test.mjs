@@ -314,15 +314,15 @@ test('Bonnie reconcile cron includes MCP receipt reconciliation (source)', async
   assert.match(src, /reconcileAllTenantsExecutionReceipts/);
 });
 
-test('send_email routes through durable queue when runtime enabled (source)', async () => {
+test('send_email uses the normal write gateway without a lossy parallel send queue (source)', async () => {
   const fs = await import('node:fs');
   const src = fs.readFileSync(
     new URL('../../src/lib/mcp/tools/email-ops.ts', import.meta.url),
     'utf8'
   );
-  assert.match(src, /isDurableRuntimeEnabled/);
-  assert.match(src, /enqueueEmailSendTask/);
-  assert.match(src, /status: 'queued'/);
+  assert.match(src, /executeMcpWrite/);
+  assert.match(src, /sendEmailServer/);
+  assert.doesNotMatch(src, /enqueueEmailSendTask/);
 });
 
 test('verification service covers durable social, email, and outcome steps (source)', async () => {

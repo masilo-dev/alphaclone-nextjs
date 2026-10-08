@@ -17,6 +17,9 @@ export type EmailExecutionRequest = {
   sourceAction: string;
   to: string | string[];
   subject: string;
+  cc?: string[];
+  bcc?: string[];
+  preserveContent?: boolean;
   message?: string;
   html?: string;
   category: EmailGatewayCategory;
@@ -60,7 +63,7 @@ function normalizeRecipients(to: string | string[]): string[] {
 export const EmailExecutionService = {
   async execute(request: EmailExecutionRequest): Promise<EmailGatewayResult> {
     const context = assertEmailExecutionContext(request.context);
-    const recipients = normalizeRecipients(request.to);
+    const recipients = request.preserveContent ? (Array.isArray(request.to) ? request.to : [request.to]).map((email) => email.trim()) : normalizeRecipients(request.to);
     if (!recipients.length) {
       return {
         success: false,
@@ -92,6 +95,7 @@ export const EmailExecutionService = {
       tenantId: context.tenantId,
       userId: context.userId || undefined,
       to: recipients,
+      cc: request.cc, bcc: request.bcc, preserveContent: request.preserveContent,
       subject: request.subject,
       message: request.message,
       html: request.html,

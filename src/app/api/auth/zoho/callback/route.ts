@@ -16,6 +16,7 @@ function getZohoRedirectUri(_req: NextRequest) {
 }
 
 type ZohoTokenResponse = {
+    scope?: string;
     access_token?: string;
     refresh_token?: string;
     expires_in?: number;
@@ -196,6 +197,7 @@ export async function GET(req: NextRequest) {
 
         await zohoService.saveConfig({
             accessToken: data.access_token,
+            scopes: data.scope ? String(data.scope).split(/[ ,]+/).filter(Boolean) : undefined,
             refreshToken,
             expiryDate: new Date(Date.now() + (data.expires_in || 3600) * 1000).toISOString(),
             mailApiHost: mailHost,
