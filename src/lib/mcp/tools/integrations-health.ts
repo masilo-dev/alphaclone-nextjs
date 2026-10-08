@@ -131,17 +131,13 @@ defineConnectorTool({
     properties: { tenant_id: { type: 'string', format: 'uuid' } },
     required: ['tenant_id'],
   },
-  handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
-    const { rows } = await tenantHasIntegration(supabase, args.tenant_id, ['zoho', 'zoho_mail']);
-    return {
-      name: 'Zoho',
-      key: 'zoho',
-      status: rows.length ? 'connected' : 'missing',
-      connected: rows.length > 0,
-      details: { integration_rows: rows, verification_scope: 'integration_configuration',
-        limitation: 'Enabled integration does not verify a sender, quota, credentials or delivery. Use list_email_accounts and a provider receipt.' },
-    } satisfies IntegrationHealth;
+  handler: async (_args,ctx) => {
+    const { MailboxService } = await import('@/lib/email/mailboxService');
+    const { okResult } = await import('@/lib/mcp/connector/response');
+    const accounts = (await new MailboxService(ctx.tenantId,ctx.userId).discover()).filter((row) => row.provider === 'zoho');
+    return okResult('zoho_health',{name:'Zoho',key:'zoho',connected:accounts.length>0,
+      status:accounts.some((row) => row.read_access === 'verified') ? 'read_verified' : accounts.length ? 'access_failed' : 'missing',
+      accounts,verification_scope:'provider_mailbox_access'}, {receipt:{status:'completed',verification:{scope:'provider_mailbox_health'}}});
   },
 });
 

@@ -10,6 +10,8 @@ type PersistCanonicalOutboundParams = {
   providerMessageId: string;
   fromEmail: string;
   recipients: string[];
+  cc?: string[];
+  bcc?: string[];
   replyTo?: string;
   subject: string;
   html?: string;
@@ -257,6 +259,7 @@ export async function persistCanonicalOutboundEmail(params: PersistCanonicalOutb
       provider_accepted_at: now,
       provider_message_id: params.providerMessageId,
       sender: params.fromEmail,
+      from: params.fromEmail, to: params.recipients, cc:params.cc || [], bcc:params.bcc || [],
       execution_source: executionSource,
       body_html: params.html || null,
       body_text: params.text || null,
@@ -277,6 +280,8 @@ export async function persistCanonicalOutboundEmail(params: PersistCanonicalOutb
         delivery_status: 'accepted',
       };
     }),
+    ...(params.cc || []).map((email) => ({tenant_id:params.tenantId,message_id:message.id,recipient_type:'cc',email_address:email,contact_id:null,company_id:null,delivery_status:'accepted'})),
+    ...(params.bcc || []).map((email) => ({tenant_id:params.tenantId,message_id:message.id,recipient_type:'bcc',email_address:email,contact_id:null,company_id:null,delivery_status:'accepted'})),
     ...(params.replyTo ? [{
       tenant_id: params.tenantId, message_id: message.id, recipient_type: 'reply_to',
       email_address: params.replyTo.trim().toLowerCase(), contact_id: null, company_id: null, delivery_status: null,

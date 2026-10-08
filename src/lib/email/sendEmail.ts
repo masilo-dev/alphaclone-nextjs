@@ -13,6 +13,7 @@ import { sanitizeBonnieOutboundText } from '@/lib/bonnie/bonnieBannedLanguage';
 import { persistCanonicalOutboundEmail } from '@/lib/email/persistCanonicalEmail';
 import { toUnifiedEmailProvider } from '@/lib/email/unifiedEmailDomain';
 import { type EmailAttachment, normalizeEmailAttachments } from '@/lib/email/emailAttachment';
+import { explicitRecipients } from '@/lib/email/mailboxNormalization';
 import { assertBrevoSender } from '@/lib/email/providerSenderIdentity';
 
 export type { EmailAttachment } from '@/lib/email/emailAttachment';
@@ -24,6 +25,9 @@ export interface EmailPayload {
   from_name?: string;
   fromName?: string;
   subject: string;
+  cc?: string[];
+  bcc?: string[];
+  preserveContent?: boolean;
   html?: string;
   text?: string;
   reply_to?: string;
@@ -87,7 +91,8 @@ export async function sendEmail(
       return { success: false, tried, error: 'tenantId, to, subject, and html or text are required', code: 'MISSING_FIELDS' };
     }
 
-    for (const recipient of recipients) {
+    explicitRecipients([...recipients,...(payload.cc || []),...(payload.bcc || [])]);
+    for (const recipient of [...recipients,...(payload.cc || []),...(payload.bcc || [])]) {
       if (!payload.isPlatformNotification && !payload.skipRecipientGate) {
         const { allowed, reason } = await validateRecipient(supabase, tenantId, recipient);
         if (!allowed) return { success: false, tried, error: reason, code: 'BLOCKED_RECIPIENT' };
@@ -139,6 +144,7 @@ export async function sendEmail(
       forcePlatform: Boolean(payload.isPlatformNotification),
     });
 
+    if (!payload.isPlatformNotification) configs = configs.filter((config) => config.accountType !== 'platform');
     if (explicitlyRequestedProvider) configs = configs.filter((config) => config.provider === explicitlyRequestedProvider);
     if (payload.providerAccountId) configs = configs.filter((config) => config.providerAccountId === payload.providerAccountId);
 
@@ -187,6 +193,7 @@ export async function sendEmail(
             fromName,
             to: payload.to,
             subject: normalizedSubject,
+    cc: payload.cc, bcc: payload.bcc,
             html: normalizedHtml,
             text: normalizedText,
             replyTo: payload.reply_to || payload.replyTo,
@@ -248,7 +255,7 @@ export async function sendEmail(
           providerAccountId: config.providerAccountId,
           providerMessageId,
           fromEmail,
-          recipients,
+          recipients, cc:payload.cc, bcc:payload.bcc,
           replyTo: payload.reply_to || payload.replyTo,
           subject: normalizedSubject,
           html: normalizedHtml,

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { ensureMcpIdempotencyKey } from '@/lib/mcp/toolRiskTiers';
 import {
   resolveEmailIntegrationDefaults,
   resolveSocialPublishDefaults,
@@ -43,7 +44,7 @@ export function coalesceArgs(args: Record<string, unknown>): Record<string, unkn
   const next = { ...args };
 
   next.text = firstNonEmpty(next.text, next.body, next.message, next.content, next.email_body);
-  next.to = firstNonEmpty(next.to, next.recipient, next.recipient_email, next.email, next.email_address);
+  next.to = Array.isArray(next.to) ? next.to : firstNonEmpty(next.to, next.recipient, next.recipient_email, next.email, next.email_address);
   next.subject = firstNonEmpty(next.subject, next.title, next.email_subject);
   next.caption = firstNonEmpty(next.caption, next.content, next.text, next.post_text, next.message);
   next.recipient_name = firstNonEmpty(next.recipient_name, next.name, next.contact_name);
@@ -108,9 +109,12 @@ export async function normalizeToolArguments(
   ctx: { tenantId: string; userId: string }
 ): Promise<Record<string, unknown>> {
   let args = coalesceArgs(rawArgs);
+  const conversationEmail = toolName === 'send_email' || toolName === 'reply_to_email';
+  if (conversationEmail && typeof rawArgs.text === 'string') args.text = rawArgs.text;
 
   if (needsAutoIdempotency(toolName) && !firstNonEmpty(args.idempotency_key, args.idempotencyKey)) {
-    args.idempotency_key = `mcp-${toolName}-${randomUUID()}`;
+    if (conversationEmail) ensureMcpIdempotencyKey({tenantId:ctx.tenantId,toolName,args,requireKey:true});
+    else args.idempotency_key = `mcp-${toolName}-${randomUUID()}`;
   }
 
   if (toolName === 'create_bulk_email_campaign') {
@@ -124,10 +128,10 @@ export async function normalizeToolArguments(
   }
 
   if (EMAIL_TOOLS.has(toolName)) {
-    if (!args.text && args.subject) {
+    if (!conversationEmail && !args.text && !args.html && args.subject) {
       args.text = String(args.subject);
     }
-    if (!args.provider) {
+    if (!conversationEmail && !args.provider) {
       const defaults = await resolveEmailIntegrationDefaults(ctx.tenantId);
       if (defaults.provider) args.provider = defaults.provider;
       if (!args.from && defaults.senderEmail) args.from = defaults.senderEmail;

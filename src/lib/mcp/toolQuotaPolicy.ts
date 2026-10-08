@@ -5,6 +5,8 @@ const EMAIL_READ_TOOLS = new Set([
   'get_zoho_mail_thread',
   'read_emails',
   'read_email_content',
+  'read_email_conversation',
+  'get_email_sync_status',
   'search_emails',
   'list_email_accounts',
   'get_action_status',

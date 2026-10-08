@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import crypto from 'node:crypto';
 import sanitizeHtml from 'sanitize-html';
+import { explicitRecipients } from '../../src/lib/email/mailboxNormalization.ts';
 import { createRequire } from 'node:module';
 const realRequire = createRequire(import.meta.url);
 
@@ -166,6 +167,7 @@ function providerFixture() {
     '@/lib/email/unsubscribe': { isUnsubscribed: async () => false },
     '@/lib/email/suppression': { isEmailSuppressed: async () => false },
     '@/lib/email/validateRecipient': { validateRecipient: async () => ({ allowed: true }) },
+    '@/lib/email/mailboxNormalization':{explicitRecipients},
     '@/lib/email/emailComposition': { normalizeEmailSubject: (s) => s },
     '@/lib/email/providerIntegrationResolver': { resolveAllConnectedEmailProviders: async () => [
       { provider: 'zoho', fromEmail: 'sender@example.com', fromName: 'Sender', providerAccountId: 'zoho-account' },

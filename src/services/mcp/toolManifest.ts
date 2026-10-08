@@ -2711,12 +2711,12 @@ export const MCP_TOOLS = [
   },
   {
     name: 'sync_all_inboxes',
-    description: 'Autonomous Assistant: Fetches unread/recent communications from all connected channels (Email, Facebook, LinkedIn) for processing.',
+    description: 'Sync actual connected mailboxes. Returns durable job progress; pending jobs must be resumed until completed.',
     inputSchema: {
       type: 'object',
       properties: {
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        limit: { type: 'number' }
+        account_id: {type:'string'}, job_id:{type:'string'}
       },
       required: [],
     },

@@ -33,16 +33,6 @@ registerTool('gap-email', {
   },
 });
 
-registerTool('gap-email', {
-  name: 'sync_all_inboxes',
-  description: 'Trigger immediate sync for all connected email inboxes.',
-  inputSchema: z.object({ tenant_id: tid }),
-  jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' } } },
-  handler: async (args) => {
-    return { content: [{ type: 'text', text: JSON.stringify({ status: 'synced', tenant_id: args.tenant_id, timestamp: new Date().toISOString() }) }] };
-  },
-});
-
 // ── WhatsApp & Chatbot ────────────────────────────────────────────────
 registerTool('gap-chatbot', {
   name: 'send_whatsapp_message',

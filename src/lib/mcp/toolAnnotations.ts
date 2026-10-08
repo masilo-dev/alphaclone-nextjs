@@ -166,6 +166,8 @@ export const CHATGPT_CONNECTOR_TOOL_NAMES = [
   'create_email_draft',
   'reply_to_email',
   'list_email_accounts',
+  'read_email_conversation',
+  'get_email_sync_status',
   'get_action_status',
   'get_media_asset',
   'list_media_assets',

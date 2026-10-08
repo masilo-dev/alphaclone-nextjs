@@ -337,7 +337,8 @@ export async function executeDomainExternalWrite<TResult>(
         ? String((err as Error & { code: string }).code)
         : 'EXECUTION_FAILED';
     const error = enrichError({ code, message, retryable: /network|timeout|ECONN/i.test(message) });
-    const outcomeUnknown = /network|timeout|abort|socket|ECONN/i.test(message);
+    const outcomeUnknown = error.code === 'UNKNOWN_EXECUTION_STATE' || error.code === 'OUTCOME_UNKNOWN'
+      || /network|timeout|abort|socket|ECONN/i.test(message);
     await updateExternalAction(actionId, {
       status: outcomeUnknown ? 'unknown_execution_state' : 'failed',
       failure_reason: message,
