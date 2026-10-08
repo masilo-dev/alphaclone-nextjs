@@ -109,6 +109,7 @@ export async function executeContractSendCommand(
           message: params.message,
           resendForSignature: params.resendForSignature,
           ...(params.config || {}),
+          idempotencyKey,
         },
         admin,
         params.userId
@@ -116,16 +117,17 @@ export async function executeContractSendCommand(
     },
     isSuccess: (r) => r.success === true,
     mapError: (r) => ({
-      code: 'EXECUTION_FAILED',
+      code: String(r.code || 'EXECUTION_FAILED'),
       message: r.error || 'Contract send failed',
     }),
     buildReceipt: (r) => ({
       action_id: '',
-      status: 'verified',
+      status: 'provider_accepted',
       timestamp: new Date().toISOString(),
       entity_type: 'contract',
       entity_id: params.contractId,
-      provider_reference: r.signingUrl,
+      provider: typeof r.provider === 'string' ? r.provider : undefined,
+      provider_reference: typeof r.provider_message_id === 'string' ? r.provider_message_id : undefined,
     }),
   });
 

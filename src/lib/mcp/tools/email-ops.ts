@@ -242,14 +242,19 @@ defineConnectorTool({
     if (accountError || integrationError || senderError) {
       throw new Error(`EMAIL_ACCOUNT_DISCOVERY_FAILED: ${accountError?.message || integrationError?.message || senderError?.message}`);
     }
+    const { resolveAllConnectedEmailProviders } = await import('@/lib/email/providerIntegrationResolver');
+    const resolved = await resolveAllConnectedEmailProviders({tenantId, preferredUserId: ctx.userId, fallbackToEnv: false});
+    const byAccount = new Map(resolved.map(config => [config.providerAccountId, config]));
     return okResult('list_email_accounts', {
       accounts: (accounts || []).map((row) => ({
         account_id: row.id, provider: row.provider, status: row.connection_status,
-        sender: row.email_address, sender_configured: Boolean(row.email_address),
-        account_type: row.account_type, capabilities: row.capabilities, connected_at: row.created_at,
+        sender: row.email_address || byAccount.get(row.id)?.fromEmail || null, sender_configured: Boolean(row.email_address || byAccount.get(row.id)?.fromEmail),
+        sender_verification_error: byAccount.get(row.id)?.senderVerificationError || null,
+        account_type: row.account_type, business_sending: row.account_type !== 'platform', capabilities: {...row.capabilities, send: row.account_type === 'platform' ? true : Boolean(byAccount.get(row.id)?.fromEmail), platform_notification_only: row.account_type === 'platform'}, connected_at: row.created_at,
       })),
       integrations: integrations || [],
-      sender_addresses: senders || [],
+      sender_addresses: [...(senders || []), ...resolved.filter(config => config.fromEmail && !(senders || []).some(row => row.provider === config.provider && row.email_address === config.fromEmail)).map(config => ({provider: config.provider, account_id: config.providerAccountId, email_address: config.fromEmail, source: 'execution_resolver', is_verified: null}))],
+      duplicate_platform_groups: Object.values((accounts || []).filter(row => row.account_type === 'platform').reduce<Record<string, string[]>>((groups, row) => {const key = `${row.provider}:${row.email_address}`; (groups[key] ||= []).push(row.id); return groups;}, {})).filter(ids => ids.length > 1),
       limitation: 'Connected configuration does not prove sender verification or inbox delivery.',
     });
   },

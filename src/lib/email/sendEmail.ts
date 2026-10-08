@@ -169,10 +169,11 @@ export async function sendEmail(
 
       if (config.provider === 'brevo') {
         try { await assertBrevoSender(config.apiKey, fromEmail); }
-        catch {
+        catch (error) {
+          const senderError = error as Error & {code?: string};
           return { success: false, provider: config.provider, providerAccountId: config.providerAccountId,
-            sender: fromEmail, tried, deliveryStatus: 'failed', code: 'EMAIL_SENDER_NOT_VERIFIED',
-            error: 'Configured Brevo sender could not be verified as active. Check sender settings before sending.' };
+            sender: fromEmail, tried, deliveryStatus: 'failed', code: senderError.code || 'EMAIL_SENDER_VERIFICATION_UNAVAILABLE',
+            error: senderError.code ? senderError.message : 'Brevo sender verification is unavailable; retry after checking provider connectivity.' };
         }
       }
 

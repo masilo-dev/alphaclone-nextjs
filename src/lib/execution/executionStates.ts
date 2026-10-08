@@ -29,7 +29,7 @@ export function normalizeExecutionState(status: string | null | undefined): Exec
   if (s === 'failed' || s === 'failure' || s === 'verification_failed') return 'FAILED';
   if (s === 'queued' || s === 'scheduled' || s === 'awaiting_approval') return 'QUEUED';
   if (s === 'running' || s === 'executing' || s === 'processing') return 'EXECUTING';
-  if (s === 'provider_processing' || s === 'publishing') return 'PROVIDER_PROCESSING';
+  if (s === 'provider_accepted' || s === 'provider_processing' || s === 'publishing') return 'PROVIDER_PROCESSING';
   if (s === 'requested' || s === 'draft') return 'REQUESTED';
   return 'EXECUTING';
 }

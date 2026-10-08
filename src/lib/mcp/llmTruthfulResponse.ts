@@ -38,8 +38,12 @@ export function buildLlmExecutionTruth(input: {
     extractReceiptFromPayload(input.parsedResult) ||
     null;
 
-  const rawStatus = receipt?.status || (input.parsedResult as any)?.status;
-  const verificationState = normalizeExecutionState(rawStatus);
+  const result = input.parsedResult as any;
+  const readCompleted = result != null && result?.ok !== false && result?.success !== false && /^(get|list|search|fetch|inspect)_/.test(input.toolName);
+  const rawStatus = receipt?.status || (readCompleted ? undefined : result?.status);
+  const verificationState = result?.ok === false || result?.success === false ? 'FAILED'
+    : readCompleted ? 'VERIFIED'
+    : rawStatus ? normalizeExecutionState(rawStatus) : 'REQUESTED';
 
   let approval_state: LlmExecutionTruth['approval_state'] = 'none';
   if (input.policy?.approvalState) {
@@ -52,7 +56,9 @@ export function buildLlmExecutionTruth(input: {
 
   const may_claim = llmSafeCompletionClaim(verificationState);
 
-  let user_message = llmStatusPhrase(verificationState);
+  let user_message = readCompleted ? 'Read completed. This confirms the lookup, not completion of any action described in the returned data.'
+    : String(rawStatus).toLowerCase() === 'provider_accepted' ? 'Provider accepted the request. Final delivery has not been verified.'
+    : llmStatusPhrase(verificationState);
   if (approval_state === 'queued') {
     user_message = 'Approval required before AlphaClone will execute this action.';
   } else if (approval_state === 'required') {

@@ -259,6 +259,9 @@ export const contractServerService = {
             throw new Error('Signer email is required');
         }
 
+        const {data: reviewToken, error: reviewTokenError} = await supabaseAdmin.from('contract_signing_tokens').select('metadata').eq('token', req.signingToken).maybeSingle();
+        if (reviewTokenError) throw reviewTokenError;
+        if (reviewToken?.metadata?.review_only === true) throw new Error('This draft is for review only. Signature is not permitted.');
         const nowIso = new Date().toISOString();
         const { data: claimed, error: claimError } = await supabaseAdmin
             .from('contract_signing_tokens')
@@ -270,6 +273,7 @@ export const contractServerService = {
                     claimedByEmail: normalizedEmail,
                 },
             })
+            .or('metadata->>review_only.is.null,metadata->>review_only.neq.true')
             .eq('token', req.signingToken)
             .eq('signer_email', normalizedEmail)
             .is('used_at', null)

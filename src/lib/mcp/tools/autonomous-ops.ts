@@ -1,3 +1,5 @@
+import { emailReceiptEvidence } from '@/lib/email/emailReceiptEvidence';
+import { emailReceiptReferenceFields, isUuidEmailReference } from '@/lib/email/emailReferenceLookup';
 /**
  * Autonomous MCP write tools — model-independent business actions.
  * Shared by ChatGPT, Claude, Cursor, Gemini, DeepSeek, Bonnie, and any MCP client.
@@ -644,36 +646,46 @@ defineConnectorTool({
   inputSchema: z.object({
     tenant_id: tenantIdField,
     message_id: z.string().min(1),
+    reference_type: z.enum(['auto', 'provider_message_id', 'action_id', 'idempotency_key', 'tracking_id']).optional().default('auto'),
+    provider: z.string().optional(),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
       tenant_id: { type: 'string', format: 'uuid' },
       message_id: { type: 'string' },
+      reference_type: {type: 'string', enum: ['auto', 'provider_message_id', 'action_id', 'idempotency_key', 'tracking_id']},
+      provider: {type: 'string'},
     },
     required: ['tenant_id', 'message_id'],
   },
-  handler: async (args) => {
+  handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
-    const { data } = await supabase
-      .from('lead_outreach_log')
-      .select('id, tracking_id, status, provider, sent_at, lead_email, subject')
-      .eq('tenant_id', args.tenant_id)
-      .eq('tracking_id', args.message_id)
-      .maybeSingle();
-
-    const receiptRow = await findReceiptByIdempotency({
-      tenantId: args.tenant_id,
-      tool: 'send_transactional_email',
-      idempotencyKey: args.message_id,
-    }).catch(() => null);
-
-    return {
-      message_id: args.message_id,
-      delivery_status: data?.status || receiptRow?.final_status || 'unknown',
-      provider: data?.provider || receiptRow?.provider || null,
-      evidence: data || receiptRow || null,
-    };
+    const fields = emailReceiptReferenceFields(args.reference_type, args.message_id);
+    let data: Record<string, any> | null = null;
+    if ((args.reference_type === 'auto' || args.reference_type === 'tracking_id') && isUuidEmailReference(args.message_id)) {
+      let query = supabase.from('lead_outreach_log').select('id, tracking_id, status, provider, sent_at, lead_email, subject').eq('tenant_id', args.tenant_id).eq('tracking_id', args.message_id);
+      if (args.provider) query = query.eq('provider', args.provider);
+      const tracking = await query.maybeSingle();
+      if (tracking.error) throw new Error('Email tracking lookup failed');
+      data = tracking.data;
+    }
+    const matches = new Map<string, Record<string, any>>();
+    for (const field of fields) {
+      let query = supabase.from('mcp_action_receipts').select('id, tool, action_id, provider, provider_reference, final_status, verification, sanitized_input, sanitized_output, created_at').eq('tenant_id', args.tenant_id).in('tool', ['send_email', 'send_contract', 'send_transactional_email', 'reply_to_email']).eq(field, args.message_id).limit(10);
+      if (args.provider) query = query.eq('provider', args.provider);
+      const result = await query;
+      if (result.error) throw new Error('Email receipt lookup failed');
+      for (const row of result.data || []) matches.set(row.id, row);
+    }
+    const receipts = [...matches.values()];
+    if (new Set(receipts.map(r => `${r.provider}:${r.provider_reference}`)).size > 1) throw new Error('EMAIL_REFERENCE_AMBIGUOUS: Use the send action_id');
+    const receipt = receipts.sort((a,b) => String(b.created_at).localeCompare(String(a.created_at)))[0];
+    const durable = receipt ? await emailReceiptEvidence(args.tenant_id, ctx.userId, receipt) : null;
+    const output = receipt?.sanitized_output;
+    const acceptance = output?.deliveryStatus || output?.delivery_status || output?.data?.delivery_status;
+    const reconciled = durable?.delivery_evidence?.status;
+    return {message_id: args.message_id, delivery_status: (reconciled && reconciled !== 'unknown' ? reconciled : null) || data?.status || acceptance || receipt?.final_status || 'unknown', provider: data?.provider || receipt?.provider || null, evidence: durable || data || null, recipient: output?.sent_to || output?.recipient || output?.data?.recipient || (receipt?.sanitized_input?.target?.resource_type === 'email' ? receipt?.sanitized_input?.target?.resource_id : null) || data?.lead_email || null, limitation: 'Provider acceptance is not proof of inbox delivery. Final delivery may be unavailable.'};
   },
 });
 

@@ -1,3 +1,5 @@
+import { resolveAllConnectedEmailProviders } from "@/lib/email/providerIntegrationResolver";
+import { assertBrevoSender } from "@/lib/email/providerSenderIdentity";
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 import { queueContractLifecycle } from "@/lib/contracts/durableContractRouter";
@@ -551,7 +553,10 @@ export async function sendContract(
         )
       : validation.findings.filter((finding) => finding.severity === "critical");
 
-    const mergedFindings = [...validation.findings, ...legalConsistencyFindings];
+    const mergedFindings = [...validation.findings, ...legalConsistencyFindings].map((finding) =>
+      isDraftReview && finding.severity === "critical" && (finding.id.includes("governing_law") || finding.id.includes("jurisdiction"))
+        ? { ...finding, severity: "warning" as const, evidence: { ...finding.evidence, policy: "draft_review_only", blocks_signature: true } }
+        : finding);
     const canSend =
       effectiveValidationFindings.length === 0 &&
       effectiveCriticalFindings.length === 0;
@@ -574,6 +579,7 @@ export async function sendContract(
         metadata: {
           ...metadata,
           last_pre_send_validation: {
+            validation_mode: isDraftReview ? "draft_review" : "signature",
             score: mergedValidation.score,
             can_send: mergedValidation.can_send,
             legal_consistency_checked: true,
@@ -689,6 +695,14 @@ export async function sendContract(
       };
     }
 
+    const sendingConfigs = await resolveAllConnectedEmailProviders({tenantId, preferredUserId: actorUserId, preferredProvider: provider as any, fallbackToEnv: false});
+    const senderConfig = sendingConfigs.find((entry) => entry.fromEmail);
+    if (!senderConfig) return {success: false, code: "EMAIL_SENDER_MISSING", error: "Configure a tenant business sender before sending contracts."};
+    if (senderConfig.provider === "brevo") {
+      try { await assertBrevoSender(senderConfig.apiKey!, senderConfig.fromEmail!); }
+      catch (error: any) { return {success: false, code: error.code || "EMAIL_SENDER_VERIFICATION_UNAVAILABLE", error: error.message}; }
+    }
+
     const { data: existingParties, error: existingPartiesError } = await supabase
       .from("contract_parties")
       .select("id,signing_order,signature_status,party_snapshot")
@@ -713,7 +727,7 @@ export async function sendContract(
           party_snapshot: { email: recipientEmail, name: contract.client_name || recipientEmail },
           role: "client",
           signing_order: Number(lastParty?.signing_order || 0) + 1,
-          signature_required: true,
+          signature_required: !isDraftReview,
           signature_status: "not_requested",
         })
         .select("id,signing_order,signature_status,party_snapshot")
@@ -731,29 +745,21 @@ export async function sendContract(
       return { success: false, error: 'An earlier signer must sign first. Use “Remind next” to contact the next eligible signer in order.' };
     }
 
-    const token = randomBytes(32).toString("hex");
-    const expiresAt = new Date(
-      Date.now() + 14 * 24 * 60 * 60 * 1000,
-    ).toISOString();
-    const { error: tokenError } = await supabase
-      .from("contract_signing_tokens")
-      .insert({
-        tenant_id: tenantId,
-        contract_id: contractId,
-        token,
-        signer_email: recipientEmail,
-        signer_role: "client",
-        expires_at: expiresAt,
-        created_by: actorUserId,
-        metadata: {
-          source: "contracts_management_send",
-          party_id: signingParty.id,
-          createdAt: new Date().toISOString(),
-        },
+    const {data: existingToken, error: tokenLookupError} = await supabase.from("contract_signing_tokens")
+      .select("token,expires_at,metadata").eq("tenant_id", tenantId).eq("contract_id", contractId)
+      .eq("signer_email", recipientEmail).is("revoked_at", null).is("used_at", null)
+      .gt("expires_at", new Date().toISOString()).order("created_at", {ascending: false}).limit(1).maybeSingle();
+    if (tokenLookupError) return {success: false, error: "Failed to resolve existing review link"};
+    const reusable = existingToken && Boolean(existingToken.metadata?.review_only) === isDraftReview;
+    const token = reusable ? existingToken.token : randomBytes(32).toString("hex");
+    const expiresAt = reusable ? existingToken.expires_at : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    if (!reusable) {
+      const {error: tokenError} = await supabase.from("contract_signing_tokens").insert({
+        tenant_id: tenantId, contract_id: contractId, token, signer_email: recipientEmail,
+        signer_role: "client", expires_at: expiresAt, created_by: actorUserId,
+        metadata: {source: "contracts_management_send", party_id: signingParty.id, review_only: isDraftReview},
       });
-
-    if (tokenError) {
-      return { success: false, error: "Failed to create signing link" };
+      if (tokenError) return {success: false, error: "Failed to create review link"};
     }
 
     const signingUrl = AppUrls.signContract(token);
@@ -784,8 +790,8 @@ export async function sendContract(
       to: recipientEmail,
       subject:
         subject || (isResend ? urgencySubject : `Contract: ${contract.title}`),
-      text: `${isResend ? urgencyMessage : message || `Please review and sign the attached contract: ${contract.title}`}\n\nSign securely here: ${signingUrl}\n\nThis link expires in 14 days and is tied to ${recipientEmail}.`,
-      html: contractEmailTemplates.signatureRequest({
+      text: `${isDraftReview ? `Draft for review only. No signature is requested: ${contract.title}` : isResend ? urgencyMessage : message || `Please review and sign the attached contract: ${contract.title}`}\n\nReview securely here: ${signingUrl}\n\nThis link expires in 14 days and is tied to ${recipientEmail}.`,
+      html: isDraftReview ? `<p>Draft for review only. No signature is requested.</p><p><a href="${signingUrl}">Review draft securely</a></p>` : contractEmailTemplates.signatureRequest({
         recipientEmail,
         tenantId,
         contractTitle: contract.title,
@@ -799,6 +805,8 @@ export async function sendContract(
       fromName: tenantName,
       preferredProvider: (provider as any) || undefined,
       skipFooter: true,
+      idempotencyKey: `contract-email:${config.idempotencyKey || `${tenantId}:${contractId}:${recipientEmail}:${contract.current_version_id || "latest"}`}`,
+      relatedRecord: {type: "contract", id: contractId},
       attachments: [
         {
           filename:
@@ -818,6 +826,7 @@ export async function sendContract(
       return {
         success: false,
         error: emailResult.error || "Failed to send contract email",
+        code: emailResult.code,
       };
     }
 
@@ -844,7 +853,7 @@ export async function sendContract(
     const fromLifecycle = String(contract.lifecycle_status || contract.status || "draft");
     const [contractUpdate, partyUpdate, signatureEvidence, lifecycleEvidence] = await Promise.all([
       supabase.from("contracts").update({ status: "sent", lifecycle_status: "sent", updated_at: sentAt }).eq("id", contractId).eq("tenant_id", tenantId),
-      supabase.from("contract_parties").update({ signature_status: "requested" }).eq("tenant_id", tenantId).eq("id", signingParty.id),
+      supabase.from("contract_parties").update({ signature_status: isDraftReview ? "not_requested" : "requested" }).eq("tenant_id", tenantId).eq("id", signingParty.id),
       supabase.from("contract_signature_events").insert({
         tenant_id: tenantId, contract_id: contractId, party_id: signingParty.id,
         event_type: "requested", signer_email: recipientEmail, signing_order: signingParty.signing_order || null,
@@ -853,7 +862,7 @@ export async function sendContract(
       }),
       supabase.from("contract_lifecycle_events").insert({
         tenant_id: tenantId, contract_id: contractId, from_status: fromLifecycle, to_status: "sent",
-        reason: isResend ? "Contract resent for signature" : "Contract sent for signature",
+        reason: isDraftReview ? "Draft sent for review only" : isResend ? "Contract resent for signature" : "Contract sent for signature",
         actor_user_id: actorUserId, source: "contracts_management_send",
         evidence: { provider: emailResult.provider || null, provider_event_id: providerReceipt, recipient: recipientEmail },
       }),
@@ -882,7 +891,9 @@ export async function sendContract(
       sent: true,
       sent_to: recipientEmail,
       sent_at: sentAt,
-      message: "Contract sent successfully",
+      message: "Provider accepted the contract email; final delivery is not verified",
+      provider: emailResult.provider, provider_message_id: emailResult.emailId,
+      providerAccountId: emailResult.providerAccountId, delivery_status: "provider_accepted", review_only: isDraftReview,
       signingUrl,
       providerCopySent,
       runId,

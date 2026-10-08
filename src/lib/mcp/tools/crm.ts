@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { assertLifecycleEmailAvailable } from '@/lib/crm/resolveCanonicalLifecycleClient';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { getUnifiedContacts } from '@/lib/crm/unifiedContacts';
@@ -71,6 +72,7 @@ registerTool('crm', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+    await assertLifecycleEmailAvailable(supabase, args.tenant_id, args.email, ['contacts', 'business_clients']);
     const { first_name, last_name } = splitName(args.name);
     
     const { data, error } = await supabase
@@ -508,6 +510,12 @@ registerTool('crm', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+    if (args.email) {
+      await assertLifecycleEmailAvailable(supabase, args.tenant_id, args.email, ['business_clients']);
+      const candidates = await supabase.from('contacts').select('id').eq('tenant_id', args.tenant_id).ilike('email', args.email).limit(2);
+      if (candidates.error) throw candidates.error;
+      if ((candidates.data || []).length > 1) throw Object.assign(new Error('input.email matches multiple contacts. Resolve an explicit canonical client before creating another record.'), {code: 'VALIDATION_ERROR'});
+    }
     const isTestData =
       args.is_test_data !== undefined
         ? Boolean(args.is_test_data)
@@ -562,7 +570,7 @@ registerTool('crm', {
             },
             updated_at: new Date().toISOString(),
           })
-          .eq('id', existingContact.id);
+          .eq('id', existingContact.id).eq('tenant_id', args.tenant_id);
       }
     }
 
@@ -600,7 +608,7 @@ registerTool('crm', {
       await supabase
         .from('business_clients')
         .update({ crm_contact_id: contactId })
-        .eq('id', client.id);
+        .eq('id', client.id).eq('tenant_id', args.tenant_id);
     }
 
     // If lead_id provided, mark lead as converted and link to client

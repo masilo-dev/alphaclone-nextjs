@@ -171,8 +171,8 @@ export function validateContract(input: ContractValidationInput): DocumentValida
 
   // Explicit false always warns; undefined only warns for multi-page docs.
   if (
-    input.hasPageNumbers === false ||
-    (input.pageCount != null && input.pageCount > 1 && input.hasPageNumbers == null)
+    input.pageCount != null && input.pageCount > 1 &&
+    (input.hasPageNumbers === false || input.hasPageNumbers == null)
   ) {
     findings.push({
       id: 'missing-page-numbers',

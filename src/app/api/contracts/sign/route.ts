@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
         const admin = createSupabaseAdminClient();
         const { data: signingToken, error: tokenError } = await admin
             .from('contract_signing_tokens')
-            .select('tenant_id, contract_id, signer_email, signer_role, expires_at, used_at, revoked_at')
+            .select('tenant_id, contract_id, signer_email, signer_role, expires_at, used_at, revoked_at, metadata')
             .eq('token', token)
             .is('revoked_at', null)
             .single();
@@ -102,6 +102,7 @@ export async function GET(req: NextRequest) {
             success: true,
             token,
             signer: { email: signingToken.signer_email, role: signingToken.signer_role },
+            review_only: signingToken.metadata?.review_only === true,
             tokenStatus: { expiresAt: signingToken.expires_at, serverTime: new Date().toISOString() },
             contract,
         });

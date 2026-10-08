@@ -1,23 +1,30 @@
 import './projects-v2-intelligence';
 import { z } from 'zod';
+import { updatePersistedProject } from '@/lib/projects/projectPersistence';
+import { normalizeProjectStatus } from '@/lib/projects/projectEnums';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 const PROJECT_TABLE = 'business_projects';
 
 async function queryProjects(supabase: ReturnType<typeof createSupabaseAdminClient>, tenantId: string, status?: string) {
-  let query = supabase.from(PROJECT_TABLE).select('*').eq('tenant_id', tenantId);
-  if (status) query = query.eq('status', status);
-  const { data, error } = await query;
-  if (error) {
-    let fallback = supabase.from('projects').select('*').eq('tenant_id', tenantId);
-    if (status) fallback = fallback.eq('status', status);
-    const fb = await fallback;
-    if (fb.error) throw fb.error;
-    return fb.data;
+  const rows = new Map<string, any>();
+  for (const table of ['projects', PROJECT_TABLE]) {
+    let query = supabase.from(table).select('*').eq('tenant_id', tenantId);
+    if (status) query = query.eq('status', table === 'projects' ? normalizeProjectStatus(status) || status : status);
+    const {data, error} = await query;
+    if (error) throw error;
+    for (const row of data || []) if (!rows.has(row.id)) rows.set(row.id, row);
   }
-  return data;
+  return [...rows.values()];
 }
+
+registerTool('projects', {
+  name: 'update_project_status', description: 'Update a tenant project status and return the persisted row.',
+  inputSchema: z.object({tenant_id: z.string().uuid(), project_id: z.string().uuid(), status: z.string().min(1), notes: z.string().optional()}),
+  jsonSchema: {type: 'object', properties: {tenant_id: {type: 'string', format: 'uuid'}, project_id: {type: 'string', format: 'uuid'}, status: {type: 'string'}, notes: {type: 'string'}}, required: ['tenant_id', 'project_id', 'status']},
+  handler: async args => updatePersistedProject(createSupabaseAdminClient(), args.tenant_id, args.project_id, {status: args.status, ...(args.notes === undefined ? {} : {description: args.notes})}),
+});
 
 // 1. get_projects
 registerTool('projects', {
@@ -47,11 +54,12 @@ registerTool('projects', {
   description: 'Create a new project linked to an optional client.',
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
-    name: z.string(),
+    name: z.string().trim().min(1),
     client_id: z.string().uuid().optional(),
     status: z.string().optional().default('active'),
     description: z.string().optional(),
     due_date: z.string().optional(),
+    idempotency_key: z.string().min(1).optional(),
   }),
   jsonSchema: {
     type: 'object',
@@ -62,6 +70,7 @@ registerTool('projects', {
       status: { type: 'string', default: 'active' },
       description: { type: 'string' },
       due_date: { type: 'string', format: 'date-time' },
+      idempotency_key: {type: 'string'},
     },
     required: ['tenant_id', 'name'],
   },
@@ -87,12 +96,13 @@ registerTool('projects', {
       },
     });
     if (!execution.ok || !execution.result) {
-      throw new Error(execution.error?.message || 'Failed to create project');
+      throw Object.assign(new Error(execution.error?.message || 'Failed to create project'), {code: execution.error?.code || 'PROJECT_CREATE_FAILED'});
     }
     return {
       ...execution.result.project,
       created: execution.result.created,
       duplicate: execution.result.duplicate,
+      receipt: {action_id: execution.execution_id, status: 'verified', entity_type: 'project', entity_id: String(execution.result.project.id), timestamp: new Date().toISOString()},
       execution_id: execution.execution_id,
       idempotency_key: execution.idempotency_key,
     };
@@ -134,32 +144,7 @@ registerTool('projects', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase
-      .from(PROJECT_TABLE)
-      .update({
-        ...args.fields,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', args.project_id)
-      .eq('tenant_id', args.tenant_id)
-      .select()
-      .single();
-
-    if (error) {
-      const { data: fbData, error: fbError } = await supabase
-        .from('projects')
-        .update({
-          ...args.fields,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', args.project_id)
-        .eq('tenant_id', args.tenant_id)
-        .select()
-        .single();
-      if (fbError) throw fbError;
-      return fbData;
-    }
-    return data;
+    return updatePersistedProject(supabase, args.tenant_id, args.project_id, args.fields);
   },
 });
 
@@ -322,7 +307,7 @@ registerTool('projects', {
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const { data: bizProject } = await supabase
-      .from(PROJECT_TABLE)
+      .from('projects')
       .select('*')
       .eq('id', args.project_id)
       .eq('tenant_id', args.tenant_id)
@@ -332,7 +317,7 @@ registerTool('projects', {
       bizProject ||
       (
         await supabase
-          .from('projects')
+          .from(PROJECT_TABLE)
           .select('*')
           .eq('id', args.project_id)
           .eq('tenant_id', args.tenant_id)
@@ -346,8 +331,9 @@ registerTool('projects', {
       clientId
         ? supabase
             .from('business_clients')
-            .select('id, name, email, company')
+            .select('id, name, email')
             .eq('id', clientId)
+            .eq('tenant_id', args.tenant_id)
             .maybeSingle()
         : Promise.resolve({ data: null }),
       clientId

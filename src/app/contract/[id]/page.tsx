@@ -13,6 +13,7 @@ export default function PublicContractPage() {
     const params = useParams();
     const signingToken = params?.id as string;
 
+    const [reviewOnly, setReviewOnly] = useState(false);
     const [contract, setContract] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [signing, setSigning] = useState(false);
@@ -45,6 +46,7 @@ export default function PublicContractPage() {
             }
             setLoadError(null);
             setContract(payload.contract);
+            setReviewOnly(payload.review_only === true);
             setSignerEmail(payload?.signer?.email || '');
             if (payload.contract.status === 'fully_signed' || payload.contract.status === 'client_signed') {
                 setSigned(true);
@@ -189,7 +191,7 @@ export default function PublicContractPage() {
                 </div>
 
                 {/* Signature Section */}
-                {declined ? (
+                {reviewOnly ? (<p className="type-card-description text-[var(--ws-text-muted)]">Draft for review only. No signature is requested or permitted.</p>) : declined ? (
                     <div className="p-8 bg-[var(--ws-canvas)]/30 border-t border-[var(--ws-border)] text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--error-500)]/10 text-red-400 rounded-lg border border-red-500/20">
                             <XCircle className="w-5 h-5" />

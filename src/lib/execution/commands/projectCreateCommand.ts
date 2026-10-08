@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { resolveCanonicalLifecycleClient } from '@/lib/crm/resolveCanonicalLifecycleClient';
 import type { PolicySource } from '@/lib/ai/ToolPolicyGate';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { executeDomainExternalWrite } from '@/lib/execution/domainExternalWrite';
@@ -121,7 +122,10 @@ export async function executeProjectCreateCommand(
       contractId: params.input.contractId,
       clientId: params.input.clientId,
     },
-    execute: async (): Promise<ProjectCreateResult> => {
+    execute: async (executionContext): Promise<ProjectCreateResult> => {
+      const existingByKey = await admin.from('projects').select('*').eq('tenant_id', params.tenantId).contains('metadata', {creation_idempotency_key: idempotencyKey}).maybeSingle();
+      if (existingByKey.error) throw existingByKey.error;
+      if (existingByKey.data) return {project: existingByKey.data, created: false, duplicate: true};
       // Deal-won / lifecycle: one project per deal.
       if (params.input.dealId) {
         const { data: existingByDeal } = await admin
@@ -147,7 +151,9 @@ export async function executeProjectCreateCommand(
         }
       }
 
-      const status = normalizeProjectStatus(params.input.status || 'Pending') || 'Pending';
+      const clientId = params.input.clientId ? await resolveCanonicalLifecycleClient(admin, params.tenantId, params.input.clientId) : null;
+      const status = normalizeProjectStatus(params.input.status || 'Pending');
+      if (!status) throw Object.assign(new Error('input.status is not a supported project status'), {code: 'VALIDATION_ERROR'});
       const currentStage = normalizeProjectStage(params.input.currentStage || 'Discovery') || 'Discovery';
       const ownerId = params.input.ownerId || params.userId;
 
@@ -162,7 +168,7 @@ export async function executeProjectCreateCommand(
         progress: 0,
         description: params.input.description || null,
         due_date: params.input.dueDate ? String(params.input.dueDate).slice(0, 10) : null,
-        client_id: params.input.clientId || null,
+        client_id: clientId,
         deal_id: params.input.dealId || null,
         contract_id: params.input.contractId || null,
         team: [],
@@ -173,6 +179,7 @@ export async function executeProjectCreateCommand(
         auto_invoice_enabled: false,
         contract_status: 'None',
         budget_used: 0,
+        metadata: {creation_idempotency_key: idempotencyKey},
       };
 
       let { data: project, error } = await admin.from('projects').insert(row).select('*').single();
@@ -183,7 +190,16 @@ export async function executeProjectCreateCommand(
         project = retry.data;
         error = retry.error;
       }
-      if (error) throw error;
+      if (error?.code === '23505') {
+        const winner = await admin.from('projects').select('*').eq('tenant_id', params.tenantId).contains('metadata', {creation_idempotency_key: idempotencyKey}).maybeSingle();
+        if (winner.error) throw winner.error;
+        if (winner.data) return {project: winner.data, created: false, duplicate: true};
+      }
+      if (error) {
+        console.error('[project.create] database failure', {tenantId: params.tenantId, correlationId: executionContext.correlationId, idempotencyKey, code: error.code, message: error.message, details: error.details});
+        const message = error.code === '23502' && /due_date/.test(error.message) ? 'input.due_date is required by the current database schema; apply the unscheduled-project migration' : error.code === '23503' ? 'A linked project field does not resolve to a valid record in this workspace' : 'Project persistence failed; inspect the correlated server log';
+        throw Object.assign(new Error(message), {code: error.code === '23502' || error.code === '23503' ? 'VALIDATION_ERROR' : 'PROJECT_PERSISTENCE_FAILED'});
+      }
       if (!project) throw new Error('Project create returned no row');
       return { project, created: true, duplicate: false };
     },

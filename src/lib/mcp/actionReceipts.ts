@@ -165,12 +165,14 @@ export async function findReceiptByIdempotency(params: {
   idempotencyKey: string;
 }): Promise<Record<string, unknown> | null> {
   const supabase = createSupabaseAdminClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('mcp_action_receipts')
     .select('*')
     .eq('tenant_id', params.tenantId)
     .eq('tool', params.tool)
     .eq('idempotency_key', params.idempotencyKey)
+    .order('created_at', { ascending: false }).limit(1)
     .maybeSingle();
+  if (error) throw new Error('ACTION_RECEIPT_LOOKUP_FAILED');
   return data || null;
 }

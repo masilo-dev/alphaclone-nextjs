@@ -1,3 +1,4 @@
+import { resolveCanonicalLifecycleClient } from '@/lib/crm/resolveCanonicalLifecycleClient';
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
@@ -84,6 +85,7 @@ registerTool('contracts', {
     const supabase = createSupabaseAdminClient();
     const { extractContractLegalFields } = await import('@/lib/contracts/extractContractLegalFields');
     const { normalizeContractContent } = await import('@/lib/contracts/normalizeContractContent');
+    const canonicalClientId = args.client_id ? await resolveCanonicalLifecycleClient(supabase, args.tenant_id, args.client_id) : null;
     const normalizedContent = normalizeContractContent(args.content);
     const extracted = extractContractLegalFields(normalizedContent);
     const governingLaw = args.governing_law || extracted.governing_law;
@@ -93,7 +95,7 @@ registerTool('contracts', {
       .from('contracts')
       .insert({
         tenant_id: args.tenant_id,
-        client_id: args.client_id || null,
+        client_id: canonicalClientId,
         title: args.title,
         content: normalizedContent,
         status: args.status,
@@ -117,7 +119,7 @@ registerTool('contracts', {
       console.error('[create_contract] notify failed:', err)
     );
 
-    return data;
+    return { ...data, receipt: {action_id: data.id, status: 'verified', entity_type: 'contract', entity_id: data.id, timestamp: new Date().toISOString()} };
   },
 });
 
@@ -268,6 +270,7 @@ registerTool('contracts', {
         .from('contracts')
         .select('client_id')
         .eq('id', args.contract_id)
+        .eq('tenant_id', args.tenant_id)
         .single();
       
       if (contract?.client_id) {
@@ -310,8 +313,11 @@ registerTool('contracts', {
       sent: true,
       sent_to: toEmail,
       sent_at: new Date().toISOString(),
-      status: 'sent',
-      message: 'Contract successfully sent to client',
+      status: 'provider_accepted',
+      delivery_status: 'provider_accepted',
+      provider: execution.result.provider,
+      provider_message_id: execution.result.provider_message_id,
+      message: 'Provider accepted the contract email; final delivery is not verified',
       recipient: toEmail,
       signing_url: execution.result.signingUrl,
       execution_id: execution.execution_id,

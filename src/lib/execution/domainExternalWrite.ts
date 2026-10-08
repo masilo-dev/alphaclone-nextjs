@@ -184,6 +184,10 @@ export async function executeDomainExternalWrite<TResult>(
       tool: params.capability,
       idempotencyKey,
     });
+    if (existing && ['unknown_execution_state', 'outcome_unknown', 'executing', 'provider_processing'].includes(String(existing.final_status))) {
+      return {ok: false, actionId: String(existing.action_id || actionId), auditLogId: String(existing.id), idempotencyKey,
+        error: enrichError({code: 'PROVIDER_TIMEOUT', message: 'Previous execution is unresolved. Reconcile the existing action before retrying.', retryable: false})};
+    }
     if (existing?.success && existing.sanitized_output) {
       return {
         ok: true,
@@ -327,7 +331,7 @@ export async function executeDomainExternalWrite<TResult>(
       receipt,
     };
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Execution failed';
+    const message = err instanceof Error ? err.message : err && typeof err === 'object' && 'message' in err ? String(err.message) : 'Execution failed';
     const code =
       err instanceof Error && 'code' in err
         ? String((err as Error & { code: string }).code)
