@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { loadClientProjects } from '@/lib/clientPortal/projects';
 
 export type WorkspaceActivityActorType = 'system' | 'team_user' | 'client' | 'external' | 'ai';
 
@@ -101,9 +102,9 @@ export async function getClientScopedActivity(
   // PostgREST .or() cannot contain SQL subqueries. Resolve related entity IDs
   // first, then build a valid UUID filter across the activity table.
   const [projectsRes, invoicesRes, contractsRes] = await Promise.all([
-    admin.from('projects').select('id').eq('tenant_id', tenantId).eq('client_id', clientId).limit(500),
-    admin.from('business_invoices').select('id').eq('tenant_id', tenantId).eq('client_id', clientId).limit(500),
-    admin.from('contracts').select('id').eq('tenant_id', tenantId).eq('client_id', clientId).limit(500),
+    loadClientProjects(admin, tenantId, clientId).then(data=>({data,error:null})),
+    admin.from('business_invoices').select('id').eq('tenant_id', tenantId).eq('client_id', clientId).in('status',['sent','viewed','partially_paid','overdue','paid','completed']).limit(500),
+    admin.from('contracts').select('id').eq('tenant_id', tenantId).eq('client_id', clientId).in('status',['sent','viewed','negotiating','client_signed','fully_signed','signed','active','completed']).limit(500),
   ]);
 
   for (const result of [projectsRes, invoicesRes, contractsRes]) {
@@ -141,5 +142,7 @@ export async function getClientScopedActivity(
     return { activity: [] };
   }
 
-  return { activity: (data || []) as WorkspaceActivityRow[] };
+  const allowed = [projectsRes,invoicesRes,contractsRes].map(result=>new Set((result.data || []).map(row=>row.id)));
+  const scoped = (data || []).filter(row=>(!row.project_id || allowed[0].has(row.project_id)) && (!row.invoice_id || allowed[1].has(row.invoice_id)) && (!row.contract_id || allowed[2].has(row.contract_id)));
+  return { activity: scoped as WorkspaceActivityRow[] };
 }

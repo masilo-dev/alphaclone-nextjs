@@ -224,7 +224,7 @@ export async function getClientFinancePortalData(
     .order('created_at', { ascending: false }).limit(30);
   if (eventError) throw eventError;
   const activityRows = [...activity.map(event => ({id:event.id,type:event.event_type,title:event.summary,createdAt:event.created_at,projectName:event.project_id ? projectNames.get(event.project_id) : undefined})),
-    ...(events || []).map((event: any) => ({id:String(event.id),type:String(event.event_type),title:String(event.metadata?.title || event.event_type.replace(/_/g,' ')),createdAt:String(event.created_at),projectName:event.project_id ? projectNames.get(event.project_id) : undefined}))]
+    ...(events || []).filter((event:any)=>!event.project_id || projectNames.has(event.project_id)).map((event: any) => ({id:String(event.id),type:String(event.event_type),title:String(event.metadata?.title || event.event_type.replace(/_/g,' ')),createdAt:String(event.created_at),projectName:event.project_id ? projectNames.get(event.project_id) : undefined}))]
     .sort((a,b) => b.createdAt.localeCompare(a.createdAt)).slice(0,30);
   const outstanding = invoiceRows.filter(i => i.balanceDue > 0 && !['paid', 'completed'].includes(i.status));
   const balancesByCurrency: Record<string, number> = {};

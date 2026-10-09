@@ -26,10 +26,10 @@ Client `f7f68c79-d3a9-4995-86c5-0717bcc97599`, tenant `066eb88e-3fb0-45c9-b4d1-c
 ## Validation
 
 - `npm run typecheck`: passed.
-- Portal unit/API/session tests plus the existing phase-2 security suite: **39 passed, 0 failed**. Command: `node --require ./tests/server-only-register.cjs --import tsx --test tests/unit/client-portal-complete.test.mjs tests/unit/client-portal-routes.test.mjs tests/unit/client-portal-session-guard.test.mjs tests/unit/phase2-security-remediation.test.mjs`.
+- Portal unit/API/session tests plus the existing phase-2 security suite: **40 passed, 0 failed**. Command: `node --require ./tests/server-only-register.cjs --import tsx --test tests/unit/client-portal-complete.test.mjs tests/unit/client-portal-routes.test.mjs tests/unit/client-portal-session-guard.test.mjs tests/unit/phase2-security-remediation.test.mjs`.
 - Full suite before adding the final route tests: **1,398 passed, 4 failed** (1,402 tests). Three failures in `crm-production-reliability.test.mjs` concern import resumption/bulk update with Supabase unconfigured. One existing static contract failure in `mcp-bulk-operations-contract.test.mjs` expects `args.confirm_execute !== true` in an unrelated bulk-email implementation. These are outside the modified portal paths; they are not claimed fixed.
 - ESLint on the portal routes, helpers, auth, UI and service: no errors; two existing native-image performance warnings.
-- Production build: see final PR validation status. Do not treat typechecking as a completed optimized build.
+- Optimized production build compiled and generated all 422 static pages; final post-build typechecking completed. Scraper dynamic-dependency and missing local service configuration warnings were reported. Subsequent activity-sharing refinement was typechecked and regression-tested; repeat the full build on the final PR commit in CI.
 - Live message delivery, staff receipt/replies, payment provider behavior, mobile/desktop visual accessibility, actual file restoration, and another-client ID changes require a staging or authorized live test session. Use two dedicated test clients. No real messages or payments should be made.
 
 ## Release procedure

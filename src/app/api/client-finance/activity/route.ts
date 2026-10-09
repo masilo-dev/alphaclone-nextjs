@@ -64,9 +64,9 @@ export async function GET(req: NextRequest) {
       admin,
       client.tenant_id,
       client.id,
-      { limit: limit ?? 10 }
+      { limit: limit ?? 10, throwErrors: true }
     );
-    return NextResponse.json({ activity });
+    return NextResponse.json({ activity },{headers:{'Cache-Control':'private, no-store'}});
   } catch (error) {
     console.error('[client-finance/activity]', error);
     return NextResponse.json(
