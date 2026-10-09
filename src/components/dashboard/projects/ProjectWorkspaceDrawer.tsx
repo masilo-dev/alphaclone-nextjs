@@ -251,12 +251,14 @@ export function ProjectWorkspaceDrawer({
     return d.toISOString().split('T')[0];
   };
 
+  const commentRequest=useRef<{id:string;content:string;projectId:string}|null>(null);
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tenantId) return;
     const authorName = commentAuthorName.trim();
     const content = commentDraft.trim();
-    if (!authorName || !content) return;
+    if (!authorName || !content || postingComment) return;
+    if(!commentRequest.current || commentRequest.current.content!==content || commentRequest.current.projectId!==project.id) commentRequest.current={id:crypto.randomUUID(),content,projectId:project.id};
 
     setPostingComment(true);
     try {
@@ -266,17 +268,18 @@ export function ProjectWorkspaceDrawer({
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content }),
+          body: JSON.stringify({ content, requestId:commentRequest.current.id }),
         },
       );
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || 'Project comment could not be saved');
       if (payload.comment) {
-        setComments((prev) => [...prev, payload.comment]);
+        setComments((prev) => prev.some(item=>item.id===payload.comment.id)?prev:[...prev, payload.comment]);
+        commentRequest.current=null;
         setCommentDraft('');
-        const notifyResult = await projectService.notifyClientProjectNote(project.id, content, authorName);
-        if (notifyResult?.sent) toast.success('Note saved and emailed to client');
-        else toast.success('Note saved');
+        if (payload.notification?.sent) toast.success('Message saved; email notification accepted');
+        else if(payload.replayed) toast.success('Message already saved');
+        else toast(`Message saved; email notification unavailable: ${payload.notification?.error || 'provider unavailable'}`);
       }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to add note');
