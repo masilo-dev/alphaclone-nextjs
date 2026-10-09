@@ -1,0 +1,43 @@
+# Client portal repair and deployment checklist
+
+Prepared 2026-10-09. This branch contains code changes only. It has not been merged or deployed. Authenticated behavior on the production portal has not been verified. No production payments, client messages, agreement edits, deletions, or data reclassification were performed.
+
+## Implemented
+
+- Contract access resolves recorded original storage references, contract-specific catalog relationships, and the legacy path. Tenant/client checks remain mandatory. Stored bytes are unchanged, optional recorded file hashes are checked, and missing signed PDFs are never regenerated.
+- Client document access recognizes both `client` and `customer` relationships, checks tenant/deletion state, reads the recorded bucket/path server-side, and offers previews and downloads. Active HTML/SVG are attachments; responses cannot be cached publicly.
+- Invoice details and PDF downloads require the portal session and matching client/tenant. Remaining balances and currencies drive summaries. Only recorded HTTPS payment links or recorded bank/mobile instructions are presented. Test-harness evidence, pending reconciliation, and contradictory statuses block payment demands with an explanation.
+- Overview includes outstanding balances, billing reviews, signatures, and approvals. Recent and Workspace activity use the same combined records. Database lookup failures surface as errors rather than false empty states.
+- Projects merge canonical and legacy client links, exclude explicitly hidden/deleted records, and expose scoped milestones, tasks, progress, and deliverables. Project detail failures offer retry.
+- Messages persist before acknowledgement, reuse request UUIDs for uncertain retries, preserve the draft on failure, and distinguish persistence from notification delivery. General staff replies use the same event store. Conversation selection and loading failures are explicit.
+- Visible sign out, server-side session revocation failure reporting, expiry polling, absolute page title, organization branding, navigation anchors, modal keyboard focus handling, and error retry actions are included.
+- Server routes deny missing sessions and swapped portal tokens before looking up protected records. Both tenant and client scope are enforced for resources.
+
+## Production evidence and exact blockers
+
+Client `f7f68c79-d3a9-4995-86c5-0717bcc97599`, tenant `066eb88e-3fb0-45c9-b4d1-c3c2063ea0d4`. Evidence was obtained through authorized, read-only AlphaClone operations. Storage contents were not independently enumerated.
+
+1. **Original signed files:** Contracts `e92825cb-519a-4af9-9c6f-f249d7d5a776` (client_signed) and `910b9f96-fb86-48f4-a636-c02e7d00b20d` (fully_signed) both have `pdf_url=null`. Signature history and content hashes exist. The code can resolve catalog/legacy references, but file presence and provenance remain unverified. The business/storage administrator must locate the authentic signed PDFs in backups or existing storage, validate them against retained signing evidence, restore the original bytes to their recorded paths or attach exact authenticated storage references, and retain the signing history. If file SHA-256 evidence exists, record that separately from the agreement content hash. Do not regenerate an agreement and describe it as the original signed PDF. Verify both guarded preview and download return those original bytes.
+2. **Invoice legitimacy/reconciliation:** Invoice `a9807959-24fd-427c-983c-6a7f2f647a08`, `E2E-LIVE-1787911897`, records USD 1,150, due 2026-09-11, overdue status, paid amount 1,150, remaining balance 0, pending payment confirmation, notes `Live E2E harness`, and `is_test_data=false`. These facts conflict. Payment configuration is absent. The business must examine the originating audit/harness record and actual customer agreement/payment evidence, confirm legitimacy, reconcile the ledger through the existing authorized finance workflow, and configure its genuine payment provider link or instructions if a balance is actually owed. This branch neither marks it paid nor deletes/reclassifies it. It shows a review warning and suppresses another payment demand.
+3. **Project links:** No canonical project returned by the authorized project lookup is linked to this client. The tool's legacy fallback does not prove all legacy records were searched when canonical records exist. An administrator must check both `projects` and `business_projects` for this tenant/client, verify ownership against actual agreements, and explicitly link/share the correct records through the existing workflow. Do not expose or reassign unrelated client projects.
+4. **Live authentication and screenshots:** The secure browser sign-in request was declined. Automatic approval review then rejected reopening it because the prior decline must be respected. A new authorized secure sign-in session is required for live verification. No repaired-live screenshots can be supplied honestly yet.
+5. **Responsive fixture screenshots:** The fixture bundle compiled, but Playwright Chromium is unavailable and its download returned HTTP 403 `Domain not in allowlist`. In an environment with Chromium, run `npx playwright install chromium` and `node scripts/client-portal-fixture-qa.mjs`. It exercises seven sections at 320/375/768/1440 widths, checks overflow, tests an uncertain message acknowledgement/retry, and captures explicitly labeled synthetic screenshots in this directory. This fixture run has not passed here.
+
+## Validation
+
+- `npm run typecheck`: passed.
+- Portal unit/API/session tests plus the existing phase-2 security suite: **39 passed, 0 failed**. Command: `node --require ./tests/server-only-register.cjs --import tsx --test tests/unit/client-portal-complete.test.mjs tests/unit/client-portal-routes.test.mjs tests/unit/client-portal-session-guard.test.mjs tests/unit/phase2-security-remediation.test.mjs`.
+- Full suite before adding the final route tests: **1,398 passed, 4 failed** (1,402 tests). Three failures in `crm-production-reliability.test.mjs` concern import resumption/bulk update with Supabase unconfigured. One existing static contract failure in `mcp-bulk-operations-contract.test.mjs` expects `args.confirm_execute !== true` in an unrelated bulk-email implementation. These are outside the modified portal paths; they are not claimed fixed.
+- ESLint on the portal routes, helpers, auth, UI and service: no errors; two existing native-image performance warnings.
+- Production build: see final PR validation status. Do not treat typechecking as a completed optimized build.
+- Live message delivery, staff receipt/replies, payment provider behavior, mobile/desktop visual accessibility, actual file restoration, and another-client ID changes require a staging or authorized live test session. Use two dedicated test clients. No real messages or payments should be made.
+
+## Release procedure
+
+1. Review the code, run the targeted tests, repeat the optimized build with normal CI resources, and resolve/report the broader suite failures.
+2. Run the fixture UI test with Chromium, inspect all screenshots and keyboard navigation, then run the portal against staging with two isolated client accounts and genuine fixture PDFs. Check malformed/missing/expired/revoked cookies and changed token/resource IDs across every read, download, approval, and message write.
+3. In staging, test configured payment links/instructions and invoice PDF amounts without transferring money. Verify message persistence, duplicate retry protection, staff receipt, replies, and conversation selection using dedicated test accounts only. Check provider notification failure separately from message persistence.
+4. Complete the original-file, invoice-reconciliation/configuration, and project-linking steps above. Retain an audit trail; no signed-content edits or record deletion.
+5. Merge and deploy this reviewed branch through Railway. No database migration is introduced. Check `/api/readiness`, inspect deployment logs, and verify the deployed commit matches the PR commit. Repeat all seven sections in the authorized client session at mobile and desktop widths and capture real screenshots. Update this report with actual deployed SHA/time and verified outcomes.
+
+The prior Railway TypeScript repair deployed successfully; this portal branch is separate and remains undeployed.

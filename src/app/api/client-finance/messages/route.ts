@@ -5,12 +5,15 @@ import { requireClientPortalAccessDoubleGuarded } from '@/lib/auth/clientPortalA
 import { resolveClientByPortalToken } from '@/services/finance/clientFinancePortalService';
 import { notifyProjectTeamClientPortalMessage } from '@/lib/projects/projectClientNotification';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { loadClientProjects } from '@/lib/clientPortal/projects';
+import { persistPortalMessage } from '@/lib/clientPortal/messages';
 import { escapeHtml } from '@/lib/email/escapeHtml';
 
 export const dynamic = 'force-dynamic';
 
 const messageSchema = z.object({
   token: z.string().uuid(),
+  requestId: z.string().uuid().optional(),
   projectId: z.string().uuid().nullable().optional(),
   content: z.string().trim().min(1).max(10_000),
 });
@@ -48,9 +51,7 @@ export async function GET(req: NextRequest) {
     }
     const client = guarded.resolvedClient;
 
-    const { data: projects, error: projectError } = await admin
-      .from('projects').select('id, name').eq('tenant_id', client.tenant_id).eq('client_id', client.id);
-    if (projectError) throw projectError;
+    const projects = await loadClientProjects(admin, client.tenant_id, client.id);
     const ids = (projects || []).map((project: any) => project.id);
     const names = new Map((projects || []).map((project: any) => [project.id, project.name]));
     const projectMessages = ids.length ? await admin.from('project_comments')
@@ -82,6 +83,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    if (req.headers.get('origin') && req.headers.get('origin') !== req.nextUrl.origin) return NextResponse.json({error:'Cross-origin requests are not allowed'},{status:403});
     const parsed = messageSchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return NextResponse.json({ error: 'Valid message details are required' }, { status: 400 });
 
@@ -98,11 +100,9 @@ export async function POST(req: NextRequest) {
         .select('name, company_name, email').eq('tenant_id', client.tenant_id).eq('id', client.id).maybeSingle();
       if (recipientError) throw recipientError;
       const authorName = recipient?.name || recipient?.company_name || 'Client';
-      const { data, error } = await admin.from('client_portal_events').insert({
-        tenant_id: client.tenant_id, client_id: client.id, event_type: 'portal_message_sent',
-        metadata: { kind: 'general_message', content: parsed.data.content, author_name: authorName, is_client: true },
-      }).select('id, created_at').single();
-      if (error) throw error;
+      const saved = await persistPortalMessage(admin, {id:parsed.data.requestId || crypto.randomUUID(),tenantId:client.tenant_id,clientId:client.id,content:parsed.data.content,authorName,isClient:true});
+      const data = saved.message;
+      if (saved.replayed) return NextResponse.json({success:true,message:data,replayed:true,persistence:'confirmed'}, {status:200});
       const { data: tenant } = await admin.from('tenants').select('owner_id, name').eq('id', client.tenant_id).maybeSingle();
       const { data: owner } = tenant?.owner_id ? await admin.from('profiles').select('email').eq('id', tenant.owner_id).maybeSingle() : { data: null };
       const notification = owner?.email ? await sendEmailServer({
@@ -116,23 +116,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, message: data, notification: { sent: notification.success, error: notification.error } }, { status: 201 });
     }
 
-    const { data: project, error: projectError } = await admin
-      .from('projects').select('id, name').eq('tenant_id', client.tenant_id).eq('client_id', client.id).eq('id', parsed.data.projectId).maybeSingle();
-    if (projectError) throw projectError;
-    if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-    const { data, error } = await admin.from('project_comments').insert({
-      tenant_id: client.tenant_id, project_id: project.id, author_name: (client as any).name,
-      author_email: (client as any).email || null, content: parsed.data.content, is_client: true,
-    }).select('id, project_id, author_name, author_email, content, is_client, created_at').single();
-    if (error) throw error;
+    const projects = await loadClientProjects(admin,client.tenant_id,client.id);
+    const project = projects.find(item=>item.id === parsed.data.projectId);
+    if (!project) return NextResponse.json({error:'Project not found'},{status:404});
+    const {data:recipient,error:recipientError} = await admin.from('business_clients').select('name,email').eq('tenant_id',client.tenant_id).eq('id',client.id).maybeSingle();
+    if (recipientError) throw recipientError;
+    const saved = await persistPortalMessage(admin,{id:parsed.data.requestId || crypto.randomUUID(),tenantId:client.tenant_id,clientId:client.id,projectId:project.id,content:parsed.data.content,authorName:recipient?.name || 'Client',authorEmail:recipient?.email,isClient:true});
+    const data = saved.message;
+    if (saved.replayed) return NextResponse.json({success:true,message:data,replayed:true,persistence:'confirmed'});
     await notifyProjectTeamClientPortalMessage({
       admin, projectId: project.id, tenantId: client.tenant_id,
-      projectName: project.name || 'Project', authorName: (client as any).name,
+      projectName: project.name || 'Project', authorName: recipient?.name || 'Client',
       content: parsed.data.content, origin: req.nextUrl.origin,
     }).catch((notificationError) => console.error('[client-finance/message notification]', notificationError));
-    return NextResponse.json({ success: true, message: data }, { status: 201 });
+    return NextResponse.json({ success: true, message: data, persistence: 'confirmed' }, { status: 201 });
   } catch (error) {
     console.error('[client-finance/messages POST]', error);
-    return NextResponse.json({ error: 'Message could not be sent' }, { status: 500 });
+    return NextResponse.json({ error: 'Message could not be confirmed. Retry with the same request reference.', code: 'MESSAGE_UNCONFIRMED' }, { status: (error as any)?.status || 500 });
   }
 }

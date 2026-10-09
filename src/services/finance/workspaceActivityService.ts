@@ -23,6 +23,7 @@ export interface WorkspaceActivityRow {
 export type WorkspaceActivityInsert = Omit<WorkspaceActivityRow, 'id' | 'created_at'>;
 
 export interface ActivityQueryOptions {
+  throwErrors?: boolean;
   limit?: number;
   since?: Date;
 }
@@ -107,6 +108,7 @@ export async function getClientScopedActivity(
 
   for (const result of [projectsRes, invoicesRes, contractsRes]) {
     if (result.error) {
+      if (opts.throwErrors) throw result.error;
       console.error('[workspaceActivityService] related entity lookup failed', result.error);
     }
   }
@@ -134,6 +136,7 @@ export async function getClientScopedActivity(
 
   const { data, error } = await query;
   if (error) {
+    if (opts.throwErrors) throw error;
     console.error('[workspaceActivityService] getClientScopedActivity failed', error);
     return { activity: [] };
   }

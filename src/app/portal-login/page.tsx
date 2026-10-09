@@ -173,7 +173,7 @@ function PortalLoginContent() {
                                         Password
                                     </label>
                                     <span className="type-caption text-[color:var(--ws-text-tertiary)]">
-                                        Use your client access link to recover access
+                                        Forgot your password? Ask the business to send a new access invitation.
                                     </span>
                                 </div>
                                 <div className="relative">

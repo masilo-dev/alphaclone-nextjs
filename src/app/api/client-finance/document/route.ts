@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireClientPortalAccessDoubleGuarded } from '@/lib/auth/clientPortalAuth';
-import { portalOwnsResource } from '@/lib/auth/portalResourceOwnership';
+import { readStoredFile, storageReference } from '@/lib/clientPortal/files';
 import { resolveClientByPortalToken } from '@/services/finance/clientFinancePortalService';
 
 export const dynamic = 'force-dynamic';
@@ -42,32 +42,33 @@ export async function GET(req: NextRequest) {
 
     const { data: link, error } = await admin
       .from('document_relationships')
-      .select('document:documents(id, storage_path, deleted_at)')
+      .select('document_id')
       .eq('tenant_id', client.tenant_id)
-      .eq('entity_type', 'client')
+      .in('entity_type', ['client', 'customer'])
       .eq('entity_id', client.id)
       .eq('document_id', documentId)
-      .maybeSingle();
+      .limit(1).maybeSingle();
     if (error) throw error;
-    const document = Array.isArray((link as any)?.document) ? (link as any).document[0] : (link as any)?.document;
-    // Defense-in-depth: explicit ownership assertion before signing URLs (PORTAL-IDOR-001).
-    if (
-      !portalOwnsResource(
-        { clientId: client.id, tenantId: client.tenant_id },
-        link
-          ? { id: documentId, tenant_id: client.tenant_id, client_id: client.id }
-          : null
-      ) ||
-      !document ||
-      document.deleted_at ||
-      !document.storage_path
-    ) {
-      return NextResponse.json({ error: 'Document is unavailable' }, { status: 404 });
-    }
-
-    for (const bucket of ['uploads', 'documents', 'files']) {
-      const { data } = await admin.storage.from(bucket).createSignedUrl(document.storage_path, 900);
-      if (data?.signedUrl) return NextResponse.redirect(data.signedUrl);
+    if (!link) return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+    const { data: document, error: documentError } = await admin.from('documents').select('*')
+      .eq('id', documentId).eq('tenant_id', client.tenant_id).is('deleted_at', null).maybeSingle();
+    if (documentError) throw documentError;
+    if (!document?.storage_path) return NextResponse.json({ error: 'The business has not attached a file to this document.', code: 'FILE_REFERENCE_MISSING' }, { status: 404 });
+    const ref = storageReference(document.storage_path, document.storage_bucket || document.metadata?.storage_bucket || 'documents', process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL);
+    if (!ref) return NextResponse.json({ error: 'The document has an invalid storage reference. Ask the business to repair it.' }, { status: 404 });
+    const file = await readStoredFile(admin, [ref], document.metadata?.file_sha256);
+    if (file) {
+      const download = req.nextUrl.searchParams.get('download') === '1';
+      const filename = String(document.title || document.name || 'document').replace(/[^a-zA-Z0-9._-]/g, '_');
+      // Active HTML/SVG uploads must never execute under the application's origin.
+      const type = file.contentType.split(';')[0];
+      const previewable = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'text/plain'].includes(type);
+      return new NextResponse(Uint8Array.from(file.bytes).buffer, { headers: {
+        'Content-Type': previewable ? type : 'application/octet-stream',
+        'Content-Disposition': `${download || !previewable ? 'attachment' : 'inline'}; filename="${filename}"`,
+        'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff',
+        'Content-Security-Policy': "sandbox", 'Referrer-Policy': 'no-referrer',
+      } });
     }
     return NextResponse.json({ error: 'Document file is unavailable' }, { status: 404 });
   } catch (error) {

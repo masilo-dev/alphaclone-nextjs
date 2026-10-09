@@ -1,0 +1,37 @@
+// Offline UI regression run: synthetic records only; no production requests.
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+import http from 'node:http';
+import assert from 'node:assert/strict';
+import { build } from 'esbuild';
+import postcss from 'postcss';
+import tailwind from '@tailwindcss/postcss';
+import { chromium } from 'playwright';
+const root=process.cwd(), tmp=await fs.mkdtemp(path.join(os.tmpdir(),'portal-qa-'));
+const token='11111111-1111-4111-8111-111111111111';
+const portal={client:{id:'fixture',name:'QA Client'},branding:{name:'QA Business'},invoices:[{id:'invoice',invoiceNumber:'INV-QA-001',status:'overdue',total:1150,balanceDue:1000,amountPaid:150,currency:'USD',dueDate:'2026-09-11',issueDate:'2026-09-01',reviewReason:null,viewUrl:'/api/client-finance/invoice',downloadUrl:'/api/client-finance/invoice?download=1',payUrl:'/api/client-finance/invoice'}],quotes:[],projects:[{id:'project',name:'Portal delivery',status:'in_progress',stage:'Development',progress:60,description:'Synthetic project used for regression testing.',dueDate:'2026-11-01'}],contracts:[{id:'contract',title:'QA Agreement',status:'fully_signed',updatedAt:'2026-10-09'}],documents:[{id:'document',name:'QA deliverable',documentType:'document',status:'active',updatedAt:'2026-10-09',viewUrl:'/api/client-finance/document'}],approvals:[],activity:[{id:'activity',type:'invoice.updated',title:'Invoice updated',createdAt:'2026-10-09T10:00:00Z'}],summary:{openInvoices:1,openBalance:1000,balancesByCurrency:{USD:1000},pendingQuotes:0,billingReviews:0}};
+await build({stdin:{contents:"import React from 'react';import{createRoot}from'react-dom/client';import Page from './src/app/portal/[token]/page';createRoot(document.getElementById('root')).render(<Page/>);",resolveDir:root,loader:'tsx'},outfile:path.join(tmp,'ui.js'),bundle:true,define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'fixture-boundaries',setup(b){b.onResolve({filter:/^(next\/navigation|@\/lib\/supabase|@\/contexts\/LanguageContext)$/},a=>({path:a.path,namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},a=>({contents:a.path==='next/navigation'?`export const useParams=()=>({token:'${token}'});const router={replace:u=>{window.__redirect=u}};export const useRouter=()=>router;`:a.path==='@/lib/supabase'?`const c={on:()=>c,subscribe:()=>c};export const supabase={channel:()=>c,removeChannel:()=>{}};`:`export const useLanguage=()=>({language:'en',languageCode:'en',setLanguage:()=>{},t:s=>s});`,loader:'js'}));}}]});
+const css=await postcss([tailwind()]).process(await fs.readFile('src/app/globals.css','utf8'),{from:path.join(root,'src/app/globals.css')});
+await fs.writeFile(path.join(tmp,'ui.css'),css.css+'\n'+await fs.readFile('src/styles/product-system.css','utf8'));
+let failSend=true;const saved=[];let sends=0;
+const server=http.createServer(async(req,res)=>{res.setHeader('Cache-Control','no-store');const u=new URL(req.url,'http://localhost');let data;
+if(u.pathname==='/api/client-finance/portal')data={portal};
+else if(u.pathname==='/api/client-finance/messages'){if(req.method==='POST'){let body='';for await(const c of req)body+=c;const m=JSON.parse(body);sends++;if(!saved.some(x=>x.id===m.requestId))saved.push({id:m.requestId,project_id:m.projectId||null,projectName:'General',author_name:'QA Client',content:m.content,is_client:true,created_at:new Date().toISOString()});if(failSend){failSend=false;res.statusCode=500;data={error:'Fixture: acknowledgement lost; retry safely'};}else data={success:true,persistenceConfirmed:true,notificationSent:false};}else data={messages:saved};}
+else if(u.pathname==='/api/client-finance/project')data={project:portal.projects[0],milestones:[{id:'m',name:'Review',status:'pending'}],tasks:[{id:'t',name:'Build portal',status:'in_progress'}],deliverables:[{id:'d',name:'QA delivery',status:'draft'}]};
+else if(u.pathname==='/api/client-portal-auth/me')data={client:{id:'fixture'}};
+else if(u.pathname==='/api/client-portal-auth/logout')data={success:true};
+else if(u.pathname==='/api/client-finance/contract'||u.pathname==='/api/client-finance/document'){res.setHeader('Content-Type','application/pdf');res.end('%PDF-1.4\n% Fixture only\n%%EOF');return;}
+else if(u.pathname==='/api/client-finance/invoice'){res.end('<h1>QA Invoice detail fixture</h1>');return;}
+if(data){res.setHeader('Content-Type','application/json');res.end(JSON.stringify(data));return;}
+if(u.pathname==='/ui.js'||u.pathname==='/ui.css'){res.setHeader('Content-Type',u.pathname.endsWith('.css')?'text/css':'application/javascript');res.end(await fs.readFile(path.join(tmp,u.pathname.slice(1))));return;}
+res.setHeader('Content-Type','text/html');res.end('<!doctype html><html><head><title>Portal QA fixture</title><link rel="stylesheet" href="/ui.css"></head><body><div style="position:fixed;bottom:0;right:0;z-index:99999;background:#fff;color:#111;padding:2px 8px;font:12px sans-serif">LOCAL QA FIXTURE — not live data</div><div id="root"></div><script src="/ui.js"></script></body></html>');});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));const url=`http://127.0.0.1:${server.address().port}/portal/${token}`;
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const errors=[];let checks=0;
+try{const page=await browser.newPage();page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'||route.request().url().startsWith('blob:')?route.continue():route.abort());
+for(const width of [320,375,768,1440]){await page.setViewportSize({width,height:1000});for(const tab of ['overview','projects','invoices','quotes','contracts','documents','messages']){await page.goto(`${url}#${tab}`);await page.getByText('QA Client',{exact:false}).first().waitFor();await page.waitForTimeout(100);const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);assert.equal(overflow,false,`horizontal overflow ${width} ${tab}`);checks++;if((width===375||width===1440)&&['overview','invoices','messages'].includes(tab))await page.screenshot({path:`docs/qa/client-portal/${width}-${tab}.png`,fullPage:true});}}
+await page.goto(`${url}#messages`);const composer=page.getByRole('textbox',{name:'Message to the business'});await composer.fill('Synthetic QA message');await page.getByRole('button',{name:/Send message/}).click();await page.getByText('Fixture: acknowledgement lost; retry safely').waitFor();assert.equal(await composer.inputValue(),'Synthetic QA message');await page.getByRole('button',{name:/Send message/}).click();await page.waitForFunction(()=>document.querySelector('textarea')?.value==='');assert.equal(saved.length,1);assert.equal(sends,2);checks++;
+await page.goto(`${url}#projects`);await page.getByText('Portal delivery',{exact:true}).first().click();await page.getByRole('dialog').waitFor();await page.getByText('Build portal',{exact:true}).waitFor();await page.screenshot({path:'docs/qa/client-portal/1440-project-details.png',fullPage:true});await page.keyboard.press('Escape');assert.equal(await page.getByRole('dialog').count(),0);checks++;
+assert.deepEqual(errors,[]);console.log(JSON.stringify({passed:checks,widths:[320,375,768,1440],sections:7,messageRetry:'one persisted record after two requests',pageErrors:errors,screenshots:'docs/qa/client-portal'},null,2));
+}finally{await browser.close();await new Promise(r=>server.close(r));await fs.rm(tmp,{recursive:true,force:true});}

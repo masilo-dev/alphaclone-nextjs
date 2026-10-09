@@ -14,6 +14,8 @@ import {
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  const origin=req.headers.get('origin');
+  if(origin && origin !== req.nextUrl.origin) return NextResponse.json({error:'Access denied'},{status:403});
   try {
     const admin = await resolveSupabaseAdminClient();
     const session = await requireClientPortalSession(admin);
@@ -37,8 +39,6 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error('[client-portal-auth/logout]', error);
-    return clearClientPortalCookie(
-      NextResponse.json({ success: true })
-    );
+    return NextResponse.json({error:'Sign out could not be completed. Please retry.'},{status:503});
   }
 }
