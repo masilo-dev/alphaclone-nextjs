@@ -1,6 +1,6 @@
 # Portal theme, logout, language and conversation follow-up
 
-Prepared 2026-10-09. Prior portal PR #196 deployed successfully as master eda95248bae3571a548dbe14c2f1b96ebd6e54b3. This follow-up is prepared for deployment; update the release status after Railway completes.
+Prepared 2026-10-09. Prior portal PR #196 deployed successfully as master eda95248bae3571a548dbe14c2f1b96ebd6e54b3. PR #197 merged and deployed as master f86c76019745d227919f29d1395c42db0a4d2563. Railway deployment 9e5494fd-6d62-451b-b5d1-c8539f6b82f9 reported SUCCESS on 2026-10-09 at approximately 11:25 UTC; /api/readiness healthcheck completed and Next.js reported Ready. Deployment list readback confirms the exact commit. Production build generated 422 static pages and completed its final TypeScript check. This verifies deployment health, not authenticated portal behavior.
 
 - Sidebar and mobile drawer now use the panel background matching their text tokens. Portal routes respect the saved theme at initial paint and in ThemeContext; a visible accessible theme toggle is available on desktop and mobile.
 - Logout remains visible on mobile. Session revocation no longer writes the nonexistent client_portal_sessions.updated_at column. Database failures remain explicit and are not reported as successful sign-out.
@@ -12,3 +12,5 @@ Validation: 46 targeted portal, API, session and security tests passed; typechec
 Live authenticated verification and screenshots remain blocked by the previously declined secure sign-in and subsequent automatic approval rejection. The synthetic browser fixture requires Chromium, whose download was denied by the environment allowlist. Neither visual browser verification nor actual inbox delivery is claimed. With an approved secure session and Chromium available, run scripts/client-portal-fixture-qa.mjs, then inspect desktop/mobile light and dark modes, keyboard navigation, language switching and logout. Test both message directions using dedicated test accounts and verify provider logs and actual test inbox receipt. Replies are sent through the portal conversation; inbound email replies are not implemented by this change.
 
 Prior data blockers remain: locate and restore authentic signed files and references with retained signature evidence; reconcile E2E-LIVE-1787911897 and configure genuine payment instructions only if an actual balance is owed; verify/link/share the client's real projects. See audit.md for exact record IDs and resolution steps. These are not solved by UI changes.
+
+The screenshot fixture module-resolution correction is prepared separately from the deployed app. Its bundle now compiles, but browser launch fails because the Chromium executable is absent. No synthetic screenshot test has passed.
