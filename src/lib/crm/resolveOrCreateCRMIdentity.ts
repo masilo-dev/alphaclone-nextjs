@@ -22,6 +22,7 @@ export type CRMIdentityInput = {
   website?: string | null;
   company?: string | null;
   industry?: string | null;
+  stage?: string | null;
   location?: string | null;
   notes?: string | null;
   linkedin_url?: string | null;
@@ -562,7 +563,7 @@ export async function resolveOrCreateCRMIdentity(
     notes: input.notes || null,
     linkedin_url: input.linkedin_url || null,
     status: 'new',
-    stage: 'lead',
+    stage: normalizeLeadPipelineStage(input.stage),
     metadata,
     is_test_data: isTestData,
   };

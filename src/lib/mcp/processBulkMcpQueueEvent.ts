@@ -47,7 +47,7 @@ export async function processBulkMcpQueueEvent(params: {
 
     switch (tool) {
       case 'bulk_update_records':
-        output = (await executeBulkUpdateRecords(args as any, ctx)) as Record<string, unknown>;
+        output = { ...await executeBulkUpdateRecords(args as any, ctx) };
         break;
       case 'send_bulk_email':
         output = (await executeBulkEmail(args as any, ctx)) as Record<string, unknown>;

@@ -179,7 +179,7 @@ export function inferCountryCode(context?: PhoneContext | null): CountryCode | n
  */
 function safeParsePhoneNumber(candidate: string, country?: CountryCode | null) {
   try {
-    return parsePhoneNumber(candidate, country || undefined, metadata);
+    return parsePhoneNumber(candidate, { defaultCountry: country || undefined }, metadata);
   } catch {
     return null;
   }

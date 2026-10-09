@@ -135,6 +135,8 @@ export class CrmBulkUpdateService {
       idempotencyKey,
     } = params;
 
+    const isApproved = approved || confirmExecute;
+
     // 1. Validate inputs
     this.validatePatch(recordType, patch);
     const config = CRM_UNIFIED_ALLOWLISTS[recordType];
@@ -224,7 +226,6 @@ export class CrmBulkUpdateService {
     });
 
     // 6. Determine Approval Truth vs Execution Truth
-    const isApproved = approved || confirmExecute;
     const approvalStatus: ApprovalStatus = isApproved ? 'APPROVED' : 'PENDING';
     const isReadyToExecute = !dryRun && isApproved;
     const executionStatus: ExecutionStatus = dryRun
