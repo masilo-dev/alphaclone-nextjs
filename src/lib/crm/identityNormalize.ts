@@ -1,4 +1,4 @@
-import { normalizePhoneForStorage } from '@/lib/phone/leadPhone';
+import { normalizePhoneNumber, type PhoneContext } from '@/lib/phone/phoneNormalizer';
 
 const LEGAL_SUFFIXES = /\b(inc|incorporated|llc|ltd|limited|corp|corporation|co|company|plc|gmbh|sa|bv|ag)\.?$/i;
 
@@ -11,9 +11,10 @@ export function normalizeEmail(email: unknown): string | null {
   return trimmed;
 }
 
-/** Normalize phone to E.164 when possible. */
-export function normalizePhone(phone: unknown): string | null {
-  return normalizePhoneForStorage(phone);
+/** Normalize phone to E.164 when possible using country-aware normalizer. */
+export function normalizePhone(phone: unknown, context?: PhoneContext | null): string | null {
+  const result = normalizePhoneNumber(phone, context);
+  return result.e164 || (result.isValid ? result.phone : null);
 }
 
 /** Collapse whitespace and strip common legal suffixes for company matching. */
@@ -52,14 +53,35 @@ export function normalizeContactName(name: unknown): string | null {
   return trimmed || null;
 }
 
-/** Build alternate phone lookup keys (digits-only, E.164). */
-export function phoneLookupVariants(phone: unknown): string[] {
-  const normalized = normalizePhone(phone);
-  if (!normalized) return [];
-  const digits = normalized.replace(/\D/g, '');
-  const variants = new Set<string>([normalized]);
-  if (digits) variants.add(digits);
-  if (digits.length === 11 && digits.startsWith('1')) variants.add(`+${digits}`);
-  if (digits.length === 10) variants.add(`+1${digits}`);
+/** Build alternate phone lookup keys (digits-only, E.164, local national variants). */
+export function phoneLookupVariants(phone: unknown, context?: PhoneContext | null): string[] {
+  const result = normalizePhoneNumber(phone, context);
+  const variants = new Set<string>();
+  const raw = String(phone || '').trim();
+  if (raw) variants.add(raw);
+
+  if (result.e164) {
+    variants.add(result.e164);
+    const digits = result.e164.replace(/\D/g, '');
+    if (digits) variants.add(digits);
+    if (result.national) {
+      variants.add(result.national.trim());
+      const natDigits = result.national.replace(/\D/g, '');
+      if (natDigits) {
+        variants.add(natDigits);
+        if (!natDigits.startsWith('0')) variants.add(`0${natDigits}`);
+      }
+    }
+  } else {
+    const digits = raw.replace(/\D/g, '');
+    if (digits) {
+      variants.add(digits);
+      if (digits.length === 11 && digits.startsWith('1')) variants.add(`+${digits}`);
+      if (digits.length === 10 && (context?.countryCode === 'US' || context?.countryCode === 'CA')) {
+        variants.add(`+1${digits}`);
+      }
+    }
+  }
   return Array.from(variants);
 }
+

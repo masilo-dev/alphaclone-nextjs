@@ -141,6 +141,37 @@ const ZohoCampaignsHub = React.lazy(() => import('../zoho/ZohoCampaignsHub'));
 const ExecutiveDashboard = React.lazy(() => import('../ExecutiveDashboard'));
 import { renderSharedDashboardRoute } from '@/lib/dashboard/sharedDashboardRoutes';
 import { isHubRoute, wrapRouteInHub } from '@/lib/dashboard/hubRoutes';
+import { scheduleIdlePrefetch } from '@/lib/cache/tenantPrefetcher';
+
+/**
+ * Primary persistent routes kept alive in the authenticated application shell.
+ * When a user navigates between these modules, previously loaded data and state
+ * are displayed immediately without unmounting or re-fetching from scratch.
+ */
+const PRIMARY_PERSISTENT_ROUTES = new Set([
+  '/dashboard',
+  '/dashboard/business',
+  '/dashboard/crm',
+  '/dashboard/crm/workspace',
+  '/dashboard/leads',
+  '/dashboard/clients',
+  '/dashboard/business/clients',
+  '/dashboard/contacts',
+  '/dashboard/deals',
+  '/dashboard/finance',
+  '/dashboard/finance/manage',
+  '/dashboard/billing',
+  '/dashboard/business/billing',
+  '/dashboard/business/billing/manage',
+  '/dashboard/projects',
+  '/dashboard/projects/manage',
+  '/dashboard/business/projects',
+  '/dashboard/mail',
+  '/dashboard/comms',
+  '/dashboard/contracts',
+  '/dashboard/business/contracts',
+  '/dashboard/business/social',
+]);
 
 import { TrialBanner } from '../TrialBanner';
 import BonnieWidget from '../bonnie/BonnieWidget';
@@ -216,6 +247,28 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     }
     const [activeSection, setActiveSection] = useState('profile');
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    // Keep primary routes mounted once visited for instant 0ms restoration
+    const [visitedRoutes, setVisitedRoutes] = useState<string[]>(() => [route]);
+
+    useEffect(() => {
+        if (PRIMARY_PERSISTENT_ROUTES.has(route)) {
+            setVisitedRoutes((prev) => (prev.includes(route) ? prev : [...prev, route]));
+        }
+    }, [route]);
+
+    // Reset visited cache on tenant switch or user logout to enforce strict isolation
+    const currentTenantId = currentTenant?.id;
+    useEffect(() => {
+        setVisitedRoutes([route]);
+    }, [currentTenantId, user.id]);
+
+    // Schedule background idle prefetching for likely next modules
+    useEffect(() => {
+        if (currentTenant?.id) {
+            return scheduleIdlePrefetch(queryClient, currentTenant.id, user);
+        }
+    }, [currentTenant?.id, queryClient, user]);
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
     const [quickCreateOpen, setQuickCreateOpen] = useState(false);
     const [mailToolsOpen, setMailToolsOpen] = useState(false);
@@ -1475,7 +1528,24 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                             }`}
                         >
                         <EnterpriseTabWrapper fullBleed={isEnterpriseFullBleedTab(route)}>
-                            {moduleContent}
+                            {visitedRoutes.map((vRoute) => {
+                                const isCurrent = vRoute === route;
+                                return (
+                                    <div
+                                        key={vRoute}
+                                        data-module-route={vRoute}
+                                        className={isCurrent ? 'w-full min-h-full' : 'hidden'}
+                                        aria-hidden={!isCurrent}
+                                    >
+                                        {wrapRouteInHub(vRoute, renderBusinessContent(vRoute))}
+                                    </div>
+                                );
+                            })}
+                            {!PRIMARY_PERSISTENT_ROUTES.has(route) && (
+                                <div data-module-route={route} className="w-full min-h-full">
+                                    {moduleContent}
+                                </div>
+                            )}
                         </EnterpriseTabWrapper>
                         </DashboardRouteTransition>
                     </WidgetErrorBoundary>

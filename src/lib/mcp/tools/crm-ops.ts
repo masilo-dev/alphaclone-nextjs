@@ -490,7 +490,9 @@ defineConnectorTool({
     ] as const) {
       if (args[key] !== undefined) updates[key] = args[key];
     }
-    if (args.phone !== undefined) updates.phone = normalizePhoneForStorage(args.phone);
+    if (args.phone !== undefined) {
+      updates.phone = normalizePhoneForStorage(args.phone, null, { location: args.location });
+    }
 
     if (args.notes !== undefined) {
       const incomingNotes = String(args.notes || '').trim();
@@ -525,7 +527,9 @@ defineConnectorTool({
       for (const key of ['business_name', 'email', 'industry', 'location', 'source', 'notes', 'stage'] as const) {
         if (args[key] !== undefined) fallback[key] = args[key];
       }
-      if (args.phone !== undefined) fallback.phone = normalizePhoneForStorage(args.phone);
+      if (args.phone !== undefined) {
+        fallback.phone = normalizePhoneForStorage(args.phone, null, { location: args.location });
+      }
       ({ data, error } = await supabase
         .from('leads')
         .update(fallback)

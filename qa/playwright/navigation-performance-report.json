@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-10-08T18:37:04.470Z",
+  "initialColdReadyMs": 13311,
+  "coldNavigationMs": {
+    "Overview": 1196,
+    "CRM / Leads": 1338,
+    "Clients": 1500,
+    "Projects": 1211,
+    "Finance": 1196,
+    "Contracts": 1286
+  },
+  "warmNavigationMs": {
+    "Overview": 980,
+    "CRM / Leads": 951,
+    "Clients": 1093,
+    "Projects": 974,
+    "Finance": 782,
+    "Contracts": 986
+  },
+  "skeletonFlashes": {
+    "Overview": false,
+    "CRM / Leads": false,
+    "Clients": false,
+    "Projects": false,
+    "Finance": false,
+    "Contracts": false
+  },
+  "sidebarClickTimingsMs": {},
+  "pass": true
+}

@@ -1,18 +1,14 @@
 'use client';
 
-import { motion, type Variants } from 'framer-motion';
 import type { ReactNode } from 'react';
 
-const variants: Variants = {
-  // A transform on the route wrapper becomes the containing block for fixed
-  // dialogs rendered inside modules, trapping them beneath sticky chrome.
-  initial: { opacity: 0 },
-  animate: {
-    opacity: 1,
-    transition: { duration: 0.15 },
-  },
-};
-
+/**
+ * DashboardRouteTransition provides a stable, zero-overhead layout wrapper
+ * across authenticated module navigations.
+ *
+ * It avoids unmounting or flashing opacity when navigating between
+ * cached, persistent application shell modules.
+ */
 export function DashboardRouteTransition({
   routeKey,
   children,
@@ -23,14 +19,11 @@ export function DashboardRouteTransition({
   className?: string;
 }) {
   return (
-    <motion.div
-      key={routeKey}
-      initial="initial"
-      animate="animate"
-      variants={variants}
+    <div
+      data-route-key={routeKey}
       className={className}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }

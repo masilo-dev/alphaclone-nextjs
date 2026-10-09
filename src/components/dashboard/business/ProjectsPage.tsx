@@ -55,6 +55,9 @@ import { CardSkeleton } from '@/components/ui/workspace';
 import { isFinishedProject } from '@/lib/projects/projectEnums';
 import CreateInvoiceModal from '../CreateInvoiceModal';
 
+import { useQueryClient } from '@tanstack/react-query';
+import { tenantQueryKeys, invalidateTenantProjects } from '@/lib/cache/tenantQueryKeys';
+
 interface ProjectsPageProps {
     user: User;
 }
@@ -87,10 +90,19 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const pathname = usePathname();
     const nextSearch = useSearchParams();
     const { currentTenant } = useTenant();
-    const [projects, setProjects] = useState<BusinessProject[]>([]);
-    const [clients, setClients] = useState<any[]>([]);
+    const queryClient = useQueryClient();
+
+    const cachedProjects = currentTenant
+        ? queryClient.getQueryData<BusinessProject[]>(tenantQueryKeys.projects(currentTenant.id, user.id, user.role))
+        : null;
+    const cachedClients = currentTenant
+        ? queryClient.getQueryData<any[]>(tenantQueryKeys.clients(currentTenant.id))
+        : null;
+
+    const [projects, setProjects] = useState<BusinessProject[]>(() => cachedProjects || []);
+    const [clients, setClients] = useState<any[]>(() => cachedClients || []);
     const [showAddModal, setShowAddModal] = useState(false);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState<boolean>(() => !cachedProjects || cachedProjects.length === 0);
     const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [searchQuery, setSearchQuery] = useState('');
     const [viewingProject, setViewingProject] = useState<BusinessProject | null>(null);
@@ -123,7 +135,8 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         if (!currentTenant) return;
 
         // Use cached projects for the same tenant before showing a full loader.
-        if (loadedTenantRef.current !== currentTenant.id) {
+        const cached = queryClient.getQueryData<BusinessProject[]>(tenantQueryKeys.projects(currentTenant.id, user.id, user.role));
+        if (!cached || cached.length === 0) {
             setLoading(true);
         }
 
@@ -133,15 +146,22 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 businessClientService.getClients(currentTenant.id),
             ]);
 
-            setProjects(projectRes.projects || []);
-            setClients(clientRes.clients || []);
+            const freshProjects = (projectRes.projects as unknown as BusinessProject[]) || [];
+            const freshClients = clientRes.clients || [];
+
+            setProjects(freshProjects);
+            setClients(freshClients);
             loadedTenantRef.current = currentTenant.id;
+
+            // Cache data in TanStack Query for instant subsequent loads
+            queryClient.setQueryData(tenantQueryKeys.projects(currentTenant.id, user.id, user.role), freshProjects);
+            queryClient.setQueryData(tenantQueryKeys.clients(currentTenant.id), freshClients);
         } catch (e) {
             console.error('Failed to load mission control data', e);
         } finally {
             setLoading(false);
         }
-    }, [currentTenant, user.id, user.role]);
+    }, [currentTenant, user.id, user.role, queryClient]);
 
     useEffect(() => {
         if (currentTenant) {
@@ -173,6 +193,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 if (!error) {
                     setProjects(prev => prev.map(p => p.id === editingProject.id ? { ...p, ...saved } : p));
                     setEditingProject(null);
+                    void invalidateTenantProjects(queryClient, currentTenant.id);
                     toast.success('Project saved');
                     celebrateWinRitual({
                         reason: 'Project updated',
@@ -207,6 +228,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     setProjects(prev => [project, ...prev]);
                     setShowAddModal(false);
                     setLastCreatedProject(project);
+                    void invalidateTenantProjects(queryClient, currentTenant.id);
                     toast.success('Project created');
                     celebrateWinRitual({
                         reason: 'New project created',
@@ -221,7 +243,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             toast.error(`Critical System Error: ${(e as Error).message}`);
             console.error(e);
         }
-    }, [currentTenant, editingProject, user]);
+    }, [currentTenant, editingProject, user, queryClient, router]);
 
     const handleStageUpdate = useCallback(async (projectId: string, newStage: ProjectStage) => {
         if (!currentTenant) return;
@@ -249,19 +271,23 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             currentStage: newStage,
             ...(finished ? { status: 'Completed' as const, progress: 100 } : {}),
         } : prev));
+        void invalidateTenantProjects(queryClient, currentTenant.id);
         toast.success(finished ? 'Project marked finished' : `Stage updated to ${newStage}`);
-    }, [currentTenant, user.id]);
+    }, [currentTenant, user.id, queryClient]);
 
     const handleDeleteProject = useCallback(async (projectId: string) => {
         if (!confirm('Delete this project? This action cannot be undone.')) return;
         const { error } = await projectService.deleteProject(projectId);
         if (!error) {
             setProjects(prev => prev.filter(p => p.id !== projectId));
+            if (currentTenant?.id) {
+                void invalidateTenantProjects(queryClient, currentTenant.id);
+            }
             toast.success('Project deleted');
         } else {
             toast.error(`Project could not be deleted: ${error}`);
         }
-    }, []);
+    }, [currentTenant?.id, queryClient]);
 
     const openCreateInvoiceForProject = useCallback((project: BusinessProject) => {
         setInvoicePreselectProjectId(project.id);

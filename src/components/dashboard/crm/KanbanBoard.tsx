@@ -37,6 +37,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { HelpDisclosure } from '@/components/ui/workspace/HelpDisclosure';
 import { dashboardTimer } from '@/lib/dashboard/performance';
 import { useQueryClient } from '@tanstack/react-query';
+import { tenantQueryKeys, invalidateTenantLeads } from '@/lib/cache/tenantQueryKeys';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { ContextualBulkBar } from '@/components/ui/workspace';
@@ -471,16 +472,33 @@ export default function KanbanBoard() {
   const queryClient = useQueryClient();
   const { currentTenant } = useTenant();
   const { user } = useAuth();
+  const cachedKanban = useMemo(() => {
+    if (!currentTenant?.id || !user?.id) return null;
+    const key = ['crm', 'kanban', currentTenant.id, user.id];
+    const data = queryClient.getQueryData<{ leads: Lead[]; cursor: { createdAt: string; id: string } | null; hasMore: boolean }>(key);
+    if (data) return data;
+    const prefetched = queryClient.getQueryData<{ leads: Lead[]; pageInfo?: { nextCursor: any; hasMore: boolean } }>(tenantQueryKeys.leads(currentTenant.id, 100))
+      || queryClient.getQueryData<{ leads: Lead[]; pageInfo?: { nextCursor: any; hasMore: boolean } }>(tenantQueryKeys.leads(currentTenant.id, 50));
+    if (prefetched?.leads) {
+      return {
+        leads: prefetched.leads,
+        cursor: prefetched.pageInfo?.nextCursor || null,
+        hasMore: Boolean(prefetched.pageInfo?.hasMore),
+      };
+    }
+    return null;
+  }, [currentTenant?.id, user?.id, queryClient]);
+
   const [columns, setColumns] = useState(KANBAN_STAGES);
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const [leads, setLeads] = useState<Lead[]>(() => cachedKanban?.leads || []);
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
   const [detailLead, setDetailLead] = useState<Lead | null>(null);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [mobileDrawerLead, setMobileDrawerLead] = useState<Lead | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(() => !cachedKanban);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [leadCursor, setLeadCursor] = useState<{ createdAt: string; id: string } | null>(null);
-  const [hasMoreLeads, setHasMoreLeads] = useState(false);
+  const [leadCursor, setLeadCursor] = useState<{ createdAt: string; id: string } | null>(() => cachedKanban?.cursor || null);
+  const [hasMoreLeads, setHasMoreLeads] = useState<boolean>(() => cachedKanban?.hasMore || false);
 
   const handleOpenLead = (lead: Lead) => {
     if (window.innerWidth < 768) {
@@ -528,6 +546,9 @@ export default function KanbanBoard() {
     try {
       const { error } = await leadService.updateLead(leadId, { stage: newStage });
       if (error) throw new Error(error);
+      if (currentTenant?.id) {
+        void invalidateTenantLeads(queryClient, currentTenant.id);
+      }
       if (newStage === 'lost') {
         toast.success('Lead removed from pipeline');
       } else if (newStage === 'won') {
@@ -564,7 +585,7 @@ export default function KanbanBoard() {
       setLeadCursor(cached.cursor);
       setHasMoreLeads(cached.hasMore);
       setLoading(false);
-    } else {
+    } else if (leads.length === 0) {
       setLoading(true);
     }
     const { leads: dbLeads, error, pageInfo } = await leadService.getLeadsPage({ limit: 100 });
@@ -783,6 +804,9 @@ export default function KanbanBoard() {
                 );
                 if (removesFromBoard) {
                     setLeads((prev) => prev.filter((l) => l.id !== lead.id));
+                }
+                if (currentTenant?.id) {
+                    void invalidateTenantLeads(queryClient, currentTenant.id);
                 }
             } catch {
                 await loadLeads();

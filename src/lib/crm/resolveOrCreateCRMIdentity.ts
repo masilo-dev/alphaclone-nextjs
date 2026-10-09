@@ -326,15 +326,9 @@ async function updateMatchedLead(
       patch.notes = `${existingNotes}\n\n[${now}] ${newNotes}`;
     }
   }
+
   if (input.is_test_data !== undefined) {
     patch.is_test_data = Boolean(input.is_test_data);
-  } else if (
-    !existing.is_test_data &&
-    /test|qa|sample|dummy|invalid/i.test(
-      `${input.business_name || ''} ${input.contact_name || ''} ${input.email || ''} ${input.notes || ''}`
-    )
-  ) {
-    patch.is_test_data = true;
   }
 
   let updateResult = await admin
@@ -379,7 +373,12 @@ export async function resolveOrCreateCRMIdentity(
   const admin = options?.supabase ?? createSupabaseAdminClient();
   const userId = options?.userId ?? null;
   const normalizedEmail = normalizeEmail(input.email);
-  const normalizedPhone = normalizePhone(input.phone);
+  const phoneContext = {
+    location: input.location,
+    website: input.website,
+    source,
+  };
+  const normalizedPhone = normalizePhone(input.phone, phoneContext);
   const normalizedDomain = normalizeDomain(input.website);
   const externalId = normalizeExternalAccountId(input.external_id);
   const platform = input.platform?.trim() || null;
@@ -509,8 +508,9 @@ export async function resolveOrCreateCRMIdentity(
   const isTestData =
     input.is_test_data !== undefined
       ? Boolean(input.is_test_data)
-      : /test|qa|sample|dummy|invalid/i.test(
-          `${input.business_name || ''} ${input.company || ''} ${input.contact_name || ''} ${input.email || ''} ${input.notes || ''}`
+      : Boolean(
+          /(@example\.invalid|@test\.invalid|@alphaclone-qa-test\.invalid)$/i.test(input.email || '') ||
+          /^(\[TEST\]|TEST\s*—|QA\s+Test\b)/i.test(input.business_name || '')
         );
 
   const metadata: Record<string, unknown> = {

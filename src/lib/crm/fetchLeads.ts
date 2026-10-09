@@ -118,7 +118,10 @@ export async function fetchLeadsPaginated(
 
   const rows = returnedRows.map((row: Record<string, unknown>) => {
     const phone = row.phone;
-    const normalizedPhone = normalizePhoneForStorage(phone);
+    const normalizedPhone = normalizePhoneForStorage(phone, null, {
+      location: typeof row.location === 'string' ? row.location : undefined,
+      website: typeof row.website === 'string' ? row.website : undefined,
+    });
     return {
       ...row,
       phone: normalizedPhone || phone || null,

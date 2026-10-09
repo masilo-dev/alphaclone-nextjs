@@ -2,21 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { PlatformTenantError, resolveActiveTenantForUser } from '@/lib/tenant/platformTenant';
-
-function normalizePhoneForStorage(phone: unknown, defaultCountryCode = '1'): string | null {
-  if (phone == null) return null;
-  const raw = String(phone).trim();
-  if (!raw) return null;
-  const plusPrefixed = raw.startsWith('+');
-  const digits = raw.replace(/\D/g, '');
-  if (!digits) return null;
-  if (plusPrefixed && /^[1-9]\d{6,14}$/.test(digits)) return `+${digits}`;
-  if (digits.startsWith('00') && /^[1-9]\d{6,14}$/.test(digits.slice(2))) return `+${digits.slice(2)}`;
-  if (digits.length === 10) return `+${defaultCountryCode}${digits}`;
-  if (digits.length === 11 && digits.startsWith(defaultCountryCode)) return `+${digits}`;
-  if (digits.length >= 8 && digits.length <= 15) return `+${digits}`;
-  return raw;
-}
+import { normalizePhoneForStorage } from '@/lib/phone/leadPhone';
 
 /**
  * GET /api/leads/[id]
@@ -144,8 +130,13 @@ export async function PATCH(
     if (body.businessName !== undefined) updateData.business_name = body.businessName;
     if (body.industry !== undefined) updateData.industry = body.industry;
     if (body.location !== undefined) updateData.location = body.location;
-    if (body.phone !== undefined) updateData.phone = normalizePhoneForStorage(body.phone);
     if (body.email !== undefined) updateData.email = body.email;
+    if (body.phone !== undefined) {
+      updateData.phone = normalizePhoneForStorage(body.phone, null, {
+        location: body.location,
+        website: body.website,
+      });
+    }
     if (body.website !== undefined) updateData.website = body.website;
     if (body.stage !== undefined) updateData.stage = body.stage;
     if (body.value !== undefined) updateData.value = body.value;

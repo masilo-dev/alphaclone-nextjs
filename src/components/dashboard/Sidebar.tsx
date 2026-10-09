@@ -17,6 +17,9 @@ import { applyAcThemeClass, persistAcTheme, readStoredAcTheme } from '@/lib/appl
 import { preferencesService } from '@/services/dashboardService';
 import { WORKSPACE } from '@/constants/design';
 import { resolveCanonicalPath } from '@/lib/dashboard/canonicalRoutes';
+import { useQueryClient } from '@tanstack/react-query';
+import { useTenant } from '@/contexts/TenantContext';
+import { prefetchRouteData } from '@/lib/cache/tenantPrefetcher';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface SidebarProps {
@@ -51,6 +54,8 @@ const Sidebar = React.memo<SidebarProps>(({
     activeBgTasksCount = 0,
 }) => {
     const router = useRouter();
+    const queryClient = useQueryClient();
+    const { currentTenant } = useTenant();
     const { t } = useLanguage();
     const { tasks, dismissTask } = useBackgroundTasks();
 
@@ -99,14 +104,22 @@ const Sidebar = React.memo<SidebarProps>(({
         void preferencesService.updateTheme(user.id, next);
     }, [user.id]);
 
+    const handlePrefetch = useCallback((href: string) => {
+        if (!href || href === '#') return;
+        void router.prefetch(href);
+        if (currentTenant?.id) {
+            void prefetchRouteData(queryClient, href, currentTenant.id, user);
+        }
+    }, [router, queryClient, currentTenant?.id, user]);
+
     const navigate = useCallback((href: string) => {
         if (!href || href === '#') return;
         const canonical = resolveCanonicalPath(href);
         if (setActiveTab) {
             setActiveTab(canonical);
+        } else {
+            router.push(href);
         }
-        void router.prefetch(href);
-        router.push(href);
         if (onNavigate) onNavigate();
         if (typeof window !== 'undefined' && window.innerWidth < 768) {
             setSidebarOpen(false);
@@ -261,6 +274,8 @@ const Sidebar = React.memo<SidebarProps>(({
                                         }
                                     }}
                                     title={!sidebarOpen ? t(item.label) : undefined}
+                                    onMouseEnter={() => handlePrefetch(item.href)}
+                                    onTouchStart={() => handlePrefetch(item.href)}
                                     aria-expanded={hasChildren ? isExpanded && sidebarOpen : undefined}
                                     aria-current={active && !hasChildren ? 'page' : undefined}
                                     className={`${WORKSPACE.nav.item} ${active ? WORKSPACE.nav.itemActive : ''} ${sidebarOpen ? 'gap-2.5' : 'justify-center'} group relative touch-manipulation`}
@@ -307,6 +322,8 @@ const Sidebar = React.memo<SidebarProps>(({
                                                         if (sub.comingSoon) return;
                                                         navigate(sub.href);
                                                     }}
+                                                    onMouseEnter={() => handlePrefetch(sub.href)}
+                                                    onTouchStart={() => handlePrefetch(sub.href)}
                                                     aria-current={subActive ? 'page' : undefined}
                                                     className={`${WORKSPACE.nav.subItem} ${subActive ? WORKSPACE.nav.subItemActive : ''} gap-2`}
                                                 >

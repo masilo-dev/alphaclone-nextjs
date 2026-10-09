@@ -546,6 +546,56 @@ export const emailCampaignService = {
     },
 
     /**
+     * Pause an in-flight campaign
+     */
+    async pauseCampaign(campaignId: string): Promise<{ success: boolean; error: string | null }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('No active tenant');
+            const { error } = await supabase
+                .from('email_campaigns')
+                .update({ status: 'paused', updated_at: new Date().toISOString() })
+                .eq('id', campaignId)
+                .eq('tenant_id', tenantId);
+
+            if (error) throw error;
+            return { success: true, error: null };
+        } catch (err) {
+            return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Resume a paused campaign: resets interrupted 'sending' recipients back to 'pending'
+     * and resumes from the next pending checkpoint without duplicate sends.
+     */
+    async resumeCampaign(campaignId: string): Promise<{ success: boolean; error: string | null }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('No active tenant');
+
+            // Reset any recipients stuck in 'sending' back to 'pending'
+            await supabase
+                .from('campaign_recipients')
+                .update({ status: 'pending', updated_at: new Date().toISOString() })
+                .eq('campaign_id', campaignId)
+                .eq('tenant_id', tenantId)
+                .eq('status', 'sending');
+
+            const { error } = await supabase
+                .from('email_campaigns')
+                .update({ status: 'scheduled', updated_at: new Date().toISOString() })
+                .eq('id', campaignId)
+                .eq('tenant_id', tenantId);
+
+            if (error) throw error;
+            return { success: true, error: null };
+        } catch (err) {
+            return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
      * Get campaign recipients
      */
     async getCampaignRecipients(campaignId: string): Promise<{ recipients: CampaignRecipient[]; error: string | null }> {

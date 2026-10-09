@@ -19,6 +19,8 @@ import { showActionNextSteps } from '../common/showActionNextSteps';
 import { OperationalWorkflowStrip } from '../dashboard/OperationalWorkflowStrip';
 import { HelpDisclosure } from '@/components/ui/workspace/HelpDisclosure';
 import { TableSkeleton } from '@/components/ui/workspace';
+import { useQueryClient } from '@tanstack/react-query';
+import { tenantQueryKeys, invalidateTenantContracts } from '@/lib/cache/tenantQueryKeys';
 import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { SignaturePad } from './SignaturePad';
@@ -181,10 +183,14 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     // Owner's reusable signer profile: provider details, default governing law
     // and the adopted signature. Pre-fills every new contract.
     const [signerProfile, setSignerProfile] = useState<ContractSignerProfile>(EMPTY_SIGNER_PROFILE);
+    const queryClient = useQueryClient();
+    const cachedContracts = currentTenant?.id
+        ? queryClient.getQueryData<any[]>(tenantQueryKeys.contracts(currentTenant.id))
+        : null;
     const [generatedContract, setGeneratedContract] = useState('');
     const [contractId, setContractId] = useState<string>('');
-    const [savedContracts, setSavedContracts] = useState<any[]>([]);
-        const [loadingContracts, setLoadingContracts] = useState(true);
+    const [savedContracts, setSavedContracts] = useState<any[]>(() => cachedContracts || []);
+    const [loadingContracts, setLoadingContracts] = useState<boolean>(() => !cachedContracts || cachedContracts.length === 0);
     const [isSaving, setIsSaving] = useState(false);
     const [activeView, setActiveView] = useState<'new' | 'list' | 'lawyer' | 'templates' | 'alerts'>('new');
     const [selectedContractIds, setSelectedContractIds] = useState<Set<string>>(new Set());
@@ -374,6 +380,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             setActiveView('new');
 
             await contractService.downloadPDF({ ...contract, content: html }, currentTenant);
+            if (currentTenant?.id) {
+                void invalidateTenantContracts(queryClient, currentTenant.id);
+            }
             toast.success('AI Lawyer contract saved and PDF generated', { id: toastId });
         } catch (err: any) {
             toast.error(err?.message || 'Failed to generate PDF', { id: toastId });
@@ -460,7 +469,12 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 }
             });
             supabase.from('contracts').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false })
-                .then(({ data }: { data: any[] | null }) => { setSavedContracts(data || []); setLoadingContracts(false); })
+                .then(({ data }: { data: any[] | null }) => {
+                    const fresh = data || [];
+                    setSavedContracts(fresh);
+                    queryClient.setQueryData(tenantQueryKeys.contracts(currentTenant.id), fresh);
+                    setLoadingContracts(false);
+                })
                 .catch(() => setLoadingContracts(false));
             Promise.all([
                 contractLifecycleService.getTemplates(),
@@ -611,6 +625,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                     .eq('tenant_id', currentTenant.id);
             }
             setSavedContracts((prev) => [contract, ...prev]);
+            if (currentTenant?.id) {
+                void invalidateTenantContracts(queryClient, currentTenant.id);
+            }
             setActiveView('list');
             toast.success('Existing contract imported as a draft.', { id: toastId });
         } catch (error) {
@@ -747,6 +764,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 toast.success('Contract saved successfully!');
                 if (contract?.id) setContractId(contract.id);
                 setSavedContracts(prev => [contract, ...prev]);
+            }
+            if (currentTenant?.id) {
+                void invalidateTenantContracts(queryClient, currentTenant.id);
             }
             rememberSignerDetails(form);
             showActionNextSteps(isSigned ? 'contract_signed' : 'contract_saved', (path) => router.push(path));
@@ -1064,6 +1084,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             } else {
                 toast.success(`Deleted ${count} contract(s)`, { id: toastId });
             }
+            if (currentTenant?.id) {
+                void invalidateTenantContracts(queryClient, currentTenant.id);
+            }
         } catch (err) {
             toast.error(err instanceof Error ? err.message : 'Bulk delete failed', { id: toastId });
         } finally {
@@ -1097,6 +1120,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 next.delete(contractIdToDelete);
                 return next;
             });
+            if (currentTenant?.id) {
+                void invalidateTenantContracts(queryClient, currentTenant.id);
+            }
             toast.success('Draft deleted', { id: toastId });
         } catch (err) {
             toast.error(err instanceof Error ? err.message : 'Delete failed', { id: toastId });

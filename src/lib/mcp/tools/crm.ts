@@ -3,6 +3,7 @@ import { assertLifecycleEmailAvailable } from '@/lib/crm/resolveCanonicalLifecyc
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { getUnifiedContacts } from '@/lib/crm/unifiedContacts';
+import { normalizePhoneForStorage } from '@/lib/phone/leadPhone';
 
 // Helper to split name into first/last
 function splitName(fullName: string): { first_name: string; last_name: string } {
@@ -519,7 +520,15 @@ registerTool('crm', {
     const isTestData =
       args.is_test_data !== undefined
         ? Boolean(args.is_test_data)
-        : /test|qa|sample|dummy|invalid/i.test(`${args.name} ${args.email || ''} ${args.notes || ''}`);
+        : Boolean(
+            /(@example\.invalid|@test\.invalid|@alphaclone-qa-test\.invalid)$/i.test(args.email || '') ||
+            /^(\[TEST\]|TEST\s*—|QA\s+Test\b)/i.test(args.name || '')
+          );
+
+    const normalizedPhone = normalizePhoneForStorage(args.phone, null, {
+      location: args.location,
+      website: args.website,
+    });
 
     const { data: client, error } = await supabase
       .from('business_clients')
@@ -527,7 +536,7 @@ registerTool('crm', {
         tenant_id: args.tenant_id,
         name: args.name,
         email: args.email || null,
-        phone: args.phone || null,
+        phone: normalizedPhone,
         industry: args.industry || null,
         website: args.website || null,
         location: args.location || null,

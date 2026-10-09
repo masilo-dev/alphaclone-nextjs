@@ -1,7 +1,7 @@
-import { PaymentRailBanner } from '@/components/dashboard/payments/PaymentRailBanner';
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { PaymentRailBanner } from '@/components/dashboard/payments/PaymentRailBanner';
 import { useBonnieDeepLinkFocus } from '@/hooks/useBonnieDeepLinkFocus';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRelationship } from '@/contexts/RelationshipContext';
@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '../../../contexts/TenantContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { tenantQueryKeys, invalidateTenantInvoices } from '@/lib/cache/tenantQueryKeys';
 import { businessInvoiceService, BusinessInvoice } from '../../../services/businessInvoiceService';
 import { businessClientService } from '../../../services/businessClientService';
 import { projectService } from '../../../services/projectService';
@@ -56,9 +58,15 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const { isMobile, isTablet, isDesktop } = useBreakpoint();
     const { isInstalledMobileCompanion } = useDeviceExperience();
     const { confirm: confirmDialog } = useConfirmDialog();
+    const queryClient = useQueryClient();
 
-    const [invoices, setInvoices] = useState<BusinessInvoice[]>([]);
-    const [loading, setLoading] = useState(true);
+    const initialInvoices = useMemo(() => {
+        if (!currentTenant?.id) return [];
+        return queryClient.getQueryData<BusinessInvoice[]>(tenantQueryKeys.invoices(currentTenant.id)) || [];
+    }, [currentTenant?.id, queryClient]);
+
+    const [invoices, setInvoices] = useState<BusinessInvoice[]>(initialInvoices);
+    const [loading, setLoading] = useState(() => initialInvoices.length === 0);
     const [filter, setFilter] = useState<'all' | 'draft' | 'sent' | 'paid' | 'overdue'>('all');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingInvoice, setEditingInvoice] = useState<BusinessInvoice | null>(null);
@@ -234,8 +242,18 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
     const loadClients = async () => {
         if (!currentTenant?.id) return;
+        const cacheKey = tenantQueryKeys.clients(currentTenant.id, 'summary');
+        const cached = queryClient.getQueryData<any[]>(cacheKey);
+        if (cached && cached.length > 0) {
+            const map: Record<string, { name: string; email?: string }> = {};
+            cached.forEach((c) => {
+                map[c.id] = { name: c.name, email: c.email || undefined };
+            });
+            setClientMap(map);
+        }
         const { clients } = await businessClientService.getClients(currentTenant.id);
         if (clients) {
+            queryClient.setQueryData(cacheKey, clients);
             const map: Record<string, { name: string; email?: string }> = {};
             clients.forEach((c) => {
                 map[c.id] = { name: c.name, email: c.email || undefined };
@@ -245,10 +263,21 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     };
 
     const loadProjects = async () => {
-        if (!user?.id || !user?.role) return;
+        if (!user?.id || !user?.role || !currentTenant?.id) return;
         try {
+            const cacheKey = tenantQueryKeys.projects(currentTenant.id, user.id, user.role);
+            const cached = queryClient.getQueryData<any[]>(cacheKey);
+            if (cached && cached.length > 0) {
+                setProjects(cached);
+                const pMap: Record<string, { name: string }> = {};
+                cached.forEach((p: any) => {
+                    pMap[p.id] = { name: p.name };
+                });
+                setProjectMap(pMap);
+            }
             const { projects: fetchedProjects } = await projectService.getProjects(user.id, user.role);
             if (fetchedProjects) {
+                queryClient.setQueryData(cacheKey, fetchedProjects);
                 setProjects(fetchedProjects);
                 const pMap: Record<string, { name: string }> = {};
                 fetchedProjects.forEach((p: any) => {
@@ -290,9 +319,19 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
     const loadInvoices = async () => {
         if (!currentTenant?.id) return;
-        setLoading(true);
+        const cacheKey = tenantQueryKeys.invoices(currentTenant.id);
+        const cached = queryClient.getQueryData<BusinessInvoice[]>(cacheKey);
+        if (cached && cached.length > 0) {
+            setInvoices(cached);
+            calculateStats(cached);
+            loadRevenueData(cached);
+            setLoading(false);
+        } else {
+            setLoading(true);
+        }
         const { invoices: data } = await businessInvoiceService.getInvoices(currentTenant.id);
         if (data) {
+            queryClient.setQueryData(cacheKey, data);
             setInvoices(data);
             calculateStats(data);
             loadRevenueData(data);

@@ -46,6 +46,8 @@ import { CrmSyncToolbar } from './crm/CrmSyncToolbar';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 import { usePersistentPreference } from '@/hooks/usePersistentPreference';
 import { useRelationship } from '@/contexts/RelationshipContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { tenantQueryKeys, invalidateTenantDeals } from '@/lib/cache/tenantQueryKeys';
 
 type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
 
@@ -549,8 +551,14 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const pathname = usePathname() || '';
   const searchParams = useSearchParams();
   const { currentTenant } = useTenant();
-  const [deals, setDeals] = useState<Deal[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const cachedDeals = currentTenant?.id
+    ? queryClient.getQueryData<Deal[]>(tenantQueryKeys.deals(currentTenant.id))
+    : null;
+
+  const [deals, setDeals] = useState<Deal[]>(() => cachedDeals || []);
+  const [loading, setLoading] = useState<boolean>(() => !cachedDeals || cachedDeals.length === 0);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -631,6 +639,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
       setDeals((prev) => prev.filter((d) => !selectedDealIds.has(d.id)));
       if (selectedDeal && selectedDealIds.has(selectedDeal.id)) setSelectedDeal(null);
       setSelectedDealIds(new Set());
+      if (currentTenant?.id) {
+        void invalidateTenantDeals(queryClient, currentTenant.id);
+      }
       toast.success(`Deleted ${count} deal(s)`, { id: toastId });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Bulk delete failed', { id: toastId });
@@ -669,15 +680,20 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
   const load = useCallback(async () => {
     if (!currentTenant?.id) return;
-    setLoading(true);
+    const cached = queryClient.getQueryData<Deal[]>(tenantQueryKeys.deals(currentTenant.id));
+    if (!cached || cached.length === 0) {
+      setLoading(true);
+    }
     const { data } = await supabase
       .from('deals')
       .select('*')
       .eq('tenant_id', currentTenant.id)
       .order('created_at', { ascending: false });
-    setDeals((data as Deal[])?.filter((d) => isActiveDealStage(d.stage)) || []);
+    const freshDeals = (data as Deal[])?.filter((d) => isActiveDealStage(d.stage)) || [];
+    setDeals(freshDeals);
+    queryClient.setQueryData(tenantQueryKeys.deals(currentTenant.id), freshDeals);
     setLoading(false);
-  }, [currentTenant?.id]);
+  }, [currentTenant?.id, queryClient]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -726,6 +742,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
     if (removesFromBoard) {
       setDeals((prev) => prev.filter((d) => d.id !== id));
       if (selectedDeal?.id === id) setSelectedDeal(null);
+      if (currentTenant?.id) {
+        void invalidateTenantDeals(queryClient, currentTenant.id);
+      }
       toast.success(newStage === 'closed_won' ? 'Deal closed won — removed from active board' : 'Deal removed from pipeline');
       showDealStageNextSteps(newStage, (path) => router.push(path));
       return;
@@ -738,6 +757,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
     );
     if (selectedDeal?.id === id) {
       setSelectedDeal((prev) => (prev ? { ...prev, stage: updatedDeal?.stage || newStage } : prev));
+    }
+    if (currentTenant?.id) {
+      void invalidateTenantDeals(queryClient, currentTenant.id);
     }
     toast.success(`Moved to ${newStage.replace('_', ' ')}`);
     showDealStageNextSteps(newStage, (path) => router.push(path));
@@ -797,6 +819,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
       toast.success('Deal created successfully');
       setDeals((prev) => [data as Deal, ...prev]);
+      if (currentTenant?.id) {
+        void invalidateTenantDeals(queryClient, currentTenant.id);
+      }
       setShowCreateModal(false);
       // Reset form
       setNewDealName('');

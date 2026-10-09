@@ -74,6 +74,7 @@ import { ContextualBulkBar, TableSkeleton } from '@/components/ui/workspace';
 import { resolveContactDeepLink } from '@/lib/crm/resolveContactDeepLink';
 import ClientPortalAccessPanel from './ClientPortalAccessPanel';
 import { useQueryClient } from '@tanstack/react-query';
+import { tenantQueryKeys } from '@/lib/cache/tenantQueryKeys';
 
 const KanbanBoard = lazy(() => import('../crm/KanbanBoard'));
 const DealsTab = lazy(() => import('../DealsTab'));
@@ -92,7 +93,17 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const router = useRouter();
     const rawPathname = usePathname() || '';
     const pathname = resolveCanonicalPath(rawPathname);
-    const [clients, setClients] = useState<BusinessClient[]>([]);
+
+    const initialCached = currentTenant ? (
+        queryClient.getQueryData<{ clients: BusinessClient[]; total: number; cursor: { createdAt: string; id: string } | null; hasMore: boolean; page: number }>(
+            ['crm', 'clients', currentTenant.id, user.id, false, 'all', '']
+        ) ||
+        queryClient.getQueryData<{ clients: BusinessClient[] }>(
+            tenantQueryKeys.clients(currentTenant.id, 'default')
+        )
+    ) : null;
+
+    const [clients, setClients] = useState<BusinessClient[]>(() => initialCached?.clients || []);
     const [filteredClients, setFilteredClients] = useState<BusinessClient[]>([]);
     const [searchTerm, setSearchTerm] = useState(() =>
         typeof window === 'undefined' ? '' : new URLSearchParams(window.location.search).get('search') || ''
@@ -104,12 +115,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingClient, setEditingClient] = useState<BusinessClient | null>(null);
     const [showImportModal, setShowImportModal] = useState(false);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState<boolean>(() => !initialCached || initialCached.clients.length === 0);
     const clientRequestSequence = useRef(0);
     const clientsSnapshotRef = useRef<BusinessClient[]>([]);
     const loadedTenantRef = useRef<string | null>(null);
     const previousSearchRef = useRef(searchTerm);
-    const [totalCount, setTotalCount] = useState(0);
+    const [totalCount, setTotalCount] = useState<number>(() => (initialCached as any)?.total || initialCached?.clients?.length || 0);
     const [viewMode, setViewMode] = useState<'list' | 'board' | 'micro'>('list');
     const [showProposalModal, setShowProposalModal] = useState(false);
     const [selectedClientForProposal, setSelectedClientForProposal] = useState<BusinessClient | null>(null);
@@ -438,6 +449,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             setClientCursor(nextCursor);
             setHasMore(nextHasMore);
             queryClient.setQueryData(cacheKey, { clients: next, total: pageInfo.total, cursor: nextCursor, hasMore: nextHasMore, page: previousPage });
+            queryClient.setQueryData(tenantQueryKeys.clients(currentTenant.id, 'default'), { clients: next });
         } else {
             const seen = new Set(clientsSnapshotRef.current.map(client => client.id));
             const next = [...clientsSnapshotRef.current, ...data.filter(client => !seen.has(client.id))];

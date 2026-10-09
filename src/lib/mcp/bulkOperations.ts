@@ -11,6 +11,7 @@ import { emailOperationStore, runEmailOperation } from '@/lib/email/emailOperati
 import { deriveStableMcpIdempotencyKey } from '@/lib/mcp/toolRiskTiers';
 import { createHash } from 'node:crypto';
 import { isUuid } from '@/lib/tenant/platformTenant';
+import { CrmBulkUpdateService, CRM_UNIFIED_ALLOWLISTS, type RecordType as CrmRecordType } from '@/services/crmBulkUpdateService';
 
 type RecordType = 'lead' | 'client' | 'contact' | 'invoice' | 'project' | 'task';
 type BulkRecordArgs = {
@@ -31,38 +32,7 @@ const CRM_BATCH_SIZE = 50;
 const BULK_EMAIL_CONCURRENCY = 5;
 const BULK_MEDIA_CONCURRENCY = 2;
 
-const RECORD_CONFIG: Record<RecordType, { table: string; fields: string[]; stateFields: string[] }> = {
-  lead: {
-    table: 'leads',
-    fields: ['status', 'stage', 'notes'],
-    stateFields: ['status', 'stage'],
-  },
-  client: {
-    table: 'business_clients',
-    fields: ['sales_stage', 'is_active', 'notes'],
-    stateFields: ['sales_stage', 'is_active'],
-  },
-  contact: {
-    table: 'contacts',
-    fields: ['status'],
-    stateFields: ['status'],
-  },
-  invoice: {
-    table: 'business_invoices',
-    fields: ['status', 'lifecycle_status'],
-    stateFields: ['status', 'lifecycle_status'],
-  },
-  project: {
-    table: 'business_projects',
-    fields: ['status'],
-    stateFields: ['status'],
-  },
-  task: {
-    table: 'tasks',
-    fields: ['status', 'priority', 'assigned_to', 'due_date'],
-    stateFields: ['status', 'priority', 'assigned_to', 'due_date'],
-  },
-};
+const RECORD_CONFIG = CRM_UNIFIED_ALLOWLISTS;
 
 function uniqueIds(ids: unknown, label: string, max: number): string[] {
   if (!Array.isArray(ids)) throw new Error(`${label} must be an array`);
@@ -153,124 +123,17 @@ async function recordReceipt(params: {
 }
 
 export async function executeBulkUpdateRecords(args: BulkRecordArgs, ctx: BatchContext) {
-  const config = RECORD_CONFIG[args.record_type];
-  if (!config) throw new Error('record_type must be one of lead, client, contact, invoice, project, or task');
-  const recordIds = uniqueIds(args.record_ids, 'record_ids', MAX_RECORDS_PER_BATCH);
-  const requestedPatch = safeObject(args.patch, 'patch');
-  const patchKeys = Object.keys(requestedPatch);
-  if (patchKeys.length === 0) throw new Error('patch must contain at least one supported field');
-  const unsupported = patchKeys.filter((key) => !config.fields.includes(key));
-  if (unsupported.length) {
-    throw new Error(`Unsupported ${args.record_type} patch fields: ${unsupported.join(', ')}`);
-  }
-
-  const dryRun = args.dry_run !== false;
-  const actionId = crypto.randomUUID();
-  const tool = 'bulk_update_records';
-  const key = dryRun ? null : idempotencyKey(args.idempotency_key);
-  if (!dryRun && args.confirm_execute !== true) {
-    throw new Error('Set confirm_execute: true after reviewing a dry run before applying bulk changes');
-  }
-  if (key) {
-    const replay = await replayIfPresent(ctx.tenantId, tool, key);
-    if (replay) return replay;
-  }
-
-  const selectFields = ['id', 'tenant_id', ...config.fields].join(', ');
-  const supabase = createSupabaseAdminClient() as any;
-  const { data, error } = await supabase
-    .from(config.table)
-    .select(selectFields)
-    .eq('tenant_id', ctx.tenantId)
-    .in('id', recordIds);
-  if (error) throw new Error(`Unable to load ${args.record_type} records: ${error.message}`);
-
-  const rows = (data || []) as Array<Record<string, unknown>>;
-  const byId = new Map(rows.map((row) => [String(row.id), row]));
-  const missingIds = recordIds.filter((id) => !byId.has(id));
-  const invalidTransitions: Array<{ id: string; reason: string }> = [];
-  const eligibleIds: string[] = [];
-
-  for (const id of recordIds) {
-    const row = byId.get(id);
-    if (!row) continue;
-    if (args.record_type === 'lead' && requestedPatch.stage !== undefined) {
-      const from = normalizeLeadPipelineStage(String(row.stage || 'lead'));
-      const to = normalizeLeadPipelineStage(String(requestedPatch.stage));
-      const transition = assertLeadStageTransition(from, to);
-      if (!transition.ok) {
-        invalidTransitions.push({ id, reason: transition.message });
-        continue;
-      }
-    }
-    eligibleIds.push(id);
-  }
-
-  const preview = eligibleIds.map((id) => {
-    const row = byId.get(id) || {};
-    return {
-      id,
-      before: getState(row, config.stateFields),
-      after: { ...getState(row, config.stateFields), ...requestedPatch },
-      will_update: true,
-    };
-  });
-
-  const baseOutput: Record<string, unknown> = {
-    action_id: actionId,
-    dry_run: dryRun,
-    record_type: args.record_type,
-    requested: recordIds.length,
-    eligible: eligibleIds.length,
-    processed: dryRun ? 0 : eligibleIds.length,
-    updated_or_sent: 0,
-    skipped: missingIds.length + invalidTransitions.length,
-    failed: 0,
-    missing_ids: missingIds,
-    invalid_transitions: invalidTransitions,
-    preview,
-    reason: args.reason || null,
-  };
-
-  if (dryRun || eligibleIds.length === 0) {
-    return baseOutput;
-  }
-
-  const update = { ...requestedPatch, updated_at: new Date().toISOString() };
-  let updatedCount = 0;
-  const updatedIds: string[] = [];
-
-  for (let offset = 0; offset < eligibleIds.length; offset += CRM_BATCH_SIZE) {
-    const batchIds = eligibleIds.slice(offset, offset + CRM_BATCH_SIZE);
-    const { data: updatedRows, error: updateError } = await supabase
-      .from(config.table)
-      .update(update)
-      .eq('tenant_id', ctx.tenantId)
-      .in('id', batchIds)
-      .select('id');
-    if (updateError) throw new Error(`Unable to update ${args.record_type} records: ${updateError.message}`);
-    for (const row of updatedRows || []) {
-      updatedIds.push(String(row.id));
-    }
-    updatedCount += (updatedRows || []).length;
-  }
-
-  const output = {
-    ...baseOutput,
-    updated_or_sent: updatedCount,
-    updated_ids: updatedIds,
-  };
-  await recordReceipt({
+  return CrmBulkUpdateService.processBulkUpdate({
     tenantId: ctx.tenantId,
     userId: ctx.userId,
-    tool,
-    idempotencyKey: key as string,
-    actionId,
-    entityType: `${args.record_type}_batch`,
-    output,
-    input: args as unknown as Record<string, unknown>,
+    recordType: args.record_type,
+    recordIds: args.record_ids,
+    patch: args.patch,
+    dryRun: args.dry_run !== false,
+    confirmExecute: args.confirm_execute === true,
+    reason: args.reason,
+    idempotencyKey: args.idempotency_key,
   });
-  return output;
 }
 
 type MediaItem = {
