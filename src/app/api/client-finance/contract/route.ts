@@ -3,6 +3,7 @@ import { resolveSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireClientPortalAccessDoubleGuarded } from '@/lib/auth/clientPortalAuth';
 import { portalOwnsResource } from '@/lib/auth/portalResourceOwnership';
 import { resolveClientByPortalToken } from '@/services/finance/clientFinancePortalService';
+import { readContractFile } from '@/lib/clientPortal/files';
 import { generateThemedContractPdfBuffer } from '@/lib/documents/themedDocumentPdf';
 
 export const dynamic = 'force-dynamic';
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
     ) {
       return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
     }
-    const shared = ['sent', 'viewed', 'client_signed', 'fully_signed', 'signed', 'completed'].includes(String(data.status || '').toLowerCase());
+    const shared = ['sent', 'viewed', 'negotiating', 'active', 'client_signed', 'fully_signed', 'signed', 'completed'].includes(String(data.status || '').toLowerCase());
     if (!shared) {
       const { data: recipient } = await admin.from('business_clients').select('email')
         .eq('tenant_id', client.tenant_id).eq('id', client.id).maybeSingle();
@@ -42,14 +43,13 @@ export async function GET(req: NextRequest) {
     }
     if (req.nextUrl.searchParams.get('download') === '1' || req.nextUrl.searchParams.get('view') === '1') {
       const download = req.nextUrl.searchParams.get('download') === '1';
-      const filePath = `contracts/${client.tenant_id}/${contractId}.pdf`;
-      const { data: stored } = await admin.storage.from('contracts').download(filePath);
+      const stored = await readContractFile(admin, data, process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL);
       let pdf: ArrayBuffer;
       if (stored) {
-        pdf = await stored.arrayBuffer();
+        pdf = Uint8Array.from(stored.bytes).buffer;
       } else {
         const signed = ['client_signed', 'fully_signed', 'signed', 'completed'].includes(String(data.status || '').toLowerCase());
-        if (signed) return NextResponse.json({ error: 'The signed PDF is unavailable. Please ask the business for a copy.' }, { status: 404 });
+        if (signed) return NextResponse.json({ error: 'The original signed PDF is missing from its recorded storage locations. Contact the business to restore the original file; signature evidence has been preserved.', code: 'SIGNED_FILE_MISSING', contractId }, { status: 404 });
         const [{ data: tenant }, { data: recipient }] = await Promise.all([
           admin.from('tenants').select('name, logo_url, settings').eq('id', client.tenant_id).maybeSingle(),
           admin.from('business_clients').select('name, email').eq('tenant_id', client.tenant_id).eq('id', client.id).maybeSingle(),
@@ -69,6 +69,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ contract: { id: data.id, title: data.title, content: data.content, status: data.status, updated_at: data.updated_at } }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     console.error('[client-finance/contract]', error);
-    return NextResponse.json({ error: 'Contract could not be loaded' }, { status: 500 });
+    return NextResponse.json({ error: 'Contract could not be loaded. Retry or contact the business with the contract reference.', code: 'CONTRACT_LOAD_FAILED' }, { status: 500 });
   }
 }

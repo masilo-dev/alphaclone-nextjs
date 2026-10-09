@@ -7,7 +7,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 export const metadata: Metadata = {
     robots: { index: false, follow: false },
-    title: 'Client Workspace · AlphaClone',
+    title: { absolute: 'Client workspace' },
     description: 'Secure client workspace for projects, invoices, contracts, documents and communication.',
 };
 

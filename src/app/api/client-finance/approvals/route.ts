@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { resolveSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireClientPortalAccessDoubleGuarded } from '@/lib/auth/clientPortalAuth';
 import { resolveClientByPortalToken } from '@/services/finance/clientFinancePortalService';
+import { loadClientProjects } from '@/lib/clientPortal/projects';
 import { appendWorkspaceActivity } from '@/services/finance/workspaceActivityService';
 
 const schema = z.object({ token: z.string().uuid(), approvalId: z.string().uuid(), decision: z.enum(['approved', 'changes_requested']), comment: z.string().trim().max(5000).optional() });
@@ -28,6 +29,8 @@ function mapAuthError(code: string): { status: number; message: string } {
 }
 
 export async function POST(req: NextRequest) {
+  const origin = req.headers.get('origin');
+  if (origin && origin !== req.nextUrl.origin) return NextResponse.json({error:'Access denied'},{status:403});
   const parsed = schema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: 'Invalid approval response' }, { status: 400 });
   try {
@@ -38,13 +41,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: message, code: guarded.error.code }, { status });
     }
     const client = guarded.resolvedClient;
-    const { data: approval, error: lookupError } = await admin.from('project_client_approvals').select('id, project_id').eq('id', parsed.data.approvalId).eq('tenant_id', client.tenant_id).maybeSingle();
+    const { data: approval, error: lookupError } = await admin.from('project_client_approvals').select('id, project_id, status').eq('id', parsed.data.approvalId).eq('tenant_id', client.tenant_id).maybeSingle();
     if (lookupError) throw lookupError; if (!approval) return NextResponse.json({ error: 'Approval not found' }, { status: 404 });
-    const { data: project } = await admin.from('projects').select('id').eq('id', approval.project_id).eq('client_id', client.id).maybeSingle();
+    const project = (await loadClientProjects(admin,client.tenant_id,client.id)).find(item=>item.id===approval.project_id);
     if (!project) return NextResponse.json({ error: 'Approval not found' }, { status: 404 });
+    if (!['pending','viewed'].includes(approval.status)) return NextResponse.json({error:'This approval has already been decided. Refresh the workspace.'},{status:409});
     const now = new Date().toISOString();
-    const { error } = await admin.from('project_client_approvals').update({ status: parsed.data.decision, decided_at: now, last_actor_type: 'client', last_actor_name: (client as any).name, last_actor_email: (client as any).email || null, updated_at: now }).eq('id', approval.id).eq('tenant_id', client.tenant_id);
+    const { data: updated, error } = await admin.from('project_client_approvals').update({ status: parsed.data.decision, decided_at: now, last_actor_type: 'client', last_actor_name: (client as any).name, last_actor_email: (client as any).email || null, updated_at: now }).eq('id', approval.id).eq('tenant_id', client.tenant_id).in('status',['pending','viewed']).select('id').maybeSingle();
     if (error) throw error;
+    if (!updated) return NextResponse.json({error:'This approval has already been decided. Refresh the workspace.'},{status:409});
     await admin.from('client_portal_events').insert({ tenant_id: client.tenant_id, client_id: client.id, project_id: approval.project_id, event_type: 'feedback_submitted', metadata: { title: parsed.data.decision === 'approved' ? 'Approval completed' : 'Changes requested', approval_id: approval.id } });
 
     void appendWorkspaceActivity(admin, {

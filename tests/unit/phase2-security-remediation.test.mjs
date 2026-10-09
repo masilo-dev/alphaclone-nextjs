@@ -119,7 +119,9 @@ test('client-finance document and contract routes enforce tenant+client filters'
   const contract = readFileSync(join(root, 'src/app/api/client-finance/contract/route.ts'), 'utf8');
   assert.match(doc, /entity_id',\s*client\.id/);
   assert.match(doc, /tenant_id',\s*client\.tenant_id/);
-  assert.match(doc, /portalOwnsResource/);
+  assert.match(doc, /in\('entity_type', \['client', 'customer'\]\)/);
+  assert.match(doc, /eq\('document_id', documentId\)/);
+  assert.match(doc, /is\('deleted_at', null\)/);
   assert.match(contract, /client_id',\s*client\.id/);
   assert.match(contract, /portalOwnsResource/);
 });

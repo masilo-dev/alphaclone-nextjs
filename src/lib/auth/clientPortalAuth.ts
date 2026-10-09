@@ -138,6 +138,7 @@ export function verifyClientPortalSessionToken(
   token: string
 ): { ok: true; claims: ClientPortalClaims } | { ok: false; reason: 'bad_token' | 'bad_sig' | 'expired' | 'bad_claims' } {
   if (!token || typeof token !== 'string') return { ok: false, reason: 'bad_token' };
+  if (token.split('.').length !== 3) return { ok: false, reason: 'bad_token' };
   const [headerB64, payloadB64, sigB64] = token.split('.');
   if (!headerB64 || !payloadB64 || !sigB64) return { ok: false, reason: 'bad_token' };
   const signingInput = `${headerB64}.${payloadB64}`;
@@ -162,7 +163,7 @@ export function verifyClientPortalSessionToken(
     c.iss !== CLIENT_PORTAL_JWT_ISS ||
     c.aud !== CLIENT_PORTAL_JWT_AUD
   ) return { ok: false, reason: 'bad_claims' };
-  if (c.exp < Math.floor(Date.now() / 1000)) return { ok: false, reason: 'expired' };
+  if (c.exp <= Math.floor(Date.now() / 1000)) return { ok: false, reason: 'expired' };
   return { ok: true, claims: claims as ClientPortalClaims };
 }
 
@@ -219,7 +220,7 @@ export async function requireClientPortalSession(
     !sessionRow ||
     sessionRow.is_active === false ||
     sessionRow.signed_out_at !== null ||
-    new Date(sessionRow.expires_at).getTime() < Date.now()
+    (!Number.isFinite(Date.parse(sessionRow.expires_at)) || Date.parse(sessionRow.expires_at) <= Date.now())
   ) {
     return { ok: false, error: { code: 'SESSION_REVOKED', http: 401 } };
   }
@@ -470,7 +471,7 @@ export async function createClientPortalSessionRow(
 ): Promise<void> {
   const now = new Date();
   const expiresAt = new Date(now.getTime() + CLIENT_PORTAL_SESSION_TTL_SECONDS * 1000);
-  await admin.from('client_portal_sessions').insert({
+  const { error } = await admin.from('client_portal_sessions').insert({
     tenant_id: params.tenantId,
     client_id: params.clientId,
     session_jti: params.sessionJti,
@@ -481,6 +482,7 @@ export async function createClientPortalSessionRow(
     created_at: now.toISOString(),
     expires_at: expiresAt.toISOString(),
   });
+  if (error) throw error;
 }
 
 export async function revokeClientPortalSessionByJti(
@@ -488,10 +490,11 @@ export async function revokeClientPortalSessionByJti(
   sessionJti: string
 ): Promise<void> {
   const now = new Date().toISOString();
-  await admin
+  const { error } = await admin
     .from('client_portal_sessions')
     .update({ is_active: false, signed_out_at: now, updated_at: now })
     .eq('session_jti', sessionJti);
+  if (error) throw error;
 }
 
 export async function rotateClientPortalSaltAndRevoke(

@@ -4,7 +4,7 @@ import { Select as AlphaCloneSelect } from '@/components/ui/select';
 import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
     AlertTriangle,
@@ -43,7 +43,7 @@ const money = (amount: number, currency = 'USD') =>
     new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount);
 
 const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    iso && Number.isFinite(Date.parse(iso)) ? new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
 
 const formatDateTime = (iso: string) =>
     new Date(iso).toLocaleString(undefined, {
@@ -75,11 +75,13 @@ const NAV: Array<{ id: Tab; label: string; icon: React.ComponentType<{ className
 ];
 
 function Shell({
-    portal, activeTab, setActiveTab, children,
+    portal, activeTab, setActiveTab, onLogout, loggingOut, children,
 }: {
     portal: ClientFinancePortalData;
     activeTab: Tab;
     setActiveTab: (t: Tab) => void;
+    onLogout: () => void;
+    loggingOut: boolean;
     children: React.ReactNode;
 }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -88,8 +90,8 @@ function Shell({
         return true;
     });
     const counts = useMemo(() => ({
-        invoices: portal.summary.openInvoices,
-        approvals: portal.approvals.length,
+        invoices: portal.invoices.filter(i=>i.balanceDue > 0 || i.reviewReason).length,
+        approvals: portal.approvals.length + portal.contracts.filter(c=>c.actionUrl).length,
         messages: 0,
     }), [portal]);
 
@@ -127,6 +129,7 @@ function Shell({
                                 return (
                                     <li key={item.id}>
                                         <button
+                                            aria-current={activeTab === item.id ? 'page' : undefined}
                                             onClick={() => setActiveTab(item.id)}
                                             className={`group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 type-ui transition-colors ${
                                                 isActive
@@ -207,6 +210,7 @@ function Shell({
                         </div>
 
                         <div className="ml-auto flex items-center gap-2">
+                            <button type="button" onClick={onLogout} disabled={loggingOut} className="min-h-10 rounded-lg border border-[color:var(--ws-border)] px-3 text-[color:var(--ws-text-primary)]">{loggingOut ? 'Signing out…' : 'Sign out'}</button>
                             <div className="hidden sm:block">
                                 <LanguageSwitcher />
                             </div>
@@ -245,6 +249,7 @@ function Shell({
                                 return (
                                     <li key={item.id}>
                                         <button
+                                            aria-current={activeTab === item.id ? 'page' : undefined}
                                             onClick={() => setActiveTab(item.id)}
                                             className={`flex w-full flex-col items-center justify-center gap-0.5 rounded-lg py-1.5 px-1 ${
                                                 isActive
@@ -371,6 +376,7 @@ function ErrorState({ message }: { message: string }) {
                 </div>
                 <h1 className="text-lg font-bold text-[color:var(--ws-text-primary)]">Workspace unavailable</h1>
                 <p className="mt-2 type-caption text-[color:var(--ws-text-secondary)]">{message}</p>
+                <button onClick={()=>window.location.reload()} className="mt-4 min-h-11 rounded-lg border px-4">Retry workspace</button>
                 <p className="mt-4 type-card-description text-[color:var(--ws-text-tertiary)]">
                     If you received this link from {''}
                     <span className="font-medium">your service provider</span>, please verify the URL or contact them for a new access link.
@@ -412,6 +418,8 @@ export default function ClientPortalPage() {
             return;
         }
         const nextPath = `/portal/${encodeURIComponent(token)}`;
+        setPortal(null);
+        setMessages([]);
         router.replace(`/portal-login?next=${encodeURIComponent(nextPath)}`);
     }, [router, token]);
 
@@ -424,6 +432,14 @@ export default function ClientPortalPage() {
     const [message, setMessage] = useState('');
     const [projectId, setProjectId] = useState('');
     const [sending, setSending] = useState(false);
+    const [loggingOut, setLoggingOut] = useState(false);
+    const [messagesError, setMessagesError] = useState<string | null>(null);
+    const [messagesLoading, setMessagesLoading] = useState(true);
+    const messageRequest = useRef<{id:string;content:string;projectId:string} | null>(null);
+    const [projectDetails, setProjectDetails] = useState<{milestones:any[];tasks:any[];deliverables:any[]} | null>(null);
+    const [projectDetailsError, setProjectDetailsError] = useState<string | null>(null);
+    const [projectDetailsLoading, setProjectDetailsLoading] = useState(false);
+    const [projectRetry, setProjectRetry] = useState(0);
     const [documentPreview, setDocumentPreview] = useState<{ name: string; url: string } | null>(null);
     const [contractPreview, setContractPreview] = useState<{ id: string; title: string; pdfUrl: string; actionUrl?: string; signing?: boolean } | null>(null);
     const [projectPreview, setProjectPreview] = useState<ClientFinancePortalData['projects'][number] | null>(null);
@@ -447,10 +463,11 @@ export default function ClientPortalPage() {
                 return;
             }
             const d = await r.json().catch(() => ({}));
-            if (r.ok) setMessages(d.messages || []);
-        } catch {
-            /* swallow network flakes; next poll or reload will recover */
-        }
+            if (!r.ok) throw new Error(d.error || 'Messages could not be loaded');
+            setMessages(d.messages || []); setMessagesError(null);
+        } catch (cause) {
+            setMessagesError(cause instanceof Error ? cause.message : 'Messages could not be loaded');
+        } finally { setMessagesLoading(false); }
     }, [token, handle401]);
 
     const openContract = useCallback(async (contract: ClientFinancePortalData['contracts'][number]) => {
@@ -471,6 +488,20 @@ export default function ClientPortalPage() {
             setToast({ type: 'error', text: cause instanceof Error ? cause.message : 'Contract could not be opened' });
         } finally { setContractLoading(false); }
     }, [token, handle401]);
+    const closeDocument = useCallback(() => {setDocumentPreview(previous=>{if(previous)URL.revokeObjectURL(previous.url);return null;});},[]);
+    const openDocument = useCallback(async (doc:ClientFinancePortalData['documents'][number]) => {
+        setContractLoading(true);
+        try {
+            const response=await fetch(doc.viewUrl,{cache:'no-store'});
+            if(response.status===401){handle401();return;}
+            if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error || 'Document could not be opened');}
+            const blob=await response.blob();
+            if(!['application/pdf','image/png','image/jpeg','image/webp','text/plain'].includes(blob.type.split(';')[0]))throw new Error('This file type cannot be previewed here. Use Download file.');
+            const url=URL.createObjectURL(blob);
+            setDocumentPreview(previous=>{if(previous)URL.revokeObjectURL(previous.url);return {name:doc.name,url};});
+        }catch(cause){setToast({type:'error',text:cause instanceof Error ? cause.message : 'Document could not be opened'});}
+        finally{setContractLoading(false);}
+    },[handle401]);
     const closeContract = useCallback(() => {
         setContractPreview((previous) => {
             if (previous) URL.revokeObjectURL(previous.pdfUrl);
@@ -500,20 +531,6 @@ export default function ClientPortalPage() {
         } finally { setContractDownloading(null); }
     }, [token, handle401]);
 
-    const loadWorkspaceActivity = useCallback(async () => {
-        if (!token) return;
-        try {
-            const r = await fetch(`/api/client-finance/activity?token=${encodeURIComponent(token)}&limit=10`, { cache: 'no-store' });
-            if (r.status === 401) {
-                handle401();
-                return;
-            }
-            const d = await r.json().catch(() => ({}));
-            if (r.ok) setWorkspaceActivity(d.activity || []);
-        } catch {
-            /* swallow network flakes; next poll or reload will recover */
-        }
-    }, [token, handle401]);
 
     useEffect(() => {
         if (!token) return;
@@ -530,12 +547,13 @@ export default function ClientPortalPage() {
                 if (!r.ok || !d.portal) throw new Error(d.error || 'This workspace link is no longer available.');
                 setPortal(d.portal);
                 setProjectId('');
+                setWorkspaceActivity(d.portal.activity.map((item:any)=>({id:item.id,event_type:item.type,summary:item.title,actor_display_name:null,created_at:item.createdAt,metadata:{}})));
                 // The portal record is the primary render payload. Do not keep
                 // the entire workspace behind the slower secondary activity
                 // requests; show projects/invoices/contracts first, then fill
                 // messages and the activity rail in parallel.
                 if (!cancelled) setLoading(false);
-                void Promise.all([loadMessages(), loadWorkspaceActivity()]);
+                void loadMessages();
             } catch (cause) {
                 if (cancelled) return;
                 setError(cause instanceof Error ? cause.message : 'Failed to load workspace');
@@ -544,7 +562,7 @@ export default function ClientPortalPage() {
             }
         })();
         return () => { cancelled = true; };
-    }, [token, loadMessages, loadWorkspaceActivity, handle401]);
+    }, [token, loadMessages, handle401]);
 
     const projectIds = useMemo(() => new Set(portal?.projects.map((p) => p.id) || []), [portal]);
     const conversationMessages = useMemo(() => messages.filter((item) => item.project_id === (projectId || null)), [messages, projectId]);
@@ -567,13 +585,14 @@ export default function ClientPortalPage() {
 
     async function sendMessage(event: React.FormEvent) {
         event.preventDefault();
-        if (!message.trim()) return;
+        if (!message.trim() || sending) return;
+        if (!messageRequest.current || messageRequest.current.content !== message.trim() || messageRequest.current.projectId !== projectId) messageRequest.current = {id:crypto.randomUUID(),content:message.trim(),projectId};
         setSending(true);
         try {
             const r = await fetch('/api/client-finance/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token, projectId: projectId || null, content: message }),
+                body: JSON.stringify({ token, requestId: messageRequest.current!.id, projectId: projectId || null, content: message.trim() }),
             });
             if (r.status === 401) {
                 handle401();
@@ -581,12 +600,12 @@ export default function ClientPortalPage() {
             }
             const result = await r.json().catch(() => ({}));
             if (!r.ok) throw new Error(result.error || 'Message could not be sent');
-            setMessage('');
-            setToast({ type: 'success', text: result.notification?.sent === false ? 'Message saved. The business email notification was unavailable.' : 'Message sent' });
+            setMessage(''); messageRequest.current = null;
+            setToast({ type: 'success', text: result.notification?.sent === false ? 'Message saved. The business email notification was unavailable.' : 'Message saved to your conversation' });
             await loadMessages();
         } catch (cause) {
-            setError(cause instanceof Error ? cause.message : 'Message could not be sent');
-            setToast({ type: 'error', text: 'Message could not be sent' });
+            setMessagesError('Message could not be confirmed. Your draft is preserved; retry to check the same request.');
+            setToast({ type: 'error', text: 'Message could not be confirmed. Retry without changing the draft.' });
         } finally {
             setSending(false);
         }
@@ -615,12 +634,58 @@ export default function ClientPortalPage() {
         }
     }
 
+    async function logout() {
+        setLoggingOut(true);
+        try {
+            const response = await fetch('/api/client-portal-auth/logout', {method:'POST'});
+            if (!response.ok) throw new Error('Sign out could not be confirmed. Please retry.');
+            setPortal(null); setMessages([]); closeContract(); closeDocument();
+            router.replace('/portal-login'); router.refresh();
+        } catch (cause) { setToast({type:'error',text:cause instanceof Error ? cause.message : 'Sign out failed'}); }
+        finally {setLoggingOut(false);}
+    }
+    useEffect(() => {
+        const readTab = () => { const tab = window.location.hash.slice(1); if (NAV.some(item=>item.id===tab)) setActiveTab(tab as Tab); };
+        readTab(); window.addEventListener('hashchange',readTab);
+        return () => window.removeEventListener('hashchange',readTab);
+    }, []);
+    useEffect(() => { window.history.replaceState(null,'',`#${activeTab}`); }, [activeTab]);
+    useEffect(() => {
+        if (!portal) return;
+        const interval = setInterval(() => { fetch('/api/client-portal-auth/me',{cache:'no-store'}).then(response=>{if(response.status===401) handle401();}).catch(()=>{}); },60_000);
+        return () => clearInterval(interval);
+    }, [portal,handle401]);
+    useEffect(() => {
+        if (!projectPreview) return;
+        let cancelled=false; setProjectDetails(null);setProjectDetailsError(null);setProjectDetailsLoading(true);
+        fetch(`/api/client-finance/project?token=${encodeURIComponent(token)}&projectId=${encodeURIComponent(projectPreview.id)}`,{cache:'no-store'})
+            .then(async response=>{ if(response.status===401) {handle401();return;} const data=await response.json();if(!response.ok)throw new Error(data.error);if(!cancelled)setProjectDetails(data); })
+            .catch(cause=>{if(!cancelled)setProjectDetailsError(cause.message || 'Project details could not be loaded');})
+            .finally(()=>{if(!cancelled)setProjectDetailsLoading(false);});
+        return ()=>{cancelled=true;};
+    },[projectPreview,projectRetry,token,handle401]);
+    useEffect(() => {
+        if (!contractPreview && !documentPreview && !projectPreview) return;
+        const previous = document.activeElement as HTMLElement | null;
+        const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
+        dialog?.querySelector<HTMLElement>('button, a, input, textarea')?.focus();
+        const keydown = (event:KeyboardEvent) => {
+            if(event.key==='Escape'){closeContract();setDocumentPreview(null);setProjectPreview(null);}
+            if(event.key==='Tab' && dialog){const elements=Array.from(dialog.querySelectorAll<HTMLElement>('button:not([disabled]),a[href],input,textarea,iframe'));const first=elements[0],last=elements[elements.length-1];if(event.shiftKey && document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first?.focus();}}
+        };
+        document.addEventListener('keydown',keydown);
+        return ()=>{document.removeEventListener('keydown',keydown);previous?.focus();};
+    },[Boolean(contractPreview),Boolean(documentPreview),Boolean(projectPreview),closeContract]);
+    const attentionInvoices = portal?.invoices.filter(invoice=>invoice.reviewReason || invoice.balanceDue > 0) || [];
+    const signatures = portal?.contracts.filter(contract=>contract.actionUrl) || [];
+    const attentionCount = (portal?.approvals.length || 0)+attentionInvoices.length+signatures.length;
+
     if (loading) return <LoadingSkeleton />;
     if (error && !portal) return <ErrorState message={error} />;
     if (!portal) return null;
 
     return (
-        <Shell portal={portal} activeTab={activeTab} setActiveTab={setActiveTab}>
+        <Shell portal={portal} activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => void logout()} loggingOut={loggingOut}>
             <div className="space-y-6 md:space-y-8">
                 {/* Toast */}
                 {toast ? (
@@ -728,14 +793,14 @@ export default function ClientPortalPage() {
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             <StatCard
                                 label="Active projects"
-                                value={portal.projects.length}
+                                value={portal.projects.filter(p=>!['completed','cancelled','canceled','archived'].includes(p.status)).length}
                                 icon={FolderKanban}
                                 accent="var(--info)"
                             />
                             <StatCard
                                 label="Invoices"
                                 value={portal.invoices.length}
-                                hint={portal.summary.openBalance > 0 ? `Balance due: ${money(portal.summary.openBalance)}` : portal.invoices.length > 0 ? 'Payment history available' : 'No invoices shared'}
+                                hint={portal.summary.openBalance > 0 ? `Balance due: ${Object.entries(portal.summary.balancesByCurrency).map(([currency,value])=>money(value,currency)).join(' · ')}` : portal.invoices.length > 0 ? 'Payment history available' : 'No invoices shared'}
                                 icon={CreditCard}
                                 accent="var(--warning)"
                             />
@@ -767,10 +832,12 @@ export default function ClientPortalPage() {
                                     </h2>
                                 </div>
                                 <span className="type-caption text-[color:var(--ws-text-tertiary)]">
-                                    {portal.approvals.length} item{portal.approvals.length === 1 ? '' : 's'}
+                                    {attentionCount} item{attentionCount === 1 ? '' : 's'}
                                 </span>
                             </header>
                             <div className="p-4 md:p-5">
+                                {attentionInvoices.map(invoice=><div key={invoice.id} className="mb-3 rounded-xl border border-[color:var(--ws-border)] p-4"><p className="font-semibold">{invoice.invoiceNumber}: {invoice.reviewReason ? 'Billing review needed' : `${money(invoice.balanceDue,invoice.currency)} ${invoice.status === 'overdue' ? 'overdue' : 'outstanding'}`}</p><p className="mt-1 type-caption">{invoice.reviewReason || `Due ${formatDate(invoice.dueDate)}`}</p><a className="mt-2 inline-flex min-h-10 items-center text-[color:var(--brand-teal)]" href={invoice.viewUrl}>Review invoice details</a></div>)}
+                                {signatures.map(contract=><div key={contract.id} className="mb-3 rounded-xl border border-[color:var(--ws-border)] p-4"><p>{contract.title} needs your signature</p><button type="button" onClick={()=>void openContract(contract)} className="min-h-10 text-[color:var(--brand-teal)]">Review contract</button></div>)}
                                 {portal.approvals.length > 0 ? (
                                     <ul className="divide-y divide-[color:var(--ws-border)] border border-[color:var(--ws-border)] rounded-xl overflow-hidden">
                                         {portal.approvals.map((a) => (
@@ -814,13 +881,13 @@ export default function ClientPortalPage() {
                                             </li>
                                         ))}
                                     </ul>
-                                ) : (
+                                ) : attentionCount === 0 ? (
                                     <EmptyState
                                         icon={CheckCircle2}
                                         title="You're all caught up"
-                                        description="When there are payments, signatures, or approvals waiting, we'll list them clearly here with one-click actions."
+                                        description="No outstanding billing, signatures, or approvals were found."
                                     />
-                                )}
+                                ) : null}
                             </div>
                         </section>
 
@@ -830,7 +897,7 @@ export default function ClientPortalPage() {
                             <section aria-labelledby="activity-heading" className="rounded-2xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] shadow-[color:var(--ws-card-shadow)]">
                                 <header className="flex items-center justify-between gap-3 px-5 py-4 md:px-6 md:py-5 border-b border-[color:var(--ws-border)]">
                                     <h2 id="activity-heading" className="text-base md:text-lg font-semibold text-[color:var(--ws-text-primary)]">Recent activity</h2>
-                                    <span className="type-caption text-[color:var(--ws-text-tertiary)]">Last 30 days</span>
+                                    <span className="type-caption text-[color:var(--ws-text-tertiary)]">Most recent events</span>
                                 </header>
                                 <div className="p-4 md:p-5 max-h-[420px] overflow-y-auto">
                                     {portal.activity.length > 0 ? (
@@ -875,7 +942,8 @@ export default function ClientPortalPage() {
                                         return (
                                             <button
                                                 key={item.id}
-                                                onClick={() => setActiveTab(item.id)}
+                                                aria-current={activeTab === item.id ? 'page' : undefined}
+                                            onClick={() => setActiveTab(item.id)}
                                                 className="group flex items-start gap-3 rounded-xl border border-[color:var(--ws-border)] bg-[color:var(--ws-surface-secondary)] hover:border-[color:var(--ws-border-strong)] hover:bg-[color:var(--ws-panel-hover)] p-4 text-left transition-all"
                                             >
                                                 <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)]" style={{ color: item.accent }}>
@@ -1018,27 +1086,15 @@ export default function ClientPortalPage() {
                                     </div>
                                     <div className="sm:text-right">
                                         <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Amount due</p>
-                                        <p className="mt-0.5 text-xl md:text-2xl font-bold tracking-tight text-[color:var(--ws-text-primary)]">{money(i.total)}</p>
+                                        <p className="mt-0.5 text-xl md:text-2xl font-bold tracking-tight text-[color:var(--ws-text-primary)]">{money(i.balanceDue,i.currency)}</p>
                                     </div>
                                 </div>
                                 <div className="shrink-0 sm:text-right">
-                                    {i.status !== 'paid' && i.payUrl ? (
-                                        <a
-                                            href={i.payUrl}
-                                            className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--brand-teal)] hover:opacity-90 px-4 py-2 type-caption md:text-sm font-semibold text-white"
-                                        >
-                                            Pay invoice
-                                            <ArrowUpRight className="h-3.5 w-3.5" />
-                                        </a>
-                                    ) : i.status !== 'paid' ? (
-                                        <span className="inline-flex items-center rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] px-3.5 py-2 type-caption font-medium text-[color:var(--ws-text-secondary)]">
-                                            Payment link will appear when ready
-                                        </span>
-                                    ) : (
-                                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[color:var(--success)] px-3.5 py-2 type-caption font-semibold border border-[color-mix(in_srgb,var(--success)_24%,transparent)]">
-                                            <CheckCircle2 className="h-3.5 w-3.5" /> Paid
-                                        </span>
-                                    )}
+                                    <a href={i.viewUrl} className="inline-flex min-h-10 items-center rounded-lg border border-[color:var(--ws-border)] px-3">View invoice</a>
+                                    <a href={i.downloadUrl} className="ml-2 inline-flex min-h-10 items-center rounded-lg border border-[color:var(--ws-border)] px-3">Download PDF</a>
+                                    {i.payUrl ? <a href={i.payUrl} className="mt-2 block text-[color:var(--brand-teal)]">Payment options</a> : null}
+                                    <p className="mt-2 max-w-sm type-caption">{i.reviewReason || (i.balanceDue > 0 && !i.payUrl ? 'No payment method is configured. Message the business for instructions.' : i.balanceDue === 0 ? 'No remaining balance is recorded.' : '')}</p>
+                                    <button type="button" onClick={()=>{setProjectId('');setActiveTab('messages');}} className="mt-1 min-h-10 text-[color:var(--brand-teal)]">Ask about this invoice</button>
                                 </div>
                             </div>
                         )}
@@ -1153,12 +1209,13 @@ export default function ClientPortalPage() {
                                         onClick={() => {
                                             const contract = d.documentType === 'contract' ? portal.contracts.find((item) => item.id === d.id) : null;
                                             if (contract) void openContract(contract);
-                                            else setDocumentPreview({ name: d.name, url: d.viewUrl });
+                                            else void openDocument(d);
                                         }}
                                         className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border-strong)] px-3.5 py-2 type-caption md:text-xs font-semibold text-[color:var(--ws-text-primary)]"
                                     >
                                         Preview
                                     </button>
+                                    <a href={`${d.viewUrl}${d.documentType === 'contract' ? '&view=0&download=1' : '&download=1'}`} className="ml-2 inline-flex min-h-10 items-center text-[color:var(--brand-teal)]">Download</a>
                                 </div>
                             </div>
                         )}
@@ -1187,6 +1244,8 @@ export default function ClientPortalPage() {
                                 Conversation
                             </label>
                             <AlphaCloneSelect
+                                aria-label="Conversation"
+                                disabled={sending}
                                 value={projectId}
                                 onChange={(event) => setProjectId(event.target.value)}
                                 className="w-full max-w-md px-3 py-2"
@@ -1221,7 +1280,7 @@ export default function ClientPortalPage() {
                                         </div>
                                     </div>
                                 ))
-                            ) : (
+                            ) : !messagesLoading && !messagesError ? (
                                 <div className="h-full grid place-items-center py-16 px-4 text-center">
                                     <div>
                                         <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] text-[color:var(--ws-text-tertiary)]">
@@ -1233,11 +1292,16 @@ export default function ClientPortalPage() {
                                         </p>
                                     </div>
                                 </div>
-                            )}
+                            ) : null}
                         </div>
 
+                        {messagesError ? <div role="alert" className="p-4"><p>{messagesError}</p><button type="button" onClick={()=>void loadMessages()} className="min-h-10 text-[color:var(--brand-teal)]">Retry loading messages</button></div> : null}
+                        {messagesLoading ? <p role="status" className="p-4">Loading messages…</p> : null}
                         <form onSubmit={sendMessage} className="border-t border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] p-4 md:p-5 space-y-3">
                             <AlphaCloneTextarea
+                                aria-label="Message to the business"
+                                maxLength={10000}
+                                disabled={sending}
                                 value={message}
                                 onChange={(event) => setMessage(event.target.value)}
                                 placeholder="Write a message to the business…"
@@ -1264,10 +1328,11 @@ export default function ClientPortalPage() {
 
             {projectPreview ? (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 md:p-6" onClick={() => setProjectPreview(null)}>
-                    <div role="dialog" aria-modal="true" aria-label={projectPreview.name} onClick={(event) => event.stopPropagation()} className="w-full max-w-2xl rounded-2xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] p-6 text-[color:var(--ws-text-primary)] shadow-2xl">
+                    <div role="dialog" aria-modal="true" aria-label={projectPreview.name} onClick={(event) => event.stopPropagation()} className="max-h-[90dvh] overflow-y-auto w-full max-w-2xl rounded-2xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] p-6 text-[color:var(--ws-text-primary)] shadow-2xl">
                         <div className="flex items-start justify-between gap-4"><h2 className="text-xl font-semibold">{projectPreview.name}</h2><button type="button" aria-label="Close project" onClick={() => setProjectPreview(null)}><X className="h-5 w-5" /></button></div>
                         <p className="mt-3 type-body whitespace-pre-wrap">{projectPreview.description || 'No project description has been added yet.'}</p>
                         <p className="mt-4 type-caption">Status: {projectPreview.stage || projectPreview.status} · Progress: {projectPreview.progress}%{projectPreview.dueDate ? ` · Due: ${formatDate(projectPreview.dueDate)}` : ''}</p>
+                        {projectDetailsLoading ? <p role="status" className="mt-4">Loading project details…</p> : projectDetailsError ? <div role="alert" className="mt-4"><p>{projectDetailsError}</p><button onClick={()=>setProjectRetry(value=>value+1)} className="min-h-10">Retry project details</button></div> : projectDetails ? <div className="mt-4 space-y-4">{(['milestones','tasks','deliverables'] as const).map(section=><section key={section}><h3 className="font-semibold capitalize">{section}</h3>{projectDetails[section].length ? <ul>{projectDetails[section].map(item=><li key={item.id} className="border-b border-[color:var(--ws-border)] py-2">{item.name} · {item.status}{item.dueDate ? ` · Due ${formatDate(item.dueDate)}` : ''}</li>)}</ul> : <p className="type-caption">No {section} have been shared.</p>}</section>)}</div> : null}
                         <button type="button" onClick={() => { setProjectId(projectPreview.id); setProjectPreview(null); setActiveTab('messages'); }} className="mt-5 rounded-lg bg-[color:var(--brand-teal)] px-4 py-2 font-semibold text-white">Open project conversation</button>
                     </div>
                 </div>
@@ -1276,7 +1341,7 @@ export default function ClientPortalPage() {
             {contractPreview ? (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 md:p-6" onClick={closeContract}>
                     <div role="dialog" aria-modal="true" aria-label={contractPreview.title} onClick={(event) => event.stopPropagation()} className="flex h-[90vh] w-full max-w-5xl flex-col rounded-2xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] shadow-2xl">
-                        <div className="flex items-center justify-between gap-3 border-b border-[color:var(--ws-border)] p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[color:var(--ws-border)] p-4">
                             <h2 className="truncate font-semibold text-[color:var(--ws-text-primary)]">{contractPreview.title}</h2>
                             <div className="flex items-center gap-2">
                                 <button type="button" onClick={() => { closeContract(); setProjectId(''); setActiveTab('messages'); }} className="rounded-lg border border-[color:var(--ws-border)] px-3 py-2 type-caption text-[color:var(--ws-text-primary)]">Message the business</button>
@@ -1294,7 +1359,7 @@ export default function ClientPortalPage() {
                 </div>
             ) : null}
             {documentPreview ? (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/60 backdrop-blur-sm" onClick={() => setDocumentPreview(null)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/60 backdrop-blur-sm" onClick={closeDocument}>
                     <div
                         role="dialog"
                         aria-modal="true"
@@ -1302,7 +1367,7 @@ export default function ClientPortalPage() {
                         onClick={(e) => e.stopPropagation()}
                         className="flex h-[88vh] md:h-[85vh] w-full max-w-6xl flex-col rounded-2xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] shadow-2xl"
                     >
-                        <div className="flex items-center justify-between gap-3 border-b border-[color:var(--ws-border)] px-4 py-3 md:px-5 md:py-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[color:var(--ws-border)] px-4 py-3 md:px-5 md:py-4">
                             <div className="flex items-center gap-3 min-w-0">
                                 <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-surface-secondary)] text-[color:var(--ws-text-tertiary)]">
                                     <FileText className="h-4 w-4" />
@@ -1314,12 +1379,12 @@ export default function ClientPortalPage() {
                                     href={documentPreview.url}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="hidden sm:inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border)] px-3 py-1.5 type-caption font-semibold text-[color:var(--ws-text-primary)]"
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border)] px-3 py-1.5 type-caption font-semibold text-[color:var(--ws-text-primary)]"
                                 >
                                     Open separately <ArrowUpRight className="h-3.5 w-3.5" />
                                 </a>
                                 <button
-                                    onClick={() => setDocumentPreview(null)}
+                                    onClick={closeDocument}
                                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[color:var(--ws-border)] hover:bg-[color:var(--ws-panel-hover)] text-[color:var(--ws-text-primary)]"
                                     aria-label="Close preview"
                                 >

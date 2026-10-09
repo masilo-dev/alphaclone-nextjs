@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Portal not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, portal: data });
+    return NextResponse.json({ success: true, portal: data }, {headers:{'Cache-Control':'private, no-store','Referrer-Policy':'no-referrer'}});
   } catch (error) {
     console.error('[client-finance/portal]', error);
     return NextResponse.json(

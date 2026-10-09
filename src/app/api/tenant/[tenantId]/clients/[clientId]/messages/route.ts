@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { persistPortalMessage } from '@/lib/clientPortal/messages';
 import { escapeHtml } from '@/lib/email/escapeHtml';
 import { getOrCreateClientPortalUrl } from '@/services/finance/clientFinancePortalService';
 
-const schema = z.object({ content: z.string().trim().min(1).max(10_000) });
+const schema = z.object({ requestId:z.string().uuid().optional(), content: z.string().trim().min(1).max(10_000) });
 type Context = { params: Promise<{ tenantId: string; clientId: string }> };
 
 export async function GET(req: NextRequest, context: Context) {
@@ -40,12 +41,9 @@ export async function POST(req: NextRequest, context: Context) {
     if (!client || client.is_active === false) return NextResponse.json({ error: 'Client not found' }, { status: 404 });
     const { data: profile } = await admin.from('profiles').select('full_name, name').eq('id', user.id).maybeSingle();
     const authorName = profile?.full_name || profile?.name || user.email || 'Business';
-    const { data, error } = await admin.from('client_portal_events').insert({
-      tenant_id: tenantId, client_id: clientId, actor_user_id: user.id,
-      event_type: 'portal_message_sent',
-      metadata: { kind: 'general_message', content: parsed.data.content, author_name: authorName, is_client: false },
-    }).select('id, created_at').single();
-    if (error) throw error;
+    const saved = await persistPortalMessage(admin,{id:parsed.data.requestId || crypto.randomUUID(),tenantId,clientId,content:parsed.data.content,authorName,isClient:false});
+    const data = saved.message;
+    if (saved.replayed) return NextResponse.json({message:data,replayed:true,persistence:'confirmed'});
     let notification: { sent: boolean; error?: string } = { sent: false, error: 'no_client_email' };
     if (client.email) {
       let loginUrl: string | null = null;
