@@ -35,6 +35,11 @@ import {
 import { supabase } from '@/lib/supabase';
 import type { ClientFinancePortalData } from '@/services/finance/clientFinancePortalService';
 import LanguageSwitcher from '@/components/common/LanguageSwitcher';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { portalTranslate } from '@/i18n/clientPortal';
+import { Moon, Sun, LogOut } from 'lucide-react';
+function usePortalTranslation() { const {language} = useLanguage(); return {t:(text:string)=>portalTranslate(language,text)}; }
 
 type Tab = 'overview' | 'projects' | 'invoices' | 'quotes' | 'contracts' | 'documents' | 'messages';
 type PortalMessage = { id: string; project_id: string | null; projectName: string; author_name: string; content: string; is_client: boolean; created_at: string };
@@ -84,6 +89,8 @@ function Shell({
     loggingOut: boolean;
     children: React.ReactNode;
 }) {
+    const {t} = usePortalTranslation();
+    const { isDark, setThemeMode } = useTheme();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const visibleNav = NAV.filter((n) => {
         if (n.id === 'quotes') return (portal.quotes?.length ?? 0) > 0;
@@ -99,7 +106,7 @@ function Shell({
         <div className="h-[100dvh] min-h-0 w-full overflow-hidden bg-[color:var(--background-app)] text-[color:var(--text-primary)]">
             <div className="flex h-full min-h-0 w-full">
                 {/* DESKTOP SIDEBAR */}
-                <aside className="hidden md:flex md:w-64 lg:w-72 shrink-0 flex-col border-r border-[color:var(--border-default)] bg-[color:var(--ws-sidebar)] text-[color:var(--ws-text-primary)]">
+                <aside className="hidden md:flex md:w-64 lg:w-72 shrink-0 flex-col border-r border-[color:var(--border-default)] bg-[color:var(--ws-panel)] text-[color:var(--ws-text-primary)]">
                     <div className="flex h-16 items-center gap-3 px-5 border-b border-white/[0.06]">
                         {portal.branding.logoUrl ? (
                             <img
@@ -114,11 +121,11 @@ function Shell({
                         )}
                         <div className="min-w-0 flex-1">
                             <p className="truncate type-card-description font-semibold leading-tight">{portal.branding.name}</p>
-                            <p className="truncate type-card-description text-[color:var(--ws-text-tertiary)]">Client workspace</p>
+                            <p className="truncate type-card-description text-[color:var(--ws-text-tertiary)]">{t("Client workspace")}</p>
                         </div>
                     </div>
 
-                    <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Client workspace">
+                    <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label={t("Client workspace")}>
                         <ul className="space-y-0.5">
                             {visibleNav.map((item) => {
                                 const Icon = item.icon;
@@ -138,7 +145,7 @@ function Shell({
                                             }`}
                                         >
                                             <Icon className="h-4.5 w-4.5 shrink-0" />
-                                            <span className="flex-1 text-left">{item.label}</span>
+                                            <span className="flex-1 text-left">{t(item.label)}</span>
                                             {typeof badge === 'number' && badge > 0 ? (
                                                 <span className={`inline-flex min-w-[20px] h-5 items-center justify-center rounded-full px-1.5 type-ui font-semibold ${
                                                     isActive
@@ -166,7 +173,7 @@ function Shell({
                         </div>
                         <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-panel)] px-3 py-2 type-ui text-[color:var(--ws-text-tertiary)] border border-[color:var(--ws-border)]">
                             <ShieldCheck className="h-3.5 w-3.5 text-[color:var(--success)]" />
-                            <span>Private · secure connection</span>
+                            <span>{t("Private · secure connection")}</span>
                         </div>
                     </div>
                 </aside>
@@ -178,7 +185,7 @@ function Shell({
                         <button
                             type="button"
                             className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] text-[color:var(--ws-text-primary)]"
-                            aria-label="Open navigation"
+                            aria-label={t("Open navigation")}
                             onClick={() => setMobileMenuOpen(true)}
                         >
                             <Menu className="h-4.5 w-4.5" style={{ width: 18, height: 18 }} />
@@ -195,29 +202,29 @@ function Shell({
                                 )}
                                 <div className="min-w-0">
                                     <p className="truncate type-card-description font-semibold leading-tight">{portal.branding.name}</p>
-                                    <p className="truncate type-card-description text-[color:var(--ws-text-tertiary)]">Client workspace</p>
+                                    <p className="truncate type-card-description text-[color:var(--ws-text-tertiary)]">{t("Client workspace")}</p>
                                 </div>
                             </div>
                         </div>
 
                         <div className="hidden md:flex min-w-0 flex-col">
                             <p className="type-card-description font-semibold leading-tight text-[color:var(--ws-text-primary)]">
-                                {NAV.find((n) => n.id === activeTab)?.label ?? 'Overview'}
+                                {t(NAV.find((n) => n.id === activeTab)?.label ?? 'Overview')}
                             </p>
                             <p className="type-card-description text-[color:var(--ws-text-tertiary)]">
-                                Welcome back, {portal.client.name.split(' ')[0]}
+                                {t("Welcome back,")} {portal.client.name.split(' ')[0]}
                             </p>
                         </div>
 
                         <div className="ml-auto flex items-center gap-2">
-                            <button type="button" onClick={onLogout} disabled={loggingOut} className="min-h-10 rounded-lg border border-[color:var(--ws-border)] px-3 text-[color:var(--ws-text-primary)]">{loggingOut ? 'Signing out…' : 'Sign out'}</button>
-                            <div className="hidden sm:block">
+                            <button type="button" aria-label={t(isDark ? 'Switch to light mode' : 'Switch to dark mode')} onClick={()=>setThemeMode(isDark ? 'light' : 'dark', {skipServer:true})} className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-[color:var(--ws-border)]">{isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}</button>
+                            <button type="button" onClick={onLogout} disabled={loggingOut} aria-label={t(loggingOut ? 'Signing out…' : 'Sign out')} className="inline-flex min-h-10 items-center rounded-lg border border-[color:var(--ws-border)] px-3 text-[color:var(--ws-text-primary)]"><LogOut className="h-4 w-4 md:hidden"/><span className="hidden md:inline">{t(loggingOut ? 'Signing out…' : 'Sign out')}</span></button>
+                            <div>
                                 <LanguageSwitcher />
                             </div>
                             <div className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-1.5 type-ui font-medium text-[color:var(--ws-text-tertiary)] bg-[color:var(--ws-panel)] border border-[color:var(--ws-border)]">
                                 <Bell className="h-3.5 w-3.5 text-[color:var(--warning)]" />
-                                {counts.approvals + counts.invoices} items need your attention
-                            </div>
+                                {counts.approvals + counts.invoices} {t("items need your attention")} </div>
                             <div className="hidden sm:grid h-8 w-8 place-items-center rounded-full bg-[color-mix(in_srgb,var(--brand-blue-500)_20%,var(--ws-panel))] text-[color:var(--brand-blue-400)] type-caption font-semibold border border-[color:var(--ws-border)]">
                                 {String(portal.client.name || 'C').charAt(0).toUpperCase()}
                             </div>
@@ -234,14 +241,13 @@ function Shell({
                             <p className="text-center type-card-description text-[color:var(--text-muted)]">
                                 <span className="inline-flex items-center gap-1.5">
                                     <ShieldCheck className="h-3.5 w-3.5" />
-                                    Secured by AlphaClone · private client workspace
-                                </span>
+                                    {t("Secured by AlphaClone · private client workspace")} </span>
                             </p>
                         </footer>
                     </main>
 
                     {/* MOBILE BOTTOM NAV */}
-                    <nav className="md:hidden sticky bottom-0 z-30 border-t border-[color:var(--border-default)] bg-[color:var(--ws-toolbar)]" aria-label="Mobile navigation">
+                    <nav className="md:hidden sticky bottom-0 z-30 border-t border-[color:var(--border-default)] bg-[color:var(--ws-toolbar)]" aria-label={t("Mobile navigation")}>
                         <ul className="grid grid-flow-col auto-cols-fr gap-0.5 px-1 py-1.5 pb-[max(6px,env(safe-area-inset-bottom))]">
                             {visibleNav.slice(0, 5).map((item) => {
                                 const Icon = item.icon;
@@ -258,7 +264,7 @@ function Shell({
                                             }`}
                                         >
                                             <Icon className="h-5 w-5" />
-                                            <span className="type-ui font-medium leading-tight">{item.label}</span>
+                                            <span className="type-ui font-medium leading-tight">{t(item.label)}</span>
                                         </button>
                                     </li>
                                 );
@@ -272,13 +278,13 @@ function Shell({
             {mobileMenuOpen && (
                 <div className="md:hidden fixed inset-0 z-50">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
-                    <div className="absolute left-0 top-0 bottom-0 w-[82%] max-w-xs bg-[color:var(--ws-sidebar)] text-[color:var(--ws-text-primary)] shadow-2xl border-r border-[color:var(--ws-border)] overflow-y-auto">
+                    <div className="absolute left-0 top-0 bottom-0 w-[82%] max-w-xs bg-[color:var(--ws-panel)] text-[color:var(--ws-text-primary)] shadow-2xl border-r border-[color:var(--ws-border)] overflow-y-auto">
                         <div className="flex h-14 items-center gap-3 px-4 border-b border-white/[0.06]">
                             <div className="grid h-8 w-8 place-items-center rounded-lg bg-[color-mix(in_srgb,var(--brand-teal)_22%,var(--ws-panel))] text-[color:var(--brand-teal)] type-ui font-black">
                                 {String(portal.branding.name || 'A').charAt(0).toUpperCase()}
                             </div>
                             <p className="truncate type-card-description font-semibold flex-1">{portal.branding.name}</p>
-                            <button type="button" onClick={() => setMobileMenuOpen(false)} aria-label="Close navigation"
+                            <button type="button" onClick={() => setMobileMenuOpen(false)} aria-label={t("Close navigation")}
                                 className="inline-flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/5">
                                 <X className="h-4 w-4" />
                             </button>
@@ -298,14 +304,14 @@ function Shell({
                                             }`}
                                         >
                                             <Icon className="h-4.5 w-4.5" />
-                                            <span>{item.label}</span>
+                                            <span>{t(item.label)}</span>
                                         </button>
                                     </li>
                                 );
                             })}
                         </ul>
                         <div className="p-4 mt-2 border-t border-white/[0.06]">
-                            <p className="type-card-description text-[color:var(--ws-text-tertiary)]">Signed in as</p>
+                            <p className="type-card-description text-[color:var(--ws-text-tertiary)]">{t("Signed in as")}</p>
                             <p className="type-card-description font-medium mt-0.5">{portal.client.name}</p>
                         </div>
                     </div>
@@ -316,6 +322,7 @@ function Shell({
 }
 
 function StatCard({ label, value, hint, accent, icon: Icon }: { label: string; value: string | number; hint?: string; accent?: string; icon?: React.ComponentType<{ className?: string; style?: React.CSSProperties }> }) {
+    const {t} = usePortalTranslation();
     return (
         <div className="rounded-xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] p-4 md:p-5 shadow-[color:var(--ws-card-shadow)]">
             <div className="flex items-start gap-3">
@@ -323,9 +330,9 @@ function StatCard({ label, value, hint, accent, icon: Icon }: { label: string; v
                     {Icon ? <Icon className="h-4.5 w-4.5 text-[color:var(--ws-text-tertiary)]" style={{ color: accent }} /> : null}
                 </div>
                 <div className="min-w-0 flex-1">
-                    <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">{label}</p>
+                    <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">{t(label)}</p>
                     <p className="mt-1 text-2xl font-bold tracking-tight" style={{ color: accent }}>{value}</p>
-                    {hint ? <p className="mt-1 type-card-description text-[color:var(--ws-text-tertiary)]">{hint}</p> : null}
+                    {hint ? <p className="mt-1 type-card-description text-[color:var(--ws-text-tertiary)]">{t(hint)}</p> : null}
                 </div>
             </div>
         </div>
@@ -333,6 +340,7 @@ function StatCard({ label, value, hint, accent, icon: Icon }: { label: string; v
 }
 
 function EmptyState({ title, description, icon: Icon }: { title: string; description: string; icon?: React.ComponentType<{ className?: string }> }) {
+    const {t} = usePortalTranslation();
     return (
         <div className="rounded-xl border border-dashed border-[color:var(--ws-border)] bg-[color:var(--ws-surface-secondary)] p-8 md:p-12 text-center">
             {Icon ? (
@@ -340,17 +348,18 @@ function EmptyState({ title, description, icon: Icon }: { title: string; descrip
                     <Icon className="h-6 w-6" />
                 </div>
             ) : null}
-            <h3 className="text-base font-semibold text-[color:var(--ws-text-primary)]">{title}</h3>
-            <p className="mt-1.5 type-card-description text-[color:var(--ws-text-tertiary)] max-w-md mx-auto">{description}</p>
+            <h3 className="text-base font-semibold text-[color:var(--ws-text-primary)]">{t(title)}</h3>
+            <p className="mt-1.5 type-card-description text-[color:var(--ws-text-tertiary)] max-w-md mx-auto">{t(description)}</p>
         </div>
     );
 }
 
 function LoadingSkeleton() {
+    const {t} = usePortalTranslation();
     return (
         <div className="min-h-screen w-full bg-[color:var(--background-app)] animate-pulse">
             <div className="flex min-h-screen w-full">
-                <div className="hidden md:block md:w-64 lg:w-72 shrink-0 border-r border-[color:var(--border-default)] bg-[color:var(--ws-sidebar)]" />
+                <div className="hidden md:block md:w-64 lg:w-72 shrink-0 border-r border-[color:var(--border-default)] bg-[color:var(--ws-panel)]" />
                 <div className="min-w-0 flex-1 flex-col">
                     <div className="h-14 border-b border-[color:var(--border-default)] bg-[color:var(--ws-toolbar)]" />
                     <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6 md:py-8 lg:px-8 space-y-6">
@@ -368,19 +377,19 @@ function LoadingSkeleton() {
 }
 
 function ErrorState({ message }: { message: string }) {
+    const {t} = usePortalTranslation();
     return (
         <div className="min-h-screen w-full bg-[color:var(--background-app)] grid place-items-center p-6">
             <div className="w-full max-w-md rounded-2xl border border-[color:var(--error-border)] bg-[color:var(--error-surface)] p-6 md:p-8 text-center">
                 <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-[color-mix(in_srgb,var(--error)_14%,transparent)] text-[color:var(--error)]">
                     <AlertTriangle className="h-6 w-6" />
                 </div>
-                <h1 className="text-lg font-bold text-[color:var(--ws-text-primary)]">Workspace unavailable</h1>
+                <h1 className="text-lg font-bold text-[color:var(--ws-text-primary)]">{t("Workspace unavailable")}</h1>
                 <p className="mt-2 type-caption text-[color:var(--ws-text-secondary)]">{message}</p>
-                <button onClick={()=>window.location.reload()} className="mt-4 min-h-11 rounded-lg border px-4">Retry workspace</button>
+                <button onClick={()=>window.location.reload()} className="mt-4 min-h-11 rounded-lg border px-4">{t("Retry workspace")}</button>
                 <p className="mt-4 type-card-description text-[color:var(--ws-text-tertiary)]">
-                    If you received this link from {''}
-                    <span className="font-medium">your service provider</span>, please verify the URL or contact them for a new access link.
-                </p>
+                    {t("If you received this link from")} {''}
+                    <span className="font-medium">{t("your service provider")}</span>{t(", please verify the URL or contact them for a new access link.")} </p>
             </div>
         </div>
     );
@@ -396,6 +405,7 @@ function DataCardList<T extends RowAny>({
     icon: React.ComponentType<{ className?: string }>;
     render: (row: T) => React.ReactNode;
 }) {
+    const {t} = usePortalTranslation();
     if (!rows.length) return <EmptyState title={empty.title} description={empty.description} icon={Icon} />;
     return (
         <div className="space-y-3">
@@ -409,6 +419,11 @@ function DataCardList<T extends RowAny>({
 }
 
 export default function ClientPortalPage() {
+    const {language} = useLanguage();
+    const {t} = usePortalTranslation();
+    const money = (amount:number,currency='USD')=>new Intl.NumberFormat(language,{style:'currency',currency}).format(amount);
+    const formatDate = (iso:string)=>iso && Number.isFinite(Date.parse(iso)) ? new Date(iso).toLocaleDateString(language,{year:'numeric',month:'short',day:'numeric'}) : '—';
+    const formatDateTime=(iso:string)=>iso && Number.isFinite(Date.parse(iso)) ? new Date(iso).toLocaleString(language,{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
     const router = useRouter();
     const token = useParams()?.token as string;
 
@@ -701,7 +716,7 @@ export default function ClientPortalPage() {
                         }}
                     >
                         {toast.type === 'success' ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <AlertTriangle className="h-4 w-4 shrink-0" />}
-                        <span>{toast.text}</span>
+                        <span>{t(toast.text)}</span>
                     </div>
                 ) : null}
 
@@ -720,23 +735,21 @@ export default function ClientPortalPage() {
                     <div className="rounded-2xl border border-[color:var(--ws-border)] bg-gradient-to-br from-[color:var(--ws-panel)] to-[color:var(--ws-surface-secondary)] p-5 md:p-7 lg:p-8 shadow-[color:var(--ws-card-shadow)]">
                         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                             <div className="min-w-0 max-w-2xl">
-                                <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--brand-teal)]">Good to see you</p>
+                                <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--brand-teal)]">{t("Good to see you")}</p>
                                 <h1 className="mt-1.5 text-2xl md:text-3xl font-bold tracking-tight text-[color:var(--ws-text-primary)]">
-                                    Hi, {portal.client.name.split(' ')[0]}{''}
+                                    {t("Hi,")} {portal.client.name.split(' ')[0]}{''}
                                     <span className="text-[color:var(--ws-text-tertiary)]">.</span>
                                 </h1>
                                 <p className="mt-2.5 type-caption md:text-sm leading-relaxed text-[color:var(--ws-text-secondary)]">
-                                    Here's your shared workspace with <span className="font-medium text-[color:var(--ws-text-primary)]">{portal.branding.name}</span>.
-                                    Review outstanding items, track project progress, view invoices, and message the team — all in one secure place.
-                                </p>
+                                    {t("Here's your shared workspace with")} <span className="font-medium text-[color:var(--ws-text-primary)]">{portal.branding.name}</span>{t(". Review outstanding items, track project progress, view invoices, and message the team — all in one secure place.")} </p>
                             </div>
                             <div className="flex shrink-0 items-center gap-3 rounded-xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] p-3 lg:p-4">
                                 <div className="grid h-11 w-11 place-items-center rounded-lg bg-[color-mix(in_srgb,var(--success)_14%,var(--ws-panel))] text-[color:var(--success)]">
                                     <ShieldCheck className="h-5.5 w-5.5" />
                                 </div>
                                 <div>
-                                    <p className="type-card-description font-semibold text-[color:var(--ws-text-primary)]">Verified access</p>
-                                    <p className="type-card-description text-[color:var(--ws-text-tertiary)]">Secure · encrypted · private</p>
+                                    <p className="type-card-description font-semibold text-[color:var(--ws-text-primary)]">{t("Verified access")}</p>
+                                    <p className="type-card-description text-[color:var(--ws-text-tertiary)]">{t("Secure · encrypted · private")}</p>
                                 </div>
                             </div>
                         </div>
@@ -754,9 +767,9 @@ export default function ClientPortalPage() {
                                     <Icon className="h-5 w-5" />
                                 </div>
                                 <div>
-                                    <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[color:var(--ws-text-primary)]">{meta.label}</h1>
+                                    <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[color:var(--ws-text-primary)]">{t(meta.label)}</h1>
                                     <p className="type-card-description text-[color:var(--ws-text-tertiary)]">
-                                        Shared with <span className="font-medium">{portal.branding.name}</span>
+                                        {t("Shared with")} <span className="font-medium">{portal.branding.name}</span>
                                     </p>
                                 </div>
                             </div>
@@ -770,9 +783,9 @@ export default function ClientPortalPage() {
                         <section aria-labelledby="portal-guide-heading" className="rounded-2xl border border-[color-mix(in_srgb,var(--brand-teal)_28%,var(--ws-border))] bg-[color-mix(in_srgb,var(--brand-teal)_6%,var(--ws-panel))] p-5 md:p-6">
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                 <div className="max-w-2xl">
-                                    <p className="type-caption font-bold uppercase tracking-caps text-[color:var(--brand-teal)]">Your shared workspace</p>
-                                    <h2 id="portal-guide-heading" className="mt-1 text-lg font-semibold text-[color:var(--ws-text-primary)]">Here is what you can do next</h2>
-                                    <p className="mt-1.5 type-caption leading-relaxed text-[color:var(--ws-text-secondary)]">Use this workspace to review what your provider shares, respond to requests, and keep project, billing, and communication in one place.</p>
+                                    <p className="type-caption font-bold uppercase tracking-caps text-[color:var(--brand-teal)]">{t("Your shared workspace")}</p>
+                                    <h2 id="portal-guide-heading" className="mt-1 text-lg font-semibold text-[color:var(--ws-text-primary)]">{t("Here is what you can do next")}</h2>
+                                    <p className="mt-1.5 type-caption leading-relaxed text-[color:var(--ws-text-secondary)]">{t("Use this workspace to review what your provider shares, respond to requests, and keep project, billing, and communication in one place.")}</p>
                                 </div>
                                 <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[34rem]">
                                     {[
@@ -781,9 +794,9 @@ export default function ClientPortalPage() {
                                         { tab: 'messages' as Tab, step: '3', title: 'Stay aligned', text: 'Message your project team' },
                                     ].map((item) => (
                                         <button key={item.tab} type="button" onClick={() => setActiveTab(item.tab)} className="rounded-xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] p-3 text-left transition-colors hover:border-[color:var(--brand-teal)]/50 hover:bg-[color:var(--ws-panel-hover)]">
-                                            <span className="type-caption font-bold text-[color:var(--brand-teal)]">STEP {item.step}</span>
-                                            <span className="mt-1 block type-caption font-semibold text-[color:var(--ws-text-primary)]">{item.title}</span>
-                                            <span className="mt-0.5 block type-ui leading-relaxed text-[color:var(--ws-text-tertiary)]">{item.text}</span>
+                                            <span className="type-caption font-bold text-[color:var(--brand-teal)]">{t("STEP")} {item.step}</span>
+                                            <span className="mt-1 block type-caption font-semibold text-[color:var(--ws-text-primary)]">{t(item.title)}</span>
+                                            <span className="mt-0.5 block type-ui leading-relaxed text-[color:var(--ws-text-tertiary)]">{t(item.text)}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -828,16 +841,15 @@ export default function ClientPortalPage() {
                                         <CalendarClock className="h-4 w-4" />
                                     </div>
                                     <h2 id="attention-heading" className="text-base md:text-lg font-semibold text-[color:var(--ws-text-primary)]">
-                                        Needs your attention
-                                    </h2>
+                                        {t("Needs your attention")} </h2>
                                 </div>
                                 <span className="type-caption text-[color:var(--ws-text-tertiary)]">
-                                    {attentionCount} item{attentionCount === 1 ? '' : 's'}
+                                    {attentionCount} {t("item")}{attentionCount === 1 ? '' : 's'}
                                 </span>
                             </header>
                             <div className="p-4 md:p-5">
-                                {attentionInvoices.map(invoice=><div key={invoice.id} className="mb-3 rounded-xl border border-[color:var(--ws-border)] p-4"><p className="font-semibold">{invoice.invoiceNumber}: {invoice.reviewReason ? 'Billing review needed' : `${money(invoice.balanceDue,invoice.currency)} ${invoice.status === 'overdue' ? 'overdue' : 'outstanding'}`}</p><p className="mt-1 type-caption">{invoice.reviewReason || `Due ${formatDate(invoice.dueDate)}`}</p><a className="mt-2 inline-flex min-h-10 items-center text-[color:var(--brand-teal)]" href={invoice.viewUrl}>Review invoice details</a></div>)}
-                                {signatures.map(contract=><div key={contract.id} className="mb-3 rounded-xl border border-[color:var(--ws-border)] p-4"><p>{contract.title} needs your signature</p><button type="button" onClick={()=>void openContract(contract)} className="min-h-10 text-[color:var(--brand-teal)]">Review contract</button></div>)}
+                                {attentionInvoices.map(invoice=><div key={invoice.id} className="mb-3 rounded-xl border border-[color:var(--ws-border)] p-4"><p className="font-semibold">{invoice.invoiceNumber}: {invoice.reviewReason ? 'Billing review needed' : `${money(invoice.balanceDue,invoice.currency)} ${invoice.status === 'overdue' ? 'overdue' : 'outstanding'}`}</p><p className="mt-1 type-caption">{invoice.reviewReason || `Due ${formatDate(invoice.dueDate)}`}</p><a className="mt-2 inline-flex min-h-10 items-center text-[color:var(--brand-teal)]" href={invoice.viewUrl}>{t("Review invoice details")}</a></div>)}
+                                {signatures.map(contract=><div key={contract.id} className="mb-3 rounded-xl border border-[color:var(--ws-border)] p-4"><p>{contract.title} {t("needs your signature")}</p><button type="button" onClick={()=>void openContract(contract)} className="min-h-10 text-[color:var(--brand-teal)]">{t("Review contract")}</button></div>)}
                                 {portal.approvals.length > 0 ? (
                                     <ul className="divide-y divide-[color:var(--ws-border)] border border-[color:var(--ws-border)] rounded-xl overflow-hidden">
                                         {portal.approvals.map((a) => (
@@ -853,8 +865,7 @@ export default function ClientPortalPage() {
                                                         </div>
                                                         <p className="mt-1 type-card-description text-[color:var(--ws-text-tertiary)]">
                                                             <span className="font-medium text-[color:var(--ws-text-secondary)]">{a.projectName}</span>
-                                                            {' · '}approval request
-                                                        </p>
+                                                            {' · '}{t("approval request")} </p>
                                                         {a.description ? (
                                                             <p className="mt-2 type-caption text-[color:var(--ws-text-secondary)] leading-relaxed">{a.description}</p>
                                                         ) : null}
@@ -866,16 +877,14 @@ export default function ClientPortalPage() {
                                                             className="inline-flex items-center justify-center rounded-lg border border-[color:var(--ws-border-strong)] bg-[color:var(--ws-panel)] hover:bg-[color:var(--ws-panel-hover)] px-3.5 py-2 type-caption md:text-sm font-semibold text-[color:var(--ws-text-primary)] disabled:opacity-50"
                                                         >
                                                             {deciding === a.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-                                                            Request changes
-                                                        </button>
+                                                            {t("Request changes")} </button>
                                                         <button
                                                             onClick={() => decideApproval(a.id, 'approved')}
                                                             disabled={deciding === a.id}
                                                             className="inline-flex items-center justify-center rounded-lg bg-[color:var(--brand-teal)] hover:opacity-90 px-3.5 py-2 type-caption md:text-sm font-semibold text-white disabled:opacity-50"
                                                         >
                                                             {deciding === a.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-                                                            Approve
-                                                        </button>
+                                                            {t("Approve")} </button>
                                                     </div>
                                                 </div>
                                             </li>
@@ -884,7 +893,7 @@ export default function ClientPortalPage() {
                                 ) : attentionCount === 0 ? (
                                     <EmptyState
                                         icon={CheckCircle2}
-                                        title="You're all caught up"
+                                        title={t("You're all caught up")}
                                         description="No outstanding billing, signatures, or approvals were found."
                                     />
                                 ) : null}
@@ -896,8 +905,8 @@ export default function ClientPortalPage() {
                             {/* Recent activity */}
                             <section aria-labelledby="activity-heading" className="rounded-2xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] shadow-[color:var(--ws-card-shadow)]">
                                 <header className="flex items-center justify-between gap-3 px-5 py-4 md:px-6 md:py-5 border-b border-[color:var(--ws-border)]">
-                                    <h2 id="activity-heading" className="text-base md:text-lg font-semibold text-[color:var(--ws-text-primary)]">Recent activity</h2>
-                                    <span className="type-caption text-[color:var(--ws-text-tertiary)]">Most recent events</span>
+                                    <h2 id="activity-heading" className="text-base md:text-lg font-semibold text-[color:var(--ws-text-primary)]">{t("Recent activity")}</h2>
+                                    <span className="type-caption text-[color:var(--ws-text-tertiary)]">{t("Most recent events")}</span>
                                 </header>
                                 <div className="p-4 md:p-5 max-h-[420px] overflow-y-auto">
                                     {portal.activity.length > 0 ? (
@@ -918,7 +927,7 @@ export default function ClientPortalPage() {
                                     ) : (
                                         <EmptyState
                                             icon={Clock}
-                                            title="No activity yet"
+                                            title={t("No activity yet")}
                                             description="Your project, payment, document, and approval activity will appear here as things happen."
                                         />
                                     )}
@@ -928,7 +937,7 @@ export default function ClientPortalPage() {
                             {/* Quick links */}
                             <section aria-labelledby="quick-heading" className="rounded-2xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] shadow-[color:var(--ws-card-shadow)]">
                                 <header className="flex items-center justify-between gap-3 px-5 py-4 md:px-6 md:py-5 border-b border-[color:var(--ws-border)]">
-                                    <h2 id="quick-heading" className="text-base md:text-lg font-semibold text-[color:var(--ws-text-primary)]">Jump to</h2>
+                                    <h2 id="quick-heading" className="text-base md:text-lg font-semibold text-[color:var(--ws-text-primary)]">{t("Jump to")}</h2>
                                 </header>
                                 <div className="p-4 md:p-5 grid sm:grid-cols-2 gap-3">
                                     {[
@@ -951,7 +960,7 @@ export default function ClientPortalPage() {
                                                 </div>
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center gap-1">
-                                                        <p className="font-semibold type-card-description text-[color:var(--ws-text-primary)]">{item.label}</p>
+                                                        <p className="font-semibold type-card-description text-[color:var(--ws-text-primary)]">{t(item.label)}</p>
                                                         <ArrowUpRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 translate-y-1 group-hover:opacity-70 group-hover:translate-x-0 group-hover:translate-y-0 transition" />
                                                     </div>
                                                     <p className="type-card-description text-[color:var(--ws-text-tertiary)] mt-0.5">{item.hint}</p>
@@ -971,11 +980,10 @@ export default function ClientPortalPage() {
                                         <Clock className="h-4 w-4" />
                                     </div>
                                     <h2 id="workspace-activity-heading" className="text-base md:text-lg font-semibold text-[color:var(--ws-text-primary)]">
-                                        Workspace activity
-                                    </h2>
+                                        {t("Workspace activity")} </h2>
                                 </div>
                                 <span className="type-caption text-[color:var(--ws-text-tertiary)]">
-                                    {workspaceActivity.length} recent item{workspaceActivity.length === 1 ? '' : 's'}
+                                    {workspaceActivity.length} {t("recent item")}{workspaceActivity.length === 1 ? '' : 's'}
                                 </span>
                             </header>
                             <div className="p-4 md:p-5">
@@ -1013,7 +1021,7 @@ export default function ClientPortalPage() {
                                 ) : (
                                     <EmptyState
                                         icon={Clock}
-                                        title="No workspace activity yet"
+                                        title={t("No workspace activity yet")}
                                         description="As things happen — invoices sent, projects updated, approvals decided — they'll appear here with a clean timeline."
                                     />
                                 )}
@@ -1039,7 +1047,7 @@ export default function ClientPortalPage() {
                                     </div>
                                     <div className="mt-4 max-w-lg">
                                         <div className="flex items-center justify-between type-ui font-medium text-[color:var(--ws-text-tertiary)] mb-1.5">
-                                            <span>Progress</span>
+                                            <span>{t("Progress")}</span>
                                             <span>{p.progress}%</span>
                                         </div>
                                         <div className="h-2 w-full overflow-hidden rounded-full bg-[color:var(--ws-surface-secondary)] border border-[color:var(--ws-border)]">
@@ -1055,8 +1063,7 @@ export default function ClientPortalPage() {
                                         onClick={() => setProjectPreview(p)}
                                         className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border-strong)] px-3.5 py-2 type-caption md:text-xs font-semibold text-[color:var(--ws-text-primary)]"
                                     >
-                                        Open project
-                                        <ArrowUpRight className="h-3.5 w-3.5" />
+                                        {t("Open project")} <ArrowUpRight className="h-3.5 w-3.5" />
                                     </button>
                                 </div>
                             </div>
@@ -1074,27 +1081,27 @@ export default function ClientPortalPage() {
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="min-w-0 flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6">
                                     <div>
-                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Invoice</p>
+                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">{t("Invoice")}</p>
                                         <p className="mt-0.5 text-base font-semibold text-[color:var(--ws-text-primary)]">{i.invoiceNumber}</p>
                                     </div>
                                     <div>
-                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Due date</p>
+                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">{t("Due date")}</p>
                                         <p className="mt-0.5 type-card-description text-[color:var(--ws-text-primary)]">{formatDate(i.dueDate)}</p>
                                         <p className={`mt-0.5 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 type-caption font-medium ${statusBadgeClass(i.status)}`}>
                                             {i.status.replace('_', ' ')}
                                         </p>
                                     </div>
                                     <div className="sm:text-right">
-                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Amount due</p>
+                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">{t("Amount due")}</p>
                                         <p className="mt-0.5 text-xl md:text-2xl font-bold tracking-tight text-[color:var(--ws-text-primary)]">{money(i.balanceDue,i.currency)}</p>
                                     </div>
                                 </div>
                                 <div className="shrink-0 sm:text-right">
-                                    <a href={i.viewUrl} className="inline-flex min-h-10 items-center rounded-lg border border-[color:var(--ws-border)] px-3">View invoice</a>
-                                    <a href={i.downloadUrl} className="ml-2 inline-flex min-h-10 items-center rounded-lg border border-[color:var(--ws-border)] px-3">Download PDF</a>
-                                    {i.payUrl ? <a href={i.payUrl} className="mt-2 block text-[color:var(--brand-teal)]">Payment options</a> : null}
+                                    <a href={i.viewUrl} className="inline-flex min-h-10 items-center rounded-lg border border-[color:var(--ws-border)] px-3">{t("View invoice")}</a>
+                                    <a href={i.downloadUrl} className="ml-2 inline-flex min-h-10 items-center rounded-lg border border-[color:var(--ws-border)] px-3">{t("Download PDF")}</a>
+                                    {i.payUrl ? <a href={i.payUrl} className="mt-2 block text-[color:var(--brand-teal)]">{t("Payment options")}</a> : null}
                                     <p className="mt-2 max-w-sm type-caption">{i.reviewReason || (i.balanceDue > 0 && !i.payUrl ? 'No payment method is configured. Message the business for instructions.' : i.balanceDue === 0 ? 'No remaining balance is recorded.' : '')}</p>
-                                    <button type="button" onClick={()=>{setProjectId('');setActiveTab('messages');}} className="mt-1 min-h-10 text-[color:var(--brand-teal)]">Ask about this invoice</button>
+                                    <button type="button" onClick={()=>{setProjectId('');setActiveTab('messages');}} className="mt-1 min-h-10 text-[color:var(--brand-teal)]">{t("Ask about this invoice")}</button>
                                 </div>
                             </div>
                         )}
@@ -1111,19 +1118,19 @@ export default function ClientPortalPage() {
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="min-w-0 flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6">
                                     <div>
-                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Quote</p>
+                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">{t("Quote")}</p>
                                         <p className="mt-0.5 text-base font-semibold text-[color:var(--ws-text-primary)]">{q.quoteNumber}</p>
                                         <p className="mt-0.5 type-caption text-[color:var(--ws-text-secondary)]">{q.name}</p>
                                     </div>
                                     <div>
-                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Valid until</p>
+                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">{t("Valid until")}</p>
                                         <p className="mt-0.5 type-card-description text-[color:var(--ws-text-primary)]">{q.validUntil ? formatDate(q.validUntil) : '—'}</p>
                                         <p className={`mt-0.5 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 type-caption font-medium ${statusBadgeClass(q.status)}`}>
-                                            {q.status}
+                                            {t(q.status)}
                                         </p>
                                     </div>
                                     <div className="sm:text-right">
-                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Amount</p>
+                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">{t("Amount")}</p>
                                         <p className="mt-0.5 text-xl md:text-2xl font-bold tracking-tight text-[color:var(--ws-text-primary)]">{money(q.totalAmount)}</p>
                                     </div>
                                 </div>
@@ -1135,7 +1142,7 @@ export default function ClientPortalPage() {
                                             rel="noreferrer"
                                             className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border-strong)] px-3.5 py-2 type-caption md:text-xs font-semibold text-[color:var(--ws-text-primary)]"
                                         >
-                                            Review quote <ArrowUpRight className="h-3.5 w-3.5" />
+                                            {t("Review quote")} <ArrowUpRight className="h-3.5 w-3.5" />
                                         </a>
                                     ) : null}
                                 </div>
@@ -1160,8 +1167,8 @@ export default function ClientPortalPage() {
                                         </span>
                                     </div>
                                     <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 type-caption text-[color:var(--ws-text-tertiary)]">
-                                        {c.contractNumber ? <span>Contract no. <span className="font-medium text-[color:var(--ws-text-secondary)]">{c.contractNumber}</span></span> : null}
-                                        <span>Last updated <span className="font-medium text-[color:var(--ws-text-secondary)]">{formatDate(c.updatedAt)}</span></span>
+                                        {c.contractNumber ? <span>{t("Contract no.")} <span className="font-medium text-[color:var(--ws-text-secondary)]">{c.contractNumber}</span></span> : null}
+                                        <span>{t("Last updated")} <span className="font-medium text-[color:var(--ws-text-secondary)]">{formatDate(c.updatedAt)}</span></span>
                                     </div>
                                 </div>
                                 <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
@@ -1171,11 +1178,11 @@ export default function ClientPortalPage() {
                                             disabled={contractLoading}
                                             className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--brand-teal)] hover:opacity-90 px-4 py-2 type-caption md:text-sm font-semibold text-white"
                                         >
-                                            {c.actionUrl ? 'Review & sign' : 'View contract'} <ArrowUpRight className="h-3.5 w-3.5" />
+                                            {t(c.actionUrl ? 'Review & sign' : 'View contract')} <ArrowUpRight className="h-3.5 w-3.5" />
                                         </button>
                                     <button type="button" onClick={() => void downloadContract(c.id)} disabled={contractDownloading === c.id}
                                         className="inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--ws-border-strong)] px-4 py-2 type-caption font-semibold text-[color:var(--ws-text-primary)] disabled:opacity-50">
-                                        <Download className="h-4 w-4" /> {contractDownloading === c.id ? 'Preparing…' : 'Download PDF'}
+                                        <Download className="h-4 w-4" /> {t(contractDownloading === c.id ? 'Preparing…' : 'Download PDF')}
                                     </button>
                                 </div>
                             </div>
@@ -1198,9 +1205,9 @@ export default function ClientPortalPage() {
                                     <div className="min-w-0 flex-1">
                                         <p className="text-base font-semibold text-[color:var(--ws-text-primary)]">{d.name}</p>
                                         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 type-caption text-[color:var(--ws-text-tertiary)]">
-                                            <span>Type: <span className="font-medium text-[color:var(--ws-text-secondary)]">{d.documentType}</span></span>
-                                            <span>Updated: <span className="font-medium text-[color:var(--ws-text-secondary)]">{formatDate(d.updatedAt)}</span></span>
-                                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 type-caption font-medium ${statusBadgeClass(d.status)}`}>{d.status}</span>
+                                            <span>{t("Type:")} <span className="font-medium text-[color:var(--ws-text-secondary)]">{d.documentType}</span></span>
+                                            <span>{t("Updated:")} <span className="font-medium text-[color:var(--ws-text-secondary)]">{formatDate(d.updatedAt)}</span></span>
+                                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 type-caption font-medium ${statusBadgeClass(d.status)}`}>{t(d.status)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1213,9 +1220,8 @@ export default function ClientPortalPage() {
                                         }}
                                         className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border-strong)] px-3.5 py-2 type-caption md:text-xs font-semibold text-[color:var(--ws-text-primary)]"
                                     >
-                                        Preview
-                                    </button>
-                                    <a href={`${d.viewUrl}${d.documentType === 'contract' ? '&view=0&download=1' : '&download=1'}`} className="ml-2 inline-flex min-h-10 items-center text-[color:var(--brand-teal)]">Download</a>
+                                        {t("Preview")} </button>
+                                    <a href={`${d.viewUrl}${d.documentType === 'contract' ? '&view=0&download=1' : '&download=1'}`} className="ml-2 inline-flex min-h-10 items-center text-[color:var(--brand-teal)]">{t("Download")}</a>
                                 </div>
                             </div>
                         )}
@@ -1231,26 +1237,24 @@ export default function ClientPortalPage() {
                                     <MessageSquare className="h-4 w-4" />
                                 </div>
                                 <div>
-                                    <h2 className="text-base md:text-lg font-semibold text-[color:var(--ws-text-primary)]">Messages</h2>
+                                    <h2 className="text-base md:text-lg font-semibold text-[color:var(--ws-text-primary)]">{t("Messages")}</h2>
                                     <p className="type-card-description text-[color:var(--ws-text-tertiary)]">
-                                        Talk directly with the business or choose a project conversation
-                                    </p>
+                                        {t("Talk directly with the business or choose a project conversation")} </p>
                                 </div>
                             </div>
                         </header>
 
                         <div className="px-4 py-3 md:px-6 md:py-4 border-b border-[color:var(--ws-border)] bg-[color:var(--ws-surface-secondary)]">
                             <label className="block type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)] mb-1.5">
-                                Conversation
-                            </label>
+                                {t("Conversation")} </label>
                             <AlphaCloneSelect
-                                aria-label="Conversation"
+                                aria-label={t("Conversation")}
                                 disabled={sending}
                                 value={projectId}
                                 onChange={(event) => setProjectId(event.target.value)}
                                 className="w-full max-w-md px-3 py-2"
                             >
-                                <option value="">General conversation</option>
+                                <option value="">{t("General conversation")}</option>
                                 {portal.projects.map((project) => (
                                     <option key={project.id} value={project.id}>{project.name}</option>
                                 ))}
@@ -1286,31 +1290,30 @@ export default function ClientPortalPage() {
                                         <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] text-[color:var(--ws-text-tertiary)]">
                                             <MessageSquare className="h-6 w-6" />
                                         </div>
-                                        <h3 className="font-semibold text-[color:var(--ws-text-primary)]">No messages yet</h3>
+                                        <h3 className="font-semibold text-[color:var(--ws-text-primary)]">{t("No messages yet")}</h3>
                                         <p className="mt-1.5 type-card-description text-[color:var(--ws-text-tertiary)] max-w-sm mx-auto">
-                                            Send a message to start this conversation. Replies from the business will appear right here.
-                                        </p>
+                                            {t("Send a message to start this conversation. Replies from the business will appear right here.")} </p>
                                     </div>
                                 </div>
                             ) : null}
                         </div>
 
-                        {messagesError ? <div role="alert" className="p-4"><p>{messagesError}</p><button type="button" onClick={()=>void loadMessages()} className="min-h-10 text-[color:var(--brand-teal)]">Retry loading messages</button></div> : null}
-                        {messagesLoading ? <p role="status" className="p-4">Loading messages…</p> : null}
+                        {messagesError ? <div role="alert" className="p-4"><p>{t(messagesError)}</p><button type="button" onClick={()=>void loadMessages()} className="min-h-10 text-[color:var(--brand-teal)]">{t("Retry loading messages")}</button></div> : null}
+                        {messagesLoading ? <p role="status" className="p-4">{t("Loading messages…")}</p> : null}
                         <form onSubmit={sendMessage} className="border-t border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] p-4 md:p-5 space-y-3">
                             <AlphaCloneTextarea
-                                aria-label="Message to the business"
+                                aria-label={t("Message to the business")}
                                 maxLength={10000}
                                 disabled={sending}
                                 value={message}
                                 onChange={(event) => setMessage(event.target.value)}
-                                placeholder="Write a message to the business…"
+                                placeholder={t("Write a message to the business…")}
                                 className="w-full px-4 py-3 resize-none"
                                 rows={3}
                             />
                             <div className="flex items-center justify-end gap-2">
                                 <p className="mr-auto type-card-description text-[color:var(--ws-text-tertiary)]">
-                                    {message.length > 0 ? `${message.length}/10000` : 'Messages stay in your client workspace'}
+                                    {message.length > 0 ? `${message.length}/10000` : t('Messages stay in your client workspace')}
                                 </p>
                                 <button
                                     type="submit"
@@ -1318,8 +1321,7 @@ export default function ClientPortalPage() {
                                     className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--brand-teal)] hover:opacity-90 px-4 py-2 type-ui font-semibold text-white disabled:opacity-50"
                                 >
                                     {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                                    Send message
-                                </button>
+                                    {t("Send message")} </button>
                             </div>
                         </form>
                     </div>
@@ -1329,11 +1331,11 @@ export default function ClientPortalPage() {
             {projectPreview ? (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 md:p-6" onClick={() => setProjectPreview(null)}>
                     <div role="dialog" aria-modal="true" aria-label={projectPreview.name} onClick={(event) => event.stopPropagation()} className="max-h-[90dvh] overflow-y-auto w-full max-w-2xl rounded-2xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] p-6 text-[color:var(--ws-text-primary)] shadow-2xl">
-                        <div className="flex items-start justify-between gap-4"><h2 className="text-xl font-semibold">{projectPreview.name}</h2><button type="button" aria-label="Close project" onClick={() => setProjectPreview(null)}><X className="h-5 w-5" /></button></div>
-                        <p className="mt-3 type-body whitespace-pre-wrap">{projectPreview.description || 'No project description has been added yet.'}</p>
-                        <p className="mt-4 type-caption">Status: {projectPreview.stage || projectPreview.status} · Progress: {projectPreview.progress}%{projectPreview.dueDate ? ` · Due: ${formatDate(projectPreview.dueDate)}` : ''}</p>
-                        {projectDetailsLoading ? <p role="status" className="mt-4">Loading project details…</p> : projectDetailsError ? <div role="alert" className="mt-4"><p>{projectDetailsError}</p><button onClick={()=>setProjectRetry(value=>value+1)} className="min-h-10">Retry project details</button></div> : projectDetails ? <div className="mt-4 space-y-4">{(['milestones','tasks','deliverables'] as const).map(section=><section key={section}><h3 className="font-semibold capitalize">{section}</h3>{projectDetails[section].length ? <ul>{projectDetails[section].map(item=><li key={item.id} className="border-b border-[color:var(--ws-border)] py-2">{item.name} · {item.status}{item.dueDate ? ` · Due ${formatDate(item.dueDate)}` : ''}</li>)}</ul> : <p className="type-caption">No {section} have been shared.</p>}</section>)}</div> : null}
-                        <button type="button" onClick={() => { setProjectId(projectPreview.id); setProjectPreview(null); setActiveTab('messages'); }} className="mt-5 rounded-lg bg-[color:var(--brand-teal)] px-4 py-2 font-semibold text-white">Open project conversation</button>
+                        <div className="flex items-start justify-between gap-4"><h2 className="text-xl font-semibold">{projectPreview.name}</h2><button type="button" aria-label={t("Close project")} onClick={() => setProjectPreview(null)}><X className="h-5 w-5" /></button></div>
+                        <p className="mt-3 type-body whitespace-pre-wrap">{projectPreview.description || t('No project description has been added yet.')}</p>
+                        <p className="mt-4 type-caption">{t("Status:")} {t(projectPreview.stage || projectPreview.status)} {t("· Progress:")} {projectPreview.progress}%{projectPreview.dueDate ? ` · Due: ${formatDate(projectPreview.dueDate)}` : ''}</p>
+                        {projectDetailsLoading ? <p role="status" className="mt-4">{t("Loading project details…")}</p> : projectDetailsError ? <div role="alert" className="mt-4"><p>{t(projectDetailsError)}</p><button onClick={()=>setProjectRetry(value=>value+1)} className="min-h-10">{t("Retry project details")}</button></div> : projectDetails ? <div className="mt-4 space-y-4">{(['milestones','tasks','deliverables'] as const).map(section=><section key={t(section)}><h3 className="font-semibold capitalize">{t(section)}</h3>{projectDetails[section].length ? <ul>{projectDetails[section].map(item=><li key={item.id} className="border-b border-[color:var(--ws-border)] py-2">{item.name} · {t(item.status)}{item.dueDate ? ` · Due ${formatDate(item.dueDate)}` : ''}</li>)}</ul> : <p className="type-caption">{t(`No ${section} have been shared.`)}</p>}</section>)}</div> : null}
+                        <button type="button" onClick={() => { setProjectId(projectPreview.id); setProjectPreview(null); setActiveTab('messages'); }} className="mt-5 rounded-lg bg-[color:var(--brand-teal)] px-4 py-2 font-semibold text-white">{t("Open project conversation")}</button>
                     </div>
                 </div>
             ) : null}
@@ -1344,10 +1346,10 @@ export default function ClientPortalPage() {
                         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[color:var(--ws-border)] p-4">
                             <h2 className="truncate font-semibold text-[color:var(--ws-text-primary)]">{contractPreview.title}</h2>
                             <div className="flex items-center gap-2">
-                                <button type="button" onClick={() => { closeContract(); setProjectId(''); setActiveTab('messages'); }} className="rounded-lg border border-[color:var(--ws-border)] px-3 py-2 type-caption text-[color:var(--ws-text-primary)]">Message the business</button>
-                                {contractPreview.actionUrl ? <button type="button" onClick={() => setContractPreview({ ...contractPreview, signing: !contractPreview.signing })} className="rounded-lg bg-[color:var(--brand-teal)] px-3 py-2 type-caption font-semibold text-white">{contractPreview.signing ? 'View contract' : 'Review & sign'}</button> : null}
-                                <button type="button" onClick={() => void downloadContract(contractPreview.id)} disabled={contractDownloading === contractPreview.id} className="inline-flex items-center gap-1 rounded-lg border border-[color:var(--ws-border)] px-3 py-2 type-caption text-[color:var(--ws-text-primary)] disabled:opacity-50"><Download className="h-4 w-4" /> Download</button>
-                                <button type="button" onClick={closeContract} aria-label="Close contract" className="rounded-lg p-2 text-[color:var(--ws-text-primary)]"><X className="h-5 w-5" /></button>
+                                <button type="button" onClick={() => { closeContract(); setProjectId(''); setActiveTab('messages'); }} className="rounded-lg border border-[color:var(--ws-border)] px-3 py-2 type-caption text-[color:var(--ws-text-primary)]">{t("Message the business")}</button>
+                                {contractPreview.actionUrl ? <button type="button" onClick={() => setContractPreview({ ...contractPreview, signing: !contractPreview.signing })} className="rounded-lg bg-[color:var(--brand-teal)] px-3 py-2 type-caption font-semibold text-white">{t(contractPreview.signing ? 'View contract' : 'Review & sign')}</button> : null}
+                                <button type="button" onClick={() => void downloadContract(contractPreview.id)} disabled={contractDownloading === contractPreview.id} className="inline-flex items-center gap-1 rounded-lg border border-[color:var(--ws-border)] px-3 py-2 type-caption text-[color:var(--ws-text-primary)] disabled:opacity-50"><Download className="h-4 w-4" /> {t("Download")}</button>
+                                <button type="button" onClick={closeContract} aria-label={t("Close contract")} className="rounded-lg p-2 text-[color:var(--ws-text-primary)]"><X className="h-5 w-5" /></button>
                             </div>
                         </div>
                         {contractPreview.signing && contractPreview.actionUrl ? (
@@ -1381,12 +1383,12 @@ export default function ClientPortalPage() {
                                     rel="noreferrer"
                                     className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border)] px-3 py-1.5 type-caption font-semibold text-[color:var(--ws-text-primary)]"
                                 >
-                                    Open separately <ArrowUpRight className="h-3.5 w-3.5" />
+                                    {t("Open separately")} <ArrowUpRight className="h-3.5 w-3.5" />
                                 </a>
                                 <button
                                     onClick={closeDocument}
                                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[color:var(--ws-border)] hover:bg-[color:var(--ws-panel-hover)] text-[color:var(--ws-text-primary)]"
-                                    aria-label="Close preview"
+                                    aria-label={t("Close preview")}
                                 >
                                     <X className="h-4 w-4" />
                                 </button>

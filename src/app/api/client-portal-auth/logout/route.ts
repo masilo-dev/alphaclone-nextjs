@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
   try {
     const admin = await resolveSupabaseAdminClient();
     const session = await requireClientPortalSession(admin);
+    if(!session.ok && session.error.code==='INTERNAL_ERROR') return NextResponse.json({error:'Sign out could not be confirmed. Please retry.'},{status:503});
     const ipAddress = extractRequestIp(req);
     const userAgent = extractUserAgent(req);
 

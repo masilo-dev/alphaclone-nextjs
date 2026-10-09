@@ -492,7 +492,7 @@ export async function revokeClientPortalSessionByJti(
   const now = new Date().toISOString();
   const { error } = await admin
     .from('client_portal_sessions')
-    .update({ is_active: false, signed_out_at: now, updated_at: now })
+    .update({ is_active: false, signed_out_at: now })
     .eq('session_jti', sessionJti);
   if (error) throw error;
 }

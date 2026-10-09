@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { resolveSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireClientPortalAccessDoubleGuarded } from '@/lib/auth/clientPortalAuth';
 import { resolveClientByPortalToken } from '@/services/finance/clientFinancePortalService';
-import { notifyProjectTeamClientPortalMessage } from '@/lib/projects/projectClientNotification';
+import { notifyPortalProjectMessage } from '@/lib/clientPortal/notifications';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { loadClientProjects } from '@/lib/clientPortal/projects';
 import { persistPortalMessage } from '@/lib/clientPortal/messages';
@@ -124,12 +124,8 @@ export async function POST(req: NextRequest) {
     const saved = await persistPortalMessage(admin,{id:parsed.data.requestId || crypto.randomUUID(),tenantId:client.tenant_id,clientId:client.id,projectId:project.id,content:parsed.data.content,authorName:recipient?.name || 'Client',authorEmail:recipient?.email,isClient:true});
     const data = saved.message;
     if (saved.replayed) return NextResponse.json({success:true,message:data,replayed:true,persistence:'confirmed'});
-    await notifyProjectTeamClientPortalMessage({
-      admin, projectId: project.id, tenantId: client.tenant_id,
-      projectName: project.name || 'Project', authorName: recipient?.name || 'Client',
-      content: parsed.data.content, origin: req.nextUrl.origin,
-    }).catch((notificationError) => console.error('[client-finance/message notification]', notificationError));
-    return NextResponse.json({ success: true, message: data, persistence: 'confirmed' }, { status: 201 });
+    const notification = await notifyPortalProjectMessage({admin,tenantId:client.tenant_id,projectId:project.id,messageId:data.id,authorName:recipient?.name || 'Client',content:parsed.data.content,direction:'to_creator'}).catch(()=>({sent:false,error:'notification_unavailable'}));
+    return NextResponse.json({ success: true, message: data, persistence: 'confirmed', notification }, { status: 201 });
   } catch (error) {
     console.error('[client-finance/messages POST]', error);
     return NextResponse.json({ error: 'Message could not be confirmed. Retry with the same request reference.', code: 'MESSAGE_UNCONFIRMED' }, { status: (error as any)?.status || 500 });

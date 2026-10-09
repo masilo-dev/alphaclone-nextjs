@@ -288,21 +288,25 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         return () => clearInterval(interval);
     }, [activeTab, selectedClient?.id, loadClientMessages]);
 
+    const clientMessageRequest=useRef<{id:string;content:string;clientId:string}|null>(null);
     const sendClientMessage = async (event: React.FormEvent) => {
         event.preventDefault();
-        if (!currentTenant?.id || !selectedClient?.id || !clientMessageDraft.trim()) return;
+        if (!currentTenant?.id || !selectedClient?.id || !clientMessageDraft.trim() || clientMessageSending) return;
+        if(!clientMessageRequest.current || clientMessageRequest.current.content!==clientMessageDraft || clientMessageRequest.current.clientId!==selectedClient.id) clientMessageRequest.current={id:crypto.randomUUID(),content:clientMessageDraft,clientId:selectedClient.id};
         setClientMessageSending(true);
         try {
             const response = await fetch(`/api/tenant/${currentTenant.id}/clients/${selectedClient.id}/messages`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content: clientMessageDraft }),
+                body: JSON.stringify({ content: clientMessageDraft,requestId:clientMessageRequest.current.id }),
             });
             const result = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(result.error || 'Message could not be sent');
+            clientMessageRequest.current=null;
             setClientMessageDraft('');
             await loadClientMessages(selectedClient.id);
-            if (!result.notification?.sent) toast(`Message saved, but email was not sent: ${result.notification?.error || 'delivery unavailable'}`);
-            else toast.success('Message sent to the client');
+            if(result.replayed) toast.success('Message already saved');
+            else if (!result.notification?.sent) toast(`Message saved, but email was not sent: ${result.notification?.error || 'delivery unavailable'}`);
+            else toast.success('Message saved; email notification accepted');
         } catch (cause) { toast.error(cause instanceof Error ? cause.message : 'Message could not be sent'); }
         finally { setClientMessageSending(false); }
     };
@@ -319,6 +323,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             setPortalUrl(null);
             setCopiedPortalUrl(false);
             setClientMessages([]);
+            clientMessageRequest.current=null;
             setClientMessageDraft('');
         } else {
             setClientTimeline(null);

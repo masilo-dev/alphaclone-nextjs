@@ -41,7 +41,8 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const { user } = useAuth();
-    const forceLight = isPublicMarketingRoute(usePathname());
+    const pathname = usePathname();
+    const forceLight = isPublicMarketingRoute(pathname) && !(pathname === '/portal' || pathname?.startsWith('/portal/'));
     const userId = user?.id ?? null;
 
     const [backgroundColor, setBackgroundColor] = useState('var(--ws-canvas)');
