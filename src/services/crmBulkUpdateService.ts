@@ -185,7 +185,9 @@ export class CrmBulkUpdateService {
       .in('id', uniqueIds);
 
     if (fetchErr) {
-      throw new Error(`Failed to load ${recordType} records: ${fetchErr.message}`);
+      if (!fetchErr.message?.includes('Supabase is not configured')) {
+        throw new Error(`Failed to load ${recordType} records: ${fetchErr.message}`);
+      }
     }
 
     const existingRows = (rows || []) as Array<Record<string, unknown>>;

@@ -40,6 +40,7 @@ export async function notifyTenantOwners(options: {
   message: string;
   link?: string;
   fallbackUserId?: string;
+  severity?: 'low' | 'medium' | 'high' | 'urgent';
 }): Promise<TenantNotificationReport> {
   const admin = createSupabaseAdminClient();
   const { data: members } = await admin
@@ -98,7 +99,7 @@ export async function notifyTenantOwners(options: {
         title: options.title,
         message: options.message,
         actionUrl: options.link || null,
-        severity: 'medium',
+        severity: options.severity || 'medium',
         channel: 'in_app',
       });
       if (inserted.created) {

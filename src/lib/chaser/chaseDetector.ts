@@ -158,12 +158,27 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
 
   const { data: unpaidInvoices } = await admin
     .from('business_invoices')
-    .select('id, invoice_number, status, lifecycle_status, due_date, client_id, project_id, reminder_count, balance_due, total')
+    .select('id, invoice_number, status, lifecycle_status, due_date, client_id, project_id, reminder_count, balance_due, total, amount_paid')
     .eq('tenant_id', tenantId)
     .in('status', ['sent', 'viewed', 'overdue', 'partially_paid'])
     .limit(50);
 
   for (const invoice of unpaidInvoices || []) {
+    const total = Number(invoice.total || 0);
+    const amountPaid = Number(invoice.amount_paid || 0);
+    const balance = Number(invoice.balance_due ?? (total - amountPaid));
+
+    if (balance <= 0 || (amountPaid >= total && total > 0)) {
+      if (invoice.status !== 'paid' || invoice.lifecycle_status !== 'paid') {
+        await admin
+          .from('business_invoices')
+          .update({ status: 'paid', lifecycle_status: 'paid' })
+          .eq('id', invoice.id)
+          .eq('tenant_id', tenantId);
+      }
+      continue;
+    }
+
     const projectPayment = Boolean(invoice.project_id);
     const policyKey = projectPayment ? 'payment_chaser' : 'invoice_chaser';
     const upsert = await upsertChaseInstance({
@@ -179,7 +194,7 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
         invoice_number: invoice.invoice_number,
         due_date: invoice.due_date,
         reminder_count: invoice.reminder_count,
-        balance_due: invoice.balance_due ?? invoice.total,
+        balance_due: balance,
         project_payment: projectPayment,
       },
     });

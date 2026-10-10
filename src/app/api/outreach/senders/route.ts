@@ -33,10 +33,63 @@ export async function GET(request: NextRequest) {
       .eq("tenant_id", tenantId)
       .gte("occurred_at", since)
       .in("event_type", ["sent", "delivered", "bounced", "complained"]);
-    if (eventError) throw eventError;
     type SenderRow = Record<string, any>;
     type EventRow = { event_type: string; metadata?: Record<string, unknown> | null };
-    const enriched = ((senders || []) as SenderRow[]).map((sender) => {
+
+    let senderList = (senders || []) as SenderRow[];
+    if (senderList.length === 0) {
+      const [{ data: msConns }, { data: integrations }] = await Promise.all([
+        admin
+          .from("microsoft_connections")
+          .select("id, microsoft_email, user_id, updated_at")
+          .eq("tenant_id", tenantId),
+        admin
+          .from("integrations")
+          .select("id, type, name, config, user_id, updated_at")
+          .eq("enabled", true)
+          .in("type", ["zoho", "sendgrid", "resend", "brevo"]),
+      ]);
+
+      const syntheticSenders: SenderRow[] = [];
+      for (const ms of msConns || []) {
+        if (ms.microsoft_email) {
+          syntheticSenders.push({
+            id: ms.id,
+            tenant_id: tenantId,
+            email_address: ms.microsoft_email,
+            display_name: 'Microsoft 365',
+            warmup_status: 'ready',
+            daily_send_limit: 250,
+            sent_today: 0,
+            is_default: true,
+            provider: 'microsoft',
+            created_at: ms.updated_at || new Date().toISOString(),
+          });
+        }
+      }
+
+      for (const integ of integrations || []) {
+        const email = integ.config?.fromEmail || integ.config?.from_email || integ.config?.senderEmail;
+        if (email && !syntheticSenders.some((s) => s.email_address.toLowerCase() === email.toLowerCase())) {
+          syntheticSenders.push({
+            id: integ.id,
+            tenant_id: tenantId,
+            email_address: email,
+            display_name: integ.name || integ.type,
+            warmup_status: 'ready',
+            daily_send_limit: 500,
+            sent_today: 0,
+            is_default: syntheticSenders.length === 0,
+            provider: integ.type,
+            created_at: integ.updated_at || new Date().toISOString(),
+          });
+        }
+      }
+
+      senderList = syntheticSenders;
+    }
+
+    const enriched = senderList.map((sender) => {
       const senderEvents = ((events || []) as EventRow[]).filter(
         (event: EventRow) =>
           String(event.metadata?.sender_email || "").toLowerCase() ===

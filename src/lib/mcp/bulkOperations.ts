@@ -123,13 +123,17 @@ async function recordReceipt(params: {
 }
 
 export async function executeBulkUpdateRecords(args: BulkRecordArgs, ctx: BatchContext) {
+  const dryRun = args.dry_run !== false;
+  if (!dryRun && args.confirm_execute !== true) {
+    throw new Error('Set confirm_execute: true after reviewing a dry run before applying bulk changes');
+  }
   return CrmBulkUpdateService.processBulkUpdate({
     tenantId: ctx.tenantId,
     userId: ctx.userId,
     recordType: args.record_type,
     recordIds: args.record_ids,
     patch: args.patch,
-    dryRun: args.dry_run !== false,
+    dryRun,
     confirmExecute: args.confirm_execute === true,
     reason: args.reason,
     idempotencyKey: args.idempotency_key,

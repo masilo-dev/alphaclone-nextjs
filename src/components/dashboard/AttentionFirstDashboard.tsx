@@ -285,7 +285,7 @@ export function AttentionFirstDashboard() {
             href="/dashboard/business/billing"
             className="rounded-lg border border-[var(--success-border)] bg-[var(--success-surface)] p-2 sm:p-2.5 transition-colors hover:border-[var(--success)]"
           >
-            <p className="text-[11px] sm:type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-tertiary)] flex items-center gap-1 truncate">
+            <p className="text-[11px] sm:type-caption font-semibold uppercase tracking-wider text-[var(--success-text)] flex items-center gap-1 truncate">
               <DollarSign className="w-3 h-3 text-[var(--success-text)] shrink-0" aria-hidden />
               <span>{t('Revenue')}</span>
             </p>
@@ -299,7 +299,7 @@ export function AttentionFirstDashboard() {
             href="/dashboard/business/billing/manage"
             className="rounded-lg border border-[var(--info-border)] bg-[var(--info-surface)] p-2 sm:p-2.5 transition-colors hover:border-[var(--info)]"
           >
-            <p className="text-[11px] sm:type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-tertiary)] flex items-center gap-1 truncate">
+            <p className="text-[11px] sm:type-caption font-semibold uppercase tracking-wider text-[var(--info-text)] flex items-center gap-1 truncate">
               <Receipt className="w-3 h-3 text-[var(--info-text)] shrink-0" aria-hidden />
               <span className="truncate">{t('Outstanding')}</span>
             </p>

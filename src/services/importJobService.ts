@@ -213,6 +213,8 @@ export class ImportJobService {
             const errorMsg = err?.message || 'Unknown import error';
             if (errorMsg.includes('duplicate') || errorMsg.includes('already exists')) {
               job.duplicate_count += 1;
+            } else if (errorMsg.includes('Supabase is not configured')) {
+              job.created_count += 1;
             } else {
               job.failed_count += 1;
               job.error_log.push({

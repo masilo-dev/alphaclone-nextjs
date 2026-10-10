@@ -133,15 +133,45 @@ const AlphaCloneContractModal: React.FC<Props> = ({
     }, [selectedClientId, clients]);
 
     useEffect(() => {
+        if (existingContractId) {
+            void supabase
+                .from('contracts')
+                .select('*')
+                .eq('id', existingContractId)
+                .maybeSingle()
+                .then(({ data }: { data: any }) => {
+                    if (data) {
+                        const dateOptions: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+                        const cDate = data.created_at ? new Date(data.created_at).toLocaleDateString('en-US', dateOptions) : undefined;
+                        const sDate = data.start_date ? new Date(data.start_date).toLocaleDateString('en-US', dateOptions) : undefined;
+                        const dDate = data.delivery_date ? new Date(data.delivery_date).toLocaleDateString('en-US', dateOptions) : undefined;
+                        setVariables(prev => ({
+                            ...prev,
+                            ...(cDate ? { contractDate: cDate } : {}),
+                            ...(sDate ? { startDate: sDate } : {}),
+                            ...(dDate ? { deliveryDate: dDate } : {}),
+                            ...(data.title ? { projectName: data.title } : {}),
+                            ...(data.payment_amount ? { totalAmount: data.payment_amount } : {}),
+                        }));
+                        if (data.content && !existingContractText) {
+                            setContractText(data.content);
+                            setStep('preview');
+                        }
+                    }
+                });
+        }
+    }, [existingContractId, existingContractText]);
+
+    useEffect(() => {
         if (existingContractText) {
             // Load existing contract
             setContractText(existingContractText);
             setStep('preview');
-        } else {
+        } else if (!existingContractId) {
             // Generate new contract
             generateContract();
         }
-    }, [existingContractText]);
+    }, [existingContractText, existingContractId]);
 
     const generateContract = () => {
         const generated = generateAlphaCloneContract(variables);

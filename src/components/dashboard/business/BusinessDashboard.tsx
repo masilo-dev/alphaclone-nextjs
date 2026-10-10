@@ -166,6 +166,7 @@ const PRIMARY_PERSISTENT_ROUTES = new Set([
   '/dashboard/projects',
   '/dashboard/projects/manage',
   '/dashboard/business/projects',
+  '/dashboard/business/projects/manage',
   '/dashboard/mail',
   '/dashboard/comms',
   '/dashboard/contracts',
@@ -248,20 +249,22 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const [activeSection, setActiveSection] = useState('profile');
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    // Keep primary routes mounted once visited for instant 0ms restoration
-    const [visitedRoutes, setVisitedRoutes] = useState<string[]>(() => [route]);
+    // Keep primary persistent routes mounted once visited for instant 0ms restoration
+    const [visitedPersistentRoutes, setVisitedPersistentRoutes] = useState<string[]>(() =>
+        PRIMARY_PERSISTENT_ROUTES.has(route) ? [route] : []
+    );
 
     useEffect(() => {
         if (PRIMARY_PERSISTENT_ROUTES.has(route)) {
-            setVisitedRoutes((prev) => (prev.includes(route) ? prev : [...prev, route]));
+            setVisitedPersistentRoutes((prev) => (prev.includes(route) ? prev : [...prev, route]));
         }
     }, [route]);
 
     // Reset visited cache on tenant switch or user logout to enforce strict isolation
     const currentTenantId = currentTenant?.id;
     useEffect(() => {
-        setVisitedRoutes([route]);
-    }, [currentTenantId, user.id]);
+        setVisitedPersistentRoutes(PRIMARY_PERSISTENT_ROUTES.has(route) ? [route] : []);
+    }, [currentTenantId, user.id, route]);
 
     // Schedule background idle prefetching for likely next modules
     useEffect(() => {
@@ -1528,7 +1531,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                             }`}
                         >
                         <EnterpriseTabWrapper fullBleed={isEnterpriseFullBleedTab(route)}>
-                            {visitedRoutes.map((vRoute) => {
+                            {visitedPersistentRoutes.map((vRoute) => {
                                 const isCurrent = vRoute === route;
                                 return (
                                     <div

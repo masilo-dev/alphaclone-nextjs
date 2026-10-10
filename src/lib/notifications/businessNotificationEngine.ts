@@ -49,6 +49,7 @@ export interface DispatchNotificationOptions {
 
   // Technical details (separated from business log)
   technicalDetails?: Record<string, any>;
+  severity?: 'low' | 'medium' | 'high' | 'urgent';
 }
 
 export interface DispatchNotificationResult {
@@ -177,6 +178,21 @@ export async function dispatchBusinessNotification(
       (typeof options.technicalDetails?.dedupe_key === 'string' && options.technicalDetails.dedupe_key) ||
       (correlationId ? `exec:${correlationId}` : null);
 
+    const resolvedSeverity: 'low' | 'medium' | 'high' | 'urgent' =
+      options.severity ||
+      (options.status === 'failed' ||
+      options.status === 'blocked' ||
+      options.status === 'at_risk' ||
+      options.type.toLowerCase().includes('fail') ||
+      options.type.toLowerCase().includes('error') ||
+      options.type.toLowerCase().includes('alert')
+        ? 'urgent'
+        : options.status === 'success' || options.type.toLowerCase().includes('success')
+        ? 'medium'
+        : options.level === 'level3_urgent_email'
+        ? 'urgent'
+        : 'medium');
+
     const inserted = await insertTenantNotification(admin, {
       tenantId: options.tenantId,
       recipientUserId: target.userId,
@@ -186,7 +202,7 @@ export async function dispatchBusinessNotification(
       eventType: options.type,
       title: options.title,
       message: options.message,
-      severity: options.level === 'level3_urgent_email' ? 'urgent' : 'medium',
+      severity: resolvedSeverity,
       channel: 'in_app',
       actionUrl: options.actionUrl || null,
       correlationId,

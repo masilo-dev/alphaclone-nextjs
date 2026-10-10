@@ -42,6 +42,16 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     };
   }, [fileUrl]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && onClose) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const loadPDF = async () => {
     setIsLoading(true);
     setError(null);
@@ -102,6 +112,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   };
 
   const isValidUrl = (url: string): boolean => {
+    if (typeof url !== 'string' || !url.trim()) return false;
+    if (url.startsWith('/') || url.startsWith('blob:') || url.startsWith('data:')) return true;
     try {
       new URL(url);
       return true;

@@ -764,7 +764,7 @@ html.light .ac-business-root .hover\:text-white:hover,
   color: var(--ws-text-primary) !important;
 }
 
-/* Keep inverse text on solid brand CTAs in light mode */
+/* Keep inverse text on solid brand CTAs, buttons, and dark badges in light mode */
 html.light .ac-dashboard-root .bg-\[var\(--interactive-primary\)\] .text-white,
 html.light .ac-dashboard-root .bg-\[var\(--interactive-secondary\)\] .text-white,
 html.light .ac-dashboard-root .bg-\[var\(--error-500\)\] .text-white,
@@ -772,9 +772,28 @@ html.light .ac-dashboard-root .bg-\[var\(--success-500\)\] .text-white,
 html.light .ac-dashboard-root [class*="bg-[var(--interactive"][class*="text-white"],
 html.light .ac-dashboard-root [class*="bg-[var(--error"][class*="text-white"],
 html.light .ac-dashboard-root [class*="bg-[var(--success"][class*="text-white"],
-html.light .ac-dashboard-root .text-\[var\(--text-inverse\)\] {
-  color: var(--text-inverse) !important;
+html.light .ac-dashboard-root .text-\[var\(--text-inverse\)\],
+html.light .ac-business-root .bg-\[var\(--interactive-primary\)\] .text-white,
+html.light .ac-business-root .bg-\[var\(--interactive-secondary\)\] .text-white,
+html.light .ac-business-root .bg-\[var\(--error-500\)\] .text-white,
+html.light .ac-business-root .bg-\[var\(--success-500\)\] .text-white,
+html.light .ac-business-root [class*="bg-[var(--interactive"][class*="text-white"],
+html.light .ac-business-root [class*="bg-[var(--error"][class*="text-white"],
+html.light .ac-business-root [class*="bg-[var(--success"][class*="text-white"],
+html.light .ac-business-root .text-\[var\(--text-inverse\)\],
+html.light .ac-dashboard-root button.text-white,
+html.light .ac-business-root button.text-white,
+html.light .ac-dashboard-root button .text-white,
+html.light .ac-business-root button .text-white,
+html.light .ac-dashboard-root [class*="bg-blue-"] .text-white,
+html.light .ac-business-root [class*="bg-blue-"] .text-white,
+html.light .ac-dashboard-root [class*="bg-teal-"] .text-white,
+html.light .ac-business-root [class*="bg-teal-"] .text-white,
+html.light .ac-dashboard-root [class*="bg-indigo-"] .text-white,
+html.light .ac-business-root [class*="bg-indigo-"] .text-white {
+  color: #ffffff !important;
 }
+
 
 /* Typography Overrides - Scoped to Marketing Theme */
 .marketing-theme {
@@ -2391,9 +2410,16 @@ html.light .ac-business-scroll.ac-workspace-canvas {
   background-color: transparent !important;
 }
 
-.ac-enterprise-module > [class*="bg-slate-950"],
-.ac-enterprise-module [class*="bg-slate-950/"] {
+html.dark .ac-enterprise-module > [class*="bg-slate-950"],
+html.dark .ac-enterprise-module [class*="bg-slate-950/"],
+:not(html.light) .ac-enterprise-module > [class*="bg-slate-950"],
+:not(html.light) .ac-enterprise-module [class*="bg-slate-950/"] {
   background-color: rgba(8, 14, 27, 0.26) !important;
+}
+
+html.light .ac-enterprise-module > [class*="bg-slate-950"],
+html.light .ac-enterprise-module [class*="bg-slate-950/"] {
+  background-color: var(--ws-surface-card) !important;
 }
 
 @media (max-width: 767px) {

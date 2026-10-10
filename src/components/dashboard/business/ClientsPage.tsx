@@ -1460,7 +1460,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 </div>
 
                                 <div className="flex flex-1 min-h-0 gap-4">
-                                <div className="min-w-0 p-3 sm:p-5 lg:p-6 flex flex-col flex-1 ac-scroll-pane custom-scrollbar">
+                                <div className="min-w-0 p-3 sm:p-5 lg:p-6 flex flex-col flex-1 min-h-0 overflow-hidden">
                                     <RecordHeader
                                         moduleId="crm"
                                         className="mb-4"
@@ -1643,7 +1643,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     </div>
 
                                     {/* Tabs Content */}
-                                    <div className="flex-1 ac-scroll-pane pr-1 custom-scrollbar mb-6">
+                                    <div className="flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar mb-4">
                                         {activeTab === 'messages' && (
                                             <section className="space-y-4" aria-label="Client conversation">
                                                 <p className="type-card-description text-[var(--ws-text-secondary)]">A private conversation with this client, available in their client workspace.</p>
@@ -2100,7 +2100,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     </div>
 
                                     {/* Quick Actions Footer */}
-                                    <div className="mt-auto bg-[var(--ws-toolbar)] pt-6 border-t border-[var(--ws-border)]">
+                                    <div className="shrink-0 bg-[var(--ws-toolbar)] pt-4 border-t border-[var(--ws-border)] mt-auto">
                                         <h3 className="type-caption font-bold text-[var(--ws-text-muted)] mb-4 uppercase tracking-wider">Quick Actions</h3>
                                         <div className="grid grid-cols-2 gap-3">
                                             <Button variant="secondary" size="sm" onClick={() => { setSelectedClientForProposal(selectedClient); setShowProposalModal(true); }} icon={<FilePlus className="w-4 h-4" />}>Proposal</Button>

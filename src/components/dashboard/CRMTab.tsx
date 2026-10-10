@@ -2676,7 +2676,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             onDeleteClient={handleClientDelete}
             onNewDeal={() => {
               setSelectedEntity(null);
-              router.push(`/dashboard/deals?clientId=${encodeURIComponent(selectedEntity.rawClient!.id)}`);
+              router.push(`/dashboard/deals?create=true&clientId=${encodeURIComponent(selectedEntity.rawClient!.id)}`);
             }}
             onDraftContract={() => {
               setSelectedEntity(null);

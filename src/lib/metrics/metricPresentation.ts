@@ -159,7 +159,9 @@ export function platformKpiFromNumbers(input: {
   errorMessage?: string;
 }): PlatformKpiCardModel {
   const def = input.metricId ? getMetricDefinition(input.metricId) : undefined;
-  const hasValue = input.current != null && Number.isFinite(input.current);
+  const hasValue =
+    (input.current != null && Number.isFinite(input.current)) ||
+    (typeof input.formattedValue === 'string' && input.formattedValue.trim() !== '');
   const state =
     input.state ??
     (input.errorMessage ? 'error' : !hasValue ? 'empty' : 'ready');

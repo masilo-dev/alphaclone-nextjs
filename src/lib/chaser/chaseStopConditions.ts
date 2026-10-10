@@ -31,13 +31,16 @@ export async function verifyChaseStopCondition(
   if (chase.entity_type === 'invoice') {
     const { data } = await admin
       .from('business_invoices')
-      .select('status')
+      .select('status, balance_due, amount_paid, total')
       .eq('tenant_id', chase.tenant_id)
       .eq('id', chase.entity_id)
       .maybeSingle();
     const status = String(data?.status || '').toLowerCase();
-    if (['paid', 'void', 'cancelled', 'canceled'].includes(status)) {
-      return { stopped: true, outcome: status };
+    const total = Number(data?.total || 0);
+    const amountPaid = Number(data?.amount_paid || 0);
+    const balance = Number(data?.balance_due ?? (total - amountPaid));
+    if (['paid', 'void', 'cancelled', 'canceled'].includes(status) || balance <= 0 || (amountPaid >= total && total > 0)) {
+      return { stopped: true, outcome: 'paid' };
     }
     if (stops.includes(status)) return { stopped: true, outcome: status };
   }

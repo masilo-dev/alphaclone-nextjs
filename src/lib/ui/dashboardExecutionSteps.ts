@@ -242,6 +242,32 @@ export const HUB_EXECUTION_STEPS: Partial<Record<ModuleId, ExecutionDecisionStep
       href: '/dashboard/crm/workspace',
     },
   ],
+  outreach: [
+    {
+      id: 'hub-outreach-audience',
+      label: 'Audience',
+      title: 'Pick the right people',
+      description: 'Use leads or contacts with real email/phone data, not anonymous records.',
+      status: 'active',
+      href: '/dashboard/leads',
+    },
+    {
+      id: 'hub-outreach-send',
+      label: 'Send',
+      title: 'Launch or reply',
+      description: 'Send campaigns, answer replies, and keep warm conversations in the inbox.',
+      status: 'running',
+      href: '/dashboard/business/campaigns',
+    },
+    {
+      id: 'hub-outreach-convert',
+      label: 'Convert',
+      title: 'Move responses into CRM',
+      description: 'Qualified replies should become contacts, deals, or follow-up tasks.',
+      status: 'neutral',
+      href: '/dashboard/crm/workspace',
+    },
+  ],
   reports: [
     {
       id: 'hub-reports-read',

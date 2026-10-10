@@ -495,9 +495,9 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
       toast.error('Could not parse sender email from this message.');
       return;
     }
-    const subject = selectedEmail.subject?.match(/^Re:/i)
-      ? selectedEmail.subject
-      : `Re: ${selectedEmail.subject || ''}`;
+    const rawSubj = (selectedEmail.subject || '').trim();
+    const cleanSubj = !rawSubj || rawSubj.toLowerCase() === 'no subject' ? 'Following up' : rawSubj;
+    const subject = cleanSubj.match(/^Re:/i) ? cleanSubj : `Re: ${cleanSubj}`;
     const toList = replyAll
       ? [parsed.email, ...(selectedEmail.to || []).filter((e) => e && e !== parsed.email)]
       : [parsed.email];
@@ -523,10 +523,19 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
 
   const openDraftInCompose = (email: UnifiedInboxMessage) => {
     const parsed = parseEmailFromHeader(email.from || '');
+    let subj = (email.subject || '').trim();
+    let body = (email.body || email.snippet || '').trim();
+    const embeddedSubjectMatch = body.match(/^Subject:\s*(.+)$/m);
+    if (embeddedSubjectMatch) {
+      if (!subj || subj.toLowerCase() === 'no subject') {
+        subj = embeddedSubjectMatch[1].trim();
+      }
+      body = body.replace(/^Subject:\s*.+\r?\n?/m, '').trim();
+    }
     openCompose({
       to: (email.to || []).join(', ') || parsed.email || '',
-      subject: email.subject || '',
-      body: email.body || email.snippet || '',
+      subject: subj,
+      body: body,
     });
   };
 
@@ -901,13 +910,13 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                   }}
                   className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left type-ui font-semibold capitalize transition-all ${
                     folder === f
-                      ? 'bg-[var(--brand-blue-500)]/15 text-[var(--brand-blue-300)] ring-1 ring-[var(--brand-blue-500)]/30'
+                      ? 'bg-[var(--brand-blue-500)]/15 text-[var(--brand-blue-700)] dark:text-[var(--brand-blue-300)] ring-1 ring-[var(--brand-blue-500)]/30 font-bold'
                       : 'text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]'
                   }`}
                 >
                   <span>{t(FOLDER_LABELS[f])}</span>
                   {f === 'inbox' && unreadCount > 0 ? (
-                    <span className="rounded-full bg-[var(--brand-blue-500)]/20 px-2 py-0.5 type-ui font-black text-[var(--brand-blue-300)]">
+                    <span className="rounded-full bg-[var(--brand-blue-500)]/20 px-2 py-0.5 type-ui font-black text-[var(--brand-blue-700)] dark:text-[var(--brand-blue-300)]">
                       {unreadCount}
                     </span>
                   ) : null}
@@ -935,16 +944,28 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
             {/* AI draft banner */}
             <AiDraftReviewBanner
               onOpenDraft={(draft) => {
+                let subj = (draft.subject || '').trim();
+                let body = (draft.body || '').trim();
+                const embeddedSubjectMatch = body.match(/^Subject:\s*(.+)$/m);
+                if (embeddedSubjectMatch) {
+                  if (!subj || subj.toLowerCase() === 'no subject') {
+                    subj = embeddedSubjectMatch[1].trim();
+                  }
+                  body = body.replace(/^Subject:\s*.+\r?\n?/m, '').trim();
+                }
+                const cleanSubj = !subj || subj.toLowerCase() === 'no subject' ? 'Following up' : subj;
+                const finalSubj = cleanSubj.match(/^Re:/i) ? cleanSubj : `Re: ${cleanSubj}`;
+
                 openCompose({
                   to: draft.fromEmail || draft.from || '',
-                  subject: draft.subject?.match(/^Re:/i) ? draft.subject : `Re: ${draft.subject || ''}`,
-                  body: draft.body || '',
+                  subject: finalSubj,
+                  body: body,
                 });
               }}
             />
 
             {/* Not-connected banner */}
-            {!providerConnected && (
+            {statusChecked && !active.loading && !providerConnected && (
               <div className="rounded-xl border border-amber-500/20 bg-amber-500/8 p-2.5 type-caption text-amber-200">
                 {provider === 'microsoft' ? (
                   <>
@@ -1121,7 +1142,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                           {(labelMap[`${provider}:${email.id}`] || email.labels || []).map((lab) => (
                             <span
                               key={lab}
-                              className="type-caption font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-[var(--brand-blue-500)]/20 text-[var(--brand-blue-300)] border border-[var(--brand-blue-500)]/30 shadow-sm"
+                              className="type-caption font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-[var(--brand-blue-500)]/20 text-[var(--brand-blue-700)] dark:text-[var(--brand-blue-300)] border border-[var(--brand-blue-500)]/30 shadow-sm"
                             >
                               {INBOX_LABEL_OPTIONS.find((o) => o.id === lab)?.label || lab}
                             </span>
@@ -1172,15 +1193,15 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                           To: {selectedEmail.to.join(', ')}
                         </p>
                       ) : senderClientId ? (
-                        <button type="button" onClick={() => openCustomer(senderClientId)} className="type-card-description text-left text-[var(--brand-blue-300)] hover:text-[var(--brand-blue-200)] hover:underline truncate" title="Open Customer 360">{selectedEmail.from}</button>
+                        <button type="button" onClick={() => openCustomer(senderClientId)} className="type-card-description text-left text-[var(--brand-blue-700)] dark:text-[var(--brand-blue-300)] hover:underline truncate" title="Open Customer 360">{selectedEmail.from}</button>
                       ) : (
                         <p className="type-card-description text-[var(--ws-text-muted)] truncate">{selectedEmail.from}</p>
                       )}
                       <span
                         className={`type-caption font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
                           provider === 'microsoft'
-                            ? 'bg-blue-500/15 text-blue-300'
-                            : 'bg-[var(--brand-blue-500)]/15 text-[var(--brand-blue-300)]'
+                            ? 'bg-blue-500/15 text-blue-700 dark:text-blue-300'
+                            : 'bg-[var(--brand-blue-500)]/15 text-[var(--brand-blue-700)] dark:text-[var(--brand-blue-300)]'
                         }`}
                       >
                         {provider === 'microsoft' ? 'Outlook' : 'Zoho'}
@@ -1202,14 +1223,14 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                           key={opt.id}
                           type="button"
                           onClick={() => toggleMessageLabel(selectedEmail.id, opt.id)}
-                          className="type-caption font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-[var(--brand-blue-500)]/20 text-[var(--brand-blue-300)] border border-[var(--brand-blue-500)]/40 hover:bg-[var(--brand-blue-500)]/30"
+                          className="type-caption font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-[var(--brand-blue-500)]/20 text-[var(--brand-blue-700)] dark:text-[var(--brand-blue-300)] border border-[var(--brand-blue-500)]/40 hover:bg-[var(--brand-blue-500)]/30"
                         >
                           {opt.label} ×
                         </button>
                       ))}
                       {/* Compact 'Tag' dropdown trigger — only unassigned labels shown on hover */}
                       <details className="relative">
-                        <summary className="list-none cursor-pointer type-ui font-bold text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-400)] px-2 py-0.5 rounded-full border border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]/30">
+                        <summary className="list-none cursor-pointer type-ui font-bold text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-700)] dark:hover:text-[var(--brand-blue-300)] px-2 py-0.5 rounded-full border border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]/30">
                           + Tag
                         </summary>
                         <div className="absolute top-full left-0 mt-1 z-50 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-2 flex flex-col gap-1 min-w-[120px] shadow-xl">
@@ -1222,7 +1243,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                                 type="button"
                                 onClick={() => toggleMessageLabel(selectedEmail.id, opt.id)}
                                 className={`type-ui font-semibold text-left px-2.5 py-1 rounded-lg transition-colors ${
-                                  assigned ? 'text-[var(--brand-blue-300)] bg-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]'
+                                  assigned ? 'text-[var(--brand-blue-700)] dark:text-[var(--brand-blue-300)] bg-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]'
                                 }`}
                               >
                                 {assigned ? '✓ ' : ''}{opt.label}
@@ -1234,12 +1255,12 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     </div>
                     {senderKnown === false && (
                       <div className="mt-1.5 flex items-center gap-2">
-                        <span className="type-ui text-amber-400 font-semibold">{t('Unknown sender')}</span>
+                        <span className="type-ui text-amber-500 dark:text-amber-400 font-semibold">{t('Unknown sender')}</span>
                         <button
                           type="button"
                           onClick={handleCreateContactFromSender}
                           disabled={creatingContact}
-                          className="inline-flex items-center gap-1 type-caption font-bold uppercase px-2 py-0.5 rounded-lg bg-[var(--brand-blue-600)]/20 text-[var(--brand-blue-300)] hover:bg-[var(--brand-blue-600)]/30 disabled:opacity-50"
+                          className="inline-flex items-center gap-1 type-caption font-bold uppercase px-2 py-0.5 rounded-lg bg-[var(--brand-blue-600)]/20 text-[var(--brand-blue-700)] dark:text-[var(--brand-blue-300)] hover:bg-[var(--brand-blue-600)]/30 disabled:opacity-50"
                         >
                           {creatingContact ? (
                             <Loader2 className="w-3 h-3 animate-spin" />

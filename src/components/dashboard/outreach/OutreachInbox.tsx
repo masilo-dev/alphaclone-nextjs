@@ -330,6 +330,8 @@ export function OutreachInbox() {
   const [connectedProviders, setConnectedProviders] = useState<
     Array<{ id: DeliveryEmailProvider; label: string; connected: boolean }>
   >([]);
+  const [starredKeys, setStarredKeys] = useState<Set<string>>(() => new Set());
+  const [archivedKeys, setArchivedKeys] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     if (!searchParams) return;
@@ -390,29 +392,89 @@ export function OutreachInbox() {
 
   useEffect(() => { load(); }, [load, refreshFlag]);
 
+  // Load preferences from localStorage on mount or tenant switch
+  useEffect(() => {
+    if (!tenantId || typeof window === 'undefined') return;
+    try {
+      const s = window.localStorage.getItem(`outreach_starred_${tenantId}`);
+      if (s) setStarredKeys(new Set(JSON.parse(s)));
+      const a = window.localStorage.getItem(`outreach_archived_${tenantId}`);
+      if (a) setArchivedKeys(new Set(JSON.parse(a)));
+    } catch {
+      // ignore
+    }
+  }, [tenantId]);
+
+  const toggleStar = useCallback((key: string) => {
+    setStarredKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+        toast.success('Removed star');
+      } else {
+        next.add(key);
+        toast.success('Starred conversation');
+      }
+      if (tenantId && typeof window !== 'undefined') {
+        try {
+          window.localStorage.setItem(`outreach_starred_${tenantId}`, JSON.stringify(Array.from(next)));
+        } catch {}
+      }
+      return next;
+    });
+  }, [tenantId]);
+
+  const toggleArchive = useCallback((key: string) => {
+    setArchivedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+        toast.success('Conversation unarchived');
+      } else {
+        next.add(key);
+        toast.success('Conversation archived');
+      }
+      if (tenantId && typeof window !== 'undefined') {
+        try {
+          window.localStorage.setItem(`outreach_archived_${tenantId}`, JSON.stringify(Array.from(next)));
+        } catch {}
+      }
+      return next;
+    });
+  }, [tenantId]);
+
   const allThreads = useMemo(() => buildThreads(events), [events]);
+
+  const isReached = useCallback((t: ReachThread) => {
+    return t.sentCount > 0 || t.openedCount > 0 || t.repliedCount > 0 || t.sequenceIds.size > 0 || t.campaignIds.size > 0;
+  }, []);
 
   const filteredThreads = useMemo(() => {
     const q = search.trim().toLowerCase();
     let list = allThreads;
+    // Exclude archived unless actively searching
+    if (!q) {
+      list = list.filter((t) => !archivedKeys.has(t.threadKey));
+    }
     switch (activeList) {
-      case 'replied':          list = list.filter(t => t.repliedCount > 0); break;
-      case 'opened':           list = list.filter(t => t.openedCount > 0 && t.repliedCount === 0 && t.bouncedCount === 0); break;
-      case 'bounced':          list = list.filter(t => t.bouncedCount > 0); break;
-      case 'needs_followup':   list = list.filter(t => t.needsFollowUp); break;
-      case 'active_sequences': list = list.filter(t => t.sequenceIds.size > 0 && t.classification !== 'bounced' && t.classification !== 'unsubscribed'); break;
+      case 'all_people':       list = list.filter(isReached); break;
+      case 'replied':          list = list.filter((t) => t.repliedCount > 0); break;
+      case 'opened':           list = list.filter((t) => t.openedCount > 0 && t.repliedCount === 0 && t.bouncedCount === 0); break;
+      case 'bounced':          list = list.filter((t) => t.bouncedCount > 0); break;
+      case 'needs_followup':   list = list.filter((t) => t.needsFollowUp); break;
+      case 'active_sequences': list = list.filter((t) => t.sequenceIds.size > 0 && t.classification !== 'bounced' && t.classification !== 'unsubscribed'); break;
       default: break;
     }
-    if (q) list = list.filter(t =>
+    if (q) list = list.filter((t) =>
       t.displayName.toLowerCase().includes(q) ||
       (t.email || '').toLowerCase().includes(q) ||
       t.normalizedRecipient.toLowerCase().includes(q)
     );
     return list;
-  }, [allThreads, activeList, search]);
+  }, [allThreads, activeList, search, archivedKeys, isReached]);
 
   const activeThread = useMemo(
-    () => filteredThreads.find(t => t.threadKey === activeThreadKey) || null,
+    () => filteredThreads.find((t) => t.threadKey === activeThreadKey) || null,
     [filteredThreads, activeThreadKey]
   );
 
@@ -421,7 +483,8 @@ export function OutreachInbox() {
       all_people: 0, active_sequences: 0, replied: 0, opened: 0, bounced: 0, needs_followup: 0,
     };
     for (const t of allThreads) {
-      counts.all_people += 1;
+      if (archivedKeys.has(t.threadKey)) continue;
+      if (isReached(t)) counts.all_people += 1;
       if (t.sequenceIds.size > 0 && t.classification !== 'bounced' && t.classification !== 'unsubscribed') counts.active_sequences += 1;
       if (t.repliedCount > 0) counts.replied += 1;
       if (t.openedCount > 0 && t.repliedCount === 0 && t.bouncedCount === 0) counts.opened += 1;
@@ -429,15 +492,21 @@ export function OutreachInbox() {
       if (t.needsFollowUp) counts.needs_followup += 1;
     }
     return counts;
-  }, [allThreads]);
+  }, [allThreads, archivedKeys, isReached]);
 
   const openComposerForThread = useCallback((t: ReachThread | null) => {
     if (!t?.email) { toast.error('No email address available for this contact'); return; }
+    const firstName = t.displayName.split(' ')[0] || 'there';
     setComposeTo(t.email);
-    setComposeSubject(`Following up — ${t.displayName}`);
-    setComposeBody(`Hi ${t.displayName.split(' ')[0] || 'there'},\n\nJust wanted to make sure you saw my last message. Happy to walk through anything that would help on your end.\n\nBest,`);
+    if (t.sentCount > 0) {
+      setComposeSubject(`Following up — ${t.displayName}`);
+      setComposeBody(`Hi ${firstName},\n\nJust wanted to follow up on my previous message. Happy to walk through anything that would help on your end.\n\nBest,`);
+    } else {
+      setComposeSubject(`Introduction — ${currentTenant?.name || 'AlphaClone'}`);
+      setComposeBody(`Hi ${firstName},\n\nHope this note finds you well. I wanted to reach out regarding our work with teams in your space.\n\nWould you have 10 minutes for a quick chat next week?\n\nBest,`);
+    }
     setComposerOpen(true);
-  }, []);
+  }, [currentTenant?.name]);
 
   const handleAiDraft = useCallback(async () => {
     if (!tenantId || !composeTo.trim()) {
@@ -706,6 +775,9 @@ export function OutreachInbox() {
                                 <p className={`type-card-description font-semibold truncate ${active ? 'text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-secondary)]'}`}>
                                   {t.displayName}
                                 </p>
+                                {starredKeys.has(t.threadKey) ? (
+                                  <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" aria-label="Starred" />
+                                ) : null}
                                 {t.needsFollowUp ? (
                                   <Badge variant="outline" className="bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-300 px-1.5 h-4 type-caption ml-1">Next</Badge>
                                 ) : null}
@@ -799,11 +871,31 @@ export function OutreachInbox() {
                         <Reply className="w-3.5 h-3.5" />
                         Reply
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]" title="Archive (no-op UX)">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className={`h-8 w-8 rounded-lg border border-[var(--ws-border)] ${
+                          activeThread && archivedKeys.has(activeThread.threadKey)
+                            ? 'text-amber-500 bg-amber-500/10 border-amber-500/30'
+                            : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'
+                        }`}
+                        onClick={() => activeThread && toggleArchive(activeThread.threadKey)}
+                        title={activeThread && archivedKeys.has(activeThread.threadKey) ? 'Unarchive conversation' : 'Archive conversation'}
+                      >
                         <Archive className="w-3.5 h-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]" title="Star (no-op UX)">
-                        <Star className="w-3.5 h-3.5" />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className={`h-8 w-8 rounded-lg border border-[var(--ws-border)] ${
+                          activeThread && starredKeys.has(activeThread.threadKey)
+                            ? 'text-amber-500 bg-amber-500/10 border-amber-500/30'
+                            : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'
+                        }`}
+                        onClick={() => activeThread && toggleStar(activeThread.threadKey)}
+                        title={activeThread && starredKeys.has(activeThread.threadKey) ? 'Remove star' : 'Star conversation'}
+                      >
+                        <Star className={`w-3.5 h-3.5 ${activeThread && starredKeys.has(activeThread.threadKey) ? 'fill-amber-400 text-amber-400' : ''}`} />
                       </Button>
                       <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]" title="More">
                         <MoreHorizontal className="w-3.5 h-3.5" />

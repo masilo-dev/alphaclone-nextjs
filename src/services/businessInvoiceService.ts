@@ -45,12 +45,20 @@ export interface BusinessInvoice {
 
 function mapInvoice(row: any): BusinessInvoice {
     const lineRows = row.invoice_line_items || row.line_items || [];
+    const total = Number(row.total || 0);
+    const amountPaid = Number(row.amount_paid || 0);
+    const rawBalance = row.balance_due != null ? Number(row.balance_due) : total - amountPaid;
+    const isSettled = rawBalance <= 0 || (amountPaid >= total && total > 0);
+    const effectiveStatus = (isSettled && row.status !== 'draft' && row.status !== 'void' && row.status !== 'cancelled')
+        ? 'paid'
+        : row.status;
     return {
         id: row.id, tenantId: row.tenant_id, clientId: row.client_id, projectId: row.project_id, contractId: row.contract_id,
-        invoiceNumber: row.invoice_number, issueDate: row.issue_date, dueDate: row.due_date, status: row.status,
+        invoiceNumber: row.invoice_number, issueDate: row.issue_date, dueDate: row.due_date, status: effectiveStatus,
         subtotal: Number(row.subtotal || 0), taxRate: Number(row.tax_rate || 0), tax: Number(row.tax || 0),
-        discountAmount: Number(row.discount_amount || 0), total: Number(row.total || 0), amountPaid: Number(row.amount_paid || 0),
-        balanceDue: Number(row.balance_due ?? Number(row.total || 0) - Number(row.amount_paid || 0)), autoFollowupEnabled: row.auto_followup_enabled !== false,
+        discountAmount: Number(row.discount_amount || 0), total, amountPaid,
+        balanceDue: isSettled ? 0 : Math.max(0, rawBalance),
+        autoFollowupEnabled: isSettled ? false : row.auto_followup_enabled !== false,
         lineItems: lineRows.map((item: any) => ({ description: item.description, quantity: Number(item.quantity || 0), rate: Number(item.rate ?? item.unit_price ?? 0), amount: Number(item.amount ?? Number(item.quantity || 0) * Number(item.rate ?? item.unit_price ?? 0)) })),
         notes: row.notes, isPublic: Boolean(row.is_public), senderName: row.sender_name, bankDetails: row.bank_details,
         mobilePaymentDetails: row.mobile_payment_details, signature: row.signature, createdAt: row.created_at, updatedAt: row.updated_at,

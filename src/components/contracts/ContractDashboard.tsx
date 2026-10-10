@@ -1975,21 +1975,26 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 />
                                 <DocumentPreview
                                     input={buildContractDocumentInput(
-                                        {
-                                            id: contractId || undefined,
-                                            title: `${form.projectName || 'Service Agreement'} — ${form.clientName || 'Client'}`,
-                                            content: isEditing
-                                                ? editedHtml
-                                                : (editedHtml || generatedContract || contractToHTML(generatedContract)),
-                                            status: isSigned ? 'sent' : 'draft',
-                                            payment_amount: parseFloat(form.totalAmount) || 0,
-                                            created_at: new Date().toISOString(),
-                                            metadata: {
-                                                document_theme: documentTheme,
-                                                client_name: form.clientName,
-                                                client_email: form.clientEmail,
-                                            },
-                                        },
+                                        (() => {
+                                            const existingContract = contractId ? savedContracts.find((c) => c.id === contractId) : undefined;
+                                            return {
+                                                id: contractId || undefined,
+                                                title: `${form.projectName || 'Service Agreement'} — ${form.clientName || 'Client'}`,
+                                                content: isEditing
+                                                    ? editedHtml
+                                                    : (editedHtml || generatedContract || contractToHTML(generatedContract)),
+                                                status: existingContract?.status || (isSigned ? 'sent' : 'draft'),
+                                                payment_amount: parseFloat(form.totalAmount) || 0,
+                                                created_at: existingContract?.created_at || new Date().toISOString(),
+                                                client_signed_at: existingContract?.client_signed_at,
+                                                admin_signed_at: existingContract?.admin_signed_at,
+                                                metadata: {
+                                                    document_theme: documentTheme,
+                                                    client_name: form.clientName,
+                                                    client_email: form.clientEmail,
+                                                },
+                                            };
+                                        })(),
                                         currentTenant
                                             ? {
                                                 name: currentTenant.name,

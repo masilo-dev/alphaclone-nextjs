@@ -168,6 +168,7 @@ export async function getRunProgressSummary(runId: string, tenantId: string) {
   const total = list.length || 1;
   const done = (byStatus.COMPLETED || 0) + (byStatus.SKIPPED || 0);
   const failed = byStatus.FAILED || 0;
+  const cancelled = byStatus.CANCELLED || 0;
   const waiting =
     (byStatus.WAITING_FOR_EVENT || 0) +
     (byStatus.WAITING_FOR_APPROVAL || 0) +
@@ -178,9 +179,10 @@ export async function getRunProgressSummary(runId: string, tenantId: string) {
 
   const progressPct = Math.round((done / total) * 100);
   const terminal = list.length > 0 && running === 0 && waiting === 0;
+  const isCancellation = run.status === 'cancellation_requested' || run.status === 'cancelled' || (terminal && cancelled > 0 && done + failed + cancelled >= total);
   let verification = null as Awaited<ReturnType<typeof verifyRunOutcomes>> | null;
 
-  if (terminal && (done + failed >= total || failed > 0)) {
+  if (terminal && !isCancellation && (done + failed >= total || failed > 0)) {
     try {
       verification = await verifyRunOutcomes({ tenantId, runId });
     } catch (err) {
@@ -188,27 +190,29 @@ export async function getRunProgressSummary(runId: string, tenantId: string) {
     }
   }
 
-  const nextStatus = verification
-    ? verification.outcome === 'COMPLETED'
-      ? 'completed'
-      : verification.outcome === 'COMPLETED_WITH_EXCEPTIONS'
-        ? 'completed_with_exceptions'
-        : verification.outcome === 'FAILED'
-          ? 'failed'
-          : verification.outcome === 'PARTIALLY_COMPLETED'
-            ? 'partially_completed'
-            : failed && done + failed >= total
-              ? 'completed_with_exceptions'
-              : done >= total
-                ? 'completed'
-                : 'running'
-    : failed && done + failed >= total
-      ? 'completed_with_exceptions'
-      : done >= total
+  const nextStatus = isCancellation
+    ? 'cancelled'
+    : verification
+      ? verification.outcome === 'COMPLETED'
         ? 'completed'
-        : waiting && !running
-          ? 'waiting'
-          : 'running';
+        : verification.outcome === 'COMPLETED_WITH_EXCEPTIONS'
+          ? 'completed_with_exceptions'
+          : verification.outcome === 'FAILED'
+            ? 'failed'
+            : verification.outcome === 'PARTIALLY_COMPLETED'
+              ? 'partially_completed'
+              : failed && done + failed >= total
+                ? 'completed_with_exceptions'
+                : done >= total
+                  ? 'completed'
+                  : 'running'
+      : failed && done + failed >= total
+        ? 'completed_with_exceptions'
+        : done >= total
+          ? 'completed'
+          : waiting && !running
+            ? 'waiting'
+            : 'running';
 
   await admin
     .from('agent_runs')
@@ -217,20 +221,25 @@ export async function getRunProgressSummary(runId: string, tenantId: string) {
       last_progress_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       status: nextStatus,
-      ...(String(nextStatus).startsWith('completed') || nextStatus === 'failed' || nextStatus === 'partially_completed'
+      ...(String(nextStatus).startsWith('completed') || nextStatus === 'failed' || nextStatus === 'partially_completed' || nextStatus === 'cancelled'
         ? { completed_at: new Date().toISOString() }
         : {}),
     })
     .eq('id', runId)
     .eq('tenant_id', tenantId);
 
+  const cancelledSnippet = cancelled > 0 ? `, and ${cancelled} cancelled` : '';
+  const summary = verification?.summary
+    || (isCancellation
+      ? `Run cancelled: ${cancelled} cancelled, ${done} completed, and ${failed} failed of ${list.length} tasks.`
+      : `Bonnie has ${done} completed, ${running} active, ${waiting} waiting, ${failed} failed${cancelledSnippet} of ${list.length} tasks.`);
+
   return {
-    run,
+    run: { ...run, status: nextStatus },
     taskCount: list.length,
     byStatus,
     progressPct,
-    summary: verification?.summary
-      || `Bonnie has ${done} completed, ${running} active, ${waiting} waiting, and ${failed} failed of ${list.length} tasks.`,
+    summary,
     verification,
     tasks: list,
   };
@@ -238,23 +247,16 @@ export async function getRunProgressSummary(runId: string, tenantId: string) {
 
 export async function requestRunCancellation(runId: string, tenantId: string, reason?: string) {
   const admin = createSupabaseAdminClient();
-  await admin
-    .from('agent_runs')
-    .update({
-      status: 'cancellation_requested',
-      failure_reason: reason || 'Cancellation requested by user',
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', runId)
-    .eq('tenant_id', tenantId);
+  const nowIso = new Date().toISOString();
+  const failureReason = reason || 'Cancellation requested by user';
 
-  // Prevent new READY tasks; cancel DRAFT/READY/QUEUED
+  // Prevent new READY tasks; cancel DRAFT/READY/QUEUED/WAITING
   const { data: open } = await admin
     .from('agent_tasks')
     .select('id, status, version')
     .eq('run_id', runId)
     .eq('tenant_id', tenantId)
-    .in('status', ['DRAFT', 'READY', 'QUEUED', 'RETRY_SCHEDULED', 'WAITING_FOR_EVENT', 'WAITING_FOR_APPROVAL']);
+    .in('status', ['DRAFT', 'READY', 'QUEUED', 'RETRY_SCHEDULED', 'WAITING_FOR_EVENT', 'WAITING_FOR_APPROVAL', 'WAITING_FOR_USER', 'PAUSED']);
 
   for (const task of open || []) {
     await admin
@@ -263,11 +265,22 @@ export async function requestRunCancellation(runId: string, tenantId: string, re
         status: 'CANCELLED',
         version: (task.version || 1) + 1,
         failure_reason: 'Run cancelled',
-        updated_at: new Date().toISOString(),
+        updated_at: nowIso,
       })
       .eq('id', task.id)
       .eq('version', task.version);
   }
+
+  await admin
+    .from('agent_runs')
+    .update({
+      status: 'cancelled',
+      failure_reason: failureReason,
+      completed_at: nowIso,
+      updated_at: nowIso,
+    })
+    .eq('id', runId)
+    .eq('tenant_id', tenantId);
 
   return { ok: true };
 }

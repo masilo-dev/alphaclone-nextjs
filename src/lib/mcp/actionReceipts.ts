@@ -82,7 +82,7 @@ export async function persistActionReceipt(params: {
       ? `Executed successfully. Entity: ${params.receipt.entity_type || 'N/A'} (${params.receipt.entity_id || 'N/A'})`
       : isPending
       ? `Execution in-flight or pending provider verification. Entity: ${params.receipt.entity_type || 'N/A'} (${params.receipt.entity_id || 'N/A'})`
-      : `Execution failed: ${params.errorMessage || 'Unknown error'}`;
+      : `Execution failed: ${params.errorMessage || (params.receipt as any)?.error || (params.receipt as any)?.failure_reason || `Action ${params.receipt.action_id} failed`}`;
 
     const notificationLevel = params.success
       ? 'LEVEL_1_RECORD'

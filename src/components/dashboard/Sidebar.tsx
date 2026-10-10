@@ -81,11 +81,28 @@ const Sidebar = React.memo<SidebarProps>(({
         return () => window.removeEventListener('ac-theme-changed', onRemote);
     }, [user.id]);
 
+    const allSubHrefs = React.useMemo(() => {
+        const hrefs: string[] = [];
+        for (const item of navItems || []) {
+            if (Array.isArray(item.subItems)) {
+                for (const sub of item.subItems) {
+                    if (sub?.href) hrefs.push(resolveCanonicalPath(sub.href.split('?')[0]));
+                }
+            }
+        }
+        return hrefs;
+    }, [navItems]);
+
     const isSubItemActive = useCallback((subHref: string): boolean => {
         const canonicalActive = resolveCanonicalPath(activeTab);
         const canonicalSub = resolveCanonicalPath(subHref.split('?')[0]);
-        return canonicalActive === canonicalSub || (canonicalSub !== '/dashboard' && canonicalActive.startsWith(`${canonicalSub}/`));
-    }, [activeTab]);
+        if (canonicalActive === canonicalSub) return true;
+        if (canonicalSub !== '/dashboard' && canonicalActive.startsWith(`${canonicalSub}/`)) {
+            const hasExactSiblingMatch = allSubHrefs.some(href => href === canonicalActive);
+            return !hasExactSiblingMatch;
+        }
+        return false;
+    }, [activeTab, allSubHrefs]);
 
     // Auto-expand parent if a child's href matches activeTab
     useEffect(() => {

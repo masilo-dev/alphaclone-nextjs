@@ -163,6 +163,7 @@ export async function recordTenantEvent(params: TenantEventParams): Promise<{
         type: `operational_alert_${params.sourceModule.toLowerCase()}`,
         title: `[ALERT] ${params.title}`,
         message: `${params.description || params.action}. Status: ${status}. Actor: ${params.actorType}`,
+        severity: 'urgent',
         link: params.projectId
           ? `/dashboard/projects?id=${params.projectId}`
           : params.clientId

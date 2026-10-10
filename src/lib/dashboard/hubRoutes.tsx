@@ -13,8 +13,6 @@ import { resolveCanonicalPath } from '@/lib/dashboard/canonicalRoutes';
 export const SALES_HUB_ROUTES = new Set([
   '/dashboard/crm',
   '/dashboard/crm/workspace',
-  '/dashboard/outreach',
-  '/dashboard/outreach/inbox',
   '/dashboard/crm/console',
   '/dashboard/crm/accounts',
   '/dashboard/crm/reports',
@@ -66,6 +64,8 @@ export const MONEY_HUB_ROUTES = new Set([
 export const MARKETING_HUB_ROUTES = new Set([
   '/dashboard/marketing',
   '/dashboard/marketing/outreach',
+  '/dashboard/outreach',
+  '/dashboard/outreach/inbox',
   '/dashboard/marketing/delivery',
   '/dashboard/business/campaigns',
   '/dashboard/business/campaigns/zoho',

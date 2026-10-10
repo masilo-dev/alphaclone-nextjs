@@ -82,20 +82,30 @@ export default function JobsQueueTab() {
         detail: e.event_type,
         created_at: e.created_at,
       })),
-      ...(runsRes.data || []).map((r: { id: string; status: string; last_error: string | null; created_at: string; playbook_id: string | null }) => ({
-        id: r.id,
-        kind: 'workflow_run',
-        status: r.status || 'unknown',
-        detail: r.last_error || r.playbook_id || 'workflow',
-        created_at: r.created_at,
-      })),
-      ...((scraperRes as { data: { id: string; status: string; created_at: string; error_message: string | null }[] | null }).data || []).map((j) => ({
-        id: j.id,
-        kind: 'scraper_job',
-        status: j.status || 'unknown',
-        detail: j.error_message || 'Lead search',
-        created_at: j.created_at,
-      })),
+      ...(runsRes.data || []).map((r: { id: string; status: string; last_error: string | null; created_at: string; playbook_id: string | null }) => {
+        const isRunning = r.status === 'running';
+        const ageMs = Date.now() - new Date(r.created_at).getTime();
+        const isStale = isRunning && ageMs > 30 * 60 * 1000;
+        return {
+          id: r.id,
+          kind: 'workflow_run',
+          status: isStale ? 'stale (timed out)' : (r.status || 'unknown'),
+          detail: r.last_error || r.playbook_id || (isStale ? 'Timed out workflow run' : 'workflow'),
+          created_at: r.created_at,
+        };
+      }),
+      ...((scraperRes as { data: { id: string; status: string; created_at: string; error_message: string | null }[] | null }).data || []).map((j) => {
+        const isRunning = j.status === 'running';
+        const ageMs = Date.now() - new Date(j.created_at).getTime();
+        const isStale = isRunning && ageMs > 30 * 60 * 1000;
+        return {
+          id: j.id,
+          kind: 'scraper_job',
+          status: isStale ? 'stale (timed out)' : (j.status || 'unknown'),
+          detail: j.error_message || (isStale ? 'Timed out lead search' : 'Lead search'),
+          created_at: j.created_at,
+        };
+      }),
       ...(isMissingTableError((cronRes as { error?: unknown }).error)
         ? []
         : ((cronRes as { data: { id: string; trigger_type: string; status: string; error_message: string | null; ran_at: string }[] | null }).data || []).map((c) => ({
@@ -107,13 +117,18 @@ export default function JobsQueueTab() {
           }))),
       ...(isMissingTableError((leadRunsRes as { error?: unknown }).error)
         ? []
-        : ((leadRunsRes as { data: { id: string; status: string; run_at: string; message: string | null; metadata: Record<string, unknown> | null }[] | null }).data || []).map((r) => ({
-            id: r.id,
-            kind: 'lead_run',
-            status: r.status || 'unknown',
-            detail: r.message || [r.metadata?.market, r.metadata?.category].filter(Boolean).join(' · ') || 'lead run',
-            created_at: r.run_at,
-          }))),
+        : ((leadRunsRes as { data: { id: string; status: string; run_at: string; message: string | null; metadata: Record<string, unknown> | null }[] | null }).data || []).map((r) => {
+            const isRunning = r.status === 'running';
+            const ageMs = Date.now() - new Date(r.run_at).getTime();
+            const isStale = isRunning && ageMs > 30 * 60 * 1000;
+            return {
+              id: r.id,
+              kind: 'lead_run',
+              status: isStale ? 'stale (timed out)' : (r.status || 'unknown'),
+              detail: r.message || [r.metadata?.market, r.metadata?.category].filter(Boolean).join(' · ') || (isStale ? 'Timed out lead run' : 'lead run'),
+              created_at: r.run_at,
+            };
+          })),
     ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     setRows(merged.slice(0, 50));
@@ -122,12 +137,37 @@ export default function JobsQueueTab() {
 
   useEffect(() => { void load(); }, [load]);
 
+  const handleMarkStaleFailed = async (row: QueueRow) => {
+    if (row.kind === 'lead_run') {
+      await supabase
+        .from('lead_run_log')
+        .update({ status: 'failed', errors: ['Execution timed out after 30 minutes without heartbeat'] })
+        .eq('id', row.id);
+      void load();
+    } else if (row.kind === 'workflow_run') {
+      await supabase
+        .from('automation_runs')
+        .update({ status: 'failed', last_error: 'Execution timed out after 30 minutes without heartbeat' })
+        .eq('id', row.id);
+      void load();
+    } else if (row.kind === 'scraper_job') {
+      await supabase
+        .from('lead_search_jobs')
+        .update({ status: 'failed', error_message: 'Execution timed out after 30 minutes without heartbeat' })
+        .eq('id', row.id);
+      void load();
+    }
+  };
+
   const statusIcon = (status: string) => {
     if (status === 'completed' || status === 'success' || status === 'delivered') {
       return <CheckCircle2 className="w-4 h-4 text-emerald-400" />;
     }
     if (status === 'failed' || status === 'error') {
       return <AlertCircle className="w-4 h-4 text-red-400" />;
+    }
+    if (status === 'stale (timed out)') {
+      return <AlertCircle className="w-4 h-4 text-amber-500" />;
     }
     return <Clock className="w-4 h-4 text-amber-400" />;
   };
@@ -165,6 +205,15 @@ export default function JobsQueueTab() {
                       <p className="type-card-description text-[var(--ws-text-tertiary)]">
                         {formatDistanceToNow(new Date(row.created_at), { addSuffix: true })}
                       </p>
+                      {row.status === 'stale (timed out)' && (
+                        <button
+                          type="button"
+                          onClick={() => void handleMarkStaleFailed(row)}
+                          className="mt-2 px-2.5 py-1 rounded text-xs font-semibold bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 border border-amber-500/30 transition-colors"
+                        >
+                          Mark Failed / Recover
+                        </button>
+                      )}
                     </div>
                   </div>
                 </MobileDataCard>
@@ -179,6 +228,7 @@ export default function JobsQueueTab() {
                     <th>Kind</th>
                     <th>Status</th>
                     <th>When</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -190,6 +240,17 @@ export default function JobsQueueTab() {
                       <td className="text-[var(--ws-text-secondary)] capitalize">{row.status}</td>
                       <td className="text-[var(--ws-text-tertiary)] type-table-cell whitespace-nowrap">
                         {formatDistanceToNow(new Date(row.created_at), { addSuffix: true })}
+                      </td>
+                      <td>
+                        {row.status === 'stale (timed out)' ? (
+                          <button
+                            type="button"
+                            onClick={() => void handleMarkStaleFailed(row)}
+                            className="px-2 py-0.5 rounded text-xs font-semibold bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 border border-amber-500/30 transition-colors"
+                          >
+                            Mark Failed
+                          </button>
+                        ) : null}
                       </td>
                     </tr>
                   ))}

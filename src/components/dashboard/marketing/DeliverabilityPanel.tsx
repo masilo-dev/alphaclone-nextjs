@@ -16,21 +16,35 @@ export default function DeliverabilityPanel() {
     if (!currentTenant?.id) return;
     (async () => {
       setLoading(true);
-      const [{ data: campaigns }, { count: suppressed }] = await Promise.all([
+      const [{ data: campaigns }, { data: outreachEvents }, { count: suppressed }] = await Promise.all([
         supabase
           .from('email_campaigns')
           .select('total_sent, total_bounced, total_unsubscribed')
           .eq('tenant_id', currentTenant.id),
         supabase
+          .from('outreach_events')
+          .select('event_type')
+          .eq('tenant_id', currentTenant.id)
+          .in('event_type', ['sent', 'delivered', 'bounced', 'unsubscribed']),
+        supabase
           .from('email_suppressions')
           .select('id', { count: 'exact', head: true })
           .eq('tenant_id', currentTenant.id),
       ]);
-      const rows = campaigns || [];
+      const campaignRows = campaigns || [];
+      const outreachRows = outreachEvents || [];
+      const campaignSent = campaignRows.reduce((s: number, c: { total_sent?: number }) => s + (c.total_sent || 0), 0);
+      const campaignBounced = campaignRows.reduce((s: number, c: { total_bounced?: number }) => s + (c.total_bounced || 0), 0);
+      const campaignUnsub = campaignRows.reduce((s: number, c: { total_unsubscribed?: number }) => s + (c.total_unsubscribed || 0), 0);
+
+      const outreachSent = outreachRows.filter((r: { event_type?: string }) => r.event_type === 'sent' || r.event_type === 'delivered').length;
+      const outreachBounced = outreachRows.filter((r: { event_type?: string }) => r.event_type === 'bounced').length;
+      const outreachUnsub = outreachRows.filter((r: { event_type?: string }) => r.event_type === 'unsubscribed').length;
+
       setStats({
-        sent: rows.reduce((s: number, c: { total_sent?: number }) => s + (c.total_sent || 0), 0),
-        bounced: rows.reduce((s: number, c: { total_bounced?: number }) => s + (c.total_bounced || 0), 0),
-        unsubscribed: rows.reduce((s: number, c: { total_unsubscribed?: number }) => s + (c.total_unsubscribed || 0), 0),
+        sent: campaignSent + outreachSent,
+        bounced: campaignBounced + outreachBounced,
+        unsubscribed: campaignUnsub + outreachUnsub,
         suppressed: suppressed ?? 0,
       });
       setLoading(false);

@@ -188,17 +188,25 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                 const filtered = integrations.filter(i => i.enabled && emailTypes.includes(i.type));
 
                 const statusList = Array.isArray(statusData?.integrations) ? statusData.integrations : [];
-                const msStatus = statusList.find((i: { type?: string; connected?: boolean }) => i.type === 'microsoft' && i.connected);
-                if (msStatus && !filtered.some((p) => p.type === 'microsoft')) {
-                    filtered.unshift({
-                        id: 'microsoft-connection',
-                        type: 'microsoft',
-                        name: 'Microsoft 365',
-                        enabled: true,
-                        userId,
-                        createdAt: new Date().toISOString(),
-                        config: { fromEmail: (msStatus as { email?: string }).email || '' },
-                    });
+                const msStatus = statusList.find((i: { type?: string; connected?: boolean; email?: string }) => i.type === 'microsoft' && i.connected) as { email?: string } | undefined;
+                const existingMs = filtered.find((p) => p.type === 'microsoft');
+                if (msStatus?.email) {
+                    if (existingMs) {
+                        existingMs.config = {
+                            ...existingMs.config,
+                            fromEmail: msStatus.email,
+                        };
+                    } else {
+                        filtered.unshift({
+                            id: 'microsoft-connection',
+                            type: 'microsoft',
+                            name: 'Microsoft 365',
+                            enabled: true,
+                            userId,
+                            createdAt: new Date().toISOString(),
+                            config: { fromEmail: msStatus.email },
+                        });
+                    }
                 }
 
                 setAvailableProviders(filtered);
@@ -217,7 +225,11 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                 const resolved = resolveAutoProvider(connectedIds, preferredDefault);
                 const pickType = preferredDefault === 'auto' ? resolved : preferredDefault;
                 const match = filtered.find((p) => p.type === pickType);
-                setSelectedProvider(match || filtered[0] || null);
+                const picked = match || filtered[0] || null;
+                setSelectedProvider(picked);
+                if (picked?.type === 'microsoft' && msStatus?.email) {
+                    setFrom(msStatus.email);
+                }
             });
 
             // Fetch user's email for the fallback From field
@@ -541,6 +553,13 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
         }
         if (!body.trim()) {
             toast.error('Message body is required');
+            return;
+        }
+
+        const placeholderRegex = /\[(?:Your\s+(?:Name|Email|Phone|Title|Role|Company)|Sender\s+Name|Client\s+Name|Recipient\s+Name)\]/i;
+        const bodyPlaceholderMatch = body.match(placeholderRegex) || subject.match(placeholderRegex);
+        if (bodyPlaceholderMatch) {
+            toast.error(`Please replace placeholder "${bodyPlaceholderMatch[0]}" before sending.`);
             return;
         }
 

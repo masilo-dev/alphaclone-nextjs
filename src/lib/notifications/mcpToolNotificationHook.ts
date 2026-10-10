@@ -141,10 +141,16 @@ export async function notifyAfterMcpToolExecution(params: {
     ? `${translated.event} (Verifying)`
     : translated.event;
 
+  const failureDetail = !effectiveSuccess
+    ? sanitizeUserFacingError(rawError, { tool: params.toolName })
+    : '';
+
   const eventMessage = isPending
     ? 'Operation submitted. Provider confirmation is pending verification in background.'
     : !effectiveSuccess
-    ? sanitizeUserFacingError(rawError, { tool: params.toolName, preferGeneric: true })
+    ? correlationId
+      ? `${failureDetail || 'Operation failed'} (Ref: ${correlationId.slice(0, 8)})`
+      : failureDetail || 'Operation failed'
     : translated.result;
 
   const eventStatus: TenantBusinessEventInput['status'] = isPending

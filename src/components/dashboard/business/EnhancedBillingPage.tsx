@@ -227,6 +227,15 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         }
     }, [searchParams, router]);
 
+    useEffect(() => {
+        if (!showPDFPreview) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setShowPDFPreview(null);
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showPDFPreview]);
+
     useBonnieDeepLinkFocus({
         onFocus: ({ focus, recordId }) => {
             if (focus === 'overdue') setFilter('overdue');
@@ -360,25 +369,28 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         };
         invoiceData.forEach(inv => {
             s.totalInvoiced += inv.total;
-            if (inv.status === 'paid') {
+            const balance = inv.balanceDue != null ? inv.balanceDue : (inv.total - (inv.amountPaid || 0));
+            const isSettled = inv.status === 'paid' || balance <= 0 || ((inv.amountPaid || 0) >= inv.total && inv.total > 0);
+            if (isSettled && inv.status !== 'draft' && inv.status !== 'void' && inv.status !== 'cancelled') {
                 s.totalRevenue += inv.total;
                 s.paidCount++;
                 if (inv.updatedAt && today.getTime() - new Date(inv.updatedAt).getTime() > 30 * 86400000) {
                     s.paidPrev++;
                 }
             } else if (inv.status === 'sent') {
-                s.pendingAmount += inv.total;
+                s.pendingAmount += balance > 0 ? balance : inv.total;
                 s.sentCount++;
                 const issuedDays = inv.issueDate ? Math.floor((today.getTime() - new Date(inv.issueDate).getTime()) / 86400000) : 0;
                 if (issuedDays > 30) s.sentPrev++;
             } else if (inv.status === 'overdue') {
-                s.overdueAmount += inv.total;
+                const effectiveOverdue = balance > 0 ? balance : 0;
+                s.overdueAmount += effectiveOverdue;
                 const age = inv.dueDate ? Math.max(0, Math.floor((today.getTime() - new Date(inv.dueDate).getTime()) / 86400000)) : 0;
                 if (age > s.oldestOverdueDays) s.oldestOverdueDays = age;
-                if (age > 60) s.overdueBucket61_plus += inv.total;
-                else if (age > 30) s.overdueBucket31_60 += inv.total;
-                else if (age > 15) s.overdueBucket16_30 += inv.total;
-                else s.overdueBucket1_15 += inv.total;
+                if (age > 60) s.overdueBucket61_plus += effectiveOverdue;
+                else if (age > 30) s.overdueBucket31_60 += effectiveOverdue;
+                else if (age > 15) s.overdueBucket16_30 += effectiveOverdue;
+                else s.overdueBucket1_15 += effectiveOverdue;
                 if (age > 45) s.overduePrev++;
             } else if (inv.status === 'draft') s.draftCount++;
         });
@@ -388,7 +400,9 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const loadRevenueData = (source: BusinessInvoice[]) => {
         const revenueMap: Record<string, number> = {};
         source.forEach(inv => {
-            if (inv.status === 'paid') {
+            const balance = inv.balanceDue != null ? inv.balanceDue : (inv.total - (inv.amountPaid || 0));
+            const isSettled = inv.status === 'paid' || balance <= 0 || ((inv.amountPaid || 0) >= inv.total && inv.total > 0);
+            if (isSettled && inv.status !== 'draft' && inv.status !== 'void' && inv.status !== 'cancelled') {
                 const day = (inv.updatedAt || inv.issueDate || new Date().toISOString()).slice(0, 10);
                 revenueMap[day] = (revenueMap[day] || 0) + inv.total;
             }
@@ -1298,9 +1312,19 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-md ac-layer-modal flex flex-col p-4">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-[var(--ws-text-primary)] font-black uppercase tracking-widest type-caption">Invoice Preview</h3>
-                            <button onClick={() => setShowPDFPreview(null)} className="w-10 h-10 bg-[var(--ws-hover)] rounded-full flex items-center justify-center text-[var(--ws-text-primary)]"><X size={20} /></button>
+                            <div className="flex items-center gap-2">
+                                <a
+                                    href={showPDFPreview}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-3 py-1.5 bg-[var(--ws-hover)] text-[var(--ws-text-primary)] rounded-lg type-caption font-bold hover:bg-[var(--ws-surface-secondary)] transition-colors"
+                                >
+                                    Open in New Tab
+                                </a>
+                                <button onClick={() => setShowPDFPreview(null)} className="w-10 h-10 bg-[var(--ws-hover)] rounded-full flex items-center justify-center text-[var(--ws-text-primary)]" aria-label="Close preview"><X size={20} /></button>
+                            </div>
                         </div>
-                        <iframe src={showPDFPreview} className="flex-1 w-full rounded-2xl border border-[var(--ws-border)]" />
+                        <iframe src={showPDFPreview} className="flex-1 w-full rounded-2xl border border-[var(--ws-border)] bg-white" title="Invoice Preview" />
                         <div className="mt-4 flex gap-2">
                             <button
                                 onClick={async () => {

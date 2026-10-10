@@ -603,8 +603,24 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (searchParams.get('create') === 'true') setShowCreateModal(true);
-  }, [searchParams]);
+    const shouldCreate = searchParams?.get('create') === 'true' || searchParams?.has('clientId');
+    if (shouldCreate) {
+      setShowCreateModal(true);
+      const cId = searchParams?.get('clientId');
+      if (cId && currentTenant?.id) {
+        void supabase
+          .from('business_clients')
+          .select('name, email')
+          .eq('tenant_id', currentTenant.id)
+          .eq('id', cId)
+          .maybeSingle()
+          .then(({ data }: { data: any }) => {
+            if (data?.name) setNewDealContactName(data.name);
+            if (data?.email) setNewDealContactEmail(data.email);
+          });
+      }
+    }
+  }, [searchParams, currentTenant?.id]);
   const [visibleCount, setVisibleCount] = useState(40);
   const loadMoreDeals = useCallback(() => setVisibleCount((c) => c + 30), []);
   const [selectedDealIds, setSelectedDealIds] = useState<Set<string>>(new Set());
@@ -667,14 +683,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
     router.push(relationship.withRelationship(buildMailComposeUrl(recipients, subject)));
   }, [deals, relationship, router, selectedDealIds]);
 
-  // Detect responsive view mode on load
+  // Detect responsive view mode on load for mobile viewports
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (window.innerWidth < 768) {
-        setViewMode('mobile-stage');
-      } else {
-        setViewMode('board');
-      }
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setViewMode('mobile-stage');
     }
   }, []);
 

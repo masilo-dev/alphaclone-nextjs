@@ -24,10 +24,10 @@ export async function markOverdueInvoicesForTenant(tenantId: string): Promise<Ma
 
   const { data: sentInvoices, error: sentError } = await admin
     .from('business_invoices')
-    .select('id, tenant_id, client_id, invoice_number, status, due_date, sent_at')
+    .select('id, tenant_id, client_id, invoice_number, status, due_date, sent_at, balance_due, total, amount_paid')
     .eq('tenant_id', tenantId)
     .lt('due_date', todayIso)
-    .in('status', ['sent', 'viewed']);
+    .in('status', ['sent', 'viewed', 'partially_paid']);
 
   if (sentError) {
     return { markedOverdue: 0, errors: [sentError.message] };
@@ -36,6 +36,20 @@ export async function markOverdueInvoicesForTenant(tenantId: string): Promise<Ma
   for (const invoice of sentInvoices || []) {
     const guard = await guardCronTenantRow(invoice, 'business_invoices', { phase: 'mark_overdue' });
     if (!guard.ok) continue;
+
+    const total = Number(invoice.total || 0);
+    const amountPaid = Number(invoice.amount_paid || 0);
+    const balance = Number(invoice.balance_due ?? (total - amountPaid));
+
+    if (balance <= 0 || (amountPaid >= total && total > 0)) {
+      // Reconcile to paid if settled
+      await admin
+        .from('business_invoices')
+        .update({ status: 'paid', lifecycle_status: 'paid', updated_at: nowIso })
+        .eq('id', invoice.id)
+        .eq('tenant_id', invoice.tenant_id);
+      continue;
+    }
 
     const { error: updateError } = await admin
       .from('business_invoices')

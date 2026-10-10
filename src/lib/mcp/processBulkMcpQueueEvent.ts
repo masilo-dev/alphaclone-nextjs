@@ -47,13 +47,13 @@ export async function processBulkMcpQueueEvent(params: {
 
     switch (tool) {
       case 'bulk_update_records':
-        output = { ...await executeBulkUpdateRecords(args as any, ctx) };
+        output = (await executeBulkUpdateRecords(args as any, ctx)) as unknown as Record<string, unknown>;
         break;
       case 'send_bulk_email':
-        output = (await executeBulkEmail(args as any, ctx)) as Record<string, unknown>;
+        output = (await executeBulkEmail(args as any, ctx)) as unknown as Record<string, unknown>;
         break;
       case 'bulk_upload_media':
-        output = (await executeBulkUploadMedia(args as any, ctx)) as Record<string, unknown>;
+        output = (await executeBulkUploadMedia(args as any, ctx)) as unknown as Record<string, unknown>;
         break;
       default:
         throw new Error(`Unhandled bulk tool: ${tool}`);
