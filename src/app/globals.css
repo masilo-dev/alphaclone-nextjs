@@ -2263,6 +2263,15 @@ html.pwa-standalone .pwa-page-title {
   max-height: none;
 }
 
+/* Ensure drawers, panels, and modals strictly preserve scroll containment even when children have ac-scroll-full */
+.ac-layer-panel .ac-scroll-full,
+.ac-layer-modal .ac-scroll-full,
+[data-radix-dialog-content] .ac-scroll-full,
+[data-radix-sheet-content] .ac-scroll-full {
+  overflow-y: auto !important;
+  max-height: 100% !important;
+}
+
 .ac-enterprise-module:not(.h-full) > * {
   max-height: none;
 }

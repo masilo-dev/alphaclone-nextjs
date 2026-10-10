@@ -763,7 +763,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
             hideHeader
         >
             <div className="flex min-h-full flex-col bg-[var(--ws-canvas)]">
-                <div className="sticky top-0 z-30 border-b border-[var(--ws-border)] bg-[var(--ws-canvas)]/95 px-4 py-3 pr-14 backdrop-blur-xl sm:px-6">
+                <div className="sticky top-0 z-30 border-b border-[var(--ws-border)] bg-[var(--ws-canvas)]/95 px-4 py-2.5 pr-14 backdrop-blur-xl sm:px-6">
                     <RecordHeader
                         moduleId="leads"
                         title={lead.businessName}
@@ -804,160 +804,149 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                         rel="noreferrer"
                                         className="inline-flex items-center gap-1 hover:text-[var(--brand-blue-400)] transition-colors"
                                     >
-                                        <Globe className="w-3 h-3" /> Website
+                                        <Globe className="w-3 h-3" /> {lead.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
                                     </a>
                                 ) : null}
                                 {lead.email ? <span>{lead.email}</span> : null}
                             </>
                         }
                         actions={
-                            <AskBonnieButton
-                                compact
-                                mode="summarise"
-                                contexts={[
-                                    { type: 'Lead', id: lead.id, label: lead.businessName },
-                                    ...(lead.industry ? [{ type: 'Industry', label: lead.industry }] : []),
-                                ]}
-                            />
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                <AskBonnieButton
+                                    compact
+                                    mode="summarise"
+                                    contexts={[
+                                        { type: 'Lead', id: lead.id, label: lead.businessName },
+                                        ...(lead.industry ? [{ type: 'Industry', label: lead.industry }] : []),
+                                    ]}
+                                />
+                                <CRMActionChips
+                                    items={[
+                                        {
+                                            label: 'Email',
+                                            icon: Mail,
+                                            tone: 'indigo',
+                                            onClick: handleSendProviderEmail,
+                                            disabled: !lead.email,
+                                        },
+                                        {
+                                            label: 'Schedule',
+                                            icon: Calendar,
+                                            tone: 'amber',
+                                            onClick: handleScheduleCall,
+                                            disabled: !lead.phone,
+                                        },
+                                        {
+                                            label: 'Call',
+                                            icon: Phone,
+                                            tone: 'teal',
+                                            onClick: () => {
+                                                if (!lead.phone) {
+                                                    toast.error('No phone number on file.');
+                                                    return;
+                                                }
+                                                window.open(`tel:${lead.phone}`, '_self');
+                                            },
+                                            disabled: !lead.phone,
+                                        },
+                                    ]}
+                                />
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleEnrich}
+                                    isLoading={isEnriching}
+                                    className="border-[var(--brand-blue-500)]/30 text-[var(--brand-blue-400)] hover:bg-[var(--brand-blue-500)]/10"
+                                >
+                                    <Bot className="w-4 h-4 mr-1.5" />
+                                    Research
+                                </Button>
+
+                                {lead.status !== 'converted' && (
+                                    <Button
+                                        variant="primary"
+                                        size="sm"
+                                        onClick={() => {
+                                            const name = window.prompt('Enter Deal Name:', lead.businessName);
+                                            if (name) handleConvert(name);
+                                        }}
+                                        className="bg-amber-600 hover:bg-amber-500 shadow-amber-500/10 border-amber-500/20"
+                                    >
+                                        <Zap className="w-4 h-4 mr-1.5" />
+                                        Convert
+                                    </Button>
+                                )}
+
+                                <Dropdown
+                                    trigger={
+                                        <Button variant="outline" size="sm" className="px-2" aria-label={`More actions for ${lead.businessName}`}>
+                                            <MoreVertical className="w-4 h-4" />
+                                        </Button>
+                                    }
+                                    items={[
+                                        {
+                                            label: showEditForm ? 'Close Edit' : 'Edit Lead',
+                                            icon: <FileText className="w-4 h-4" />,
+                                            onClick: () => setShowEditForm(!showEditForm)
+                                        },
+                                        {
+                                            label: 'Quick Task',
+                                            icon: <CheckCircle2 className="w-4 h-4 text-yellow-500" />,
+                                            onClick: () => {
+                                                setActiveTab('tasks');
+                                                setShowTaskForm(true);
+                                            }
+                                        },
+                                        {
+                                            label: 'Convert to Project',
+                                            icon: <Layout className="w-4 h-4 text-[var(--brand-blue-500)]" />,
+                                            onClick: handleCreateProject
+                                        },
+                                        {
+                                            label: 'Generate Quote',
+                                            icon: <FileText className="w-4 h-4 text-indigo-400" />,
+                                            onClick: () => setShowQuoteForm(true)
+                                        },
+                                        {
+                                            label: 'Convert to Deal',
+                                            icon: <Zap className="w-4 h-4 text-amber-500" />,
+                                            onClick: () => {
+                                                const name = window.prompt('Enter Deal Name:', lead.businessName);
+                                                if (name) handleConvert(name);
+                                            }
+                                        },
+                                        {
+                                            label: 'Pipeline View',
+                                            icon: <ArrowRight className="w-4 h-4" />,
+                                            onClick: () => {
+                                                onClose();
+                                                router.push(`/dashboard/deals?createFromLead=1&leadId=${encodeURIComponent(lead.id)}`);
+                                            }
+                                        },
+                                        {
+                                            label: 'Validate Address',
+                                            icon: <MapPin className="w-4 h-4 text-blue-400" />,
+                                            onClick: handleValidateAddress
+                                        },
+                                        {
+                                            label: 'Execute Full Flow',
+                                            icon: <Zap className="w-4 h-4 text-indigo-400" />,
+                                            onClick: handleExecuteFullFlow,
+                                            variant: 'default'
+                                        },
+                                        ...(onLeadDelete
+                                            ? [{
+                                                label: 'Delete Lead',
+                                                icon: <AlertCircle className="w-4 h-4 text-rose-400" />,
+                                                onClick: handleDeleteLead,
+                                                variant: 'danger' as const,
+                                            }]
+                                            : []),
+                                    ]}
+                                />
+                            </div>
                         }
                     />
-                </div>
-
-                {/* Header actions */}
-                <div className="sticky top-[92px] z-20 flex flex-col gap-2 border-b border-[var(--ws-border)] bg-[var(--ws-canvas)]/95 px-4 py-2 backdrop-blur-xl sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="min-w-0 type-caption text-[var(--ws-text-muted)] lg:pt-2">
-                        Quick actions for this lead
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
-                        <CRMActionChips
-                            items={[
-                                {
-                                    label: 'Email',
-                                    icon: Mail,
-                                    tone: 'indigo',
-                                    onClick: handleSendProviderEmail,
-                                    disabled: !lead.email,
-                                },
-                                {
-                                    label: 'Schedule',
-                                    icon: Calendar,
-                                    tone: 'amber',
-                                    onClick: handleScheduleCall,
-                                    disabled: !lead.phone,
-                                },
-                                {
-                                    label: 'Call',
-                                    icon: Phone,
-                                    tone: 'teal',
-                                    onClick: () => {
-                                        if (!lead.phone) {
-                                            toast.error('No phone number on file.');
-                                            return;
-                                        }
-                                        window.open(`tel:${lead.phone}`, '_self');
-                                    },
-                                    disabled: !lead.phone,
-                                },
-                            ]}
-                        />
-                        <div className="flex flex-wrap items-center gap-1.5">
-                            <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleEnrich}
-                            isLoading={isEnriching}
-                            className="border-[var(--brand-blue-500)]/30 text-[var(--brand-blue-400)] hover:bg-[var(--brand-blue-500)]/10"
-                        >
-                            <Bot className="w-4 h-4 mr-2" />
-                            Research
-                        </Button>
-
-                        {lead.status !== 'converted' && (
-                            <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => {
-                                    const name = window.prompt('Enter Deal Name:', lead.businessName);
-                                    if (name) handleConvert(name);
-                                }}
-                                className="bg-amber-600 hover:bg-amber-500 shadow-amber-500/10 border-amber-500/20"
-                            >
-                                <Zap className="w-4 h-4 mr-2" />
-                                Convert
-                            </Button>
-                        )}
-
-                        <Dropdown
-                            trigger={
-                                <Button variant="outline" size="sm" className="px-2" aria-label={`More actions for ${lead.businessName}`}>
-                                    <MoreVertical className="w-4 h-4" />
-                                </Button>
-                            }
-                            items={[
-                                {
-                                    label: showEditForm ? 'Close Edit' : 'Edit Lead',
-                                    icon: <FileText className="w-4 h-4" />,
-                                    onClick: () => setShowEditForm(!showEditForm)
-                                },
-                                {
-                                    label: 'Quick Task',
-                                    icon: <CheckCircle2 className="w-4 h-4 text-yellow-500" />,
-                                    onClick: () => {
-                                        setActiveTab('tasks');
-                                        setShowTaskForm(true);
-                                    }
-                                },
-                                {
-                                    label: 'Convert to Project',
-                                    icon: <Layout className="w-4 h-4 text-[var(--brand-blue-500)]" />,
-                                    onClick: handleCreateProject
-                                },
-                                {
-                                    label: 'Generate Quote',
-                                    icon: <FileText className="w-4 h-4 text-indigo-400" />,
-                                    onClick: () => setShowQuoteForm(true)
-                                },
-                                {
-                                    label: 'Convert to Deal',
-                                    icon: <Zap className="w-4 h-4 text-amber-500" />,
-                                    onClick: () => {
-                                        const name = window.prompt('Enter Deal Name:', lead.businessName);
-                                        if (name) handleConvert(name);
-                                    }
-                                },
-                                {
-                                    label: 'Pipeline View',
-                                    icon: <ArrowRight className="w-4 h-4" />,
-                                    onClick: () => {
-                                        onClose();
-                                        router.push(`/dashboard/deals?createFromLead=1&leadId=${encodeURIComponent(lead.id)}`);
-                                    }
-                                },
-                                {
-                                    label: 'Validate Address',
-                                    icon: <MapPin className="w-4 h-4 text-blue-400" />,
-                                    onClick: handleValidateAddress
-                                },
-                                {
-                                    label: 'Execute Full Flow',
-                                    icon: <Zap className="w-4 h-4 text-indigo-400" />,
-                                    onClick: handleExecuteFullFlow,
-                                    variant: 'default'
-                                },
-                                ...(onLeadDelete
-                                    ? [{
-                                        label: 'Delete Lead',
-                                        icon: <AlertCircle className="w-4 h-4 text-rose-400" />,
-                                        onClick: handleDeleteLead,
-                                        variant: 'danger' as const,
-                                    }]
-                                    : []),
-                            ]}
-                        />
-                        </div>
-                    </div>
                 </div>
 
                 {/* Quick Quote Form Overlay/Inline */}
@@ -986,12 +975,12 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                 )}
 
                 {/* Tabs */}
-                <div className="sticky top-[154px] z-20 flex gap-4 overflow-x-auto border-b border-[var(--ws-border)] bg-[var(--ws-canvas)]/95 px-4 backdrop-blur-xl scrollbar-hide sm:px-6 sm:gap-6">
+                <div className="sticky top-[74px] z-20 flex gap-4 overflow-x-auto border-b border-[var(--ws-border)] bg-[var(--ws-canvas)]/95 px-4 backdrop-blur-xl scrollbar-hide sm:px-6 sm:gap-6">
                     {['overview', 'deals', 'history', 'tasks', 'meetings', 'notes'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
-                            className={`py-3 type-caption sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab
+                            className={`py-2.5 type-caption sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab
                                 ? 'border-[var(--brand-blue-500)] text-[var(--ws-text-primary)]'
                                 : 'border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                                 }`}
@@ -1069,22 +1058,22 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                     )}
 
                     {activeTab === 'overview' && (
-                        <div className="space-y-6">
+                        <div className="space-y-4">
                             <GhostIntelligence lead={lead} onAction={handleSendProviderEmail} />
 
-                            <Card className="p-5 border-[var(--ws-border)] bg-[var(--ws-panel)]/40">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                            <Card className="p-3.5 sm:p-4 mb-3 border-[var(--ws-border)] bg-[var(--ws-panel)]/40">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                                     <div>
                                         <p className="type-caption uppercase tracking-wider text-[var(--ws-text-muted)] font-bold mb-1">Lead completeness</p>
                                         <div className="flex items-baseline gap-2">
-                                            <span className={`text-3xl font-bold ${getScoreColor(leadScore)}`}>{leadScore}</span>
+                                            <span className={`text-2xl sm:text-3xl font-bold ${getScoreColor(leadScore)}`}>{leadScore}</span>
                                             <span className="text-[var(--ws-text-muted)] type-ui">/ 100</span>
                                         </div>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={handleNextAction}
-                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 hover:bg-[var(--ws-surface-secondary)] transition-colors ${nextAction.color}`}
+                                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 hover:bg-[var(--ws-surface-secondary)] transition-colors ${nextAction.color}`}
                                     >
                                         {nextAction.icon}
                                         <div className="text-left">
@@ -1101,29 +1090,29 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                 </div>
                             </Card>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Card className="p-6 space-y-4">
-                                <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4">Contact Info</h3>
-                                <div className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                            <Card className="p-3.5 sm:p-4 space-y-3">
+                                <h3 className="text-base font-semibold text-[var(--ws-text-primary)] mb-2.5">Contact Info</h3>
+                                <div className="space-y-2.5">
                                     <div className="flex items-center gap-3 text-[var(--ws-text-secondary)]">
-                                        <div className="w-8 h-8 rounded-lg bg-[var(--ws-surface-secondary)] flex items-center justify-center">
-                                            <Mail className="w-4 h-4 text-[var(--ws-text-muted)]" />
+                                        <div className="w-7 h-7 rounded-lg bg-[var(--ws-surface-secondary)] flex items-center justify-center">
+                                            <Mail className="w-3.5 h-3.5 text-[var(--ws-text-muted)]" />
                                         </div>
-                                        <span>{lead.email || 'No email'}</span>
+                                        <span className="truncate">{lead.email || 'No email'}</span>
                                     </div>
                                     <div className="flex items-center gap-3 text-[var(--ws-text-secondary)]">
-                                        <div className="w-8 h-8 rounded-lg bg-[var(--ws-surface-secondary)] flex items-center justify-center">
-                                            <Phone className="w-4 h-4 text-[var(--ws-text-muted)]" />
+                                        <div className="w-7 h-7 rounded-lg bg-[var(--ws-surface-secondary)] flex items-center justify-center">
+                                            <Phone className="w-3.5 h-3.5 text-[var(--ws-text-muted)]" />
                                         </div>
-                                        <span>{lead.phone || 'No phone'}</span>
+                                        <span className="truncate">{lead.phone || 'No phone'}</span>
                                     </div>
                                     <div className="flex items-center gap-3 text-[var(--ws-text-secondary)]">
-                                        <div className="w-8 h-8 rounded-lg bg-[var(--ws-surface-secondary)] flex items-center justify-center">
-                                            <Globe className="w-4 h-4 text-[var(--ws-text-muted)]" />
+                                        <div className="w-7 h-7 rounded-lg bg-[var(--ws-surface-secondary)] flex items-center justify-center">
+                                            <Globe className="w-3.5 h-3.5 text-[var(--ws-text-muted)]" />
                                         </div>
                                         <div className="flex-1 overflow-hidden truncate">
                                             {lead.website ? (
-                                                <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="text-[var(--brand-blue-400)] hover:text-[var(--brand-blue-300)] transition-colors">
+                                                <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="text-[var(--brand-blue-400)] hover:text-[var(--brand-blue-300)] transition-colors truncate block">
                                                     {lead.website}
                                                 </a>
                                             ) : (
@@ -1133,12 +1122,12 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                     </div>
                                     {lead.location && (
                                         <div className="flex items-start gap-3 text-[var(--ws-text-secondary)] group">
-                                            <div className="w-8 h-8 rounded-lg bg-[var(--ws-surface-secondary)] flex items-center justify-center shrink-0">
-                                                <MapPin className="w-4 h-4 text-amber-500" />
+                                            <div className="w-7 h-7 rounded-lg bg-[var(--ws-surface-secondary)] flex items-center justify-center shrink-0">
+                                                <MapPin className="w-3.5 h-3.5 text-amber-500" />
                                             </div>
-                                            <div className="flex flex-col">
+                                            <div className="flex flex-col min-w-0">
                                                 <span className="type-caption text-[var(--ws-text-muted)] uppercase font-bold tracking-tighter mb-0.5">Address</span>
-                                                <span className="type-ui leading-relaxed whitespace-pre-wrap">{lead.location}</span>
+                                                <span className="type-ui leading-relaxed whitespace-pre-wrap break-words">{lead.location}</span>
                                                 {lead.isAddressValid && (
                                                     <span className="type-caption text-emerald-400 flex items-center gap-1 mt-1 font-mono uppercase font-bold">
                                                         <CheckSquare className="w-2.5 h-2.5" /> Google Verified
@@ -1151,19 +1140,19 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                             </Card>
 
                             {lead.isVerified && (
-                                <Card className="p-6 border-emerald-500/20 bg-emerald-500/5">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] flex items-center gap-2">
-                                            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                                <Card className="p-3.5 sm:p-4 border-emerald-500/20 bg-emerald-500/5">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <h3 className="text-base font-semibold text-[var(--ws-text-primary)] flex items-center gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                                             AI Verification
                                         </h3>
                                         <div className="flex flex-col items-end">
-                                            <span className="type-caption text-[var(--ws-text-muted)] uppercase tracking-wider font-bold mb-1">Trust Score</span>
-                                            <div className="text-2xl font-bold text-emerald-400">{lead.trustScore}%</div>
+                                            <span className="type-caption text-[var(--ws-text-muted)] uppercase tracking-wider font-bold mb-0.5">Trust Score</span>
+                                            <div className="text-xl font-bold text-emerald-400">{lead.trustScore}%</div>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-4">
+                                    <div className="space-y-3">
                                         <div className="h-1.5 w-full bg-[var(--ws-surface-secondary)] rounded-full overflow-hidden">
                                             <div
                                                 className="h-full bg-emerald-500 transition-all duration-1000"
@@ -1171,8 +1160,8 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                             />
                                         </div>
 
-                                        <div className="flex flex-col gap-3">
-                                            <div className="p-3 bg-[var(--ws-panel)]/50 rounded-lg border border-[var(--ws-border)]">
+                                        <div className="flex flex-col gap-2.5">
+                                            <div className="p-2.5 bg-[var(--ws-panel)]/50 rounded-lg border border-[var(--ws-border)]">
                                                 <p className="type-card-description text-[var(--ws-text-secondary)] italic leading-relaxed">
                                                     <span className="text-emerald-400 font-bold not-italic font-mono mr-2 uppercase tracking-tighter">Technical Audit:</span>
                                                     {lead.verificationNotes || "Data matches typical patterns for a legitimate business in this region."}
@@ -1180,7 +1169,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                             </div>
 
                                             {lead.sdrInsight && (
-                                                <div className="p-3 bg-[var(--brand-blue-500)]/5 rounded-lg border border-[var(--brand-blue-500)]/10">
+                                                <div className="p-2.5 bg-[var(--brand-blue-500)]/5 rounded-lg border border-[var(--brand-blue-500)]/10">
                                                     <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed">
                                                         <span className="text-[var(--brand-blue-400)] font-bold font-mono mr-2 uppercase tracking-tighter">SDR Strategy:</span>
                                                         {lead.sdrInsight}
@@ -1553,7 +1542,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                             tenantId={currentTenant.id}
                             entityType="lead"
                             entityId={lead.id}
-                            className="hidden xl:block sticky top-[210px] self-start"
+                            className="hidden xl:block sticky top-28 self-start"
                         />
                     ) : null}
                 </div>

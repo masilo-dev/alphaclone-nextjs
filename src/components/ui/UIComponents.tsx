@@ -421,21 +421,34 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const focusedMenuRef = useRef(false);
-  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number; maxHeight: number; width: number } | null>(null);
 
   const updateMenuPosition = useCallback(() => {
     const rect = triggerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const width = 192;
+    const width = Math.min(232, window.innerWidth - 16);
     const margin = 8;
     const left = align === 'right'
       ? Math.max(margin, Math.min(rect.right - width, window.innerWidth - width - margin))
       : Math.max(margin, Math.min(rect.left, window.innerWidth - width - margin));
-    const menuHeight = Math.min(items.length * 40 + 8, 320);
-    const top = rect.bottom + menuHeight + margin <= window.innerHeight
-      ? rect.bottom + margin
-      : Math.max(margin, rect.top - menuHeight - margin);
-    setMenuPosition({ top, left });
+
+    const spaceBelow = window.innerHeight - rect.bottom - margin;
+    const spaceAbove = rect.top - margin;
+    const estimatedHeight = items.length * 36 + 12;
+
+    let top: number;
+    let maxHeight: number;
+
+    if (spaceBelow >= Math.min(estimatedHeight, 180) || spaceBelow >= spaceAbove) {
+      top = rect.bottom + margin;
+      maxHeight = Math.max(120, spaceBelow - margin);
+    } else {
+      maxHeight = Math.max(120, spaceAbove - margin);
+      const targetHeight = Math.min(estimatedHeight, maxHeight);
+      top = Math.max(margin, rect.top - targetHeight - margin);
+    }
+
+    setMenuPosition({ top, left, maxHeight: Math.min(maxHeight, 360), width });
   }, [align, items.length]);
 
   useEffect(() => {
@@ -499,8 +512,12 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
       ref={menuRef}
       aria-label="Actions"
       style={{
-        position: 'fixed', top: menuPosition.top, left: menuPosition.left, width: 192,
-        maxHeight: 'min(20rem, calc(100vh - 1rem))', zIndex: menuLayer,
+        position: 'fixed',
+        top: menuPosition.top,
+        left: menuPosition.left,
+        width: menuPosition.width,
+        maxHeight: menuPosition.maxHeight,
+        zIndex: menuLayer,
         // The menu is portaled to body; copy inherited workspace tokens from
         // its trigger so it retains an opaque surface in both color schemes.
         ...Object.fromEntries(Object.entries({
@@ -516,7 +533,7 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
             : fallback,
         ])),
       } as React.CSSProperties}
-      className={`overflow-y-auto border border-[var(--ws-border)] bg-[var(--ws-panel,var(--ws-panel))] ${WORKSPACE.panel.radius} shadow-xl animate-in fade-in slide-in-from-top-1 duration-150`}
+      className={`overflow-y-auto overscroll-contain border border-[var(--ws-border)] bg-[var(--ws-panel,var(--ws-panel))] ${WORKSPACE.panel.radius} shadow-xl animate-in fade-in slide-in-from-top-1 duration-150 custom-scrollbar`}
       data-layer="dropdown"
       data-z-index={menuLayer}
     >

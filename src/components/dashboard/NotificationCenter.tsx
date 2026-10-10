@@ -285,7 +285,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             )}
 
                             {/* List */}
-                            <div className="flex-1 overflow-y-auto custom-scrollbar">
+                            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain custom-scrollbar">
                                 {loadError ? (
                                     <div className="p-6 text-center space-y-3">
                                         <p className="type-card-description text-[var(--error-text,var(--error-500))]">{loadError}</p>

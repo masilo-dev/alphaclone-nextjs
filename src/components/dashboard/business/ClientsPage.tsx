@@ -1510,39 +1510,35 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                 >
                                                     Send Email
                                                 </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    icon={<FilePlus className="w-4 h-4" />}
-                                                    onClick={() => {
-                                                        setSelectedClientForProposal(selectedClient);
-                                                        setShowProposalModal(true);
-                                                    }}
-                                                >
-                                                    Quote / Proposal
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    icon={<DollarSign className="w-4 h-4" />}
-                                                    onClick={() => {
-                                                        setSelectedClientForInvoice(selectedClient);
-                                                        setShowInvoiceModal(true);
-                                                    }}
-                                                >
-                                                    Invoice
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    icon={<Briefcase className="w-4 h-4" />}
-                                                    onClick={() => router.push(`/dashboard/projects?clientId=${encodeURIComponent(selectedClient.id)}`)}
-                                                >
-                                                    Project
-                                                </Button>
                                                 <Dropdown
                                                     trigger={<Button size="sm" variant="ghost" aria-label={`More actions for ${selectedClient.name}`} className="!p-2 hover:bg-[var(--ws-surface-secondary)] rounded-xl" icon={<MoreVertical className="w-5 h-5 text-[var(--ws-text-muted)]" />} />}
                                                     items={[
+                                                        {
+                                                            label: 'Quote / Proposal',
+                                                            icon: <FilePlus className="w-4 h-4" />,
+                                                            onClick: () => {
+                                                                setSelectedClientForProposal(selectedClient);
+                                                                setShowProposalModal(true);
+                                                            }
+                                                        },
+                                                        {
+                                                            label: 'Create Invoice',
+                                                            icon: <DollarSign className="w-4 h-4" />,
+                                                            onClick: () => {
+                                                                setSelectedClientForInvoice(selectedClient);
+                                                                setShowInvoiceModal(true);
+                                                            }
+                                                        },
+                                                        {
+                                                            label: 'View Projects',
+                                                            icon: <Briefcase className="w-4 h-4" />,
+                                                            onClick: () => router.push(`/dashboard/projects?clientId=${encodeURIComponent(selectedClient.id)}`)
+                                                        },
+                                                        {
+                                                            label: 'Call Client',
+                                                            icon: <Phone className="w-4 h-4" />,
+                                                            onClick: () => handleCallClient(selectedClient)
+                                                        },
                                                         { label: 'Set up client portal', icon: <UserCheck className="w-4 h-4"/>, onClick: () => setPortalAccessClient(selectedClient) },
                                                         { label: 'Create Contract', icon: <FileCheck className="w-4 h-4"/>, onClick: () => router.push(`/dashboard/business/contracts?clientId=${encodeURIComponent(selectedClient.id)}`) },
                                                         { label: 'Schedule Meeting', icon: <Calendar className="w-4 h-4"/>, onClick: () => router.push(`/dashboard/calendar?clientId=${encodeURIComponent(selectedClient.id)}`) },
@@ -2097,17 +2093,6 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                 )}
                                             </div>
                                         )}
-                                    </div>
-
-                                    {/* Quick Actions Footer */}
-                                    <div className="shrink-0 bg-[var(--ws-toolbar)] pt-4 border-t border-[var(--ws-border)] mt-auto">
-                                        <h3 className="type-caption font-bold text-[var(--ws-text-muted)] mb-4 uppercase tracking-wider">Quick Actions</h3>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <Button variant="secondary" size="sm" onClick={() => { setSelectedClientForProposal(selectedClient); setShowProposalModal(true); }} icon={<FilePlus className="w-4 h-4" />}>Proposal</Button>
-                                            <Button variant="outline" size="sm" onClick={() => { setSelectedClientForInvoice(selectedClient); setShowInvoiceModal(true); }} icon={<Receipt className="w-4 h-4" />}>Invoice</Button>
-                                            <Button variant="outline" size="sm" onClick={() => handleCallClient(selectedClient)} icon={<Phone className="w-4 h-4" />}>Call</Button>
-                                            <Button variant="outline" size="sm" onClick={() => { setSelectedClientForCommunication(selectedClient); setShowCommunicationModal(true); }} icon={<Mail className="w-4 h-4" />}>Email</Button>
-                                        </div>
                                     </div>
                                 </div>
                                 {currentTenant?.id ? (

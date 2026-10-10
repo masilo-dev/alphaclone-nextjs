@@ -96,7 +96,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({ tasks, onUpdateStatus, o
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid min-h-[600px] h-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="flex 2xl:grid min-h-[500px] h-full 2xl:grid-cols-5 gap-4 overflow-x-auto pb-20 [scrollbar-width:thin]">
         {STATUSES.map((status) => (
           <KanbanColumn
             key={status.id}
@@ -134,7 +134,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({ status, tasks, onEditTask }
   const { id, label, icon: Icon, color, tint } = status;
 
   return (
-    <section className="flex h-full flex-col space-y-4 rounded-[var(--ws-radius-lg,14px)] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-4">
+    <section className="flex h-full w-[min(88vw,280px)] sm:w-72 shrink-0 2xl:w-auto 2xl:shrink flex-col space-y-4 rounded-[var(--ws-radius-lg,14px)] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-4 overscroll-contain">
       <div className="flex shrink-0 items-center justify-between px-1">
         <div className="flex min-w-0 items-center gap-2">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--ws-radius-control,8px)]" style={{ background: tint }}>
@@ -154,7 +154,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({ status, tasks, onEditTask }
         </button>
       </div>
 
-      <div className="min-h-[150px] flex-1">
+      <div className="min-h-[150px] flex-1 overflow-y-auto overscroll-contain max-h-[calc(100vh-240px)] pr-1 custom-scrollbar">
         <SortableContext id={id} items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-3">
             {tasks.map((task) => (

@@ -170,7 +170,7 @@ export function BonnieDrawer() {
           transition: `transform ${ENTERPRISE.motion.drawer} ${ENTERPRISE.motion.easing}`,
         }}
       >
-        <header className="flex items-start gap-3 px-4 pt-4 pb-3 border-b border-[var(--ws-border)]">
+        <header className="flex shrink-0 items-start gap-3 px-4 pt-4 pb-3 border-b border-[var(--ws-border)]">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] bg-[color-mix(in_srgb,var(--brand-violet-500)_16%,transparent)] text-[var(--brand-violet-500)]">
             <IconBonnie size={20} variant="duotone" decorative />
           </span>
@@ -270,7 +270,7 @@ export function BonnieDrawer() {
               </div>
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-4 space-y-4">
               <p className="type-caption text-[var(--ws-text-secondary)]">
                 {MODE_HINT[mode]}
               </p>
@@ -302,7 +302,7 @@ export function BonnieDrawer() {
             </div>
           </>
         ) : (
-          <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-4 space-y-4">
             <div>
               <h3 className="type-ui font-semibold text-[var(--ws-text-primary)]">
                 Confirm Bonnie&apos;s plan
@@ -333,7 +333,7 @@ export function BonnieDrawer() {
           </div>
         )}
 
-        <footer className="flex flex-wrap gap-2 border-t border-[var(--ws-border)] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <footer className="flex shrink-0 flex-wrap gap-2 border-t border-[var(--ws-border)] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-[var(--ws-canvas)]">
           {step === "confirm" ? (
             <button
               type="button"

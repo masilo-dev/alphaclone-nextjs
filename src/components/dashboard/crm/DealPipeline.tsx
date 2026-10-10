@@ -468,9 +468,9 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
 
       {/* Pipeline Columns */}
       {loading ? (
-        <div className="grid grid-cols-6 gap-3">
+        <div className="flex xl:grid xl:grid-cols-6 gap-3 overflow-x-auto pb-20 [scrollbar-width:thin]">
           {STAGES.map(stage => (
-            <div key={stage.key} className="space-y-2">
+            <div key={stage.key} className="w-[240px] xl:w-auto shrink-0 space-y-2">
               <div className="h-8 bg-[var(--ws-surface-secondary)]/50 rounded-lg animate-pulse" />
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="h-24 bg-[var(--ws-surface-secondary)]/30 rounded-xl animate-pulse" />
@@ -479,9 +479,9 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-6 gap-3 overflow-x-auto pb-4">
+        <div className="flex xl:grid xl:grid-cols-6 gap-3 overflow-x-auto pb-20 [scrollbar-width:thin]">
           {groupedDeals.map(stage => (
-            <div key={stage.key} className="min-w-[200px] space-y-2">
+            <div key={stage.key} className="w-[240px] xl:w-auto xl:min-w-0 shrink-0 space-y-2">
               {/* Stage Header */}
               <div className={`px-3 py-2 rounded-lg type-caption font-bold ${stage.color}`}>
                 <div className="flex items-center justify-between">

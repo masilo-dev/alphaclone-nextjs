@@ -26,7 +26,7 @@ import { buildLeadKanbanNextSteps } from '@/lib/crmNextSteps';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 import { assertLeadStageTransition } from '@/lib/stageProgression';
 import { ACTIVE_LEAD_KANBAN_STAGES } from '@/lib/crmPipelineStages';
-import { Mail, Phone, MapPin, Sparkles, AlertCircle, ShieldCheck, GripVertical, CheckCircle2, Plus, X } from 'lucide-react';
+import { Mail, Phone, MapPin, Globe, Sparkles, AlertCircle, ShieldCheck, GripVertical, CheckCircle2, Plus, X } from 'lucide-react';
 import AIOutreachModal from '../business/AIOutreachModal';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
@@ -86,10 +86,10 @@ function KanbanCard({
       } rounded-xl shadow-sm hover:shadow-md transition-shadow group
       ${isOverlay ? 'scale-105 shadow-2xl rotate-2 z-50 border-[var(--brand-blue-500)]' : ''}`}
     >
-      <div className="flex flex-col gap-2 shrink-0 pt-0.5">
+      <div className="flex flex-col gap-1.5 shrink-0 pt-0.5">
         <button
           type="button"
-          className="min-h-11 min-w-11 rounded-md text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-400)] hover:bg-[var(--ws-surface-secondary)] cursor-grab active:cursor-grabbing flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400)]"
+          className="h-7 w-7 rounded-md text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-400)] hover:bg-[var(--ws-surface-secondary)] cursor-grab active:cursor-grabbing flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400)]"
           aria-label="Drag to move lead"
           {...listeners}
           {...attributes}
@@ -103,7 +103,7 @@ function KanbanCard({
               e.stopPropagation();
               onToggleSelect?.(lead.id);
             }}
-            className={`min-h-11 min-w-11 rounded border flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400)] ${isSelected ? 'bg-[var(--brand-blue-500)] border-[var(--brand-blue-500)]' : 'border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]'}`}
+            className={`h-7 w-7 rounded border flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400)] ${isSelected ? 'bg-[var(--brand-blue-500)] border-[var(--brand-blue-500)]' : 'border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]'}`}
           >
             {isSelected && <CheckCircle2 className="w-3 h-3 text-[var(--ws-text-primary)]" />}
           </button>
@@ -125,12 +125,12 @@ function KanbanCard({
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            {/* 36px Circular Initials */}
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--brand-blue-500)] to-[var(--brand-violet-600)] flex items-center justify-center font-bold text-[var(--text-inverse)] type-ui shrink-0 shadow-sm">
+            {/* Circular Initials */}
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-[var(--brand-blue-500)] to-[var(--brand-violet-600)] flex items-center justify-center font-bold text-[var(--text-inverse)] type-caption sm:type-ui shrink-0 shadow-sm">
               {(lead.businessName || '?').charAt(0).toUpperCase()}
             </div>
-            <div className="min-w-0">
-              <h4 className="font-bold type-ui text-[var(--ws-text-primary)] truncate">{lead.businessName}</h4>
+            <div className="min-w-0 flex-1">
+              <h4 className="font-bold type-ui text-[var(--ws-text-primary)] truncate" title={lead.businessName}>{lead.businessName}</h4>
               
               <div className="flex flex-wrap items-center gap-1 mt-0.5">
                 {lead.industry && (
@@ -160,24 +160,32 @@ function KanbanCard({
           </div>
         </div>
 
-        {(lead.email || lead.phone || lead.location) && (
-          <div className="flex flex-wrap gap-x-3 gap-y-1 type-caption text-[var(--ws-text-muted)]">
+        {(lead.email || lead.phone || lead.location || lead.website) && (
+          <div className="flex flex-wrap gap-x-2.5 gap-y-1 type-caption text-[var(--ws-text-muted)] min-w-0">
+            {lead.website && (
+              <div className="flex items-center gap-1 min-w-0 max-w-full">
+                <Globe className="w-3 h-3 shrink-0 text-[var(--brand-blue-400)]" />
+                <span className="truncate max-w-[150px]" title={lead.website}>
+                  {lead.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
+                </span>
+              </div>
+            )}
             {lead.location && (
-              <div className="flex items-center gap-1 min-w-0">
-                <MapPin className="w-3 h-3 shrink-0" />{' '}
-                <span className="truncate max-w-[140px]">{lead.location}</span>
+              <div className="flex items-center gap-1 min-w-0 max-w-full">
+                <MapPin className="w-3 h-3 shrink-0 text-amber-500" />
+                <span className="truncate max-w-[130px]" title={lead.location}>{lead.location}</span>
               </div>
             )}
             {lead.email && (
-              <div className="flex items-center gap-1 min-w-0">
-                <Mail className="w-3 h-3 shrink-0" />{' '}
-                <span className="truncate max-w-[140px]">{lead.email}</span>
+              <div className="flex items-center gap-1 min-w-0 max-w-full">
+                <Mail className="w-3 h-3 shrink-0" />
+                <span className="truncate max-w-[140px]" title={lead.email}>{lead.email}</span>
               </div>
             )}
             {lead.phone && (
-              <div className="flex items-center gap-1 min-w-0">
-                <Phone className="w-3 h-3 shrink-0" />{' '}
-                <span className="truncate max-w-[140px]">{lead.phone}</span>
+              <div className="flex items-center gap-1 min-w-0 max-w-full">
+                <Phone className="w-3 h-3 shrink-0" />
+                <span className="truncate max-w-[120px]" title={lead.phone}>{lead.phone}</span>
               </div>
             )}
           </div>
@@ -236,7 +244,7 @@ function KanbanColumn({
 
   return (
     <div
-      className={`flex flex-col w-[min(88vw,300px)] shrink-0 snap-center rounded-2xl md:w-auto md:min-w-0 md:max-w-none md:shrink md:snap-none ${column.color} border border-[var(--ws-border)]/30 overflow-hidden`}
+      className={`flex flex-col w-[min(88vw,300px)] sm:w-72 md:w-[280px] xl:w-auto xl:min-w-[260px] shrink-0 snap-center rounded-2xl ${column.color} border border-[var(--ws-border)]/30 overflow-hidden`}
     >
       <div className="p-3 bg-[var(--ws-panel)]/50 backdrop-blur-sm border-b border-[var(--ws-border)] flex items-center justify-between sticky top-0 z-10">
         <h3 className="font-bold type-ui text-[var(--ws-text-secondary)] flex items-center gap-2">
@@ -247,7 +255,7 @@ function KanbanColumn({
         </h3>
       </div>
       
-      <div ref={setNodeRef} className="flex-1 min-h-[240px] max-h-[min(72vh,640px)] p-2 overflow-y-auto flex flex-col gap-2 relative">
+      <div ref={setNodeRef} className="flex-1 min-h-[240px] max-h-[min(74vh,680px)] p-2 overflow-y-auto flex flex-col gap-2 relative overscroll-contain">
         <SortableContext items={leads.map(l => l.id)} strategy={verticalListSortingStrategy}>
           {leads.map((lead) => (
             <KanbanCard 
@@ -909,7 +917,7 @@ export default function KanbanBoard() {
             onDragOver={onDragOver}
             onDragEnd={onDragEnd}
         >
-            <div className="flex md:grid md:grid-cols-4 gap-3 md:gap-4 min-h-[280px] snap-x snap-proximity md:snap-none pb-4 items-stretch">
+            <div className="flex xl:grid xl:grid-cols-4 gap-3 md:gap-4 min-h-[280px] overflow-x-auto snap-x snap-proximity xl:snap-none pb-24 items-stretch [scrollbar-width:thin]">
                 <SortableContext items={columns.map(c => c.id)}>
                     {columns.map((col) => (
                         <KanbanColumn

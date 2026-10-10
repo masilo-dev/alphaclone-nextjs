@@ -71,9 +71,9 @@ export function CommunicationComposer({
       size="wide"
       className="ac-communication-composer"
     >
-      <div className="space-y-4 pt-2">
+      <div className="flex flex-col min-h-full space-y-4 pt-2">
         {(relatedCustomer || relatedRecord) && (
-          <div className="rounded-[12px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 type-caption text-[var(--ws-text-secondary)] space-y-1">
+          <div className="rounded-[12px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 type-caption text-[var(--ws-text-secondary)] space-y-1 shrink-0">
             {relatedCustomer ? (
               <p>
                 <span className="text-[var(--ws-text-muted)]">Customer </span>
@@ -90,7 +90,7 @@ export function CommunicationComposer({
         )}
 
         <div
-          className="flex flex-wrap gap-1 rounded-[10px] bg-[var(--ws-surface-tertiary)] p-1"
+          className="flex flex-wrap gap-1 rounded-[10px] bg-[var(--ws-surface-tertiary)] p-1 shrink-0"
           role="tablist"
           aria-label="Channel"
         >
@@ -113,7 +113,7 @@ export function CommunicationComposer({
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 shrink-0">
           <p className="type-card-description text-[var(--ws-text-muted)]">
             Activity can be tracked on the related customer timeline.
           </p>
@@ -125,7 +125,7 @@ export function CommunicationComposer({
         </div>
 
         {channel === 'email' || channel === 'note' || children ? (
-          <div className="ac-composer-body">{children}</div>
+          <div className="ac-composer-body flex-1 min-h-0 flex flex-col">{children}</div>
         ) : (
           <div className="rounded-[14px] border border-[var(--ws-border)] p-6 text-center">
             <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">

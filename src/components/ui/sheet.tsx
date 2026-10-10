@@ -50,7 +50,7 @@ const SheetContent = React.forwardRef<
       ref={ref}
       className={cn(
         // Layout & scroll
-        'fixed ac-layer-panel flex flex-col gap-3 sm:gap-3.5 overflow-hidden ac-scroll-full',
+        'fixed ac-layer-panel flex flex-col gap-3 sm:gap-3.5 overflow-hidden',
         // Token-driven surface: adapts to dark / light theme
         'border-[var(--ws-border)] bg-[var(--ws-panel)] shadow-xl',
         // Transition

@@ -77,7 +77,7 @@ export function DetailDrawer({
           <SheetTitle>{title}</SheetTitle>
           {description ? <SheetDescription>{description}</SheetDescription> : null}
         </SheetHeader>
-        <div className={cn('flex-1 min-h-0 overflow-y-auto ac-scroll-full pb-safe', isInstalledMobileCompanion && 'px-3 py-3')}>{children}</div>
+        <div className={cn('flex-1 min-h-0 overflow-y-auto overscroll-contain pb-safe', isInstalledMobileCompanion && 'px-3 py-3')}>{children}</div>
       </SheetContent>
     </Sheet>
   );

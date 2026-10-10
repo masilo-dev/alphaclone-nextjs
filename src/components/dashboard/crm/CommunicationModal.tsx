@@ -317,9 +317,10 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                     : undefined
             }
         >
-            <div className="space-y-4">
-                {/* Provider selector — always visible so Zoho/Microsoft compose starts clearly */}
-                <div className="space-y-2">
+            <div className="flex flex-col flex-1 min-h-0">
+                <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1 pb-4 custom-scrollbar">
+                    {/* Provider selector — always visible so Zoho/Microsoft compose starts clearly */}
+                    <div className="space-y-2">
                     <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Send via</label>
                     <div className="flex flex-wrap gap-2 p-1 bg-[var(--ws-surface-secondary)] rounded-[10px] border border-[var(--ws-border)]">
                         {availableProviders.map((p) => {
@@ -490,9 +491,10 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                             className="w-full p-3 transition-colors h-[140px] max-h-[140px] resize-none overflow-y-auto"
                         />
                     </div>
+                    </div>
                 </div>
 
-                <div className="border-t border-[var(--ws-border)] pt-4 flex items-center justify-between gap-3 flex-wrap">
+                <div className="shrink-0 border-t border-[var(--ws-border)] pt-3 pb-safe bg-[var(--ws-panel)] flex items-center justify-between gap-3 flex-wrap">
                     <div className="text-[var(--ws-text-muted)] type-caption flex items-center gap-2">
                         {loadingProvider ? (
                             <><Loader2 className="w-3 h-3 animate-spin" /> Detecting provider...</>
@@ -502,7 +504,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                             <><span className="text-[var(--warning-text)]">No provider connected. Emails cannot be sent.</span></>
                         )}
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                         <Button variant="ghost" onClick={onClose} disabled={isSending}>
                             Cancel
                         </Button>

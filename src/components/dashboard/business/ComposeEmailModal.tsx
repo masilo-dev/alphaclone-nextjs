@@ -633,15 +633,15 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
         <AnimatePresence>
             {isOpen && (
                 <div className={presentation === 'dock'
-                    ? 'fixed inset-0 z-[200] pointer-events-none flex items-end justify-end p-2 md:p-4'
-                    : 'fixed inset-0 z-[200] flex items-center justify-center p-4'}>
+                    ? 'fixed inset-0 ac-layer-modal pointer-events-none flex items-end justify-end p-2 md:p-4'
+                    : 'fixed inset-0 ac-layer-modal flex items-center justify-center p-3 sm:p-4'}>
                     {presentation === 'modal' ? (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={onClose}
-                            className="absolute inset-0 bg-[var(--ws-canvas)]/90 backdrop-blur-md pointer-events-auto"
+                            className="absolute inset-0 bg-slate-950/80 bg-[var(--ws-overlay-backdrop)] backdrop-blur-md pointer-events-auto"
                         />
                     ) : (
                         <motion.div
@@ -649,7 +649,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={onClose}
-                            className="absolute inset-0 bg-[var(--ws-canvas)]/60 backdrop-blur-xs pointer-events-auto"
+                            className="absolute inset-0 bg-slate-950/40 bg-[var(--ws-overlay-backdrop)]/50 backdrop-blur-xs pointer-events-auto"
                         />
                     )}
 
@@ -657,10 +657,10 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                         initial={{ opacity: 0, scale: 0.98, y: 12 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.98, y: 12 }}
-                        className={`relative w-full bg-[var(--ws-canvas)] border border-[var(--ws-border-strong)] shadow-[0_0_50px_rgba(0,0,0,0.95)] overflow-hidden flex flex-col z-[210] ${
+                        className={`relative w-full bg-[var(--ws-canvas)] border border-[var(--ws-border-strong)] shadow-2xl overflow-hidden flex flex-col z-10 ${
                             presentation === 'dock'
                                 ? 'pointer-events-auto max-w-[560px] max-h-[calc(100%-0.5rem)] rounded-xl'
-                                : 'max-w-xl max-h-[min(82vh,640px)] rounded-2xl'
+                                : 'max-w-xl max-h-[min(90vh,680px)] rounded-2xl'
                         }`}
                     >
                         {/* Header */}
@@ -917,7 +917,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
                                 <div>
                                     <label className="type-caption text-[var(--ws-text-muted)] uppercase font-bold tracking-wider block mb-1.5">Message</label>
-                                    <div className="rounded-xl border border-[var(--ws-border)] overflow-hidden bg-[var(--ws-canvas)]/50 [&_.ql-toolbar]:border-[var(--ws-border)] [&_.ql-toolbar]:bg-[var(--ws-panel)]/80 [&_.ql-container]:border-[var(--ws-border)] [&_.ql-editor]:min-h-[180px] [&_.ql-editor]:max-h-[320px] [&_.ql-editor]:type-ui [&_.ql-editor]:text-[var(--ws-text-primary)] [&_.ql-stroke]:stroke-slate-400 [&_.ql-picker]:text-[var(--ws-text-secondary)]">
+                                    <div className="rounded-xl border border-[var(--ws-border)] overflow-hidden bg-[var(--ws-canvas)]/50 [&_.ql-toolbar]:border-[var(--ws-border)] [&_.ql-toolbar]:bg-[var(--ws-panel)]/80 [&_.ql-container]:border-[var(--ws-border)] [&_.ql-editor]:min-h-[140px] [&_.ql-editor]:max-h-[260px] [&_.ql-editor]:type-ui [&_.ql-editor]:text-[var(--ws-text-primary)] [&_.ql-stroke]:stroke-slate-400 [&_.ql-picker]:text-[var(--ws-text-secondary)]">
                                         <ReactQuill
                                             theme="snow"
                                             value={body}

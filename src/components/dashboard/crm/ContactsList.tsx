@@ -577,7 +577,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
 
             {/* Bulk Delete Confirmation */}
             {showBulkDeleteConfirm && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 ac-layer-confirm bg-[var(--ws-overlay-backdrop)] backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-[var(--ws-surface-secondary)] rounded-xl border border-[var(--ws-border)] p-6 max-w-md w-full">
                         <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-2">Delete {selectedIds.length} contacts?</h3>
                         <p className="type-card-description text-[var(--ws-text-muted)] mb-6">
@@ -604,7 +604,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
 
             {/* Delete Confirmation */}
             {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 ac-layer-confirm bg-[var(--ws-overlay-backdrop)] backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-[var(--ws-surface-secondary)] rounded-xl border border-[var(--ws-border)] p-6 max-w-md w-full">
                         <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-2">Delete Contact?</h3>
                         <p className="type-card-description text-[var(--ws-text-muted)] mb-6">

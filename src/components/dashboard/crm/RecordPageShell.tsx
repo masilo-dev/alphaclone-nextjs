@@ -37,7 +37,7 @@ export default function RecordPageShell({
   children,
 }: RecordPageShellProps) {
   return (
-    <div className="flex flex-col h-full bg-[var(--ws-canvas)]">
+    <div className="flex flex-col h-full min-h-0 bg-[var(--ws-canvas)]">
       <div className="flex-shrink-0 px-4 py-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/50">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
@@ -94,7 +94,7 @@ export default function RecordPageShell({
           ))}
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto">{children}</div>
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">{children}</div>
     </div>
   );
 }
