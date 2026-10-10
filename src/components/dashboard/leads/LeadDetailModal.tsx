@@ -446,7 +446,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
 
         try {
             // STEP 1: Ensure we have a contact
-            const { contactId, error: convertError } = await contactService.convertLeadToContact(lead.id, {
+            const { contactId, clientId, error: convertError } = await contactService.convertLeadToContact(lead.id, {
                 createCompany: true,
                 companyName: lead.businessName
             });
@@ -466,7 +466,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                 progress: 0,
                 team: [user.id],
                 description: `Project initialized from lead discovery. \n\nTarget Business: ${lead.businessName}\nIndustry: ${lead.industry}\nIntelligence: ${lead.notes || 'None'}`,
-                clientId: contactId, // Link to the contact
+                clientId: clientId || contactId, // Link to client or contact
                 contractStatus: 'None',
                 startDate: new Date().toISOString().split('T')[0]
             });
@@ -537,7 +537,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
 
             // 3. Convert Lead to Client/Contact
             toast.loading('Converting to contact...', { id: toastId });
-            const { contactId, error: conversionError } = await contactService.convertLeadToContact(lead.id, {
+            const { contactId, clientId, error: conversionError } = await contactService.convertLeadToContact(lead.id, {
                 createCompany: true,
                 companyName: lead.businessName
             });
@@ -588,7 +588,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                 currentStage: 'Planning',
                 progress: 0,
                 team: [authUser.id],
-                clientId: contactId,
+                clientId: clientId || contactId,
                 startDate: new Date().toISOString().split('T')[0]
             });
             if (projectError) throw new Error(`Project step failed: ${projectError}`);

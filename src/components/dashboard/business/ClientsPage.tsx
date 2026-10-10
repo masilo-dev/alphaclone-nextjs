@@ -121,7 +121,23 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const loadedTenantRef = useRef<string | null>(null);
     const previousSearchRef = useRef(searchTerm);
     const [totalCount, setTotalCount] = useState<number>(() => (initialCached as any)?.total || initialCached?.clients?.length || 0);
-    const [viewMode, setViewMode] = useState<'list' | 'board' | 'micro'>('list');
+    const [viewMode, setViewModeState] = useState<'list' | 'board' | 'micro'>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('crm_clients_view_mode');
+            if (saved === 'list' || saved === 'board' || saved === 'micro') return saved;
+        }
+        return 'list';
+    });
+
+    const setViewMode = useCallback((mode: 'list' | 'board' | 'micro') => {
+        setViewModeState(mode);
+        if (typeof window !== 'undefined') {
+            try {
+                localStorage.setItem('crm_clients_view_mode', mode);
+            } catch {}
+        }
+    }, []);
+
     const [showProposalModal, setShowProposalModal] = useState(false);
     const [selectedClientForProposal, setSelectedClientForProposal] = useState<BusinessClient | null>(null);
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -156,18 +172,32 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [clientCursor, setClientCursor] = useState<{ createdAt: string; id: string } | null>(null);
     const [showArchived, setShowArchived] = useState(false);
     const [hasMore, setHasMore] = useState(true);
-    const [directoryView, setDirectoryView] = useState<ContactDirectoryView>(() =>
-        pathname === '/dashboard/crm/unified-contacts' ? 'unified' : 'sales'
-    );
+    const [directoryView, setDirectoryViewState] = useState<ContactDirectoryView>(() => {
+        if (pathname === '/dashboard/crm/unified-contacts') return 'unified';
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('crm_directory_view');
+            if (saved === 'sales' || saved === 'marketing' || saved === 'unified') return saved as ContactDirectoryView;
+        }
+        return 'sales';
+    });
+
+    const setDirectoryView = useCallback((view: ContactDirectoryView) => {
+        setDirectoryViewState(view);
+        if (typeof window !== 'undefined') {
+            try {
+                localStorage.setItem('crm_directory_view', view);
+            } catch {}
+        }
+    }, []);
 
     const openContactDetail = useCallback((client: BusinessClient) => {
         setSelectedClient(client);
         setViewMode('list');
-    }, []);
+    }, [setViewMode]);
 
     const searchParams = useSearchParams();
     const stageParam = searchParams?.get('stage');
-    const contactParam = searchParams?.get('contact') ?? searchParams?.get('contactId');
+    const contactParam = searchParams?.get('clientId') ?? searchParams?.get('client') ?? searchParams?.get('contact') ?? searchParams?.get('contactId');
     const clientTabParam = searchParams?.get('clientTab');
     const directoryParam = searchParams?.get('directory');
     const PAGE_SIZE = 50;
@@ -833,6 +863,22 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         if (filteredClients.length > 500) toast('Selected the first 500 loaded contacts.');
     };
 
+    const handleBulkUpdateStage = async (newStage: BusinessClient['salesStage']) => {
+        if (!currentTenant?.id || selectedClientIds.length === 0) return;
+        try {
+            await Promise.all(
+                selectedClientIds.map((id) => businessClientService.updateClient(id, { salesStage: newStage }))
+            );
+            setClients((prev) =>
+                prev.map((c) => (selectedClientIds.includes(c.id) ? { ...c, salesStage: newStage } : c))
+            );
+            toast.success(`Updated ${selectedClientIds.length} contact(s) to ${newStage}`);
+            setSelectedClientIds([]);
+        } catch (err: any) {
+            toast.error('Failed to update stage: ' + (err?.message || 'Unknown error'));
+        }
+    };
+
     const renderBulkSelectRow = () => (
         <div className="flex items-center justify-between px-1">
             <button
@@ -1145,6 +1191,19 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 >
                     Archive
                 </Button>
+                <Dropdown
+                    trigger={
+                        <Button variant="outline" size="sm" icon={<Edit className="w-4 h-4" />}>
+                            Stage
+                        </Button>
+                    }
+                    items={[
+                        { label: 'Set to Lead', onClick: () => handleBulkUpdateStage('lead') },
+                        { label: 'Set to Prospect', onClick: () => handleBulkUpdateStage('prospect') },
+                        { label: 'Set to Customer', onClick: () => handleBulkUpdateStage('customer') },
+                        { label: 'Set to Lost', onClick: () => handleBulkUpdateStage('lost') },
+                    ]}
+                />
                 <Button
                     variant="outline"
                     size="sm"
@@ -1487,6 +1546,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                     </button>
                                                 ) : null}
                                                 {selectedClient.phone ? <span>{selectedClient.phone}</span> : null}
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border border-[var(--ws-border)]">
+                                                    Last Touch: {clientTimeline?.stats?.last_contact ? new Date(clientTimeline.stats.last_contact).toLocaleDateString() : 'No recent touch'}
+                                                </span>
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                                                    Next: {selectedClient.salesStage === 'lead' ? 'Qualify & Schedule Call' : selectedClient.salesStage === 'prospect' ? 'Send Proposal / Quote' : selectedClient.salesStage === 'customer' ? 'Active Account Review' : 'Follow up or Re-engage'}
+                                                </span>
                                             </>
                                         }
                                         actions={
@@ -1730,6 +1795,22 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
                                         {activeTab === 'invoices' && (
                                             <div className="space-y-3">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <p className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">
+                                                        Billing Records
+                                                    </p>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        icon={<Plus className="w-3.5 h-3.5" />}
+                                                        onClick={() => {
+                                                            setSelectedClientForInvoice(selectedClient);
+                                                            setShowInvoiceModal(true);
+                                                        }}
+                                                    >
+                                                        Create Invoice
+                                                    </Button>
+                                                </div>
                                                 {clientTimeline?.activities?.filter((a: any) => a.activity_type === 'invoice' || a.activity_type === 'payment').length === 0 ? (
                                                     <EmptyState
                                                         icon={Receipt}

@@ -701,6 +701,7 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
     onDelete: (id: string) => void;
     onEdit: (event: CalendarEvent) => void;
 }) => {
+    const router = useRouter();
     const cfg = SOURCE_CONFIG[event.source];
     const date = new Date(event.date);
 
@@ -811,7 +812,11 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                     <div className="mt-6 flex flex-col gap-2">
                         {event.source === 'task' && (
                             <button
-                                onClick={() => (window.location.href = '/dashboard/tasks')}
+                                onClick={() => {
+                                    onClose();
+                                    const taskId = event.id.replace('task-', '');
+                                    router.push(taskId ? `/dashboard/tasks?taskId=${encodeURIComponent(taskId)}` : '/dashboard/tasks');
+                                }}
                                 className="w-full py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] type-ui font-medium rounded-lg transition-colors border border-[var(--ws-border)]"
                             >
                                 View Task Details
@@ -819,7 +824,11 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                         )}
                         {event.source === 'project' && (
                             <button
-                                onClick={() => (window.location.href = '/dashboard/business/projects')}
+                                onClick={() => {
+                                    onClose();
+                                    const projectId = event.id.replace('project-', '');
+                                    router.push(projectId ? `/dashboard/business/projects?projectId=${encodeURIComponent(projectId)}` : '/dashboard/business/projects');
+                                }}
                                 className="w-full py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] type-ui font-medium rounded-lg transition-colors border border-[var(--ws-border)]"
                             >
                                 View Project Details
@@ -827,10 +836,26 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                         )}
                         {event.source === 'deal' && (
                             <button
-                                onClick={() => (window.location.href = '/dashboard/leads')}
+                                onClick={() => {
+                                    onClose();
+                                    const dealId = event.id.replace('deal-', '');
+                                    router.push(dealId ? `/dashboard/deals?dealId=${encodeURIComponent(dealId)}` : '/dashboard/deals');
+                                }}
                                 className="w-full py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] type-ui font-medium rounded-lg transition-colors border border-[var(--ws-border)]"
                             >
                                 View Deal Details
+                            </button>
+                        )}
+                        {event.source === 'lead' && (
+                            <button
+                                onClick={() => {
+                                    onClose();
+                                    const leadId = event.id.replace('lead-', '');
+                                    router.push(leadId ? `/dashboard/leads?leadId=${encodeURIComponent(leadId)}` : '/dashboard/leads');
+                                }}
+                                className="w-full py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] type-ui font-medium rounded-lg transition-colors border border-[var(--ws-border)]"
+                            >
+                                View Lead Details
                             </button>
                         )}
                         {event.source === 'event' && (

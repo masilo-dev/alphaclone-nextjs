@@ -103,7 +103,24 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const [clients, setClients] = useState<any[]>(() => cachedClients || []);
     const [showAddModal, setShowAddModal] = useState(false);
     const [loading, setLoading] = useState<boolean>(() => !cachedProjects || cachedProjects.length === 0);
-    const [viewMode, setViewMode] = useState<ViewMode>('list');
+    const [viewMode, setViewMode] = useState<ViewMode>(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const saved = localStorage.getItem('alphaclone_projects_view_mode') as ViewMode | null;
+                if (saved && ['list', 'timeline', 'health'].includes(saved)) return saved;
+            } catch (_) {}
+        }
+        return 'list';
+    });
+
+    const handleSetViewMode = useCallback((mode: ViewMode) => {
+        setViewMode(mode);
+        if (typeof window !== 'undefined') {
+            try {
+                localStorage.setItem('alphaclone_projects_view_mode', mode);
+            } catch (_) {}
+        }
+    }, []);
     const [searchQuery, setSearchQuery] = useState('');
     const [viewingProject, setViewingProject] = useState<BusinessProject | null>(null);
     const loadedTenantRef = useRef<string | null>(null);
@@ -407,21 +424,21 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     </label>
                     <div className="flex p-0.5 sm:p-1 bg-[var(--ws-panel)] shadow-inner rounded-full border border-[var(--ws-border)]">
                         <button
-                            onClick={() => setViewMode('list')}
+                            onClick={() => handleSetViewMode('list')}
                             className={`h-7 sm:h-8 px-2.5 sm:px-3 rounded-full transition-all flex items-center gap-1 sm:gap-1.5 text-xs font-semibold ${viewMode === 'list' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-[var(--text-inverse)] shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
                         >
                             <LayoutList className="w-3.5 h-3.5" />
                             <span>List</span>
                         </button>
                         <button
-                            onClick={() => setViewMode('timeline')}
+                            onClick={() => handleSetViewMode('timeline')}
                             className={`h-7 sm:h-8 px-2.5 sm:px-3 rounded-full transition-all flex items-center gap-1 sm:gap-1.5 text-xs font-semibold ${viewMode === 'timeline' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-[var(--text-inverse)] shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
                         >
                             <BarChart3 className="w-3.5 h-3.5" />
                             <span>Timeline</span>
                         </button>
                         <button
-                            onClick={() => setViewMode('health')}
+                            onClick={() => handleSetViewMode('health')}
                             className={`h-7 sm:h-8 px-2.5 sm:px-3 rounded-full transition-all flex items-center gap-1 sm:gap-1.5 text-xs font-semibold ${viewMode === 'health' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-[var(--text-inverse)] shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
                         >
                             <Activity className="w-3.5 h-3.5" />

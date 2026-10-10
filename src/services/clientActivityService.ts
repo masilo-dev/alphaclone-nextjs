@@ -347,7 +347,7 @@ class ClientActivityService {
         const { data } = await supabase
             .from('projects')
             .select('*')
-            .eq('owner_id', clientId)
+            .or(`client_id.eq.${clientId},owner_id.eq.${clientId}`)
             .order('created_at', { ascending: false });
 
         return (data || []).map((project: any) => ({
@@ -355,11 +355,11 @@ class ClientActivityService {
             client_id: clientId,
             activity_type: 'project_update' as const,
             title: `Project: ${project.name}`,
-            description: `Status: ${project.status}, Stage: ${project.current_stage}`,
+            description: `Status: ${project.status}, Stage: ${project.current_stage || project.stage || 'In Progress'}`,
             metadata: {
                 project_id: project.id,
                 status: project.status,
-                stage: project.current_stage,
+                stage: project.current_stage || project.stage,
                 progress: project.progress,
             },
             created_at: project.updated_at || project.created_at,

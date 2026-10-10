@@ -2,7 +2,7 @@ import { Input as AlphaCloneInput } from '@/components/ui/input';
 import { Select as AlphaCloneSelect } from '@/components/ui/select';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
-import { Search, X, FileText, MessageSquare, DollarSign, User, Filter, Mail } from 'lucide-react';
+import { Search, X, FileText, MessageSquare, DollarSign, User, Filter, Mail, Building, Target, Users, Briefcase } from 'lucide-react';
 import { searchService, SearchResult, SearchFilters } from '../../services/searchService';
 import { User as UserType } from '../../types';
 import { Card } from '../ui/UIComponents';
@@ -117,6 +117,14 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
 
     const getIcon = (type: string) => {
         switch (type) {
+            case 'client':
+                return <Building className="w-4 h-4" />;
+            case 'lead':
+                return <Target className="w-4 h-4" />;
+            case 'contact':
+                return <Users className="w-4 h-4" />;
+            case 'deal':
+                return <Briefcase className="w-4 h-4" />;
             case 'project':
                 return <FileText className="w-4 h-4" />;
             case 'message':
@@ -137,6 +145,14 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
 
     const getColor = (type: string) => {
         switch (type) {
+            case 'client':
+                return 'text-sky-400 bg-sky-500/10';
+            case 'lead':
+                return 'text-amber-400 bg-amber-500/10';
+            case 'contact':
+                return 'text-indigo-400 bg-indigo-500/10';
+            case 'deal':
+                return 'text-emerald-400 bg-emerald-500/10';
             case 'project':
                 return 'text-blue-400 bg-blue-500/10';
             case 'message':
@@ -191,8 +207,8 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            aria-label={t('Search contacts, contracts, documents, invoices and campaigns') || 'Search contacts, contracts, documents, invoices and campaigns'}
-                            placeholder="Search contacts, contracts, documents, invoices and campaigns..."
+                            aria-label={t('Search clients, leads, contacts, deals, projects, and invoices') || 'Search clients, leads, contacts, deals, projects, and invoices'}
+                            placeholder="Search clients, leads, contacts, deals, projects, and invoices..."
                             className="flex-1"
                             autoFocus
                         />
@@ -230,6 +246,10 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                                         }}
                                         className="w-full px-3 py-2"
                                     >
+                                        <option value="client">Clients</option>
+                                        <option value="lead">Leads</option>
+                                        <option value="contact">Contacts</option>
+                                        <option value="deal">Deals</option>
                                         <option value="project">Projects</option>
                                         <option value="message">Messages</option>
                                         <option value="invoice">Invoices</option>
@@ -318,7 +338,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                             <div className="p-8 text-center text-[var(--ws-text-muted)]">
                                 <p className="type-card-description">Start typing to search...</p>
                                 <div className="mt-4 type-caption space-y-1">
-                                    <p>• Search across projects, messages, contracts, documents, invoices and campaigns</p>
+                                    <p>• Search across clients, leads, deals, contacts, projects, messages, invoices and campaigns</p>
                                     <p>• Use filters to narrow results</p>
                                     <p>• Press ⌘K anytime to search</p>
                                 </div>

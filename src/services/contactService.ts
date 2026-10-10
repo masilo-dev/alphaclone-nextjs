@@ -310,6 +310,44 @@ export const contactService = {
                 error: null,
             };
         } catch (err: any) {
+            const errMsg = (err?.message || '').toLowerCase();
+            const errDetails = (err?.details || '').toLowerCase();
+            if (errMsg.includes('already converted') || errDetails.includes('already converted')) {
+                // Idempotently locate existing contact and client
+                try {
+                    const { data: contact } = await supabase
+                        .from('contacts')
+                        .select('id, company_id')
+                        .eq('original_lead_id', leadId)
+                        .maybeSingle();
+
+                    const { data: leadRecord } = await supabase
+                        .from('leads')
+                        .select('id, client_id')
+                        .eq('id', leadId)
+                        .maybeSingle();
+
+                    const resolvedContactId = contact?.id || null;
+                    const resolvedClientId = leadRecord?.client_id || undefined;
+
+                    // Guarantee bidirectional linkage between business_clients and contacts
+                    if (resolvedClientId && resolvedContactId) {
+                        await supabase
+                            .from('business_clients')
+                            .update({ crm_contact_id: resolvedContactId })
+                            .eq('id', resolvedClientId);
+                    }
+
+                    return {
+                        contactId: resolvedContactId,
+                        clientId: resolvedClientId,
+                        error: null,
+                    };
+                } catch (fallbackErr: any) {
+                    console.error('Error during fallback lookup for converted lead:', fallbackErr);
+                }
+            }
+
             console.error('Error converting lead to contact:', JSON.stringify(err, null, 2), err);
             return { contactId: null, error: err.message || 'Unknown error occurred during conversion' };
         }

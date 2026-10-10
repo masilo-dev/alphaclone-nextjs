@@ -98,6 +98,8 @@ const PLATFORM_ICONS: Record<string, React.ReactNode> = {
     platform: <Globe className="w-3.5 h-3.5" />,
 };
 
+const DRAFT_STORAGE_KEY = 'alphaclone_social_composer_draft';
+
 export default function SocialMediaComposer() {
     const { currentTenant: tenant } = useTenant();
     const { user } = useAuth();
@@ -240,6 +242,45 @@ export default function SocialMediaComposer() {
         loadData();
     }, [loadData]);
 
+    // Restore draft from sessionStorage on initial mount
+    useEffect(() => {
+        try {
+            const saved = sessionStorage.getItem(DRAFT_STORAGE_KEY);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (typeof parsed.caption === 'string' && parsed.caption) setCaption(parsed.caption);
+                if (Array.isArray(parsed.platforms) && parsed.platforms.length > 0) setPlatforms(parsed.platforms);
+                if (Array.isArray(parsed.hashtags)) setHashtags(parsed.hashtags);
+                if (typeof parsed.linkUrl === 'string' && parsed.linkUrl) setLinkUrl(parsed.linkUrl);
+                if (typeof parsed.scheduledAt === 'string' && parsed.scheduledAt) setScheduledAt(parsed.scheduledAt);
+            }
+        } catch {
+            // Ignore sessionStorage errors
+        }
+    }, []);
+
+    // Persist draft to sessionStorage on state changes
+    useEffect(() => {
+        try {
+            if (caption.trim() || hashtags.length > 0 || linkUrl.trim() || scheduledAt) {
+                sessionStorage.setItem(
+                    DRAFT_STORAGE_KEY,
+                    JSON.stringify({
+                        caption,
+                        platforms,
+                        hashtags,
+                        linkUrl,
+                        scheduledAt,
+                    })
+                );
+            } else {
+                sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+            }
+        } catch {
+            // Ignore sessionStorage errors
+        }
+    }, [caption, platforms, hashtags, linkUrl, scheduledAt]);
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (!files.length || !tenant?.id) return;
@@ -339,6 +380,9 @@ export default function SocialMediaComposer() {
             setSelectedMediaTypes([]);
             setLinkUrl('');
             setScheduledAt('');
+            try {
+                sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+            } catch {}
             loadData();
             setActiveTab('posts');
         } else {
@@ -909,6 +953,24 @@ Return only the comment text.`;
                             <div className="flex items-center justify-between mb-1.5">
                                 <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Caption *</label>
                                 <div className="flex items-center gap-2">
+                                    {(caption.trim() || hashtags.length > 0 || linkUrl.trim()) && (
+                                        <button
+                                            onClick={() => {
+                                                setCaption('');
+                                                setHashtags([]);
+                                                setHashtagInput('');
+                                                setLinkUrl('');
+                                                setScheduledAt('');
+                                                try {
+                                                    sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+                                                } catch {}
+                                            }}
+                                            className="px-2 py-1 text-[var(--ws-text-muted)] hover:text-red-400 type-caption font-medium transition-colors"
+                                            title="Discard current draft"
+                                        >
+                                            Clear draft
+                                        </button>
+                                    )}
                                     <button
                                         onClick={startVoiceInput}
                                         title={isListening ? 'Stop recording' : 'Voice-type your caption (Chrome/Edge)'}

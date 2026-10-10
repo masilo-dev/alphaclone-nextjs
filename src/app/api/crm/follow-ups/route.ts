@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
         reason: 'Scheduled follow-up due',
         dueAt: c.next_followup_at,
         priority: 'high',
-        href: '/dashboard/contacts',
+        href: `/dashboard/contacts?contactId=${encodeURIComponent(c.id)}`,
       });
     }
 
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
         reason: 'Account follow-up due',
         dueAt: co.next_followup_at,
         priority: 'high',
-        href: '/dashboard/crm/accounts',
+        href: `/dashboard/clients?clientId=${encodeURIComponent(co.id)}`,
       });
     }
 
@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
         reason: 'Opportunity follow-up due',
         dueAt: o.next_followup_at,
         priority: 'high',
-        href: '/dashboard/crm/accounts',
+        href: `/dashboard/crm/accounts?oppId=${encodeURIComponent(o.id)}`,
       });
     }
 
@@ -118,15 +118,16 @@ export async function GET(req: NextRequest) {
         reason: 'No activity in 7+ days',
         dueAt: d.updated_at,
         priority: 'medium',
-        href: '/dashboard/deals',
+        href: `/dashboard/deals?dealId=${encodeURIComponent(d.id)}`,
       });
     }
 
     const { data: staleLeads } = await admin
       .from('leads')
-      .select('id, business_name, email, stage, updated_at')
+      .select('id, business_name, email, stage, status, updated_at')
       .eq('tenant_id', tenantId)
-      .not('stage', 'in', '("closed","won","lost")')
+      .not('stage', 'in', '("closed","won","lost","converted","disqualified")')
+      .not('status', 'in', '("closed","lost","converted","disqualified")')
       .lt('updated_at', staleIso)
       .order('updated_at', { ascending: true })
       .limit(limit);
@@ -140,7 +141,31 @@ export async function GET(req: NextRequest) {
         reason: 'Stale lead — no touch in 7+ days',
         dueAt: l.updated_at,
         priority: 'medium',
-        href: '/dashboard/leads',
+        href: `/dashboard/leads?leadId=${encodeURIComponent(l.id)}`,
+      });
+    }
+
+    // Stale active business clients (no touch in 14+ days)
+    const staleClientIso = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: staleClients } = await admin
+      .from('business_clients')
+      .select('id, name, sales_stage, updated_at')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .lt('updated_at', staleClientIso)
+      .order('updated_at', { ascending: true })
+      .limit(limit);
+
+    for (const cl of staleClients || []) {
+      items.push({
+        id: cl.id,
+        entityType: 'company',
+        title: cl.name,
+        subtitle: cl.sales_stage || 'Active Client',
+        reason: 'Active client — no interaction in 14+ days',
+        dueAt: cl.updated_at,
+        priority: 'medium',
+        href: `/dashboard/clients?clientId=${encodeURIComponent(cl.id)}`,
       });
     }
 

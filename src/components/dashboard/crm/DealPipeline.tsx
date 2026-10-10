@@ -53,6 +53,15 @@ const STAGES: { key: Deal['stage']; label: string; color: string }[] = [
 
 const STAGE_ORDER: Deal['stage'][] = ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'];
 
+export const DEFAULT_STAGE_PROBABILITIES: Record<Deal['stage'], number> = {
+  lead: 10,
+  qualified: 25,
+  proposal: 50,
+  negotiation: 75,
+  closed_won: 100,
+  closed_lost: 0,
+};
+
 // ── Deal Card Component ────────────────────────────────────────────────────────
 const DealCard: React.FC<{
   deal: Deal;
@@ -105,9 +114,9 @@ const DealCard: React.FC<{
         </div>
       )}
 
-      {deal.contact_name && (
+      {(deal.contact_name || deal.contact_email) && (
         <div className="type-caption text-[var(--ws-text-muted)] truncate">
-          Contact: {deal.contact_name}
+          Contact: <span className="text-[var(--ws-text-secondary)] font-medium">{deal.contact_name || deal.contact_email}</span>
         </div>
       )}
 
@@ -237,7 +246,11 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
             <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Stage</label>
             <AlphaCloneSelect
               value={stage}
-              onChange={e => setStage(e.target.value as Deal['stage'])}
+              onChange={e => {
+                const nextStage = e.target.value as Deal['stage'];
+                setStage(nextStage);
+                setProbability(String(DEFAULT_STAGE_PROBABILITIES[nextStage] ?? 50));
+              }}
               className="w-full px-3 py-2"
             >
               {STAGES.map(s => (
@@ -398,15 +411,21 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
   };
 
   const handleMoveDeal = async (id: string, newStage: Deal['stage']) => {
+    const newProbability = DEFAULT_STAGE_PROBABILITIES[newStage] ?? 50;
     // Optimistic update
     setDeals(prev =>
       prev.map(d =>
-        d.id === id ? { ...d, stage: newStage, updated_at: new Date().toISOString() } : d
+        d.id === id ? { ...d, stage: newStage, probability: newProbability, updated_at: new Date().toISOString() } : d
       )
     );
 
     try {
-      const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/deals`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, stage: newStage }) });
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/deals`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, stage: newStage, probability: newProbability })
+      });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || 'Failed to move deal');
     } catch (err: any) {

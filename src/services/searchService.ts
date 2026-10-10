@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase';
 
 export interface SearchFilters {
-    type?: ('project' | 'message' | 'invoice' | 'contract' | 'document' | 'campaign' | 'user' | 'all')[];
+    type?: ('project' | 'message' | 'invoice' | 'contract' | 'document' | 'campaign' | 'user' | 'client' | 'lead' | 'contact' | 'deal' | 'all')[];
     dateFrom?: Date;
     dateTo?: Date;
     status?: string[];
@@ -9,7 +9,7 @@ export interface SearchFilters {
 }
 
 export interface SearchResult {
-    type: 'project' | 'message' | 'invoice' | 'contract' | 'document' | 'campaign' | 'user';
+    type: 'project' | 'message' | 'invoice' | 'contract' | 'document' | 'campaign' | 'user' | 'client' | 'lead' | 'contact' | 'deal';
     id: string;
     title: string;
     subtitle?: string;
@@ -78,7 +78,7 @@ export const searchService = {
                         title: project.name,
                         subtitle: project.category,
                         description: project.description,
-                        link: '/dashboard/projects',
+                        link: `/dashboard/business/projects?projectId=${project.id}`,
                         metadata: {
                             status: project.status,
                             progress: project.progress,
@@ -219,6 +219,147 @@ export const searchService = {
                         metadata: {
                             role: user.role,
                             avatar: user.avatar,
+                        },
+                        relevance,
+                    });
+                });
+            }
+
+            // Search CRM clients / accounts
+            if (!filters?.type || filters.type.includes('client') || filters.type.includes('all')) {
+                const { data: clients } = await supabase
+                    .from('business_clients')
+                    .select('id, name, email, phone, industry, sales_stage, location, value, description')
+                    .eq('tenant_id', tenantId)
+                    .or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,industry.ilike.%${searchTerm}%`)
+                    .limit(20);
+
+                (clients || []).forEach((client: any) => {
+                    const relevance = this.calculateRelevance(searchTerm, [
+                        client.name,
+                        client.email,
+                        client.phone,
+                        client.industry,
+                        client.description,
+                    ]);
+
+                    results.push({
+                        type: 'client',
+                        id: client.id,
+                        title: client.name,
+                        subtitle: `${client.industry || 'Customer'} · ${client.sales_stage || 'client'}`,
+                        description: client.description || client.email || client.phone,
+                        link: `/dashboard/clients?clientId=${client.id}`,
+                        metadata: {
+                            salesStage: client.sales_stage,
+                            value: client.value,
+                            email: client.email,
+                            phone: client.phone,
+                        },
+                        relevance,
+                    });
+                });
+            }
+
+            // Search CRM sales leads
+            if (!filters?.type || filters.type.includes('lead') || filters.type.includes('all')) {
+                const { data: leads } = await supabase
+                    .from('leads')
+                    .select('id, business_name, email, phone, industry, stage, location, value, notes')
+                    .eq('tenant_id', tenantId)
+                    .or(`business_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,industry.ilike.%${searchTerm}%`)
+                    .limit(20);
+
+                (leads || []).forEach((lead: any) => {
+                    const relevance = this.calculateRelevance(searchTerm, [
+                        lead.business_name,
+                        lead.email,
+                        lead.phone,
+                        lead.industry,
+                        lead.notes,
+                    ]);
+
+                    results.push({
+                        type: 'lead',
+                        id: lead.id,
+                        title: lead.business_name || lead.email || 'Lead',
+                        subtitle: `Lead · ${lead.stage || 'new'} (${lead.industry || 'General'})`,
+                        description: lead.notes || lead.location,
+                        link: `/dashboard/leads?leadId=${lead.id}`,
+                        metadata: {
+                            stage: lead.stage,
+                            value: lead.value,
+                            email: lead.email,
+                        },
+                        relevance,
+                    });
+                });
+            }
+
+            // Search CRM contacts
+            if (!filters?.type || filters.type.includes('contact') || filters.type.includes('all')) {
+                const { data: contacts } = await supabase
+                    .from('contacts')
+                    .select('id, first_name, last_name, email, phone, title, department')
+                    .eq('tenant_id', tenantId)
+                    .is('deleted_at', null)
+                    .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`)
+                    .limit(20);
+
+                (contacts || []).forEach((contact: any) => {
+                    const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.trim();
+                    const relevance = this.calculateRelevance(searchTerm, [
+                        fullName,
+                        contact.email,
+                        contact.phone,
+                        contact.title,
+                    ]);
+
+                    results.push({
+                        type: 'contact',
+                        id: contact.id,
+                        title: fullName || contact.email || 'Contact',
+                        subtitle: `${contact.title || 'Contact'} · ${contact.email || ''}`,
+                        description: contact.phone || contact.department,
+                        link: `/dashboard/contacts?contactId=${contact.id}`,
+                        metadata: {
+                            email: contact.email,
+                            phone: contact.phone,
+                            title: contact.title,
+                        },
+                        relevance,
+                    });
+                });
+            }
+
+            // Search CRM deals / opportunities
+            if (!filters?.type || filters.type.includes('deal') || filters.type.includes('all')) {
+                const { data: deals } = await supabase
+                    .from('deals')
+                    .select('id, name, stage, value, currency, probability, contact_name, contact_email, notes')
+                    .eq('tenant_id', tenantId)
+                    .or(`name.ilike.%${searchTerm}%,contact_name.ilike.%${searchTerm}%,contact_email.ilike.%${searchTerm}%`)
+                    .limit(20);
+
+                (deals || []).forEach((deal: any) => {
+                    const relevance = this.calculateRelevance(searchTerm, [
+                        deal.name,
+                        deal.contact_name,
+                        deal.contact_email,
+                        deal.notes,
+                    ]);
+
+                    results.push({
+                        type: 'deal',
+                        id: deal.id,
+                        title: deal.name,
+                        subtitle: `Deal · ${deal.stage} · ${deal.currency || 'USD'} ${Number(deal.value || 0).toLocaleString()}`,
+                        description: deal.notes || (deal.contact_name ? `Contact: ${deal.contact_name}` : undefined),
+                        link: `/dashboard/deals?dealId=${deal.id}`,
+                        metadata: {
+                            stage: deal.stage,
+                            value: deal.value,
+                            probability: deal.probability,
                         },
                         relevance,
                     });

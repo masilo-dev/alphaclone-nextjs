@@ -342,19 +342,36 @@ export const businessInvoiceService = {
             format: 'a4'
         });
 
-        // Design Tokens - Refined for "Premium" look
-        const colors = {
-            primary: 'var(--ws-panel)',    // Slate-800
-            accent: metadata?.accentColor || 'var(--info-500)',     // Sky-500
-            success: 'var(--success-500)',    // Emerald-500
-            danger: 'var(--error-500)',     // Red-500
-            dark: 'var(--ws-canvas)',       // Slate-900
-            light: 'var(--ws-surface-secondary)',      // Slate-50
-            border: 'var(--ws-border)',     // Slate-200
-            text: 'var(--ws-text-muted)',       // Slate-600
-            white: 'var(--color-white)',
-            muted: 'var(--ws-text-secondary)'       // Slate-400
+        type RgbColor = [number, number, number];
+        const parseHexToRgb = (hex: string | undefined): RgbColor | null => {
+            if (!hex || typeof hex !== 'string') return null;
+            const clean = hex.replace('#', '').trim();
+            if (clean.length === 6) {
+                const r = parseInt(clean.substring(0, 2), 16);
+                const g = parseInt(clean.substring(2, 4), 16);
+                const b = parseInt(clean.substring(4, 6), 16);
+                if (!isNaN(r) && !isNaN(g) && !isNaN(b)) return [r, g, b];
+            }
+            return null;
         };
+
+        // Design Tokens - RGB tuples for jsPDF encoding
+        const colors: Record<string, RgbColor> = {
+            primary: [30, 41, 59],       // Slate-800
+            accent: parseHexToRgb(metadata?.accentColor) || [14, 165, 233], // Sky-500
+            success: [16, 185, 129],     // Emerald-500
+            danger: [239, 68, 68],       // Red-500
+            dark: [15, 23, 42],          // Slate-900
+            light: [248, 250, 252],      // Slate-50
+            border: [226, 232, 240],     // Slate-200
+            text: [71, 85, 105],         // Slate-600
+            white: [255, 255, 255],      // White
+            muted: [148, 163, 184],      // Slate-400
+        };
+
+        const setFill = (color: RgbColor) => doc.setFillColor(color[0], color[1], color[2]);
+        const setText = (color: RgbColor) => doc.setTextColor(color[0], color[1], color[2]);
+        const setDraw = (color: RgbColor) => doc.setDrawColor(color[0], color[1], color[2]);
 
         const margin = 20;
         const pageWidth = doc.internal.pageSize.width;
@@ -362,7 +379,7 @@ export const businessInvoiceService = {
         const contentWidth = pageWidth - (margin * 2);
 
         // --- BACKGROUND / ACCENT ---
-        doc.setFillColor(colors.primary);
+        setFill(colors.primary);
         doc.rect(0, 0, pageWidth, 45, 'F');
 
         // --- HEADER SECTION ---
@@ -380,42 +397,42 @@ export const businessInvoiceService = {
                 doc.addImage(logoUrl, 'PNG', margin, 10, 25, 25, undefined, 'FAST');
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(20);
-                doc.setTextColor(colors.white);
+                setText(colors.white);
                 drawWrappedText(doc, senderName, margin + 28, 18, 80, { fontSize: 20, maxLines: 2 });
 
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(9);
-                doc.setTextColor(colors.muted);
+                setText(colors.muted);
                 doc.text("OFFICIAL FINANCIAL DOCUMENT", margin + 28, 28);
             } catch (e) {
                 console.warn('Failed to add logo to PDF:', e);
                 // Fallback to text only
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(24);
-                doc.setTextColor(colors.white);
+                setText(colors.white);
                 drawWrappedText(doc, senderName, margin, 21, 90, { fontSize: 24, maxLines: 2 });
             }
         } else {
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(24);
-            doc.setTextColor(colors.white);
+            setText(colors.white);
             drawWrappedText(doc, senderName, margin, 21, 90, { fontSize: 24, maxLines: 2 });
         }
 
         // Invoice Label & Number (Right Aligned in header)
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
-        doc.setTextColor(colors.muted);
+        setText(colors.muted);
         doc.text(isReceipt ? 'RECEIPT NO.' : 'INVOICE NO.', pageWidth - margin, 18, { align: 'right' });
 
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
-        doc.setTextColor(colors.white);
+        setText(colors.white);
         doc.text(invoice.invoice_number || invoice.invoiceNumber, pageWidth - margin, 25, { align: 'right' });
 
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
-        doc.setTextColor(colors.muted);
+        setText(colors.muted);
         doc.text(`ISSUED: ${invoice.issue_date || invoice.issueDate}`, pageWidth - margin, 31, { align: 'right' });
 
         // --- INFO BOXES ---
@@ -423,21 +440,21 @@ export const businessInvoiceService = {
         const colWidth = (contentWidth - 10) / 3;
 
         // 1. FROM (Tenant) Box
-        doc.setFillColor(colors.light);
+        setFill(colors.light);
         doc.roundedRect(margin, currentY, colWidth, 55, 2, 2, 'F');
         
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
-        doc.setTextColor(colors.accent);
+        setText(colors.accent);
         doc.text('FROM', margin + 5, currentY + 8);
         
         doc.setFontSize(10);
-        doc.setTextColor(colors.dark);
+        setText(colors.dark);
         drawWrappedText(doc, senderName, margin + 5, currentY + 16, colWidth - 10, { fontSize: 10, maxLines: 2 });
         
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
-        doc.setTextColor(colors.text);
+        setText(colors.text);
         let fromY = currentY + 22;
         const tenantAddress = tenant?.address || tenant?.settings?.profile?.address;
         const tenantPhone = tenant?.phone || tenant?.settings?.profile?.phone;
@@ -457,22 +474,22 @@ export const businessInvoiceService = {
         }
 
         // 2. CLIENT / BILL TO Box
-        doc.setFillColor(colors.light);
+        setFill(colors.light);
         doc.roundedRect(margin + colWidth + 5, currentY, colWidth, 55, 2, 2, 'F');
         
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
-        doc.setTextColor(colors.accent);
+        setText(colors.accent);
         doc.text('CLIENT / BILL TO', margin + colWidth + 10, currentY + 8);
         
         doc.setFontSize(10);
-        doc.setTextColor(colors.dark);
+        setText(colors.dark);
         const clientName = client?.name || invoice.client?.name || 'Valued Client';
         drawWrappedText(doc, clientName, margin + colWidth + 10, currentY + 16, colWidth - 10, { fontSize: 10, maxLines: 2 });
         
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
-        doc.setTextColor(colors.text);
+        setText(colors.text);
         let detailY = currentY + 22;
         const clientEmail = client?.email || invoice.client?.email;
         const clientCompany = client?.company || invoice.client?.company;
@@ -505,43 +522,43 @@ export const businessInvoiceService = {
         const status = invoice.status?.toUpperCase() || 'DRAFT';
         const isPaid = status === 'PAID';
 
-        doc.setFillColor(colors.light);
+        setFill(colors.light);
         doc.roundedRect(margin + (colWidth * 2) + 10, currentY, colWidth, 55, 2, 2, 'F');
         
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
-        doc.setTextColor(colors.accent);
+        setText(colors.accent);
         doc.text('DOCUMENT DETAILS', margin + (colWidth * 2) + 15, currentY + 8);
         
         doc.setFontSize(9);
-        doc.setTextColor(colors.text);
+        setText(colors.text);
         doc.setFont('helvetica', 'normal');
         doc.text('Due Date:', margin + (colWidth * 2) + 15, currentY + 18);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(colors.dark);
+        setText(colors.dark);
         doc.text(invoice.due_date || invoice.dueDate, margin + (colWidth * 2) + 15, currentY + 24);
         
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(colors.text);
+        setText(colors.text);
         doc.text('Status:', margin + (colWidth * 2) + 15, currentY + 34);
         
         // Status Badge
         const badgeColor = isPaid ? colors.success : (status === 'OVERDUE' ? colors.danger : colors.primary);
-        doc.setFillColor(badgeColor);
+        setFill(badgeColor);
         doc.roundedRect(margin + (colWidth * 2) + 15, currentY + 38, 25, 6, 1, 1, 'F');
         doc.setFontSize(7);
-        doc.setTextColor(colors.white);
+        setText(colors.white);
         doc.setFont('helvetica', 'bold');
         doc.text(status, margin + (colWidth * 2) + 27.5, currentY + 42.5, { align: 'center' });
 
         // --- LINE ITEMS TABLE ---
         currentY = 120;
 
-        doc.setFillColor(colors.primary);
+        setFill(colors.primary);
         doc.roundedRect(margin, currentY, contentWidth, 10, 1, 1, 'F');
 
         doc.setFontSize(8);
-        doc.setTextColor(colors.white);
+        setText(colors.white);
         doc.text('DESCRIPTION', margin + 5, currentY + 6.5);
         doc.text('QTY', margin + 100, currentY + 6.5, { align: 'right' });
         doc.text('RATE', margin + 130, currentY + 6.5, { align: 'right' });
@@ -558,17 +575,17 @@ export const businessInvoiceService = {
 
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(9);
-            doc.setTextColor(colors.text);
+            setText(colors.text);
 
             const desc = item.description.length > 55 ? item.description.substring(0, 52) + '...' : item.description;
             doc.text(desc, margin + 5, currentY + 6.5);
             doc.text(item.quantity.toString(), margin + 100, currentY + 6.5, { align: 'right' });
             doc.text(`$${item.rate.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, margin + 130, currentY + 6.5, { align: 'right' });
             doc.setFont('helvetica', 'bold');
-            doc.setTextColor(colors.dark);
+            setText(colors.dark);
             doc.text(`$${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, margin + 165, currentY + 6.5, { align: 'right' });
 
-            doc.setDrawColor(colors.border);
+            setDraw(colors.border);
             doc.setLineWidth(0.1);
             doc.line(margin, currentY + 10, margin + contentWidth, currentY + 10);
 
@@ -589,7 +606,7 @@ export const businessInvoiceService = {
             : Math.round(((subtotalFromItems - discount) + computedTax) * 100) / 100;
 
         doc.setFontSize(9);
-        doc.setTextColor(colors.text);
+        setText(colors.text);
         doc.setFont('helvetica', 'normal');
         doc.text('Subtotal:', totalsX, currentY);
         doc.text(`$${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, pageWidth - margin, currentY, { align: 'right' });
@@ -607,12 +624,12 @@ export const businessInvoiceService = {
         }
 
         currentY += 10;
-        doc.setFillColor(colors.primary);
+        setFill(colors.primary);
         doc.roundedRect(totalsX - 5, currentY - 7, 70, 12, 1, 1, 'F');
 
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(colors.white);
+        setText(colors.white);
         doc.text('TOTAL AMOUNT:', totalsX, currentY);
         doc.text(`$${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, pageWidth - margin, currentY, { align: 'right' });
 
@@ -620,16 +637,16 @@ export const businessInvoiceService = {
         currentY += 30;
         if (invoice.bankDetails || invoice.notes) {
             doc.setFontSize(9);
-            doc.setTextColor(colors.accent);
+            setText(colors.accent);
             doc.text('POLICIES & PAYMENT', margin, currentY);
 
-            doc.setDrawColor(colors.accent);
+            setDraw(colors.accent);
             doc.setLineWidth(0.5);
             doc.line(margin, currentY + 2, margin + 40, currentY + 2);
 
             currentY += 10;
             doc.setFontSize(8);
-            doc.setTextColor(colors.text);
+            setText(colors.text);
             doc.setFont('helvetica', 'normal');
 
             if (invoice.bankDetails) {
@@ -655,7 +672,7 @@ export const businessInvoiceService = {
         // --- SIGNATURE ---
         if (signature) {
             const sigY = pageHeight - 50;
-            doc.setDrawColor(colors.border);
+            setDraw(colors.border);
             doc.line(pageWidth - margin - 60, sigY + 10, pageWidth - margin, sigY + 10);
             doc.setFontSize(8);
             doc.text('AUTHORIZED SIGNATURE', pageWidth - margin - 60, sigY + 15);
@@ -674,7 +691,7 @@ export const businessInvoiceService = {
 
         // --- FOOTER ---
         doc.setFontSize(8);
-        doc.setTextColor(colors.muted);
+        setText(colors.muted);
         doc.text(`Page 1 of 1 | Generated via AlphaClone OS Compliance v2026.1`, pageWidth / 2, pageHeight - 10, { align: 'center' });
 
         return doc;

@@ -93,6 +93,36 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
         if (prefilledBody) setBody(prefilledBody);
     }, [prefilledBody]);
 
+    // Restore draft from sessionStorage if not prefilled
+    useEffect(() => {
+        if (prefilledSubject || prefilledBody) return;
+        if (typeof window === 'undefined') return;
+        try {
+            const draftKey = `crm_email_draft_${selectedClient?.id || 'default'}`;
+            const savedDraft = sessionStorage.getItem(draftKey);
+            if (savedDraft) {
+                const parsed = JSON.parse(savedDraft);
+                if (parsed.subject && !subject) setSubject(parsed.subject);
+                if (parsed.body && !body) setBody(parsed.body);
+            }
+        } catch {
+            // Ignore draft restore errors
+        }
+    }, [selectedClient?.id, prefilledSubject, prefilledBody]);
+
+    // Auto-save draft on changes to prevent lost work
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const draftKey = `crm_email_draft_${selectedClient?.id || 'default'}`;
+        if (subject.trim() || body.trim()) {
+            try {
+                sessionStorage.setItem(draftKey, JSON.stringify({ subject, body }));
+            } catch {
+                // Ignore quota errors
+            }
+        }
+    }, [subject, body, selectedClient?.id]);
+
     useEffect(() => {
         const loadClients = async () => {
             if (!currentTenant?.id) return;
@@ -229,6 +259,33 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
 
             const { activityService } = await import('../../../services/activityService');
             await activityService.logActivity(user.id, 'Email Sent', { type: 'EXECUTE', to: selectedClient.email, subject, provider: result.provider || selectedProvider }, currentTenant.id);
+
+            // Log directly to client activity timeline so client records reflect outbound communication
+            if (selectedClient.id && currentTenant?.id) {
+                try {
+                    const { supabase } = await import('../../../lib/supabase');
+                    await supabase.from('client_notes').insert({
+                        tenant_id: currentTenant.id,
+                        related_id: selectedClient.id,
+                        type: 'client_note',
+                        user_id: user.id,
+                        owner_user_id: user.id,
+                        title: `Email Sent: ${subject || '(No Subject)'}`,
+                        description: `Sent to ${selectedClient.email} via ${(result.provider || selectedProvider || 'email').toUpperCase()}.\n\n${body}`,
+                        content: body,
+                    });
+                    const { invalidateClientTimelineCache } = await import('../../../services/clientActivityService');
+                    invalidateClientTimelineCache(selectedClient.id);
+                } catch (clientLogErr) {
+                    console.error('Failed to log client activity timeline note:', clientLogErr);
+                }
+            }
+
+            // Clear draft from storage upon successful send
+            if (typeof window !== 'undefined') {
+                const draftKey = `crm_email_draft_${selectedClient.id || 'default'}`;
+                sessionStorage.removeItem(draftKey);
+            }
 
             const sentVia = String(result.provider || selectedProvider).toUpperCase();
             toast.success(`Email sent successfully via ${sentVia}`);
