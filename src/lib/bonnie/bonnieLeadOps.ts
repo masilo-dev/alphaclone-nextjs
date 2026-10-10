@@ -4,15 +4,19 @@ import { qualifyLead, type QualityTier } from '@/lib/leadQualification';
 import { parseLeadIntentFromChat } from '@/lib/scraper/parseLeadIntent';
 import { getMemory, upsertMemory } from '@/services/nexusMemoryService';
 import { getBonnieWorkspaceSnapshot } from '@/lib/bonnie/bonnieWorkspaceSnapshot';
+import { isApifyConfigured, discoverBusinessesWithApify } from '@/services/apifyLeadService';
 
 export type LeadSearchCriteria = {
   niche: string;
   location: string;
+  country?: string;
   min_score?: number;
   tiers?: QualityTier[];
   exclude_keywords?: string[];
   max_results?: number;
   save_to_crm?: boolean;
+  filter_no_website?: boolean;
+  require_email?: boolean;
 };
 
 function mapPlaceToLead(place: {
@@ -90,19 +94,82 @@ export async function bonnieFindAndQualifyLeads(
     ...((savedCriteria?.exclude_keywords as string[]) || []),
   ];
   const tiers = criteria.tiers;
-  const maxResults = Math.min(criteria.max_results ?? 25, 40);
+  const maxResults = Math.min(criteria.max_results ?? 25, 50);
 
-  const search = await freePlacesService.searchPlacesForLeads(niche, location, undefined, {
-    maxResults,
-  });
+  let apifyRunId: string | null = null;
+  let costUsd = 0;
+  let rawCount = 0;
+  let locationValidated = true;
+  let qualified: Array<{
+    business_name: string;
+    phone?: string;
+    email?: string;
+    website?: string;
+    address?: string;
+    rating?: number;
+    category?: string;
+    source: string;
+    source_id: string;
+    source_url?: string;
+    qualification: ReturnType<typeof qualifyLead>;
+  }> = [];
 
-  const qualified = search.places
-    .map((place) => {
-      const lead = mapPlaceToLead(place);
-      return { ...lead, qualification: qualifyLead(lead, niche) };
-    })
-    .filter((lead) => passesCriteria(lead, minScore, tiers, excludeKeywords))
-    .filter((lead) => Boolean(lead.phone) || Boolean(lead.email));
+  // Primary: Use Apify Google Places if configured
+  if (isApifyConfigured()) {
+    try {
+      const receipt = await discoverBusinessesWithApify({
+        query: niche,
+        location,
+        country: criteria.country,
+        resultLimit: maxResults,
+        filterNoWebsite: criteria.filter_no_website,
+        requireEmail: criteria.require_email,
+      });
+      if (receipt.success && receipt.discovered.length > 0) {
+        apifyRunId = receipt.runId || null;
+        costUsd = receipt.costUsd;
+        rawCount = receipt.totalFound;
+        qualified = receipt.discovered.map((d) => {
+          const lead = {
+            business_name: d.businessName,
+            email: d.email || '',
+            phone: d.phone || '',
+            website: d.website || '',
+            address: d.address || '',
+            rating: d.rating ?? undefined,
+            category: d.category || niche,
+            source: d.source,
+            source_id: d.sourceId,
+            source_url: d.sourceUrl || '',
+          };
+          return {
+            ...lead,
+            qualification: qualifyLead(lead, niche),
+          };
+        })
+        .filter((lead) => passesCriteria(lead, minScore, tiers, excludeKeywords))
+        .filter((lead) => Boolean(lead.phone) || Boolean(lead.email));
+      }
+    } catch (apifyErr) {
+      console.warn('[bonnieLeadOps] Apify search failed, falling back to free sources:', apifyErr);
+    }
+  }
+
+  // Fallback: Use free places if Apify unconfigured or returned 0
+  if (qualified.length === 0) {
+    const search = await freePlacesService.searchPlacesForLeads(niche, location, undefined, {
+      maxResults,
+    });
+    rawCount = search.places.length;
+    locationValidated = search.locationValidated;
+    qualified = search.places
+      .map((place) => {
+        const lead = mapPlaceToLead(place);
+        return { ...lead, qualification: qualifyLead(lead, niche) };
+      })
+      .filter((lead) => passesCriteria(lead, minScore, tiers, excludeKeywords))
+      .filter((lead) => Boolean(lead.phone) || Boolean(lead.email));
+  }
 
   let savedToCrm = 0;
   if (criteria.save_to_crm && qualified.length > 0) {
@@ -112,13 +179,14 @@ export async function bonnieFindAndQualifyLeads(
         tenant_id: tenantId,
         business_name: lead.business_name,
         phone: lead.phone || null,
+        email: lead.email || null,
         website: lead.website || null,
         address: lead.address || null,
         rating: lead.rating ?? null,
         industry: niche,
-        source: 'bonnie_find_leads',
+        source: apifyRunId ? 'apify_google_places' : 'bonnie_find_leads',
         stage: lead.qualification.tier === 'hot' ? 'qualified' : 'lead',
-        metadata: { qualification: lead.qualification, source_id: lead.source_id, source_url: lead.source_url },
+        metadata: { qualification: lead.qualification, source_id: lead.source_id, source_url: lead.source_url, apify_run_id: apifyRunId, cost_usd: costUsd },
       });
       if (!error) savedToCrm += 1;
     }
@@ -128,13 +196,16 @@ export async function bonnieFindAndQualifyLeads(
     niche,
     location,
     min_score: minScore,
-    raw_count: search.places.length,
+    raw_count: rawCount,
     qualified_count: qualified.length,
     saved_to_crm: savedToCrm,
-    location_validated: search.locationValidated,
+    location_validated: locationValidated,
+    apify_run_id: apifyRunId,
+    cost_usd: costUsd,
     leads: qualified.slice(0, 15).map((l) => ({
       business_name: l.business_name,
       phone: l.phone,
+      email: l.email,
       website: l.website,
       address: l.address,
       score: l.qualification.score,

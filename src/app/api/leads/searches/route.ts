@@ -93,6 +93,8 @@ export async function POST(req: NextRequest) {
       industry: input.industry, company_size_min: input.companySizeMin,
       company_size_max: input.companySizeMax, source_filters: input.sources,
       requirements: input.requirements, exclusions: input.exclusions, result_limit: input.resultLimit || 25,
+      filter_no_website: input.filterNoWebsite || input.requirements.filterNoWebsite || false,
+      target_country: input.country || null,
       status: input.runNow ? 'queued' : 'draft',
     }).select().single();
 

@@ -20,11 +20,13 @@ export const leadSearchInput = z.object({
   industry: z.string().trim().max(120).optional().default(''),
   companySizeMin: z.number().int().min(0).max(1_000_000).nullable().optional(),
   companySizeMax: z.number().int().min(0).max(1_000_000).nullable().optional(),
-  sources: z.array(z.enum(['openstreetmap', 'wikidata', 'searxng', 'website', 'public_directory', 'manual'])).min(1).max(6),
+  sources: z.array(z.enum(['openstreetmap', 'wikidata', 'searxng', 'website', 'public_directory', 'manual', 'apify'])).min(1).max(7),
+  filterNoWebsite: z.boolean().default(false),
   requirements: z.object({
     website: z.boolean().default(false), email: z.boolean().default(false),
     phone: z.boolean().default(false), social: z.boolean().default(false),
-  }).default({ website: false, email: false, phone: false, social: false }),
+    filterNoWebsite: z.boolean().default(false),
+  }).default({ website: false, email: false, phone: false, social: false, filterNoWebsite: false }),
   exclusions: z.object({
     keywords: z.array(z.string().trim().max(100)).max(50).default([]),
     domains: z.array(z.string().trim().max(253)).max(50).default([]),
@@ -144,8 +146,13 @@ export function scoreCandidate(candidate: ScoreCandidate, search: {
 }) {
   const quality: Array<{ points: number; reason: string }> = [];
   const fit: Array<{ points: number; reason: string }> = [];
-  if (candidate.website) quality.push({ points: 15, reason: 'Public website found' });
-  if (normalizeDomain(candidate.website)) quality.push({ points: 10, reason: 'Website domain valid' });
+  if (candidate.website) {
+    quality.push({ points: 15, reason: 'Public website found' });
+    if (normalizeDomain(candidate.website)) quality.push({ points: 10, reason: 'Website domain valid' });
+  } else {
+    // Prime digital opportunity for AlphaClone (custom website, client portal & booking system prospect)
+    quality.push({ points: 25, reason: 'No website found — prime custom web & booking development opportunity' });
+  }
   if (normalizeEmail(candidate.public_email)) quality.push({ points: 20, reason: 'Public email format valid' });
   if (candidate.public_phone) quality.push({ points: 15, reason: 'Public phone found' });
   if (candidate.address_line_1) quality.push({ points: 10, reason: 'Physical address found' });
@@ -186,6 +193,7 @@ export type LeadContactRequirements = {
   email?: boolean;
   phone?: boolean;
   social?: boolean;
+  filterNoWebsite?: boolean;
 };
 
 /** Apply the search contract after enrichment, before a candidate is persisted. */
@@ -193,6 +201,9 @@ export function candidateMeetsRequirements(
   candidate: ScoreCandidate,
   requirements: LeadContactRequirements = {}
 ): boolean {
+  if (requirements.filterNoWebsite && Boolean(candidate.website && normalizeDomain(candidate.website))) {
+    return false;
+  }
   const email = normalizeEmail(candidate.public_email);
   const phone = normalizePhone(candidate.public_phone);
   // Contact requirements are qualification gates, not discovery gates. A business

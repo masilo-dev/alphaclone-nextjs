@@ -51,7 +51,12 @@ export function buildLeadQualification(candidate: Candidate, relationship: Relat
     opportunities.push({ category, observation: problem, inference, severity: clamp(severity), confidence: 78, evidence_url: sourceUrl });
     add({ signal_type: `observable_${category}_gap`, signal_category: category, signal_value: problem, source_type: 'public_website', source_url: sourceUrl, confidence: 78, weight: clamp(severity / 3), expires_at: inDays(21), raw_evidence: { observation: problem, inference } });
   };
-  if (!hasWebsite) observable('No public website was found in the discovery sources.', 'website', 65, 'Potential website and lead-capture opportunity.');
+  if (!hasWebsite) {
+    observable('No public website was found in discovery directory sources.', 'website_absence', 85, 'Prime candidate for custom web presence, automated client booking, and local search visibility.');
+  }
+  if (raw.is_social_first || raw.opportunity_type === 'social_first') {
+    observable('Business operates primarily via social media without a dedicated domain or booking system.', 'social_first_gap', 80, 'Opportunity to convert social traffic into automated bookings and client portal.');
+  }
   if (problems.includes('no_visible_contact_cta')) observable('No visible contact, enquiry, or telephone CTA was found on the public website.', 'lead_generation', 75, 'Potential website lead-capture opportunity.');
   if (problems.includes('https_missing')) observable('The public website does not use HTTPS.', 'website', 58, 'Potential website trust and conversion improvement.');
   if (problems.includes('responsive_viewport_missing')) observable('No responsive viewport declaration was found on the public website.', 'website', 62, 'Potential mobile website improvement.');
@@ -87,11 +92,16 @@ export function buildLeadQualification(candidate: Candidate, relationship: Relat
     : 'No strong timing signal detected from the currently available public evidence.';
   const prohibited = ['customer', 'do_not_contact', 'unsubscribed'].includes(relationshipState);
   const action = prohibited ? (relationshipState === 'customer' ? 'customer_success' : 'do_not_contact') : reachability < 35 ? 'find_contact' : master >= 70 ? 'prepare_outreach' : 'review';
-  const offer = opportunities.some((x) => x.category === 'lead_generation')
+  const offer = !hasWebsite
+    ? { primary_offer: 'AlphaClone Custom Website & Booking Portal', secondary_offer: 'Automated CRM & Follow-up System', reason: 'Business has no public website; prime candidate for full digital launch.' }
+    : opportunities.some((x) => x.category === 'lead_generation')
     ? { primary_offer: 'Website Lead Capture', secondary_offer: 'CRM Follow-up Automation', reason: 'A public lead-capture gap was observed.' }
     : opportunities.length ? { primary_offer: 'Website Improvement', reason: 'Observable public website gaps were found.' }
     : { primary_offer: null, reason: 'No specific AlphaClone offer is recommended without stronger evidence.' };
   const summary = `Score: ${master}/100 — ${priority} priority. WHY: ${why} WHY NOW: ${whyNowText} CONTACTABILITY: ${hasEmail && hasPhone ? 'public email and phone found' : hasEmail || hasPhone ? 'one public contact method found' : 'no public contact method found'}. HISTORY: ${relationshipState}. NEXT ACTION: ${action.replaceAll('_', ' ')}.`;
+  const outreachAngle = prohibited || !opportunities.length ? null
+    : !hasWebsite ? `Pitch an automated booking portal and custom website to capture online search demand in ${String(candidate.city || 'their area')}.`
+    : `Discuss ${String(opportunities[0].inference).replace(/\.$/, '')}, rather than selling AI.`;
 
   return {
     qualified,
@@ -105,7 +115,7 @@ export function buildLeadQualification(candidate: Candidate, relationship: Relat
     buying_stage: prohibited ? 'do_not_contact' : qualified && master >= 70 && reachability >= 50 ? 'contactable' : master >= 55 ? 'potential_fit' : 'unqualified',
     qualification_reason: why, why_now: whyNowText, qualification_summary: summary,
     recommended_offer: offer, recommended_action: action, next_best_action_reason: prohibited ? 'Relationship history prohibits cold outreach.' : `Based on ${opportunities.length ? 'observable opportunities' : 'available evidence'} and reachability.`,
-    outreach_angle: prohibited || !opportunities.length ? null : `Discuss ${String(opportunities[0].inference).replace(/\.$/, '')}, rather than selling AI.`,
+    outreach_angle: outreachAngle,
     decision_maker_name: null, decision_maker_title: null, decision_maker_source: null,
     decision_maker_confidence: 0, recommended_role: 'Owner / Managing Director',
     personalization_facts: [candidate.industry && { type: 'industry', value: candidate.industry }, candidate.city && { type: 'location', value: candidate.city }].filter(Boolean),

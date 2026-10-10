@@ -10,6 +10,59 @@ export interface DiscoveredBusiness {
 export interface LeadDiscoveryResult { businesses: DiscoveredBusiness[]; metadata?: Record<string, unknown> }
 export interface LeadDiscoveryProvider { id: string; enabled(): boolean; search(input: LeadSearchInput): Promise<LeadDiscoveryResult> }
 
+import { isApifyConfigured, discoverBusinessesWithApify } from '@/services/apifyLeadService';
+
+export const apifyProvider: LeadDiscoveryProvider = {
+  id: 'apify',
+  enabled: () => isApifyConfigured(),
+  async search(input) {
+    if (!this.enabled()) return { businesses: [], metadata: { status: 'skipped', reason: 'not_configured' } };
+    const receipt = await discoverBusinessesWithApify({
+      query: input.query,
+      industry: input.industry,
+      location: input.location,
+      country: input.country,
+      resultLimit: input.resultLimit,
+    });
+    const businesses: DiscoveredBusiness[] = receipt.discovered.map((d) => ({
+      source: 'apify:google-places',
+      sourceId: d.sourceId,
+      businessName: d.businessName,
+      website: d.website || undefined,
+      sourceUrl: d.sourceUrl || undefined,
+      phone: d.phone || undefined,
+      email: d.email || undefined,
+      address: d.address || undefined,
+      city: d.city || undefined,
+      region: d.region || undefined,
+      country: d.country || undefined,
+      lat: d.lat ?? undefined,
+      lng: d.lng ?? undefined,
+      category: d.category || undefined,
+      description: d.description || undefined,
+      socialUrls: d.socialUrls,
+      rawData: {
+        ...((d.rawData as object) || {}),
+        apify_run_id: receipt.runId,
+        cost_usd: receipt.costUsd,
+        compute_units: receipt.computeUnits,
+        opportunity_type: d.opportunityType,
+        opportunity_summary: d.opportunitySummary,
+      },
+    }));
+    return {
+      businesses,
+      metadata: {
+        status: receipt.success ? 'success' : 'failed',
+        apify_run_id: receipt.runId,
+        cost_usd: receipt.costUsd,
+        compute_units: receipt.computeUnits,
+        error: receipt.error,
+      },
+    };
+  },
+};
+
 export const searxngProvider: LeadDiscoveryProvider = {
   id: 'searxng',
   enabled: () => process.env.SEARXNG_ENABLED === 'true' && Boolean(process.env.SEARXNG_BASE_URL),

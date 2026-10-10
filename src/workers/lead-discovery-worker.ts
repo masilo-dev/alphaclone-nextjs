@@ -8,6 +8,8 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 
+import { isApifyConfigured, discoverBusinessesWithApify } from '@/services/apifyLeadService';
+
 const workerId = process.env.RAILWAY_REPLICA_ID || `lead-worker-${process.pid}`;
 let stopping = false;
 
@@ -16,6 +18,9 @@ type Search = {
   id: string; query?: string; location?: string; city?: string; country?: string; industry?: string;
   business_keywords?: string[]; result_limit?: number; exclusions?: { keywords?: string[] };
   requirements?: LeadContactRequirements;
+  source_filters?: string[];
+  filter_no_website?: boolean;
+  target_country?: string;
 };
 
 function getAdminClient(): SupabaseClient {
@@ -172,85 +177,216 @@ async function execute(job: Job) {
   let sourceErrors: Record<string, string> = {};
   let sourceStats: Record<string, number> = {};
   let searchCenter: GeoPoint | null = null;
+  let rows: Array<Record<string, unknown>> = [];
+  let apifyReceipt: Awaited<ReturnType<typeof discoverBusinessesWithApify>> | null = null;
 
-  for (let guard = 0; guard < 4; guard++) {
-    const result = await runLeadStep({
-      step,
-      niche: search.query || search.business_keywords?.join(' ') || search.industry || 'business',
-      location: search.location || [search.city, search.country].filter(Boolean).join(', '),
-      radiusKm: 40,
-      partialResults: partial,
-      usePlaywright: false,
-      sortBy: 'reach_asc',
-      sourceErrors,
-      sourceStats,
-      searchCenter,
-      resultLimit: search.result_limit || 25,
-      allowHere: !policy.freeOnly && policy.providers.here === true && Boolean(process.env.HERE_API_KEY),
-    });
-    partial = result.partialResults;
-    sourceErrors = result.sourceErrors;
-    sourceStats = result.sourceStats;
-    searchCenter = result.searchCenter;
-    await supabase.from('lead_searches').update({ progress: Math.min(90, Math.max(15, result.progress)), discovered_count: partial.length }).eq('id', search.id).eq('workspace_id', job.workspace_id);
-    if (result.nextStep === 'completed') break;
-    step = result.nextStep;
+  const sources = (search.source_filters as string[] | undefined) || [];
+  const apifyAllowed = sources.includes('apify') || (!policy.freeOnly && policy.providers.apify === true) || isApifyConfigured();
+
+  // Primary Path: Use production Apify actor for real directory and places discovery
+  if (apifyAllowed && isApifyConfigured()) {
+    try {
+      await supabase.from('lead_searches').update({ progress: 25, status: 'running' }).eq('id', search.id).eq('workspace_id', job.workspace_id);
+      apifyReceipt = await discoverBusinessesWithApify({
+        query: search.query || search.business_keywords?.join(' ') || search.industry,
+        industry: search.industry,
+        location: search.location,
+        country: search.country || search.target_country,
+        city: search.city,
+        resultLimit: search.result_limit || 50,
+        filterNoWebsite: search.filter_no_website || search.requirements?.filterNoWebsite,
+        requireEmail: search.requirements?.email,
+      });
+
+      if (apifyReceipt.success && apifyReceipt.discovered.length > 0) {
+        await supabase.from('lead_searches').update({
+          progress: 75,
+          discovered_count: apifyReceipt.discovered.length,
+          apify_run_id: apifyReceipt.runId,
+          apify_actor_id: apifyReceipt.actorId,
+          apify_dataset_id: apifyReceipt.datasetId,
+          cost_usd: apifyReceipt.costUsd,
+          compute_units: apifyReceipt.computeUnits,
+        }).eq('id', search.id).eq('workspace_id', job.workspace_id);
+
+        await supabase.from('lead_search_jobs').update({
+          apify_run_id: apifyReceipt.runId,
+          apify_dataset_id: apifyReceipt.datasetId,
+          cost_usd: apifyReceipt.costUsd,
+        }).eq('id', job.id).eq('workspace_id', job.workspace_id);
+
+        rows = apifyReceipt.discovered
+          .filter((d) => resolveBusinessEntity({ businessName: d.businessName, website: d.website, sourceUrl: d.sourceUrl }).isRealBusiness)
+          .map((d) => {
+            const candidate = {
+              website: d.website || null,
+              public_email: d.email || null,
+              public_phone: d.phone || null,
+              address_line_1: d.address || null,
+              industry: d.category || search.industry || null,
+              city: d.city || search.city || null,
+              business_name: d.businessName,
+            };
+            const score = scoreCandidate(candidate, search);
+            const contactability = candidate.public_email && candidate.public_phone ? 100 : candidate.public_email || candidate.public_phone ? 70 : 25;
+            const opportunity = d.opportunityType === 'no_website' ? 85 : d.opportunityType === 'social_first' ? 75 : 30;
+            const finalScore = calculateCompositeLeadScore({ fit: score.fitScore, quality: score.qualityScore, confidence: 85, contactability, freshness: 100, opportunity });
+            const canonicalBusinessKey = buildCanonicalBusinessKey({
+              email: candidate.public_email,
+              website: candidate.website,
+              phone: candidate.public_phone,
+              sourceExternalId: d.sourceId,
+              businessName: d.businessName,
+              city: candidate.city,
+              country: d.country || search.country || null,
+            });
+
+            return {
+              workspace_id: job.workspace_id,
+              created_by: job.created_by,
+              search_id: search.id,
+              source_type: d.source,
+              source_url: d.sourceUrl || d.website || null,
+              source_external_id: d.sourceId,
+              business_name: d.businessName,
+              public_email: candidate.public_email,
+              public_phone: candidate.public_phone,
+              website: candidate.website,
+              domain: normalizeDomain(candidate.website),
+              address_line_1: candidate.address_line_1,
+              city: candidate.city,
+              country: d.country || search.country || null,
+              latitude: d.lat ?? null,
+              longitude: d.lng ?? null,
+              industry: candidate.industry,
+              business_category: d.category || null,
+              description: d.description || d.opportunitySummary,
+              apify_place_id: d.apifyPlaceId || null,
+              google_maps_url: d.googleMapsUrl || null,
+              email_source_url: d.emailSourceUrl || null,
+              is_social_first: d.opportunityType === 'social_first',
+              facebook_url: d.socialUrls?.facebook || null,
+              instagram_url: d.socialUrls?.instagram || null,
+              linkedin_url: d.socialUrls?.linkedin || null,
+              raw_data: { ...(d.rawData as object || {}), opportunity_type: d.opportunityType, opportunity_summary: d.opportunitySummary },
+              normalized_data: { domain: normalizeDomain(candidate.website), email: candidate.public_email, phone: candidate.public_phone },
+              confidence_score: 85,
+              quality_score: score.qualityScore,
+              fit_score: score.fitScore,
+              contactability_score: contactability,
+              freshness_score: 100,
+              opportunity_score: opportunity,
+              final_score: finalScore,
+              score_explanation: [...score.explanation, { type: 'digital_opportunity', points: opportunity, reason: d.opportunitySummary }],
+              verification_status: d.verificationStatus,
+              field_provenance: d.email ? { email: { value: d.email, source: d.emailSourceUrl || d.sourceUrl } } : {},
+              source_sightings: [{ source: d.source, source_external_id: d.sourceId, source_url: d.sourceUrl, seen_at: new Date().toISOString() }],
+              canonical_business_key: canonicalBusinessKey,
+              outreach_memory_status: 'new',
+              last_seen_at: new Date().toISOString(),
+              dedupe_key: buildLeadCandidateDedupeKey({
+                source_type: d.source,
+                source_external_id: d.sourceId,
+                website: candidate.website,
+                business_name: d.businessName,
+                city: candidate.city,
+              }),
+            };
+          })
+          .filter((row) => candidateMeetsRequirements({
+            business_name: String(row.business_name),
+            website: row.website ? String(row.website) : null,
+            public_email: row.public_email ? String(row.public_email) : null,
+            public_phone: row.public_phone ? String(row.public_phone) : null,
+          }, search.requirements));
+      }
+    } catch (apifyErr) {
+      console.warn('[lead-discovery-worker] Apify execution notice, falling back to free sources:', apifyErr);
+      sourceErrors['apify'] = apifyErr instanceof Error ? apifyErr.message : String(apifyErr);
+    }
   }
 
-  const limit = Math.max(1, search.result_limit || 25);
-  const enriched: Array<{ lead: LeadResult; crawl: Awaited<ReturnType<typeof crawlPublicWebsite>> | null }> = [];
-  for (let index = 0; index < Math.min(partial.length, limit); index += 6) {
-    const batch = await Promise.all(partial.slice(index, index + 6).map(async (lead) => {
-      if (!lead.website || lead.email) return { lead, crawl: null };
-      try { return { lead, crawl: await crawlPublicWebsite(lead.website, { maxPages: 2, timeoutMs: 6000 }) }; }
-      catch { return { lead, crawl: null }; }
-    }));
-    enriched.push(...batch);
+  // Fallback Path: If Apify was unconfigured or yielded 0 leads, run free sources pipeline
+  if (rows.length === 0) {
+    for (let guard = 0; guard < 4; guard++) {
+      const result = await runLeadStep({
+        step,
+        niche: search.query || search.business_keywords?.join(' ') || search.industry || 'business',
+        location: search.location || [search.city, search.country].filter(Boolean).join(', '),
+        radiusKm: 40,
+        partialResults: partial,
+        usePlaywright: false,
+        sortBy: 'reach_asc',
+        sourceErrors,
+        sourceStats,
+        searchCenter,
+        resultLimit: search.result_limit || 25,
+        allowHere: !policy.freeOnly && policy.providers.here === true && Boolean(process.env.HERE_API_KEY),
+      });
+      partial = result.partialResults;
+      sourceErrors = result.sourceErrors;
+      sourceStats = result.sourceStats;
+      searchCenter = result.searchCenter;
+      await supabase.from('lead_searches').update({ progress: Math.min(90, Math.max(15, result.progress)), discovered_count: partial.length }).eq('id', search.id).eq('workspace_id', job.workspace_id);
+      if (result.nextStep === 'completed') break;
+      step = result.nextStep;
+    }
+
+    const limit = Math.max(1, search.result_limit || 25);
+    const enriched: Array<{ lead: LeadResult; crawl: Awaited<ReturnType<typeof crawlPublicWebsite>> | null }> = [];
+    for (let index = 0; index < Math.min(partial.length, limit); index += 6) {
+      const batch = await Promise.all(partial.slice(index, index + 6).map(async (lead) => {
+        if (!lead.website || lead.email) return { lead, crawl: null };
+        try { return { lead, crawl: await crawlPublicWebsite(lead.website, { maxPages: 2, timeoutMs: 6000 }) }; }
+        catch { return { lead, crawl: null }; }
+      }));
+      enriched.push(...batch);
+    }
+    rows = enriched
+      .filter(({ lead }) => resolveBusinessEntity({ businessName: lead.business_name, website: lead.website, sourceUrl: lead.source_url }).isRealBusiness)
+      .map(({ lead, crawl }) => {
+      const publicEmail = normalizeEmail(lead.email) || crawl?.emails[0]?.email || null;
+      const candidate = {
+        website: lead.website || null, public_email: publicEmail, public_phone: normalizePhone(lead.phone, search.country),
+        address_line_1: lead.address || null, industry: lead.category || search.industry || null,
+        city: search.city || null, business_name: lead.business_name,
+      };
+      const score = scoreCandidate(candidate, search);
+      const contactability = candidate.public_email && candidate.public_phone ? 100 : candidate.public_email || candidate.public_phone ? 70 : 20;
+      const opportunity = crawl?.quality?.opportunity_score || 0;
+      const finalScore = calculateCompositeLeadScore({ fit: score.fitScore, quality: score.qualityScore, confidence: lead.hasContact ? 75 : 45, contactability, freshness: 100, opportunity });
+      const canonicalBusinessKey = buildCanonicalBusinessKey({ email: candidate.public_email, website: candidate.website, phone: candidate.public_phone, sourceExternalId: lead.source_id, businessName: lead.business_name, city: search.city || null, country: search.country || null });
+      return {
+        workspace_id: job.workspace_id, created_by: job.created_by, search_id: search.id,
+        source_type: lead.source, source_url: lead.source_url || lead.website || null,
+        source_external_id: lead.source_id, business_name: lead.business_name,
+        public_email: candidate.public_email, public_phone: candidate.public_phone,
+        website: candidate.website, domain: normalizeDomain(candidate.website), address_line_1: candidate.address_line_1,
+        city: candidate.city, country: search.country || null, latitude: lead.lat, longitude: lead.lng,
+        industry: candidate.industry, business_category: lead.category || null, description: lead.snippet,
+        raw_data: { ...lead, crawl_quality: crawl?.quality || null }, normalized_data: { domain: normalizeDomain(candidate.website), email: candidate.public_email, phone: candidate.public_phone },
+        confidence_score: lead.hasContact ? 75 : 45, quality_score: score.qualityScore,
+        fit_score: score.fitScore, contactability_score: contactability, freshness_score: 100, opportunity_score: opportunity, final_score: finalScore,
+        score_explanation: [...score.explanation, ...(crawl?.quality?.problems || []).map((reason) => ({ type: 'website_opportunity', points: 0, reason }))],
+        verification_status: crawl?.emails[0] ? 'publicly_published' : candidate.public_email ? 'format_valid' : 'unknown',
+        field_provenance: crawl?.emails[0] ? { email: { value: crawl.emails[0].email, source: crawl.emails[0].source_url } } : {},
+        source_sightings: [{ source: lead.source, source_external_id: lead.source_id, source_url: lead.source_url, seen_at: new Date().toISOString() }],
+        canonical_business_key: canonicalBusinessKey, outreach_memory_status: 'new', last_seen_at: new Date().toISOString(),
+        dedupe_key: buildLeadCandidateDedupeKey({
+          source_type: lead.source,
+          source_external_id: lead.source_id,
+          website: candidate.website,
+          business_name: lead.business_name,
+          city: candidate.city,
+        }),
+      };
+    }).filter((row) => candidateMeetsRequirements({
+      business_name: row.business_name,
+      website: row.website,
+      public_email: row.public_email,
+      public_phone: row.public_phone,
+    }, search.requirements));
   }
-  const rows = enriched
-    .filter(({ lead }) => resolveBusinessEntity({ businessName: lead.business_name, website: lead.website, sourceUrl: lead.source_url }).isRealBusiness)
-    .map(({ lead, crawl }) => {
-    const publicEmail = normalizeEmail(lead.email) || crawl?.emails[0]?.email || null;
-    const candidate = {
-      website: lead.website || null, public_email: publicEmail, public_phone: normalizePhone(lead.phone, search.country),
-      address_line_1: lead.address || null, industry: lead.category || search.industry || null,
-      city: search.city || null, business_name: lead.business_name,
-    };
-    const score = scoreCandidate(candidate, search);
-    const contactability = candidate.public_email && candidate.public_phone ? 100 : candidate.public_email || candidate.public_phone ? 70 : 20;
-    const opportunity = crawl?.quality?.opportunity_score || 0;
-    const finalScore = calculateCompositeLeadScore({ fit: score.fitScore, quality: score.qualityScore, confidence: lead.hasContact ? 75 : 45, contactability, freshness: 100, opportunity });
-    const canonicalBusinessKey = buildCanonicalBusinessKey({ email: candidate.public_email, website: candidate.website, phone: candidate.public_phone, sourceExternalId: lead.source_id, businessName: lead.business_name, city: search.city || null, country: search.country || null });
-    return {
-      workspace_id: job.workspace_id, created_by: job.created_by, search_id: search.id,
-      source_type: lead.source, source_url: lead.source_url || lead.website || null,
-      source_external_id: lead.source_id, business_name: lead.business_name,
-      public_email: candidate.public_email, public_phone: candidate.public_phone,
-      website: candidate.website, domain: normalizeDomain(candidate.website), address_line_1: candidate.address_line_1,
-      city: candidate.city, country: search.country || null, latitude: lead.lat, longitude: lead.lng,
-      industry: candidate.industry, business_category: lead.category || null, description: lead.snippet,
-      raw_data: { ...lead, crawl_quality: crawl?.quality || null }, normalized_data: { domain: normalizeDomain(candidate.website), email: candidate.public_email, phone: candidate.public_phone },
-      confidence_score: lead.hasContact ? 75 : 45, quality_score: score.qualityScore,
-      fit_score: score.fitScore, contactability_score: contactability, freshness_score: 100, opportunity_score: opportunity, final_score: finalScore,
-      score_explanation: [...score.explanation, ...(crawl?.quality?.problems || []).map((reason) => ({ type: 'website_opportunity', points: 0, reason }))],
-      verification_status: crawl?.emails[0] ? 'publicly_published' : candidate.public_email ? 'format_valid' : 'unknown',
-      field_provenance: crawl?.emails[0] ? { email: { value: crawl.emails[0].email, source: crawl.emails[0].source_url } } : {},
-      source_sightings: [{ source: lead.source, source_external_id: lead.source_id, source_url: lead.source_url, seen_at: new Date().toISOString() }],
-      canonical_business_key: canonicalBusinessKey, outreach_memory_status: 'new', last_seen_at: new Date().toISOString(),
-      dedupe_key: buildLeadCandidateDedupeKey({
-        source_type: lead.source,
-        source_external_id: lead.source_id,
-        website: candidate.website,
-        business_name: lead.business_name,
-        city: candidate.city,
-      }),
-    };
-  }).filter((row) => candidateMeetsRequirements({
-    business_name: row.business_name,
-    website: row.website,
-    public_email: row.public_email,
-    public_phone: row.public_phone,
-  }, search.requirements));
 
   if (rows.length) {
     const { error: insertError } = await supabase.from('lead_candidates').upsert(rows, {
@@ -308,12 +444,22 @@ async function execute(job: Job) {
   await supabase.from('lead_searches').update({
     status, progress: 100, discovered_count: totalDiscovered, error_count: Object.keys(sourceErrors).length,
     accepted_count: autoAcceptedCount,
+    cost_usd: apifyReceipt?.costUsd ?? 0,
+    compute_units: apifyReceipt?.computeUnits ?? 0,
     completed_at: new Date().toISOString(), updated_at: new Date().toISOString(),
   }).eq('id', search.id).eq('workspace_id', job.workspace_id);
   await supabase.from('lead_search_jobs').update({
     status: 'completed', progress: 100, records_found: totalDiscovered, records_processed: rows.length,
+    cost_usd: apifyReceipt?.costUsd ?? 0,
     completed_at: new Date().toISOString(), locked_at: null,
-    metadata: { source_errors: sourceErrors, duration_ms: Date.now() - started, auto_accepted: autoAcceptedCount, crm_synced: crmSyncedCount },
+    metadata: {
+      source_errors: sourceErrors,
+      duration_ms: Date.now() - started,
+      auto_accepted: autoAcceptedCount,
+      crm_synced: crmSyncedCount,
+      apify_run_id: apifyReceipt?.runId ?? null,
+      cost_usd: apifyReceipt?.costUsd ?? 0,
+    },
   }).eq('id', job.id).eq('workspace_id', job.workspace_id);
 
   // Emit durable runtime outbox event

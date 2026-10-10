@@ -24,15 +24,18 @@ type SearchRecord = {
   status: string; progress: number; discovered_count: number; accepted_count: number;
   rejected_count: number; duplicate_count: number; error_count: number; created_at: string;
   contactable_count?: number; contacted_count?: number;
+  cost_usd?: number; compute_units?: number; apify_run_id?: string;
 };
 type Candidate = {
   id: string; business_name: string; contact_name?: string; industry?: string; city?: string;
   country?: string; website?: string; public_email?: string; public_phone?: string;
   source_type: string; quality_score: number; fit_score: number; verification_status: string;
   review_status: string; created_at: string; lat?: number; lng?: number;
+  is_social_first?: boolean; google_maps_url?: string; email_source_url?: string;
   qualification?: {
     master_score: number; grade: string; priority_band: string; qualification_reason: string;
     why_now: string; recommended_action: string; recommended_offer?: { primary_offer?: string | null };
+    outreach_angle?: string | null;
   } | null;
 };
 
@@ -56,16 +59,16 @@ const SETTINGS_KEY = 'lead_finder_workspace_settings';
 
 function readLeadFinderSettings(workspaceId: string): LeadFinderSettings {
   if (typeof window === 'undefined') {
-    return { defaultResultLimit: 50, requireEmail: false, requireWebsite: false, defaultSources: ['openstreetmap', 'website'] };
+    return { defaultResultLimit: 50, requireEmail: false, requireWebsite: false, defaultSources: ['apify', 'openstreetmap', 'website'] };
   }
   try {
     const raw = window.localStorage.getItem(`${SETTINGS_KEY}:${workspaceId}`);
     if (!raw) {
-      return { defaultResultLimit: 50, requireEmail: false, requireWebsite: false, defaultSources: ['openstreetmap', 'website'] };
+      return { defaultResultLimit: 50, requireEmail: false, requireWebsite: false, defaultSources: ['apify', 'openstreetmap', 'website'] };
     }
     return JSON.parse(raw) as LeadFinderSettings;
   } catch {
-    return { defaultResultLimit: 50, requireEmail: false, requireWebsite: false, defaultSources: ['openstreetmap', 'website'] };
+    return { defaultResultLimit: 50, requireEmail: false, requireWebsite: false, defaultSources: ['apify', 'openstreetmap', 'website'] };
   }
 }
 
@@ -76,12 +79,12 @@ function writeLeadFinderSettings(workspaceId: string, settings: LeadFinderSettin
 
 const nav = ['Discover', 'Assistant', 'Results', 'Research', 'Lists', 'Outreach', 'Activity', 'Settings'] as const;
 const presets = [
-  ['Restaurants in Harare', 'restaurants', 'Harare'],
+  ['No-website opportunities in Harare', 'restaurants and services', 'Harare'],
   ['Construction companies in Bulawayo', 'construction companies', 'Bulawayo'],
   ['Marketing agencies in Warsaw', 'marketing agencies', 'Warsaw'],
   ['Small retailers in Johannesburg', 'small retailers', 'Johannesburg'],
   ['Local service businesses', 'local services', ''],
-  ['Companies without websites', 'businesses', ''],
+  ['Social-first businesses (No website)', 'salons and boutiques', 'Harare'],
   ['Businesses with public email addresses', 'businesses', ''],
 ] as const;
 
@@ -115,12 +118,12 @@ export default function ScraperCampaignsPage() {
     defaultResultLimit: 50,
     requireEmail: false,
     requireWebsite: false,
-    defaultSources: ['openstreetmap', 'website'],
+    defaultSources: ['apify', 'openstreetmap', 'website'],
   });
   const [form, setForm] = useState({
     keywords: '', location: '', country: '', city: '', region: '', industry: '',
     searchType: 'businesses_by_location', resultLimit: 50, website: false, email: false,
-    phone: false, social: false, sources: ['openstreetmap', 'website'],
+    phone: false, social: false, filterNoWebsite: false, sources: ['apify', 'openstreetmap', 'website'],
     excludedKeywords: '', excludedDomains: '', excludedLocations: '', radiusKm: 25,
   });
   // The safe tenant hook exposes tenant identity, not membership role. The API
@@ -213,8 +216,8 @@ export default function ScraperCampaignsPage() {
           country: form.country,
           region: form.region,
           sources: form.sources,
-          resultLimit: Number(form.resultLimit) || 50,
-          requirements: { email: form.email, phone: form.phone, website: form.website, social: form.social },
+          filterNoWebsite: form.filterNoWebsite,
+          requirements: { email: form.email, phone: form.phone, website: form.website, social: form.social, filterNoWebsite: form.filterNoWebsite },
           exclusions: {
             keywords: form.excludedKeywords.split(',').map(value => value.trim()).filter(Boolean),
             domains: form.excludedDomains.split(',').map(value => value.trim()).filter(Boolean),
@@ -439,12 +442,26 @@ export default function ScraperCampaignsPage() {
                   <AlphaCloneInput className={`${fieldClass} mt-1.5`} value={form.industry} onChange={e => setForm({...form,industry:e.target.value})} placeholder="Optional industry" />
                 </label>
               </div>
-              <fieldset className="mt-5"><legend className="type-ui font-semibold">Required public information</legend>
-                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">{(['website','email','phone','social'] as const).map(key =>
-                  <label key={key} className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--ws-border)] px-3 type-label capitalize"><input type="checkbox" checked={form[key]} onChange={e=>setForm({...form,[key]:e.target.checked})} className="accent-teal-500"/>{key}</label>)}</div>
+              <fieldset className="mt-5"><legend className="type-ui font-semibold">Target Requirements & Opportunity Focus</legend>
+                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
+                  <label className="flex min-h-11 items-center gap-2 rounded-xl border border-teal-500/40 bg-teal-500/10 px-3 type-label font-semibold text-teal-300">
+                    <input type="checkbox" checked={form.filterNoWebsite} onChange={e=>setForm({...form, filterNoWebsite: e.target.checked, website: e.target.checked ? false : form.website})} className="accent-teal-500"/>
+                    🎯 No Website
+                  </label>
+                  {(['website','email','phone','social'] as const).map(key =>
+                    <label key={key} className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--ws-border)] px-3 type-label capitalize">
+                      <input type="checkbox" disabled={key === 'website' && form.filterNoWebsite} checked={form[key]} onChange={e=>setForm({...form,[key]:e.target.checked})} className="accent-teal-500"/>{key}
+                    </label>)}
+                </div>
               </fieldset>
               <button type="button" onClick={() => setAdvanced(!advanced)} className="mt-5 inline-flex min-h-11 items-center gap-2 type-ui font-semibold text-teal-400"><SlidersHorizontal size={16}/>{advanced ? 'Hide' : 'Show'} advanced filters</button>
               {advanced && <div className="grid gap-4 border-t border-[var(--ws-border)] pt-4 md:grid-cols-2">
+                <label className="type-label">Discovery source
+                  <AlphaCloneSelect className={`${fieldClass} mt-1`} value={form.sources[0] || 'apify'} onChange={e => setForm({...form, sources: [e.target.value, 'website']})}>
+                    <option value="apify">Apify — Google Places & Global Business Directory (Recommended)</option>
+                    <option value="openstreetmap">OpenStreetMap (Free community directory)</option>
+                  </AlphaCloneSelect>
+                </label>
                 <label className="type-label">Country<AlphaCloneInput className={`${fieldClass} mt-1`} value={form.country} onChange={e=>setForm({...form,country:e.target.value})}/></label>
                 <label className="type-label">City or region<AlphaCloneInput className={`${fieldClass} mt-1`} value={form.city} onChange={e=>setForm({...form,city:e.target.value})}/></label>
                 <label className="type-label">Excluded keywords<AlphaCloneInput className={`${fieldClass} mt-1`} value={form.excludedKeywords} onChange={e=>setForm({...form,excludedKeywords:e.target.value})} placeholder="comma separated"/></label>
@@ -524,7 +541,18 @@ function ResultsPanel({ searches, selected, setSelected, candidates, metrics, re
   }));
   return <div className="space-y-4">
     <div className="flex flex-col gap-3 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div><h2 className="font-semibold">{selected?.name || 'No search selected'}</h2><p className="type-caption text-[var(--ws-text-secondary)]">{selected ? `${selected.status.replace('_',' ')} · ${selected.progress}% complete` : 'Create a search to discover public business leads.'}</p>{!canReview ? <p className="mt-1 type-caption text-[var(--warning-text,var(--warning-500))]">View-only review: ask a workspace admin to accept candidates into CRM.</p> : null}</div>
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="font-semibold">{selected?.name || 'No search selected'}</h2>
+          {selected?.cost_usd != null && Number(selected.cost_usd) > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-lg border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 text-xs font-semibold text-teal-300">
+              ⚡ Apify: ${Number(selected.cost_usd).toFixed(4)} USD
+            </span>
+          )}
+        </div>
+        <p className="type-caption text-[var(--ws-text-secondary)]">{selected ? `${selected.status.replace('_',' ')} · ${selected.progress}% complete` : 'Create a search to discover public business leads.'}</p>
+        {!canReview ? <p className="mt-1 type-caption text-[var(--warning-text,var(--warning-500))]">View-only review: ask a workspace admin to accept candidates into CRM.</p> : null}
+      </div>
       {searches.length>0 && <AlphaCloneSelect aria-label="Selected search" className={`${fieldClass} sm:max-w-xs`} value={selected?.id||''} onChange={e=>{const s=searches.find(x=>x.id===e.target.value);if(s)setSelected(s)}}>{searches.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</AlphaCloneSelect>}
     </div>
     <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">{Object.entries(metrics).map(([label,value])=><div key={label} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4"><p className="type-caption uppercase tracking-wide text-[var(--ws-text-secondary)]">{label.replace('_',' ')}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value}</p></div>)}</div>
@@ -544,8 +572,19 @@ function ResultsPanel({ searches, selected, setSelected, candidates, metrics, re
     {view === 'map' ? (
       <LeadFinderMapPanel leads={pins} emptyHint="Run a search. Pins appear for businesses with public coordinates." />
     ) : candidates.length ? <div className="overflow-hidden rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)]">
-      <div className="hidden overflow-x-auto md:block"><table className="w-full text-left type-caption"><thead className="border-b border-[var(--ws-border)] type-caption uppercase text-[var(--ws-text-secondary)]"><tr>{['Company','Location','Contact','Intelligence','Status',''].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{candidates.map(c=><tr key={c.id} className="border-b border-[var(--ws-border)] last:border-0"><td className="px-4 py-3 font-semibold">{c.business_name}<div className="type-caption font-normal text-[var(--ws-text-secondary)]">{c.industry||'Uncategorized'}</div></td><td className="px-4 py-3">{[c.city,c.country].filter(Boolean).join(', ')||'—'}</td><td className="px-4 py-3">{c.public_email||c.public_phone||'No public contact'}</td><td className="px-4 py-3"><div className="font-semibold text-[var(--brand-blue-300)]">{c.qualification ? `${c.qualification.master_score} · ${c.qualification.grade} · ${c.qualification.priority_band}` : 'Qualifying…'}</div><div className="max-w-xs type-caption text-[var(--ws-text-secondary)]">{c.qualification?.why_now || c.qualification?.qualification_reason || 'Evidence is being assessed.'}</div></td><td className="px-4 py-3 capitalize">{c.review_status}</td><td className="px-4 py-3"><div className="flex items-center justify-end gap-2"><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'accepted'} onClick={() => onReview(c, 'accepted')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-teal-500/30 px-2 type-caption font-semibold text-[var(--brand-blue-300)] hover:bg-teal-500/10 disabled:cursor-not-allowed disabled:opacity-50"><Check size={14}/>{reviewingCandidateId === c.id ? 'Saving…' : c.review_status === 'accepted' ? 'In CRM' : 'Accept'}</button><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'rejected'} onClick={() => onReview(c, 'rejected')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-rose-500/30 px-2 type-caption font-semibold text-[var(--error-text,var(--error-500))] hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"><X size={14}/>Reject</button></div></td></tr>)}</tbody></table></div>
-      <div className="divide-y divide-[var(--ws-border)] md:hidden">{candidates.map(c=><article key={c.id} className="p-4"><div className="flex justify-between gap-3"><div><h3 className="font-semibold">{c.business_name}</h3><p className="type-caption text-[var(--ws-text-secondary)]">{[c.industry,c.city].filter(Boolean).join(' · ')}</p></div><span className="type-caption font-semibold text-teal-400">{c.fit_score} fit</span></div><p className="mt-3 type-caption">{c.public_email||c.public_phone||'No public contact found'}</p></article>)}</div>
+      <div className="hidden overflow-x-auto md:block"><table className="w-full text-left type-caption"><thead className="border-b border-[var(--ws-border)] type-caption uppercase text-[var(--ws-text-secondary)]"><tr>{['Company','Location','Contact','Intelligence','Status',''].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{candidates.map(c=><tr key={c.id} className="border-b border-[var(--ws-border)] last:border-0"><td className="px-4 py-3 font-semibold">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span>{c.business_name}</span>
+          {!c.website && <span className="inline-flex items-center rounded-md bg-teal-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-teal-300">🎯 No Website</span>}
+          {c.is_social_first && <span className="inline-flex items-center rounded-md bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-purple-300">📱 Social-First</span>}
+        </div>
+        <div className="flex items-center gap-2 type-caption font-normal text-[var(--ws-text-secondary)]">
+          <span>{c.industry||'Uncategorized'}</span>
+          {c.website ? (<><span>·</span><a href={c.website} target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:underline">{c.website.replace(/^https?:\/\//i, '').replace(/\/$/, '').slice(0, 24)}</a></>) : null}
+          {c.google_maps_url ? (<><span>·</span><a href={c.google_maps_url} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:underline">Maps</a></>) : null}
+        </div>
+      </td><td className="px-4 py-3">{[c.city,c.country].filter(Boolean).join(', ')||'—'}</td><td className="px-4 py-3">{c.public_email||c.public_phone||'No public contact'}</td><td className="px-4 py-3"><div className="font-semibold text-[var(--brand-blue-300)]">{c.qualification ? `${c.qualification.master_score} · ${c.qualification.grade} · ${c.qualification.priority_band}` : 'Qualifying…'}</div><div className="max-w-xs type-caption text-[var(--ws-text-secondary)]">{c.qualification?.recommended_offer?.primary_offer ? <span className="font-semibold text-teal-300">{c.qualification.recommended_offer.primary_offer}: </span> : null}{c.qualification?.why_now || c.qualification?.qualification_reason || 'Evidence is being assessed.'}</div></td><td className="px-4 py-3 capitalize">{c.review_status}</td><td className="px-4 py-3"><div className="flex items-center justify-end gap-2"><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'accepted'} onClick={() => onReview(c, 'accepted')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-teal-500/30 px-2 type-caption font-semibold text-[var(--brand-blue-300)] hover:bg-teal-500/10 disabled:cursor-not-allowed disabled:opacity-50"><Check size={14}/>{reviewingCandidateId === c.id ? 'Saving…' : c.review_status === 'accepted' ? 'In CRM' : 'Accept'}</button><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'rejected'} onClick={() => onReview(c, 'rejected')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-rose-500/30 px-2 type-caption font-semibold text-[var(--error-text,var(--error-500))] hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"><X size={14}/>Reject</button></div></td></tr>)}</tbody></table></div>
+      <div className="divide-y divide-[var(--ws-border)] md:hidden">{candidates.map(c=><article key={c.id} className="p-4"><div className="flex justify-between gap-3"><div><div className="flex flex-wrap items-center gap-1.5"><h3 className="font-semibold">{c.business_name}</h3>{!c.website && <span className="rounded bg-teal-500/10 px-1 py-0.5 text-[10px] font-semibold text-teal-300">🎯 No Website</span>}{c.is_social_first && <span className="rounded bg-purple-500/10 px-1 py-0.5 text-[10px] font-semibold text-purple-300">📱 Social-First</span>}</div><p className="type-caption text-[var(--ws-text-secondary)]">{[c.industry,c.city].filter(Boolean).join(' · ')}</p></div><span className="type-caption font-semibold text-teal-400">{c.fit_score} fit</span></div><p className="mt-3 type-caption">{c.public_email||c.public_phone||'No public contact found'}</p>{c.qualification?.recommended_offer?.primary_offer ? <p className="mt-1 text-xs text-teal-300">💡 {c.qualification.recommended_offer.primary_offer}</p> : null}</article>)}</div>
     </div> : <ModuleEmpty section="Results"/>}
   </div>;
 }
