@@ -274,9 +274,10 @@ export function normalizeApifyPlaceItem(
   }
 
   const hasWebsite = Boolean(rawWebsite && normalizeDomain(rawWebsite));
+  const countryContext = params.country || params.location || (typeof raw.countryCode === 'string' ? raw.countryCode : null);
   const normalizedPhone = normalizePhone(
     typeof raw.phone === 'string' ? raw.phone : typeof raw.phoneUnformatted === 'string' ? raw.phoneUnformatted : null,
-    params.country || (typeof raw.countryCode === 'string' ? raw.countryCode : null)
+    countryContext
   );
 
   // Extract public emails if present in raw item or contact sub-fields

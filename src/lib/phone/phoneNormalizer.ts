@@ -268,6 +268,21 @@ export function normalizePhoneNumber(
   }
 
   if (parsed && parsed.isValid()) {
+    // Incomplete local subscriber numbers without area codes (e.g. 6 digits like '305 810')
+    // cannot be dialed internationally or out-of-area, and must not pass as valid reachable contacts.
+    const natDigits = parsed.nationalNumber.replace(/\D/g, '');
+    if (natDigits.length < 7 || (inferred === 'ZW' && natDigits.length < 8)) {
+      return {
+        phone: raw,
+        e164: null,
+        national: null,
+        country: null,
+        isValid: false,
+        raw,
+        inferredCountry: inferred,
+      };
+    }
+
     const e164 = parsed.format('E.164');
     return {
       phone: e164,

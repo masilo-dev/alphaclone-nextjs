@@ -20,7 +20,7 @@ defineConnectorTool({
     location: z.string().optional(),
     country: z.string().optional(),
     query: z.string().optional(),
-    min_score: z.number().optional().default(70),
+    min_score: z.number().optional().default(50),
     no_website_only: z.boolean().optional().default(false),
     require_email: z.boolean().optional().default(false),
     limit: z.number().optional().default(25),
@@ -47,20 +47,26 @@ defineConnectorTool({
       niche: String(args.industry || args.query || '').trim() || 'local businesses',
       location: String(args.location || '').trim() || 'United States',
       country: args.country ? String(args.country).trim() : undefined,
-      min_score: args.min_score != null ? Number(args.min_score) : undefined,
+      min_score: args.min_score != null ? Number(args.min_score) : 50,
       max_results: args.limit != null ? Number(args.limit) : 25,
       save_to_crm: Boolean(args.save_to_crm),
       filter_no_website: Boolean(args.no_website_only),
       require_email: Boolean(args.require_email),
     });
     return okResult('find_and_qualify_leads', {
+      search_id: result.search_id,
       leads_discovered: result.raw_count,
+      leads_parsed: result.parsed_count,
+      leads_contactable: result.contactable_count,
       leads_qualified: result.qualified_count,
       leads_imported: result.saved_to_crm,
       apify_run_id: result.apify_run_id,
       cost_usd: result.cost_usd,
+      execution_truth: result.execution_truth,
+      may_claim_completed: result.execution_truth.may_claim_completed,
       leads: result.leads,
-      note: 'Only real directory/source results with phone or email. No fabricated contacts.',
+      candidate_previews: result.candidate_previews,
+      note: 'Only real business directory/source results with validated phone or email. No fabricated contacts.',
     });
   },
 });
@@ -153,19 +159,31 @@ defineConnectorTool({
   permission: 'sales:read',
   inputSchema: z.object({
     tenant_id: tenantIdField.optional(),
+    search_id: z.string().optional(),
+    run_id: z.string().optional(),
+    campaign_id: z.string().optional(),
     limit: z.number().optional().default(20),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
+      search_id: { type: 'string', description: 'Traceable search ID to fetch leads from a specific run' },
+      run_id: { type: 'string', description: 'Provider run ID to fetch leads from' },
+      campaign_id: { type: 'string', description: 'Campaign ID to fetch leads from' },
       limit: { type: 'number' },
     },
     required: [],
   },
   handler: async (args, ctx) => {
     const { bonnieGetScraperLeads } = await import('@/lib/bonnie/bonnieLeadOps');
-    const scraped = await bonnieGetScraperLeads(ctx.tenantId, { limit: args.limit || 20 });
+    const scraped = await bonnieGetScraperLeads(ctx.tenantId, {
+      limit: args.limit || 20,
+      search_id: args.search_id,
+      run_id: args.run_id,
+      campaign_id: args.campaign_id,
+    });
     return okResult('get_scraper_leads', {
+      search_id: args.search_id || args.run_id || args.campaign_id || null,
       scraped_leads: scraped.map((p: any) => ({
         id: p.id,
         business_name: p.company || p.name,
@@ -175,6 +193,9 @@ defineConnectorTool({
         score: p.score,
         grade: p.grade,
         status: p.status,
+        search_id: p.campaign_id || null,
+        source: p.source || null,
+        source_url: p.source_url || null,
       })),
     });
   },

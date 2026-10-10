@@ -11,6 +11,7 @@
  */
 
 import { COMPREHENSIVE_INDUSTRIES, findIndustryByNameOrKeyword } from './comprehensiveIndustries';
+import { resolveBusinessEntity, normalizeEmail, normalizePhone, normalizeDomain } from '@/lib/lead-finder/core';
 
 export type QualityTier = 'hot' | 'warm' | 'cold' | 'skip';
 
@@ -24,6 +25,11 @@ export interface QualificationResult {
   insights:   string[];      // human-readable signals
   pitchAngle: string;        // recommended sales angle for AI email
   canAutoSend:boolean;       // requires at least an email
+  dataQualityScore?: number;
+  fitScore?: number;
+  disqualificationReason?: string;
+  normalizedEmail?: string | null;
+  normalizedPhone?: string | null;
 }
 
 // ── Signal Weights (per industry category) ────────────────────────────────────
@@ -140,10 +146,71 @@ export function qualifyLead(
     address?: string;
     category?:string;
     source?:  string;
+    country?: string;
   },
-  industry: string
+  industry: string,
+  options?: {
+    filter_no_website?: boolean;
+    require_email?: boolean;
+    country?: string;
+    target_criteria?: Record<string, unknown>;
+  }
 ): QualificationResult {
-  // 1. Pick profile
+  const TIER_META: Record<QualityTier, { label: string; color: string; bgColor: string; borderColor: string }> = {
+    hot:  { label: '🔥 Hot',  color: 'text-orange-400',  bgColor: 'bg-orange-500/10',  borderColor: 'border-orange-500/30' },
+    warm: { label: '🌡 Warm', color: 'text-yellow-400',  bgColor: 'bg-yellow-500/10',  borderColor: 'border-yellow-500/30' },
+    cold: { label: '🧊 Cold', color: 'text-blue-400',    bgColor: 'bg-blue-500/10',    borderColor: 'border-blue-500/30'   },
+    skip: { label: '✗ Skip',  color: 'text-[var(--ws-text-muted)]',   bgColor: 'bg-[var(--ws-surface-secondary)]/50',   borderColor: 'border-[var(--ws-border)]'     },
+  };
+
+  // 1. Entity verification: reject directory listicles, search pages, aggregator listings
+  const entity = resolveBusinessEntity({
+    businessName: lead.business_name,
+    website: lead.website,
+    sourceUrl: lead.source,
+  });
+  if (!entity.isRealBusiness) {
+    return {
+      score: 0,
+      tier: 'skip',
+      ...TIER_META.skip,
+      insights: ['Rejected: Aggregator directory or listicle page, not an operating business'],
+      pitchAngle: 'skip',
+      canAutoSend: false,
+      dataQualityScore: 0,
+      fitScore: 0,
+      disqualificationReason: entity.reason,
+      normalizedEmail: null,
+      normalizedPhone: null,
+    };
+  }
+
+  // 2. Contact verification using international context
+  const targetCountry = options?.country || lead.country;
+  const normalizedEmail = normalizeEmail(lead.email);
+  const normalizedPhone = normalizePhone(lead.phone, targetCountry);
+  const hasValidEmail = Boolean(normalizedEmail);
+  const hasValidPhone = Boolean(normalizedPhone);
+  const hasValidWebsite = Boolean(lead.website && normalizeDomain(lead.website));
+
+  // Hard gate: require email if configured
+  if (options?.require_email && !hasValidEmail) {
+    return {
+      score: 25,
+      tier: 'skip',
+      ...TIER_META.skip,
+      insights: ['Disqualified: Search requires a verified email address'],
+      pitchAngle: 'skip',
+      canAutoSend: false,
+      dataQualityScore: 25,
+      fitScore: 25,
+      disqualificationReason: 'LEAD_EMAIL_REQUIRED',
+      normalizedEmail: null,
+      normalizedPhone,
+    };
+  }
+
+  // 3. Pick profile
   const industryLower = industry.toLowerCase();
   const profile = INDUSTRY_PROFILES.find(p =>
     p.keywords.some(k => industryLower.includes(k) || k.includes(industryLower.slice(0, 5)))
@@ -152,31 +219,61 @@ export function qualifyLead(
   const { weights } = profile;
   const insights: string[] = [];
 
-  // 2. Score each signal
+  // 4. Data Quality Score calculation
+  let dataQualityScore = 20; // 20 pts base for verified business entity
+  if (hasValidEmail) dataQualityScore += 30;
+  if (hasValidPhone) dataQualityScore += 25;
+  if (hasValidWebsite) dataQualityScore += 15;
+  if (lead.address?.trim()) dataQualityScore += 10;
+  dataQualityScore = Math.min(100, dataQualityScore);
+
+  // 5. Fit & Signal score calculation
   let score = 0;
 
-  // Email (most important signal across all industries)
-  const hasEmail = !!(lead.email?.trim());
-  if (hasEmail) {
+  // Email
+  if (hasValidEmail) {
     score += weights.email;
   } else {
-    insights.push('No email — auto-outreach unavailable, use phone or website contact');
+    insights.push('No email — auto-outreach unavailable, use phone or direct contact');
   }
 
   // Phone
-  const hasPhone = !!(lead.phone?.trim());
-  if (hasPhone) {
+  if (hasValidPhone) {
     score += weights.phone;
   } else {
-    insights.push('No phone number — harder to reach directly');
+    insights.push('No validated phone number');
   }
 
-  // Website
-  const hasWebsite = !!(lead.website?.trim());
-  if (hasWebsite) {
-    score += weights.website;
+  // Website & Digital Opportunity
+  const wantsNoWebsite = Boolean(options?.filter_no_website);
+  if (wantsNoWebsite) {
+    if (hasValidWebsite) {
+      // User requested only businesses without website
+      return {
+        score: 30,
+        tier: 'skip',
+        ...TIER_META.skip,
+        insights: ['Disqualified: Business already has an active website'],
+        pitchAngle: 'skip',
+        canAutoSend: false,
+        dataQualityScore,
+        fitScore: 0,
+        disqualificationReason: 'FILTER_NO_WEBSITE_ACTIVE',
+        normalizedEmail,
+        normalizedPhone,
+      };
+    } else {
+      score += weights.website;
+      insights.push('No website — prime custom web & booking development opportunity');
+    }
   } else {
-    insights.push('No website — strong digital service opportunity');
+    if (hasValidWebsite) {
+      score += weights.website;
+    } else {
+      // Award partial digital-opportunity credit so businesses without websites aren't zeroed out
+      score += Math.round(weights.website * 0.7);
+      insights.push('No website — high opportunity for digital transformation');
+    }
   }
 
   // Rating
@@ -186,13 +283,11 @@ export function qualifyLead(
     if (rating >= 4.0)      { ratingPts = weights.rating; insights.push(`Rated ${rating.toFixed(1)}★ — established business`); }
     else if (rating >= 3.0) { ratingPts = Math.round(weights.rating * 0.5); }
     else if (rating >= 2.0) { ratingPts = 0; insights.push(`Low rating (${rating.toFixed(1)}★) — reputation management opportunity`); }
-    // < 2.0 = 0 pts
   } else {
-    // No rating: industries where rating matters a lot get penalised
     if (weights.rating >= 15) {
       insights.push('No reviews yet — early opportunity to build reputation');
     }
-    ratingPts = Math.round(weights.rating * 0.3); // partial credit for unrated
+    ratingPts = Math.round(weights.rating * 0.3);
   }
   score += ratingPts;
 
@@ -203,25 +298,27 @@ export function qualifyLead(
   // Clamp
   score = Math.max(0, Math.min(100, score));
 
-  // 3. Determine pitch angle
+  // Determine pitch angle
   let pitchAngle = profile.defaultPitch;
-  if (!hasWebsite) pitchAngle = 'digital-presence';
+  if (!hasValidWebsite) pitchAngle = 'digital-presence';
   else if ((rating !== undefined) && rating < 3.0) pitchAngle = 'low-rating-recovery';
-  else if (!hasEmail && hasPhone) pitchAngle = 'no-email-follow-up';
+  else if (!hasValidEmail && hasValidPhone) pitchAngle = 'no-email-follow-up';
 
-  // 4. Assign tier
+  // 6. Assign tier with strict contactability enforcement:
+  // Invalid contacts can NEVER produce Grade A / Hot tier!
   let tier: QualityTier;
-  if      (score >= 75) tier = 'hot';
-  else if (score >= 50) tier = 'warm';
-  else if (score >= 25) tier = 'cold';
-  else                  tier = 'skip';
+  const hasReachableContact = hasValidEmail || hasValidPhone;
+  if (score >= 75 && hasReachableContact) {
+    tier = 'hot';
+  } else if (score >= 50 && hasReachableContact) {
+    tier = 'warm';
+  } else if (score >= 25) {
+    tier = 'cold';
+  } else {
+    tier = 'skip';
+  }
 
-  const TIER_META: Record<QualityTier, { label: string; color: string; bgColor: string; borderColor: string }> = {
-    hot:  { label: '🔥 Hot',  color: 'text-orange-400',  bgColor: 'bg-orange-500/10',  borderColor: 'border-orange-500/30' },
-    warm: { label: '🌡 Warm', color: 'text-yellow-400',  bgColor: 'bg-yellow-500/10',  borderColor: 'border-yellow-500/30' },
-    cold: { label: '🧊 Cold', color: 'text-blue-400',    bgColor: 'bg-blue-500/10',    borderColor: 'border-blue-500/30'   },
-    skip: { label: '✗ Skip',  color: 'text-[var(--ws-text-muted)]',   bgColor: 'bg-[var(--ws-surface-secondary)]/50',   borderColor: 'border-[var(--ws-border)]'     },
-  };
+  const fitScore = score;
 
   return {
     score,
@@ -229,6 +326,10 @@ export function qualifyLead(
     ...TIER_META[tier],
     insights,
     pitchAngle,
-    canAutoSend: hasEmail,
+    canAutoSend: hasValidEmail,
+    dataQualityScore,
+    fitScore,
+    normalizedEmail,
+    normalizedPhone,
   };
 }

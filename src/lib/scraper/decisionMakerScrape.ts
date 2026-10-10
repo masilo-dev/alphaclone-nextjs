@@ -6,6 +6,7 @@
 
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import { enrichLeadWebsite, type EnrichmentResult } from '@/lib/scraper/enrichmentPipeline';
+import { normalizeEmail, normalizePhone } from '@/lib/lead-finder/core';
 export { hasPhoneOrEmail, hasReachableContact } from '@/lib/scraper/contactGate';
 
 export type DecisionMaker = {
@@ -204,12 +205,14 @@ export async function enrichBusinessWithDecisionMakers(
       const html = await fetchHtmlStatic(pageUrl);
       if (!html) continue;
       htmlBlob += `\n${html}`;
-      const mailto = [...html.matchAll(/mailto:([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/gi)].map(
-        (m) => m[1].toLowerCase()
-      );
+      const mailto = [...html.matchAll(/mailto:([^\s"'?#<>]+)/gi)]
+        .map((m) => normalizeEmail(m[1]))
+        .filter((e): e is string => Boolean(e));
       emails = [...new Set([...emails, ...mailto])].slice(0, 8);
-      const tel = html.match(/tel:([+\d\s().-]{8,})/i)?.[1]?.trim();
-      if (!phone && tel) phone = tel;
+      const tel = html.match(/tel:([+\d\s().-]{7,})/i)?.[1]?.trim();
+      if (!phone && tel) {
+        phone = normalizePhone(tel) || tel;
+      }
     }
   } catch {
     /* ignore */
@@ -231,14 +234,20 @@ export async function enrichBusinessWithDecisionMakers(
   }
 
   const text = htmlToText(htmlBlob || '');
-  const fromTextEmails = (text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g) || [])
-    .map((e) => e.toLowerCase())
-    .filter((e) => !/\.(png|jpg|svg|gif)$/i.test(e) && !e.includes('example.com') && !e.includes('sentry.io'));
+  const fromTextEmails = (text.match(/\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,24}\b/g) || [])
+    .map((e) => normalizeEmail(e))
+    .filter((e): e is string => typeof e === 'string' && !e.includes('example.com') && !e.includes('sentry.io'));
   emails = [...new Set([...emails, ...fromTextEmails])].slice(0, 8);
 
   if (!phone) {
-    const phoneMatch = text.match(/(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?){2,}\d{3,4}/);
-    if (phoneMatch && phoneMatch[0].replace(/\D/g, '').length >= 10) phone = phoneMatch[0].trim();
+    const phoneMatches = text.match(/(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?){2,}\d{3,4}/g) || [];
+    for (const p of phoneMatches) {
+      const norm = normalizePhone(p);
+      if (norm) {
+        phone = norm;
+        break;
+      }
+    }
   }
 
   const decisionMakers = extractDecisionMakers(text, emails);

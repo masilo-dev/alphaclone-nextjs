@@ -18,6 +18,7 @@
  */
 
 import { BrowserManager } from '@/lib/scraper/browserManager';
+import { normalizeEmail, normalizePhone } from '@/lib/lead-finder/core';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -41,7 +42,7 @@ const EMPTY: EnrichmentResult = {
 // Regexes
 // ---------------------------------------------------------------------------
 
-const EMAIL_RE = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+const EMAIL_RE = /\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,24}\b/g;
 const PHONE_RE =
   /(?:\+?\d{1,3}[\s.\-]?)?(?:\(?\d{2,4}\)?[\s.\-]?){2,}\d{3,4}/g;
 
@@ -57,21 +58,31 @@ function normalizeUrl(raw: string): string {
 }
 
 function extractFromText(text: string): Pick<EnrichmentResult, 'emails' | 'phone'> {
-  const emailMatches = (text.match(EMAIL_RE) || [])
-    .map((e) => e.toLowerCase().trim())
-    .filter(
-      (e) =>
-        !e.endsWith('.png') &&
-        !e.endsWith('.jpg') &&
-        !e.endsWith('.svg') &&
-        !e.includes('example.com') &&
-        !e.includes('sentry.io')
-    );
-  const emails = [...new Set(emailMatches)].slice(0, 5);
+  const mailtoMatches = Array.from(text.matchAll(/mailto:([^\s"'?#<>]+)/gi), (m) => m[1]);
+  const textMatches = text.match(EMAIL_RE) ?? [];
+  const rawMatches = [...textMatches, ...mailtoMatches];
+
+  const validEmails = new Set<string>();
+  for (const raw of rawMatches) {
+    const cleaned = normalizeEmail(raw);
+    if (cleaned && !cleaned.includes('sentry.io') && !cleaned.includes('wixpress.com')) {
+      validEmails.add(cleaned);
+    }
+  }
+  const emails = Array.from(validEmails).slice(0, 5);
 
   const phoneMatches = text.match(PHONE_RE) || [];
-  const phone =
-    phoneMatches.find((p) => p.replace(/\D/g, '').length >= 10)?.trim() ?? '';
+  let phone = '';
+  for (const rawP of phoneMatches) {
+    const norm = normalizePhone(rawP);
+    if (norm) {
+      phone = norm;
+      break;
+    }
+  }
+  if (!phone) {
+    phone = phoneMatches.find((p) => p.replace(/\D/g, '').length >= 10)?.trim() ?? '';
+  }
 
   return { emails, phone };
 }

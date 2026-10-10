@@ -9,6 +9,7 @@ import type { GeoPoint } from '@/lib/scraper/freeGeoSources';
 import { enrichBusinessWithDecisionMakers } from '@/lib/scraper/decisionMakerScrape';
 import { hasPhoneOrEmail } from '@/lib/scraper/contactGate';
 import { canUseBrowserScraper } from '@/lib/scraper/browserSerpLeads';
+import { resolveBusinessEntity, normalizeEmail, normalizePhone, normalizeDomain } from '@/lib/lead-finder/core';
 
 export function formatSearchNiche(intent: ParsedLeadIntent): string {
   return (
@@ -241,6 +242,13 @@ export async function fallbackLocalSearch(
   const enrichedRows: Array<Record<string, unknown>> = [];
   for (const p of smbPlaces.slice(0, Math.min(intent.daily_limit || 40, 25))) {
     const place = places.find((pl) => pl.businessName === p.company) || places[0];
+    const entity = resolveBusinessEntity({
+      businessName: place?.businessName || p.company,
+      website: place?.website,
+      sourceUrl: place?.website,
+    });
+    if (!entity.isRealBusiness) continue;
+
     let phone = place?.phone || '';
     let email = '';
     let dmName = '';
@@ -256,7 +264,10 @@ export async function fallbackLocalSearch(
         /* keep directory phone */
       }
     }
-    if (!hasPhoneOrEmail({ phone, email })) continue;
+    const normEmail = normalizeEmail(email);
+    const normPhone = normalizePhone(phone, location);
+    if (!normEmail && !normPhone) continue;
+
     const sourceId = normalizeTraceValue(
       place?.placeId || `${place?.source || 'directory'}:${place?.businessName}`
     );
@@ -266,8 +277,8 @@ export async function fallbackLocalSearch(
     });
     const matchReasons = [
       'Directory business matched search niche',
-      phone ? 'Public phone found' : '',
-      email ? 'Public email found' : '',
+      normPhone ? 'Public phone verified' : '',
+      normEmail ? 'Public email verified' : '',
       place?.website ? 'Website found' : '',
       dmName ? `Decision maker found: ${dmName}` : '',
     ].filter(Boolean);
@@ -277,8 +288,8 @@ export async function fallbackLocalSearch(
       name: dmName || place?.businessName || p.company,
       title: dmTitle || null,
       company: place?.businessName || p.company,
-      phone: phone || null,
-      email: email || null,
+      phone: normPhone || null,
+      email: normEmail || null,
       company_website: place?.website,
       industry: niche,
       source_id: sourceId,
@@ -288,13 +299,13 @@ export async function fallbackLocalSearch(
       address: place?.formattedAddress || '',
       lat: place?.lat ?? null,
       lng: place?.lng ?? null,
-      score: email && phone ? 72 : 58,
-      confidence_score: email && phone ? 72 : 58,
-      grade: email && phone ? 'B' : 'C',
+      score: normEmail && normPhone ? 72 : 58,
+      confidence_score: normEmail && normPhone ? 72 : 58,
+      grade: normEmail && normPhone ? 'B' : 'C',
       status: 'new',
       dedupe_key: buildLeadDedupeKey({
-        email,
-        phone,
+        email: normEmail,
+        phone: normPhone,
         website: place?.website,
         company: place?.businessName || p.company,
         address: place?.formattedAddress,
@@ -302,7 +313,7 @@ export async function fallbackLocalSearch(
       match_reasons: matchReasons,
       source_urls: sourceUrls,
       enrichment_status: 'completed',
-      verification_status: email && phone ? 'verified' : 'partial',
+      verification_status: normEmail && normPhone ? 'verified' : 'partial',
       duplicate_status: 'unique',
       source_health: { primary: place?.source || 'directory', urls: sourceUrls },
       quality_reason: 'SMB directory + auto contact enrichment',
@@ -335,29 +346,57 @@ export async function fallbackLocalSearch(
   return rows.length;
 }
 
-function scoreFromLeadResult(lead: LeadResult, radiusKm: number): { score: number; grade: string } {
-  let score = 35;
-  if (lead.phone) score += 18;
-  if (lead.email) score += 22;
-  if (lead.website) score += 8;
-  if (lead.decision_maker_name) score += 12;
-  if (lead.decision_maker_title) score += 6;
+function scoreFromLeadResult(
+  lead: LeadResult,
+  radiusKm: number,
+  countryOrLocation?: string
+): { score: number; grade: string } {
+  const entity = resolveBusinessEntity({
+    businessName: lead.business_name,
+    website: lead.website,
+    sourceUrl: lead.source_url || lead.website,
+  });
+  if (!entity.isRealBusiness) {
+    return { score: 0, grade: 'Reject' };
+  }
+
+  const validEmail = normalizeEmail(lead.email);
+  const validPhone = normalizePhone(lead.phone, countryOrLocation);
+  const hasValidContact = Boolean(validEmail || validPhone);
+
+  let score = 20; // Base score for verified business entity identity
+  if (validPhone) score += 20;
+  if (validEmail) score += 25;
+  if (lead.website && normalizeDomain(lead.website)) score += 10;
+  if (lead.decision_maker_name) score += 10;
+  if (lead.decision_maker_title) score += 5;
   if (lead.rating && lead.rating >= 4) score += 8;
-  if (lead.address) score += 4;
-  if (lead.lat != null && lead.lng != null) score += 6;
+  if (lead.address) score += 5;
+  if (lead.lat != null && lead.lng != null) score += 4;
 
   // Reach-based prediction: closer businesses inside the search radius score higher
   if (typeof lead.reach_km === 'number' && Number.isFinite(lead.reach_km)) {
     const ratio = Math.min(Math.max(lead.reach_km / Math.max(radiusKm, 1), 0), 1.5);
-    if (ratio <= 0.25) score += 18;
-    else if (ratio <= 0.5) score += 14;
-    else if (ratio <= 0.85) score += 8;
-    else if (ratio <= 1.1) score += 3;
-    else score -= 4;
+    if (ratio <= 0.25) score += 10;
+    else if (ratio <= 0.5) score += 6;
+    else if (ratio <= 0.85) score += 3;
+    else if (ratio > 1.1) score -= 5;
   }
 
   score = Math.max(0, Math.min(99, Math.round(score)));
-  const grade = score >= 75 ? 'A' : score >= 60 ? 'B' : score >= 45 ? 'C' : 'D';
+
+  // Invalid contacts can NEVER produce Grade A or B
+  let grade: string;
+  if (score >= 75 && hasValidContact) {
+    grade = 'A';
+  } else if (score >= 60 && hasValidContact) {
+    grade = 'B';
+  } else if (score >= 45) {
+    grade = 'C';
+  } else {
+    grade = 'D';
+  }
+
   return { score, grade };
 }
 
@@ -568,32 +607,39 @@ export async function runInProcessLeadCampaign(
   }));
   const smb = filterSmbLeads(candidates);
 
-  const rows = smb.slice(0, limit).map((entry) => {
-    const lead = entry.lead;
-    const { score, grade } = scoreFromLeadResult(lead, radiusKm);
-    const sourceUrls = buildSourceUrls(lead);
-    const matchReasons = buildMatchReasons(lead, score, radiusKm);
-    const sourceId =
-      normalizeTraceValue(lead.source_id) ||
-      normalizeTraceValue(`${lead.source}:${lead.business_name}:${lead.lat},${lead.lng}`);
-    const dmName = lead.decision_maker_name || null;
-    const dmTitle = lead.decision_maker_title || null;
-    const nameParts = (dmName || '').trim().split(/\s+/).filter(Boolean);
-    return {
-      campaign_id: campaignId,
-      tenant_id: tenantId,
-      name: dmName || lead.business_name,
-      first_name: nameParts[0] || null,
-      last_name: nameParts.length > 1 ? nameParts.slice(1).join(' ') : null,
-      title: dmTitle,
-      company: lead.business_name,
-      phone: lead.phone || null,
-      email: lead.email || null,
-      company_website: lead.website || null,
-      industry: niche,
-      source: lead.source || 'osm',
-      source_id: sourceId,
-      source_url: normalizeTraceValue(lead.source_url || lead.website) || null,
+  const rows = smb
+    .map((entry) => {
+      const lead = entry.lead;
+      const { score, grade } = scoreFromLeadResult(lead, radiusKm, location);
+      if (grade === 'Reject') return null;
+
+      const normEmail = normalizeEmail(lead.email);
+      const normPhone = normalizePhone(lead.phone, location);
+      if (!normEmail && !normPhone) return null;
+
+      const sourceUrls = buildSourceUrls(lead);
+      const matchReasons = buildMatchReasons(lead, score, radiusKm);
+      const sourceId =
+        normalizeTraceValue(lead.source_id) ||
+        normalizeTraceValue(`${lead.source}:${lead.business_name}:${lead.lat},${lead.lng}`);
+      const dmName = lead.decision_maker_name || null;
+      const dmTitle = lead.decision_maker_title || null;
+      const nameParts = (dmName || '').trim().split(/\s+/).filter(Boolean);
+      return {
+        campaign_id: campaignId,
+        tenant_id: tenantId,
+        name: dmName || lead.business_name,
+        first_name: nameParts[0] || null,
+        last_name: nameParts.length > 1 ? nameParts.slice(1).join(' ') : null,
+        title: dmTitle,
+        company: lead.business_name,
+        phone: normPhone,
+        email: normEmail,
+        company_website: lead.website || null,
+        industry: niche,
+        source: lead.source || 'osm',
+        source_id: sourceId,
+        source_url: normalizeTraceValue(lead.source_url || lead.website) || null,
       source_label: [
         lead.source || 'osm',
         typeof lead.reach_km === 'number' ? `${lead.reach_km} km` : null,
@@ -645,7 +691,7 @@ export async function runInProcessLeadCampaign(
         verification_status: lead.email && lead.phone ? 'verified' : lead.email || lead.phone ? 'partial' : 'unverified',
       },
     };
-  });
+  }).filter((r): r is NonNullable<typeof r> => r !== null).slice(0, limit);
 
   const { rows: dedupedRows, removedCount } = await removeKnownDuplicateRows(tenantId, rows);
   sourceStats.duplicates = (sourceStats.duplicates || 0) + removedCount;

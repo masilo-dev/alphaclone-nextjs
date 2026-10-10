@@ -1,5 +1,6 @@
 import parsePhoneNumberFromString, { type CountryCode } from 'libphonenumber-js/max';
 import { z } from 'zod';
+import { normalizePhoneNumber } from '../phone/phoneNormalizer';
 
 export const SEARCH_TYPES = [
   'businesses_by_location', 'businesses_by_keyword', 'domain_discovery',
@@ -46,24 +47,52 @@ export function normalizeDomain(value?: string | null) {
   }
 }
 
+const COMMON_CONCATENATED_TLDS = /^(?:com|org|net|edu|gov|io|co|ai|biz|info|me|tv|zw|za|uk|de|fr|ca|au|in|app|dev|tech)([a-z]{2,})$/i;
+
 export function normalizeEmail(value?: string | null) {
   const email = value?.normalize('NFKC').trim().toLowerCase();
   if (!email || !/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/i.test(email)) return null;
   if (/^(example@example\.com|test@test\.com|name@example\.com|user@domain\.com)$/.test(email)) return null;
   if (/\.(png|jpe?g|gif|svg|webp|ico)@/i.test(email)) return null;
+
+  // Extract TLD and verify boundary / validity
+  const parts = email.split('@');
+  if (parts.length !== 2) return null;
+  const domainParts = parts[1].split('.');
+  const tld = domainParts[domainParts.length - 1];
+  if (!tld || tld.length < 2 || tld.length > 24) return null;
+
+  // Reject concatenated run-on words like comanswerrosemaryposted
+  if (COMMON_CONCATENATED_TLDS.test(tld)) {
+    return null;
+  }
+
   return email;
 }
 
 export function normalizePhone(value?: string | null, country?: string | null) {
   if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  try {
+    const res = normalizePhoneNumber(trimmed, {
+      country: country || undefined,
+      location: country || undefined,
+    });
+    if (res.isValid && res.e164) {
+      return res.e164;
+    }
+  } catch {
+    // Fall back to direct parsePhoneNumberFromString if normalizer threw
+  }
+
   try {
     const defaultCountry = country?.trim().length === 2 ? country.toUpperCase() as CountryCode : undefined;
-    const parsed = parsePhoneNumberFromString(value, defaultCountry);
+    const parsed = parsePhoneNumberFromString(trimmed, defaultCountry);
     return parsed?.isValid() ? parsed.number : null;
   } catch {
-    // Some worker transpilers do not preserve libphonenumber's CJS metadata binding.
-    // Retain only already-international, plausible values in that environment.
-    const international = value.trim().startsWith('+') ? `+${value.replace(/\D/g, '')}` : '';
+    const international = trimmed.startsWith('+') ? `+${trimmed.replace(/\D/g, '')}` : '';
     return /^\+[1-9]\d{7,14}$/.test(international) ? international : null;
   }
 }
@@ -74,14 +103,29 @@ export function normalizeCompany(value: string) {
 }
 
 const NON_BUSINESS_PATTERNS = [
-  /\b(top|best)\s+\d+\b/i,
+  /\b(top|best|leading|trusted|recommended)\s+\d+\b/i,
+  /\b\d+\s+(top|best|leading|trusted)\b/i,
+  /\b(top|best)\s+.*\s+(in|near|around)\b/i,
   /\bbusiness\s+directory\b/i,
+  /\byellow\s*pages\b/i,
   /\bsearch\s+results?\b/i,
   /\b(category|categories)\b/i,
   /\bnear\s+me\b/i,
   /\blinkedin\s+search\b/i,
   /\bfacebook\s+search\b/i,
+  /\bgoogle\s+search\b/i,
+  /\b(companies|firms|services|agencies|businesses|contractors)\s+in\s+[a-z\s-]+/i,
+  /\blist\s+of\s+[a-z\s-]+/i,
+  /\b(aeroleads|clutch|yelp|tripadvisor|trustpilot|bbb|zoominfo|apollo\.io|kompass|cybo|hotfrog|africabizinfo|africa2trust)\b/i,
 ];
+
+const KNOWN_AGGREGATOR_DOMAINS = new Set([
+  'aeroleads.com', 'clutch.co', 'yellowpages.com', 'yellowpages.co.zw',
+  'yelp.com', 'tripadvisor.com', 'trustpilot.com', 'bbb.org',
+  'zoominfo.com', 'dnb.com', 'apollo.io', 'kompass.com', 'cybo.com',
+  'hotfrog.com', 'africabizinfo.com', 'africa2trust.com', 'yell.com',
+  'cylex.com', 'bark.com', 'thumbtack.com', 'angi.com',
+]);
 
 export type EntityResolution = {
   isRealBusiness: boolean;
@@ -93,12 +137,18 @@ export type EntityResolution = {
 /** Reject list/article/search-page labels before they can become CRM entities. */
 export function resolveBusinessEntity(input: { businessName?: string | null; website?: string | null; sourceUrl?: string | null }): EntityResolution {
   const rawName = String(input.businessName || '').trim();
-  if (!rawName) return { isRealBusiness: false, canonicalName: null, canonicalDomain: normalizeDomain(input.website), reason: 'missing_name' };
+  const domain = normalizeDomain(input.website) || normalizeDomain(input.sourceUrl);
+  if (!rawName) return { isRealBusiness: false, canonicalName: null, canonicalDomain: domain, reason: 'missing_name' };
+
+  if (domain && KNOWN_AGGREGATOR_DOMAINS.has(domain)) {
+    return { isRealBusiness: false, canonicalName: null, canonicalDomain: domain, reason: 'directory_or_search_result' };
+  }
+
   const source = `${rawName} ${String(input.sourceUrl || '')}`;
   if (NON_BUSINESS_PATTERNS.some((pattern) => pattern.test(source))) {
-    return { isRealBusiness: false, canonicalName: null, canonicalDomain: normalizeDomain(input.website), reason: 'directory_or_search_result' };
+    return { isRealBusiness: false, canonicalName: null, canonicalDomain: domain, reason: 'directory_or_search_result' };
   }
-  return { isRealBusiness: true, canonicalName: normalizeCompany(rawName), canonicalDomain: normalizeDomain(input.website), reason: 'ok' };
+  return { isRealBusiness: true, canonicalName: normalizeCompany(rawName), canonicalDomain: domain, reason: 'ok' };
 }
 
 export function buildCanonicalBusinessKey(input: {
