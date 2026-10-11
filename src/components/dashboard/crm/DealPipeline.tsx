@@ -248,7 +248,7 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="dashboard-panel w-full max-w-md overflow-hidden shadow-2xl">
         <div className="p-4 border-b border-[var(--ws-border)] flex items-center justify-between">
           <h3 className="type-ui font-bold text-[var(--ws-text-primary)]">
@@ -355,7 +355,7 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
           </div>
         </div>
 
-        <div className="p-4 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 flex gap-2">
+        <div className="p-4 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)] flex gap-2">
           <button
             onClick={onClose}
             className="flex-1 py-2 type-caption font-bold text-[var(--ws-text-muted)] bg-[var(--ws-surface-secondary)] rounded-xl hover:bg-[var(--ws-surface-tertiary)] transition-colors"
@@ -564,9 +564,9 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
         <div className="flex xl:grid xl:grid-cols-6 gap-3 overflow-x-auto pb-20 [scrollbar-width:thin]">
           {STAGES.map(stage => (
             <div key={stage.key} className="w-[240px] xl:w-auto shrink-0 space-y-2">
-              <div className="h-8 bg-[var(--ws-surface-secondary)]/50 rounded-lg animate-pulse" />
+              <div className="h-8 bg-[var(--ws-surface-secondary)] rounded-lg animate-pulse" />
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-24 bg-[var(--ws-surface-secondary)]/30 rounded-xl animate-pulse" />
+                <div key={i} className="h-24 bg-[var(--ws-surface-secondary)] rounded-xl animate-pulse" />
               ))}
             </div>
           ))}

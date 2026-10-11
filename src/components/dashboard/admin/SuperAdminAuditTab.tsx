@@ -48,7 +48,7 @@ export const SuperAdminAuditTab: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
             <Input
               placeholder="Search action or resource..."
-              className="pl-10 w-48 sm:w-64 h-10 bg-[var(--ws-panel)]/50 border-[var(--ws-border)] type-ui"
+              className="pl-10 w-48 sm:w-64 h-10 bg-[var(--ws-panel)] border-[var(--ws-border)] type-ui"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -70,7 +70,7 @@ export const SuperAdminAuditTab: React.FC = () => {
             onClick={() => { setActionFilter(act); setPage(1); }}
             className={`px-3 py-1 rounded-full type-caption font-bold uppercase tracking-wider transition-all border ${actionFilter === act
               ? 'bg-teal-500 text-[var(--text-inverse)] border-teal-500'
-              : 'bg-[var(--ws-panel)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-[var(--ws-border)]'
+              : 'bg-[var(--ws-panel)] text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-[var(--ws-border)]'
             }`}
           >
             {act === '' ? 'ALL ACTIONS' : act.replace(/_/g, ' ')}
@@ -83,14 +83,14 @@ export const SuperAdminAuditTab: React.FC = () => {
           <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : logs.length === 0 ? (
-        <div className="p-8 text-center bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl text-[var(--ws-text-muted)]">
+        <div className="p-8 text-center bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl text-[var(--ws-text-muted)]">
           No audit logs found matching criteria.
         </div>
       ) : (
-        <div className="bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl overflow-hidden">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left type-caption">
-              <thead className="bg-[var(--ws-panel)]/80 text-[var(--ws-text-muted)] font-bold uppercase tracking-wider border-b border-[var(--ws-border)]">
+              <thead className="bg-[var(--ws-panel)] text-[var(--ws-text-muted)] font-bold uppercase tracking-wider border-b border-[var(--ws-border)]">
                 <tr>
                   <th className="p-3.5">Timestamp</th>
                   <th className="p-3.5">Action</th>
@@ -101,7 +101,7 @@ export const SuperAdminAuditTab: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-800 text-[var(--ws-text-secondary)]">
                 {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-[var(--ws-surface-secondary)]/30 transition-colors">
+                  <tr key={log.id} className="hover:bg-[var(--ws-surface-secondary)] transition-colors">
                     <td className="p-3.5 text-[var(--ws-text-muted)] font-mono whitespace-nowrap">
                       {new Date(log.created_at).toLocaleString()}
                     </td>

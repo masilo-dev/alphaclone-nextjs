@@ -313,7 +313,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
           {loading ? (
             <div className="divide-y divide-white/5">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-14 bg-[var(--ws-panel)]/40 animate-pulse" />
+                <div key={i} className="h-14 bg-[var(--ws-panel)] animate-pulse" />
               ))}
             </div>
           ) : (

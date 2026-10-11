@@ -37,6 +37,7 @@ import {
     LayoutList,
     Download,
     Share2,
+    Loader2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ProjectPortalShareDialog } from './ProjectPortalShareDialog';
@@ -192,6 +193,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const [invoicePreselectProjectId, setInvoicePreselectProjectId] = useState<string | undefined>(undefined);
     const [invoicePreselectClientId, setInvoicePreselectClientId] = useState<string | undefined>(undefined);
     const [lastCreatedProject, setLastCreatedProject] = useState<BusinessProject | null>(null);
+    const [isSavingProject, setIsSavingProject] = useState(false);
 
     const handleSaveProject = useCallback(async (projectData: Partial<BusinessProject>) => {
         if (!currentTenant) {
@@ -199,6 +201,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             return;
         }
 
+        setIsSavingProject(true);
         try {
             if (editingProject) {
                 const closing = projectData.currentStage === 'Closure';
@@ -471,7 +474,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 {viewMode === 'list' ? (
                     <div className="flex flex-col space-y-4">
                         {/* List Header */}
-                        <div className="hidden lg:grid grid-cols-12 gap-4 px-5 py-3 bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-lg type-caption font-semibold uppercase tracking-wide text-[var(--ws-text-muted)]">
+                        <div className="hidden lg:grid grid-cols-12 gap-4 px-5 py-3 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-caption font-semibold uppercase tracking-wide text-[var(--ws-text-muted)]">
                             <div className="col-span-5">Project</div>
                             <div className="col-span-2 text-center">Status</div>
                             <div className="col-span-2 text-center">Health & Risk</div>
@@ -488,7 +491,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                                     />
                                 </div>
                             ) : filteredProjects.length === 0 ? (
-                                <div className="py-16 flex flex-col items-center justify-center text-[var(--ws-text-muted)] bg-[var(--ws-panel)]/20 rounded-3xl border border-dashed border-[var(--ws-border)]">
+                                <div className="py-16 flex flex-col items-center justify-center text-[var(--ws-text-muted)] bg-[var(--ws-panel)] rounded-3xl border border-dashed border-[var(--ws-border)]">
                                     <Target className="w-12 h-12 mb-3 opacity-20" />
                                     <p className="type-card-description text-[var(--ws-text-muted)]">No projects found</p>
                                 </div>
@@ -522,6 +525,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     clients={clients}
                     initialData={editingProject}
                     tenantId={currentTenant?.id}
+                    isSaving={isSavingProject}
                     onClose={() => {
                         setShowAddModal(false);
                         setEditingProject(null);
@@ -595,7 +599,7 @@ const ProjectListRow = ({
     return (
         <div 
             onClick={() => onViewDetails(project)}
-            className="group grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 items-center px-3.5 py-3 sm:px-5 sm:py-3.5 lg:px-6 lg:py-4 bg-[var(--ws-panel)]/40 hover:bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]/30 rounded-xl transition-all duration-300 relative overflow-hidden cursor-pointer"
+            className="group grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 items-center px-3.5 py-3 sm:px-5 sm:py-3.5 lg:px-6 lg:py-4 bg-[var(--ws-panel)] hover:bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]/30 rounded-xl transition-all duration-300 relative overflow-hidden cursor-pointer"
         >
             {/* Status Indicator Line */}
             <div className={`absolute left-0 top-0 bottom-0 w-1 ${project.health === 'At Risk' ? 'bg-[var(--error-500)] animate-pulse' :
@@ -641,7 +645,7 @@ const ProjectListRow = ({
                                 return (
                                     <div
                                         key={stage}
-                                        className={`h-1 flex-1 rounded-full transition-all duration-500 ${isActive ? 'bg-[var(--brand-blue-500)]' : 'bg-[var(--ws-surface-tertiary)]/50'} ${isCurrent ? 'shadow-[0_0_8px_rgba(20,184,166,0.5)]' : ''}`}
+                                        className={`h-1 flex-1 rounded-full transition-all duration-500 ${isActive ? 'bg-[var(--brand-blue-500)]' : 'bg-[var(--ws-surface-tertiary)]'} ${isCurrent ? 'shadow-[0_0_8px_rgba(20,184,166,0.5)]' : ''}`}
                                         title={stage}
                                     />
                                 );
@@ -759,7 +763,7 @@ const ProjectListRow = ({
                 {finished ? (
                     <span className="type-caption font-semibold text-emerald-400">Finished</span>
                 ) : project.dueDate ? (
-                    <div className="scale-90 origin-center bg-[var(--ws-canvas)]/50 px-2.5 py-1 rounded-full border border-[var(--ws-border)]">
+                    <div className="scale-90 origin-center bg-[var(--ws-canvas)] px-2.5 py-1 rounded-full border border-[var(--ws-border)]">
                         <TaskCountdown dueDate={project.dueDate} showAlarm={true} label={project.name} />
                     </div>
                 ) : (
@@ -852,7 +856,7 @@ const ProjectHealthDashboard = ({ projects }: { projects: BusinessProject[] }) =
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Health Distribution Panel could go here */}
-                <div className="p-6 bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-3xl">
+                <div className="p-6 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl">
                     <h3 className="type-ui font-semibold text-[var(--ws-text-muted)] mb-6 flex items-center gap-2">
                         <Activity className="w-4 h-4" /> Project Health
                     </h3>
@@ -878,7 +882,7 @@ const ProjectHealthDashboard = ({ projects }: { projects: BusinessProject[] }) =
 };
 
 const HealthStatCard = ({ label, value, icon: Icon, color, bg, warning }: any) => (
-    <div className={`p-6 rounded-3xl border transition-all duration-500 group hover:scale-[1.02] ${warning ? 'bg-[var(--error-500)]/5 border-red-500/20' : 'bg-[var(--ws-panel)]/40 border-[var(--ws-border)] hover:border-[var(--ws-border)]'}`}>
+    <div className={`p-6 rounded-3xl border transition-all duration-500 group hover:scale-[1.02] ${warning ? 'bg-[var(--error-500)]/5 border-red-500/20' : 'bg-[var(--ws-panel)] border-[var(--ws-border)] hover:border-[var(--ws-border)]'}`}>
         <div className="flex items-start justify-between mb-4">
             <div className={`p-3 rounded-lg ${bg} ${warning ? 'animate-pulse' : ''}`}>
                 <Icon className={`w-5 h-5 ${color}`} />
@@ -892,12 +896,13 @@ const HealthStatCard = ({ label, value, icon: Icon, color, bg, warning }: any) =
     </div>
 );
 
-const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
+const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId, isSaving }: {
   clients: any[];
   onClose: () => void;
   onSave: (data: any) => void;
   initialData?: BusinessProject | null;
   tenantId?: string;
+  isSaving?: boolean;
 }) => {
     const [shareDialogOpen, setShareDialogOpen] = useState(false);
     const [formData, setFormData] = useState({
@@ -929,7 +934,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
     }, [initialData]);
 
     return (
-        <div className="fixed inset-0 ac-layer-modal flex items-end justify-center overflow-y-auto bg-[var(--ws-overlay-backdrop)] p-0 backdrop-blur-md sm:items-center sm:p-4">
+        <div className="fixed inset-0 ac-layer-modal flex items-end justify-center overflow-y-auto bg-[var(--ws-overlay-backdrop)] p-0 sm:items-center sm:p-4">
             <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-t-2xl sm:rounded-lg p-5 sm:p-8 max-w-md w-full max-h-[95dvh] sm:max-h-none overflow-y-auto shadow-2xl shadow-[var(--brand-blue-900)]/20 animate-in zoom-in-95 duration-200 my-auto">
                 <div className="flex items-center justify-between mb-8">
                     <h3 className="text-xl font-bold text-[var(--ws-text-primary)]">{initialData ? 'Edit Project' : 'New Project'}</h3>
@@ -1024,8 +1029,11 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
                     ) : null}
 
                     <div className="flex gap-4 pt-6">
-                        <button type="button" onClick={onClose} className="flex-1 px-6 py-4 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] rounded-lg font-bold type-ui text-[var(--ws-text-secondary)] transition-all">Cancel</button>
-                        <button type="submit" className="flex-1 px-6 py-4 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-[var(--text-inverse)] rounded-lg font-bold type-ui transition-all shadow-lg shadow-[var(--brand-blue-900)]/20 active:scale-95">{initialData ? 'Save Changes' : 'Create Project'}</button>
+                        <button type="button" onClick={onClose} disabled={isSaving} className="flex-1 px-6 py-4 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] rounded-lg font-bold type-ui text-[var(--ws-text-secondary)] transition-all disabled:opacity-50">Cancel</button>
+                        <button type="submit" disabled={isSaving} className="flex-1 px-6 py-4 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-[var(--text-inverse)] rounded-lg font-bold type-ui transition-all shadow-lg shadow-[var(--brand-blue-900)]/20 active:scale-95 disabled:opacity-50 inline-flex items-center justify-center gap-2">
+                            {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+                            <span>{initialData ? 'Save Changes' : 'Create Project'}</span>
+                        </button>
                     </div>
                 </form>
             </div>
@@ -1064,8 +1072,8 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
     };
 
     return (
-        <div className="glass-panel overflow-hidden rounded-3xl border border-[var(--ws-border)] flex flex-col h-full min-h-[500px] backdrop-blur-xl bg-[var(--ws-canvas)]/20">
-            <div className="flex border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/40 sticky top-0 z-20">
+        <div className="glass-panel overflow-hidden rounded-3xl border border-[var(--ws-border)] flex flex-col h-full min-h-[500px] bg-[var(--ws-canvas)]">
+            <div className="flex border-b border-[var(--ws-border)] bg-[var(--ws-panel)] sticky top-0 z-20">
                 <div className="w-64 min-w-[16rem] p-4 type-caption font-medium text-[var(--ws-text-muted)] border-r border-[var(--ws-border)]">Project Timeline</div>
                 <div className="flex-1 relative h-12 flex">
                     {months.map((m, i) => (
@@ -1088,7 +1096,7 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
 
                     return (
                         <div key={proj.id} className="flex hover:bg-white/[0.02] group transition-all duration-300 border-l-2 border-transparent hover:border-[var(--brand-blue-500)]/30">
-                            <div className="w-64 min-w-[16rem] p-4 flex flex-col gap-1 border-r border-[var(--ws-border)] bg-[var(--ws-panel)]/20 backdrop-blur-sm">
+                            <div className="w-64 min-w-[16rem] p-4 flex flex-col gap-1 border-r border-[var(--ws-border)] bg-[var(--ws-panel)]">
                                 <h4 className="type-card-title font-bold text-[var(--ws-text-secondary)] group-hover:text-[var(--brand-blue-400)] transition-colors truncate">{proj.name}</h4>
                             </div>
                             <div className="flex-1 relative h-14 flex items-center px-2">

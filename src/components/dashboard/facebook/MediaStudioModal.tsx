@@ -360,7 +360,7 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
             </div>
           </div>
 
-          <div className="space-y-4 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-4">
+          <div className="space-y-4 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-4">
             <div>
               <div className="mb-2 flex items-center gap-2 type-ui font-semibold text-[var(--ws-text-primary)]">
                 <Crop className="h-4 w-4 text-blue-400" />

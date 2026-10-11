@@ -543,7 +543,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
   return (
     <div className="flex flex-col flex-1 min-h-[420px] h-full ac-workspace-panel rounded-xl border border-[var(--ws-border)] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--ws-border)]/80 bg-[var(--ws-panel)]/40">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--ws-border)]/80 bg-[var(--ws-panel)]">
         <div className="w-9 h-9 rounded-lg bg-teal-500/15 border border-teal-500/25 flex items-center justify-center">
           <Sparkles className="w-5 h-5 text-teal-400" />
         </div>
@@ -578,7 +578,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
               className={`max-w-[85%] rounded-xl px-4 py-3 type-ui whitespace-pre-wrap ${
                 msg.role === 'user'
                   ? 'bg-teal-700/80 text-[var(--ws-text-primary)] rounded-br-sm'
-                  : 'bg-[var(--ws-surface-secondary)]/80 text-[var(--ws-text-secondary)] rounded-bl-sm border border-[var(--ws-border)]/50'
+                  : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] rounded-bl-sm border border-[var(--ws-border)]/50'
               }`}
             >
               {msg.content}
@@ -720,7 +720,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
                 className={`flex items-start gap-3 p-3 rounded-xl border transition-colors ${
                   selectedIds.has(lead.id)
                     ? 'border-emerald-500/50 bg-emerald-950/20'
-                    : 'border-[var(--ws-border)] bg-[var(--ws-panel)]/40 hover:border-[var(--ws-border)]'
+                    : 'border-[var(--ws-border)] bg-[var(--ws-panel)] hover:border-[var(--ws-border)]'
                 }`}
               >
                 <input
@@ -792,7 +792,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/40">
+      <div className="p-4 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]">
         <form
           onSubmit={(e) => {
             e.preventDefault();

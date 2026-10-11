@@ -491,7 +491,7 @@ export default function ExpenseTrackerTab() {
             )}
             stats={(
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 px-1">
-                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4">
+                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
                         <div className="flex items-center justify-between mb-2">
                             <span className="type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">Total Spending</span>
                             <DollarSign className="w-4 h-4 text-teal-400" />
@@ -499,7 +499,7 @@ export default function ExpenseTrackerTab() {
                         <div className="text-xl font-semibold text-[var(--ws-text-primary)] font-mono tracking-tight">{fmt(totalAmount)}</div>
                         <span className="type-caption text-[var(--ws-text-muted)]">Filtered expenses</span>
                     </div>
-                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4">
+                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
                         <div className="flex items-center justify-between mb-2">
                             <span className="type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">Pending Approval</span>
                             <Clock className="w-4 h-4 text-amber-400" />
@@ -507,7 +507,7 @@ export default function ExpenseTrackerTab() {
                         <div className="text-xl font-semibold text-amber-400 font-mono tracking-tight">{fmt(pendingAmount)}</div>
                         <span className="type-caption text-[var(--ws-text-muted)]">{filtered.filter(e => e.status === 'pending').length} pending</span>
                     </div>
-                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4">
+                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
                         <div className="flex items-center justify-between mb-2">
                             <span className="type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">Approved Spend</span>
                             <CheckCircle2 className="w-4 h-4 text-teal-400" />
@@ -519,7 +519,7 @@ export default function ExpenseTrackerTab() {
             )}
         >
             {scanning && (
-                <div className="fixed inset-0 bg-[var(--ws-canvas)]/80 backdrop-blur-md z-[110] flex flex-col items-center justify-center gap-4">
+                <div className="fixed inset-0 bg-[var(--ws-canvas)] z-[110] flex flex-col items-center justify-center gap-4">
                     <div className="relative w-20 h-20">
                         <div className="absolute inset-0 border-4 border-teal-500/30 rounded-full" />
                         <div className="absolute inset-0 border-4 border-t-teal-500 rounded-full animate-spin" />
@@ -703,7 +703,7 @@ export default function ExpenseTrackerTab() {
                 <>
                 <ResponsiveTableMobile>
                     {filtered.map((expense) => (
-                        <MobileDataCard key={expense.id} className="group border-[var(--ws-border)] bg-[var(--ws-panel)]/40">
+                        <MobileDataCard key={expense.id} className="group border-[var(--ws-border)] bg-[var(--ws-panel)]">
                             <div className="flex justify-between gap-2">
                                 <p className="text-[var(--ws-text-primary)] font-medium truncate flex-1">{expense.description || '—'}</p>
                                 <p className="font-semibold text-[var(--ws-text-primary)] shrink-0">{fmt(expense.total ?? expense.amount, expense.currency)}</p>
@@ -730,7 +730,7 @@ export default function ExpenseTrackerTab() {
                             </div>
                         </MobileDataCard>
                     ))}
-                    <MobileDataCard className="border-[var(--ws-border)] bg-[var(--ws-panel)]/60">
+                    <MobileDataCard className="border-[var(--ws-border)] bg-[var(--ws-panel)]">
                         <div className="flex justify-between type-ui font-bold text-[var(--ws-text-primary)]">
                             <span>{filtered.length} expense{filtered.length !== 1 ? 's' : ''}</span>
                             <span>{fmt(totalAmount)}</span>
@@ -740,7 +740,7 @@ export default function ExpenseTrackerTab() {
                 <ResponsiveTableDesktop className="rounded-2xl border border-[var(--ws-border)] min-w-0">
                     <table className="w-full min-w-[720px] type-ui">
                         <thead>
-                            <tr className="border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/50">
+                            <tr className="border-b border-[var(--ws-border)] bg-[var(--ws-panel)]">
                                 <th className="text-left px-4 py-3 type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Date</th>
                                 <th className="text-left px-4 py-3 type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Description</th>
                                 <th className="text-left px-4 py-3 type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Category</th>
@@ -753,7 +753,7 @@ export default function ExpenseTrackerTab() {
                         </thead>
                         <tbody className="divide-y divide-slate-800">
                             {filtered.map(expense => (
-                                <tr key={expense.id} className="hover:bg-[var(--ws-surface-secondary)]/30 transition-colors group">
+                                <tr key={expense.id} className="hover:bg-[var(--ws-surface-secondary)] transition-colors group">
                                     <td className="px-4 py-3 text-[var(--ws-text-secondary)] whitespace-nowrap">
                                         {new Date(expense.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                     </td>
@@ -767,7 +767,7 @@ export default function ExpenseTrackerTab() {
                                     </td>
                                     <td className="px-4 py-3">
                                         {expense.expense_categories ? (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)] text-[var(--ws-text-secondary)] type-caption">
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] text-[var(--ws-text-secondary)] type-caption">
                                                 <span className="w-4 h-4 rounded-full flex items-center justify-center type-ui bg-[var(--ws-panel)]" style={{ color: expense.expense_categories.color }}>
                                                     {expense.expense_categories.icon || '🏷️'}
                                                 </span>
@@ -823,7 +823,7 @@ export default function ExpenseTrackerTab() {
                             ))}
                         </tbody>
                         <tfoot>
-                            <tr className="border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/50">
+                            <tr className="border-t border-[var(--ws-border)] bg-[var(--ws-panel)]">
                                 <td colSpan={5} className="px-4 py-3 type-caption text-[var(--ws-text-muted)] font-semibold uppercase tracking-wider">
                                     {filtered.length} expense{filtered.length !== 1 ? 's' : ''}
                                 </td>

@@ -356,13 +356,13 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
     return (
         <div className="flex flex-col min-h-[600px] w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl ac-scroll-full ac-enterprise-module shadow-2xl">
             {!isLoading && messages.length > 0 && (
-                <div className="p-3 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/20 shrink-0">
+                <div className="p-3 border-b border-[var(--ws-border)] bg-[var(--ws-panel)] shrink-0">
                     <ModuleStatCards stats={mailStats} hub="outreach" />
                 </div>
             )}
             <div className="flex flex-1 overflow-hidden min-h-0">
             {/* Folder Sidebar */}
-            <div className="w-16 sm:w-20 md:w-24 border-r border-[var(--ws-border)] flex flex-col items-center py-6 gap-6 bg-[var(--ws-canvas)]/50">
+            <div className="w-16 sm:w-20 md:w-24 border-r border-[var(--ws-border)] flex flex-col items-center py-6 gap-6 bg-[var(--ws-canvas)]">
                 {LABELS.map(({ id, Icon, label }) => (
                     <button
                         key={id}
@@ -445,7 +445,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
                     {isLoading ? (
                         Array.from({ length: 5 }).map((_, i) => (
-                            <div key={i} className="p-4 rounded-xl border border-transparent bg-[var(--ws-panel)]/40 animate-pulse h-24 mb-2" />
+                            <div key={i} className="p-4 rounded-xl border border-transparent bg-[var(--ws-panel)] animate-pulse h-24 mb-2" />
                         ))
                     ) : filteredMessages.length === 0 ? (
                         <div className="text-center py-12 text-[var(--ws-text-muted)]">
@@ -514,7 +514,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                 {composing ? (
                     <div className="flex-1 flex flex-col bg-[var(--ws-canvas)]">
                         {/* Compose Header */}
-                        <div className="p-4 border-b border-[var(--ws-border)] flex items-center justify-between bg-[var(--ws-canvas)]/50 backdrop-blur-sm">
+                        <div className="p-4 border-b border-[var(--ws-border)] flex items-center justify-between bg-[var(--ws-canvas)]">
                             <div className="flex items-center gap-3">
                                 <button 
                                     onClick={() => setComposing(false)} 
@@ -599,7 +599,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                         </div>
                         
                         {/* Compose Actions */}
-                        <div className="p-4 border-t border-[var(--ws-border)] flex justify-end gap-3 bg-[var(--ws-canvas)]/50">
+                        <div className="p-4 border-t border-[var(--ws-border)] flex justify-end gap-3 bg-[var(--ws-canvas)]">
                             <Button variant="outline" onClick={() => setComposing(false)} className="border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
                                 Cancel
                             </Button>
@@ -615,7 +615,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                 ) : selectedThreadId ? (
                     <>
                         {/* Thread Header */}
-                        <div className="p-4 border-b border-[var(--ws-border)] flex items-center gap-4 bg-[var(--ws-canvas)]/50 backdrop-blur-sm">
+                        <div className="p-4 border-b border-[var(--ws-border)] flex items-center gap-4 bg-[var(--ws-canvas)]">
                             <Button variant="outline" size="sm" onClick={handleBackToList} className="md:hidden">
                                 <ArrowLeft className="w-4 h-4" />
                             </Button>
@@ -783,7 +783,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            className="bg-[var(--ws-panel)]/50 p-12 rounded-[3rem] border border-[var(--ws-border)]/50 backdrop-blur-3xl"
+                            className="bg-[var(--ws-panel)] p-12 rounded-[3rem] border border-[var(--ws-border)]/50"
                         >
                             <div className="w-20 h-20 bg-blue-500/10 rounded-3xl flex items-center justify-center border border-blue-500/20 mb-6 mx-auto">
                                 <Mail className="w-10 h-10 text-blue-400" />

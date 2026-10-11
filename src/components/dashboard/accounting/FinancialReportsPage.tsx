@@ -144,7 +144,7 @@ export function FinancialReportsPage() {
 
                     <ResponsiveTableMobile>
                         {trialBalance.accounts.map((account) => (
-                            <MobileDataCard key={account.accountCode} className="border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/80">
+                            <MobileDataCard key={account.accountCode} className="border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]">
                                 <div className="flex justify-between gap-3">
                                     <div className="min-w-0">
                                         <p className="type-card-description text-[var(--ws-text-muted)] font-mono">{account.accountCode}</p>

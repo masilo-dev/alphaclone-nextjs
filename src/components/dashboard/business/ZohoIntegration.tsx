@@ -146,7 +146,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                 </p>
             </div>
 
-            <div className={`p-6 rounded-3xl border ${isConnected ? 'bg-teal-500/5 border-teal-500/20' : 'bg-[var(--ws-panel)]/50 border-[var(--ws-border)]'} relative overflow-hidden transition-all duration-500`}>
+            <div className={`p-6 rounded-3xl border ${isConnected ? 'bg-teal-500/5 border-teal-500/20' : 'bg-[var(--ws-panel)] border-[var(--ws-border)]'} relative overflow-hidden transition-all duration-500`}>
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
                     <div className="flex items-start gap-5">
                         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${isConnected ? 'bg-teal-500/10 text-teal-400 shadow-teal-500/10' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'}`}>
@@ -237,7 +237,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-5 bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl">
+                <div className="p-5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl">
                     <h4 className="type-ui font-semibold text-teal-400 mb-2 flex items-center gap-2">
                         <div className="w-1.5 h-1.5 bg-teal-500 rounded-full" />
                         CRM Sync
@@ -246,7 +246,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                         Sync leads, contacts, and opportunities between AlphaClone and Zoho CRM automatically.
                     </p>
                 </div>
-                <div className="p-5 bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl">
+                <div className="p-5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl">
                     <h4 className="type-ui font-semibold text-teal-400 mb-2 flex items-center gap-2">
                         <div className="w-1.5 h-1.5 bg-teal-500 rounded-full" />
                         Zoho Mail
@@ -257,7 +257,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                 </div>
             </div>
             {isConnected && (
-                <div className="p-5 bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl">
+                <div className="p-5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl">
                     <h4 className="type-ui font-semibold text-teal-400 mb-3">Send Test Email</h4>
                     <div className="flex flex-col md:flex-row gap-3">
                         <AlphaCloneInput

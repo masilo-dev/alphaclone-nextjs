@@ -505,7 +505,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     );
 
     return (
-        <div className={`flex flex-col bg-[var(--ws-canvas)] rounded-2xl md:rounded-3xl border border-[var(--ws-border)] overflow-hidden backdrop-blur-sm relative h-[calc(100dvh-140px)]`}>
+        <div className={`flex flex-col bg-[var(--ws-canvas)] rounded-2xl md:rounded-3xl border border-[var(--ws-border)] overflow-hidden  relative h-[calc(100dvh-140px)]`}>
             
             {/* Expired Token Inline Banner (non-blocking, below header) */}
             {needsReconnect && (
@@ -541,7 +541,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 <AnimatePresence>
                     {isMobileMenuOpen && (
                         <>
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsMobileMenuOpen(false)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]" />
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsMobileMenuOpen(false)} className="fixed inset-0 bg-black/80 z-[100]" />
                             <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} className="fixed inset-y-0 left-0 w-4/5 bg-[var(--ws-canvas)] z-[101] shadow-2xl">
                                 <SidebarContent />
                                 <button onClick={() => setIsMobileMenuOpen(false)} className="absolute top-6 right-6 p-2 text-gray-500"><X size={24} /></button>
@@ -554,7 +554,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 <div className={`flex flex-col bg-[var(--ws-canvas)] border-r border-[var(--ws-border)] shrink-0 transition-all duration-300 w-full md:w-96 ${selectedMessage ? 'hidden md:flex' : 'flex'}`}>
                     
                     {/* Header Bar */}
-                    <div className="h-20 border-b border-[var(--ws-border)] px-6 flex items-center gap-4 sticky top-0 z-10 bg-[var(--ws-canvas)]/80 backdrop-blur-md shrink-0">
+                    <div className="h-20 border-b border-[var(--ws-border)] px-6 flex items-center gap-4 sticky top-0 z-10 bg-[var(--ws-canvas)] shrink-0">
                         <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-gray-400 md:hidden"><Menu size={24} /></button>
                         <div className="relative flex-1">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
@@ -638,7 +638,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                                 }
                                             }}
                                             onClick={() => fetchMessageContent(msg.messageId)}
-                                            className={`relative z-10 flex items-center gap-3 py-3 px-4 cursor-pointer select-none transition-colors ${msg.status === 'unread' ? 'bg-[var(--ws-panel)]/30' : 'bg-[var(--ws-canvas)]'}`}
+                                            className={`relative z-10 flex items-center gap-3 py-3 px-4 cursor-pointer select-none transition-colors ${msg.status === 'unread' ? 'bg-[var(--ws-panel)]' : 'bg-[var(--ws-canvas)]'}`}
                                         >
                                             {/* Avatar/Initial Circle */}
                                             <div className="w-9 h-9 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold type-ui shrink-0">
@@ -772,7 +772,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                 </div>
                                 
                                 {/* Quick Reply and Smart Reply Bar */}
-                                <div className="p-4 sm:p-6 bg-[var(--ws-canvas)]/50 border-t border-[var(--ws-border)] flex flex-col gap-4">
+                                <div className="p-4 sm:p-6 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] flex flex-col gap-4">
                                     <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
                                         {smartReplies.map((reply, i) => (
                                             <button 

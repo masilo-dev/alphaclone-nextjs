@@ -165,7 +165,7 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
 
                         {!preview ? (
                             <div className="flex justify-center w-full">
-                                <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-[var(--ws-border)] border-dashed rounded-xl cursor-pointer bg-[var(--ws-panel)]/60 hover:bg-[var(--ws-panel)] transition-colors">
+                                <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-[var(--ws-border)] border-dashed rounded-xl cursor-pointer bg-[var(--ws-panel)] hover:bg-[var(--ws-panel)] transition-colors">
                                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                         <Camera className="w-10 h-10 text-emerald-400 mb-3" />
                                         <p className="mb-2 type-card-description text-[var(--ws-text-secondary)]"><span className="font-semibold text-emerald-400">Click to upload</span> or drag and drop</p>

@@ -182,7 +182,7 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                 </div>
 
                 {/* Footer Actions */}
-                <div className={`flex flex-wrap gap-3 pt-6 border-t border-[var(--ws-border)] ${isMobile ? 'fixed bottom-0 left-0 right-0 p-4 bg-black/90 backdrop-blur-xl z-50 border-[var(--ws-border)]' : ''}`}>
+                <div className={`flex flex-wrap gap-3 pt-6 border-t border-[var(--ws-border)] ${isMobile ? 'fixed bottom-0 left-0 right-0 p-4 bg-black/90  z-50 border-[var(--ws-border)]' : ''}`}>
                     {isMobile ? (
                         <button onClick={finalizeReceipt} disabled={isSaving} className="w-full h-14 bg-emerald-600 disabled:opacity-60 text-[var(--text-inverse)] rounded-2xl font-black uppercase type-caption shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2"><Save size={20} /> {isSaving ? 'Finalizing…' : 'Finalize & Download'}</button>
                     ) : (

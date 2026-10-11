@@ -224,7 +224,7 @@ export default function RecurringInvoicesPanel({
       </div>
 
       {showForm && (
-        <Card className="p-5 bg-[var(--ws-panel)]/60 border-[var(--ws-border)]">
+        <Card className="p-5 bg-[var(--ws-panel)] border-[var(--ws-border)]">
           <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Client</label>
@@ -320,14 +320,14 @@ export default function RecurringInvoicesPanel({
       )}
 
       {profiles.length === 0 ? (
-        <Card className="p-10 text-center border-dashed border-[var(--ws-border)] bg-[var(--ws-panel)]/30">
+        <Card className="p-10 text-center border-dashed border-[var(--ws-border)] bg-[var(--ws-panel)]">
           <Repeat className="w-10 h-10 text-slate-600 mx-auto mb-3" />
           <p className="text-[var(--ws-text-muted)] type-card-description">No recurring profiles yet. Create one for retainers or subscriptions.</p>
         </Card>
       ) : (
         <div className="space-y-3">
           {profiles.map((p) => (
-            <Card key={p.id} className="p-4 bg-[var(--ws-panel)]/40 border-[var(--ws-border)]">
+            <Card key={p.id} className="p-4 bg-[var(--ws-panel)] border-[var(--ws-border)]">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="font-bold text-[var(--ws-text-primary)]">{p.clientName}</p>

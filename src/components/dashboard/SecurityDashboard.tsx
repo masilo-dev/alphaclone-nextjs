@@ -235,7 +235,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                 key={log.id}
                                 className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${log.is_suspicious
                                     ? 'bg-[var(--error-500)]/5 border-red-500/20 hover:bg-[var(--error-500)]/10'
-                                    : 'bg-[var(--ws-surface-secondary)]/50 border-[var(--ws-border)] hover:bg-[var(--ws-surface-secondary)]'
+                                    : 'bg-[var(--ws-surface-secondary)] border-[var(--ws-border)] hover:bg-[var(--ws-surface-secondary)]'
                                     }`}
                             >
                                 <div className="flex items-center gap-4 flex-1">
@@ -275,7 +275,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                         {loginSessions.map((session) => (
                             <div
                                 key={session.id}
-                                className="flex items-center justify-between p-3 rounded-lg bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] hover:bg-[var(--ws-surface-secondary)] transition-colors"
+                                className="flex items-center justify-between p-3 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] hover:bg-[var(--ws-surface-secondary)] transition-colors"
                             >
                                 <div className="flex items-center gap-4 flex-1">
                                     <div className={`w-2 h-2 rounded-full ${session.is_active ? 'bg-green-500' : 'bg-slate-600'}`} />
@@ -412,7 +412,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                         {errorLogs.map((error) => (
                             <div
                                 key={error.id}
-                                className="p-3 rounded-lg bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]"
+                                className="p-3 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]"
                             >
                                 <div className="flex items-start justify-between mb-2">
                                     <div className="flex items-center gap-2">
@@ -452,7 +452,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                         {blockedCountries.map((country) => (
                             <div
                                 key={country.id}
-                                className="flex items-center justify-between p-3 rounded-lg bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]"
+                                className="flex items-center justify-between p-3 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]"
                             >
                                 <div className="flex items-center gap-4">
                                     <Globe className="w-5 h-5 text-red-500" />

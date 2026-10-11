@@ -845,7 +845,7 @@ export default function SocialCommandCenter() {
                     </div>
 
                     {activeSubView !== 'analytics' && (
-                        <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[var(--ws-canvas)]/80 border-b border-[var(--ws-border)]">
+                        <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[var(--ws-canvas)] border-b border-[var(--ws-border)]">
                             <p className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">
                                 Content calendar
                             </p>
@@ -897,7 +897,7 @@ export default function SocialCommandCenter() {
                         ) : null}
                         {activeSubView === 'analytics' ? (
                             <div className="space-y-3">
-                                <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/80 px-4 py-3">
+                                <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3">
                                     <div>
                                         <p className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Provider metrics</p>
                                         <p className="type-card-description text-[var(--ws-text-muted)]">
@@ -975,7 +975,7 @@ export default function SocialCommandCenter() {
                                                     {/* Main Post Row */}
                                                     <div 
                                                         onClick={() => setSelectedPost(post)}
-                                                        className="relative z-10 bg-[var(--ws-panel)]/90 active:bg-[var(--ws-surface-secondary)] transition-transform duration-150 cursor-pointer"
+                                                        className="relative z-10 bg-[var(--ws-panel)] active:bg-[var(--ws-surface-secondary)] transition-transform duration-150 cursor-pointer"
                                                         style={{ 
                                                             transform: `translateX(${offset}px)`,
                                                         }}
@@ -1049,7 +1049,7 @@ export default function SocialCommandCenter() {
                                                                         />
                                                                     )}
                                                                     {post.media_urls.length > 1 && (
-                                                                        <div className="px-3 py-2 type-ui text-[var(--ws-text-muted)] font-bold bg-[var(--ws-canvas)]/90">
+                                                                        <div className="px-3 py-2 type-ui text-[var(--ws-text-muted)] font-bold bg-[var(--ws-canvas)]">
                                                                             +{post.media_urls.length - 1} more media item{post.media_urls.length > 2 ? 's' : ''}
                                                                         </div>
                                                                     )}
@@ -1065,7 +1065,7 @@ export default function SocialCommandCenter() {
                                                                 ].map((metric) => {
                                                                     const Icon = metric.icon;
                                                                     return (
-                                                                        <div key={metric.label} className="flex items-center justify-center gap-1.5 rounded-xl bg-[var(--ws-canvas)]/80 px-2 py-2 text-[var(--ws-text-muted)]">
+                                                                        <div key={metric.label} className="flex items-center justify-center gap-1.5 rounded-xl bg-[var(--ws-canvas)] px-2 py-2 text-[var(--ws-text-muted)]">
                                                                             <Icon className="w-3.5 h-3.5" />
                                                                             <span className="type-ui font-black text-[var(--ws-text-primary)]">{compactNumber(metric.value)}</span>
                                                                         </div>
@@ -1509,7 +1509,7 @@ export default function SocialCommandCenter() {
             {/* AI Prompter Dialog Modal inside compose */}
             <AnimatePresence>
                 {aiPromptOpen && (
-                    <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[110] bg-black/80 flex items-center justify-center p-4">
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -1547,7 +1547,7 @@ export default function SocialCommandCenter() {
                     <>
                         {/* Overlay backdrop */}
                         <div 
-                            className="fixed inset-0 bg-black/80 backdrop-blur-sm ac-layer-overlay"
+                            className="fixed inset-0 bg-black/80 ac-layer-overlay"
                             onClick={() => setSelectedPost(null)}
                         />
                         {/* Bottom sheet */}

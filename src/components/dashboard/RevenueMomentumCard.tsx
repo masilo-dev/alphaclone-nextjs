@@ -48,7 +48,7 @@ export default function RevenueMomentumCard() {
       <div className="relative">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-lg bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] ${getStatusColor(score)}`}>
+            <div className={`p-1.5 rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] ${getStatusColor(score)}`}>
               <Zap className="w-4 h-4" />
             </div>
             <div>
@@ -80,7 +80,7 @@ export default function RevenueMomentumCard() {
 
         <div className="space-y-3">
           {/* Nudge Box */}
-          <div className="rounded-lg bg-[var(--ws-canvas)]/45 p-3 border border-[var(--ws-border)]">
+          <div className="rounded-lg bg-[var(--ws-canvas)] p-3 border border-[var(--ws-border)]">
             <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed">
               {nudge}
             </p>
@@ -105,7 +105,7 @@ export default function RevenueMomentumCard() {
       </div>
 
       {/* Progress Bar Background */}
-      <div className="absolute bottom-0 left-0 w-full h-1 bg-[var(--ws-canvas)]/40">
+      <div className="absolute bottom-0 left-0 w-full h-1 bg-[var(--ws-canvas)]">
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: `${score}%` }}

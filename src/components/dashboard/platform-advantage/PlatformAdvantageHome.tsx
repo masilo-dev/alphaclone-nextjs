@@ -66,7 +66,7 @@ function priorityClass(priority?: string): string {
     case 'medium':
       return 'border-teal-500/30 bg-teal-500/10 text-teal-200';
     default:
-      return 'border-[var(--ws-border)] bg-[var(--ws-panel)]/60 text-[var(--ws-text-secondary)]';
+      return 'border-[var(--ws-border)] bg-[var(--ws-panel)] text-[var(--ws-text-secondary)]';
   }
 }
 
@@ -199,7 +199,7 @@ export function PlatformAdvantageHome() {
         </section>
 
         <section className="ac-workspace-panel p-4 space-y-3">
-          <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-3">
+          <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3">
             <div className="flex items-center gap-2 text-[var(--ws-text-muted)]">
               <Clock className="h-4 w-4" />
               <span className="type-caption font-bold uppercase tracking-wider">Time saved (30d)</span>
@@ -207,7 +207,7 @@ export function PlatformAdvantageHome() {
             <p className="mt-2 text-2xl font-black text-[var(--ws-text-primary)]">{hoursSaved > 0 ? `${hoursSaved.toFixed(1)}h` : '—'}</p>
             <p className="type-card-description text-[var(--ws-text-muted)]">Estimated from automated workflows and MCP activity.</p>
           </div>
-          <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-3">
+          <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3">
             <div className="flex items-center gap-2 text-[var(--ws-text-muted)]">
               <ShieldCheck className="h-4 w-4" />
               <span className="type-caption font-bold uppercase tracking-wider">Automation readiness</span>

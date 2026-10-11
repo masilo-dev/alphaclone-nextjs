@@ -46,7 +46,7 @@ export function ContextualBulkBar({
       className={cn(
         'flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border border-[var(--brand-blue-500)]/30 bg-[var(--brand-blue-500)]/10 text-[var(--ws-text-primary)] shadow-sm animate-fade-in',
         position === 'floating' &&
-          'fixed bottom-6 left-1/2 -translate-x-1/2 z-40 max-w-2xl w-[90vw] bg-[var(--ws-panel)] border-[var(--brand-blue-500)]/40 shadow-2xl backdrop-blur-md',
+          'fixed bottom-6 left-1/2 -translate-x-1/2 z-40 max-w-2xl w-[90vw] bg-[var(--ws-panel)] border-[var(--brand-blue-500)]/40 shadow-2xl ',
         className
       )}
     >

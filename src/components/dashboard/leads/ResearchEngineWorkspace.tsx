@@ -1027,7 +1027,7 @@ export default function ResearchEngineWorkspace() {
 
       {/* Mobile Lead Detail & Evidence Inspection Modal */}
       {inspectingLead && isMobile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--ws-panel)]/80 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--ws-panel)] p-4">
           <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] p-5 shadow-2xl">
             {renderInspectorContent(inspectingLead, () => setInspectingLead(null))}
           </div>

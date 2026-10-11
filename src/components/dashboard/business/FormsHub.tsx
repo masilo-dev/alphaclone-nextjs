@@ -370,7 +370,7 @@ export default function FormsHub() {
               className={`w-full text-left px-4 py-3 rounded-xl border transition-colors ${
                 selectedId === f.id
                   ? 'bg-teal-500/15 border-teal-500/40 text-[var(--text-inverse)]'
-                  : 'bg-[var(--ws-panel)]/50 border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:border-[var(--ws-border)]'
+                  : 'bg-[var(--ws-panel)] border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:border-[var(--ws-border)]'
               }`}
             >
               <div className="font-bold type-ui truncate">{f.title}</div>
@@ -379,7 +379,7 @@ export default function FormsHub() {
           ))}
         </div>
 
-        <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-5 md:p-6 space-y-5">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-5 md:p-6 space-y-5">
 
           {/* Mode toggle */}
           <div className="flex gap-1 p-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl w-fit">
@@ -424,7 +424,7 @@ export default function FormsHub() {
                       <button
                         type="button"
                         onClick={() => setExpandedSub(expandedSub === sub.id ? null : sub.id)}
-                        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[var(--ws-surface-secondary)]/50 transition-colors"
+                        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[var(--ws-surface-secondary)] transition-colors"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="w-8 h-8 rounded-full bg-teal-500/10 flex items-center justify-center flex-shrink-0">
@@ -441,7 +441,7 @@ export default function FormsHub() {
                         </div>
                       </button>
                       {expandedSub === sub.id && (
-                        <div className="px-4 pb-4 pt-1 space-y-2 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)]/40">
+                        <div className="px-4 pb-4 pt-1 space-y-2 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)]">
                           {sub.submitter_email && (
                             <div className="flex items-center gap-2 type-caption text-[var(--ws-text-secondary)]">
                               <Mail className="w-3.5 h-3.5 text-[var(--ws-text-muted)]" />

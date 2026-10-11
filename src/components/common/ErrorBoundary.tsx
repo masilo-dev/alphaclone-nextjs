@@ -53,7 +53,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       }
 
       return (
-        <div className="flex flex-col items-center justify-center p-8 bg-[var(--ws-panel)]/50 border border-red-500/20 rounded-2xl text-center">
+        <div className="flex flex-col items-center justify-center p-8 bg-[var(--ws-panel)] border border-red-500/20 rounded-2xl text-center">
           <div className="w-12 h-12 bg-[var(--error-500)]/10 rounded-full flex items-center justify-center mb-4">
             <AlertTriangle className="w-6 h-6 text-red-400" />
           </div>

@@ -193,7 +193,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
     return (
         <>
             <div
-                className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm"
+                className="fixed inset-0 bg-black/50 z-50"
                 onClick={() => setIsOpen(false)}
             />
             <div className="fixed inset-0 z-50 flex items-start justify-center pt-10 sm:pt-20 px-4">
@@ -233,7 +233,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
 
                     {/* Filters Panel */}
                     {showFilters && (
-                        <div className="p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/50">
+                        <div className="p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="type-label text-[var(--ws-text-muted)] mb-2 block">Type</label>
@@ -351,7 +351,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                                 onClick={() => handleSelect(result)}
                                 className={`w-full flex items-start gap-3 p-4 text-left transition-colors ${index === selectedIndex
                                     ? 'bg-[var(--ws-surface-secondary)]'
-                                    : 'hover:bg-[var(--ws-surface-secondary)]/50'
+                                    : 'hover:bg-[var(--ws-surface-secondary)]'
                                     }`}
                             >
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${getColor(result.type)}`}>
@@ -387,7 +387,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                     </div>
 
                     {/* Footer */}
-                    <div className="p-3 border-t border-[var(--ws-border)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 type-caption text-[var(--ws-text-muted)] bg-[var(--ws-panel)]/50">
+                    <div className="p-3 border-t border-[var(--ws-border)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 type-caption text-[var(--ws-text-muted)] bg-[var(--ws-panel)]">
                         <div className="flex flex-wrap gap-3 sm:gap-4">
                             <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded">↑↓</kbd> Navigate</span>
                             <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded">Enter</kbd> Select</span>

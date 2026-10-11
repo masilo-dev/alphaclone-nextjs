@@ -64,7 +64,7 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
   return (
     <div className="space-y-6 text-[var(--ws-text-primary)]">
       {/* Header Bar */}
-      <div className="p-6 bg-[var(--ws-panel)]/80 backdrop-blur border border-[var(--ws-border)] rounded-2xl shadow-xl">
+      <div className="p-6 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl shadow-xl">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-[var(--text-inverse)] text-xl font-bold shadow-lg shadow-cyan-500/20">
@@ -109,7 +109,7 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
 
         {/* Metric Cards Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-          <div className="p-4 bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)]/80 rounded-xl">
+          <div className="p-4 bg-[var(--ws-canvas)] border border-[var(--ws-border)]/80 rounded-xl">
             <div className="flex items-center justify-between type-caption text-[var(--ws-text-muted)] mb-1">
               <span>Total Revenue</span>
               <DollarSign className="w-4 h-4 text-emerald-400" />
@@ -117,7 +117,7 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
             <span className="text-xl font-bold text-[var(--ws-text-primary)]">${profile.total_revenue.toLocaleString()}</span>
           </div>
 
-          <div className="p-4 bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)]/80 rounded-xl">
+          <div className="p-4 bg-[var(--ws-canvas)] border border-[var(--ws-border)]/80 rounded-xl">
             <div className="flex items-center justify-between type-caption text-[var(--ws-text-muted)] mb-1">
               <span>Outstanding Balance</span>
               <Clock className="w-4 h-4 text-amber-400" />
@@ -125,7 +125,7 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
             <span className="text-xl font-bold text-amber-400">${profile.outstanding_balance.toLocaleString()}</span>
           </div>
 
-          <div className="p-4 bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)]/80 rounded-xl">
+          <div className="p-4 bg-[var(--ws-canvas)] border border-[var(--ws-border)]/80 rounded-xl">
             <div className="flex items-center justify-between type-caption text-[var(--ws-text-muted)] mb-1">
               <span>Active Commitments</span>
               <Handshake className="w-4 h-4 text-purple-400" />
@@ -133,7 +133,7 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
             <span className="text-xl font-bold text-purple-400">{profile.commitments.filter(c => c.status === 'pending').length}</span>
           </div>
 
-          <div className="p-4 bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)]/80 rounded-xl">
+          <div className="p-4 bg-[var(--ws-canvas)] border border-[var(--ws-border)]/80 rounded-xl">
             <div className="flex items-center justify-between type-caption text-[var(--ws-text-muted)] mb-1">
               <span>Active Deals Value</span>
               <Zap className="w-4 h-4 text-cyan-400" />
@@ -189,13 +189,13 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
 
       {/* Tab Content Panels */}
       {activeTab === 'timeline' && (
-        <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
           <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4">Unified Activity Timeline</h3>
           <div className="relative pl-6 border-l-2 border-[var(--ws-border)] space-y-6">
             {profile.timeline.map((item) => (
               <div key={item.id} className="relative">
                 <div className="absolute -left-[31px] top-0 w-4 h-4 rounded-full bg-cyan-500/20 border-2 border-cyan-400" />
-                <div className="bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)] rounded-lg p-4">
+                <div className="bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <span className="type-caption font-semibold px-2 py-0.5 rounded bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] uppercase">
                       {item.type}
@@ -214,14 +214,14 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
       )}
 
       {activeTab === 'commitments' && (
-        <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
           <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4">Promises & Commitments Audit</h3>
           <div className="grid gap-3">
             {profile.commitments.length === 0 ? (
               <p className="text-[var(--ws-text-muted)] type-card-description">No active commitments recorded.</p>
             ) : (
               profile.commitments.map((c) => (
-                <div key={c.id} className="p-4 bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)] rounded-lg flex items-center justify-between">
+                <div key={c.id} className="p-4 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className={`type-caption font-semibold px-2 py-0.5 rounded ${c.makerType === 'our_team' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'}`}>
@@ -244,14 +244,14 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
       )}
 
       {activeTab === 'commercial' && (
-        <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
           <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4">Proposals & Quotations</h3>
           <div className="grid gap-3">
             {profile.proposals.length === 0 ? (
               <p className="text-[var(--ws-text-muted)] type-card-description">No proposal records found.</p>
             ) : (
               profile.proposals.map((p) => (
-                <div key={p.id} className="p-4 bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)] rounded-lg flex items-center justify-between">
+                <div key={p.id} className="p-4 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg flex items-center justify-between">
                   <div>
                     <h4 className="type-ui font-medium text-[var(--ws-text-primary)]">{p.title}</h4>
                     <span className="type-caption text-[var(--ws-text-muted)] mt-1 block">Created: {new Date(p.createdAt).toLocaleDateString()}</span>
@@ -268,13 +268,13 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
       )}
 
       {activeTab === 'calendar' && (
-        <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
           <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4">Calendar & Meeting History</h3>
           <div className="space-y-4">
             <div>
               <h4 className="type-caption font-semibold text-cyan-400 uppercase tracking-wider mb-2">Upcoming & Today ({profile.calendar_events.today.length + profile.calendar_events.future.length})</h4>
               {[...profile.calendar_events.today, ...profile.calendar_events.future].map((mtg) => (
-                <div key={mtg.id} className="p-3 bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)] rounded-lg flex items-center justify-between mb-2">
+                <div key={mtg.id} className="p-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg flex items-center justify-between mb-2">
                   <span className="type-ui text-[var(--ws-text-primary)] font-medium">{mtg.title}</span>
                   <span className="type-caption text-[var(--ws-text-muted)]">{new Date(mtg.time).toLocaleString()}</span>
                 </div>
@@ -284,7 +284,7 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
             <div>
               <h4 className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-2">Past Meetings ({profile.calendar_events.past.length})</h4>
               {profile.calendar_events.past.map((mtg) => (
-                <div key={mtg.id} className="p-3 bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)] rounded-lg flex items-center justify-between mb-2 opacity-75">
+                <div key={mtg.id} className="p-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg flex items-center justify-between mb-2 opacity-75">
                   <span className="type-ui text-[var(--ws-text-secondary)]">{mtg.title}</span>
                   <span className="type-caption text-[var(--ws-text-muted)]">{new Date(mtg.time).toLocaleString()}</span>
                 </div>
@@ -295,14 +295,14 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
       )}
 
       {activeTab === 'decisions' && (
-        <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
           <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4">Logged Project Decisions</h3>
           <div className="grid gap-3">
             {profile.decisions.length === 0 ? (
               <p className="text-[var(--ws-text-muted)] type-card-description">No formal decisions logged yet.</p>
             ) : (
               profile.decisions.map((d) => (
-                <div key={d.id} className="p-4 bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)] rounded-lg">
+                <div key={d.id} className="p-4 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg">
                   <h4 className="type-ui font-medium text-[var(--ws-text-primary)]">{d.title}</h4>
                   {d.decidedAt && (
                     <span className="type-caption text-[var(--ws-text-muted)] mt-1 block">Logged: {new Date(d.decidedAt).toLocaleString()}</span>

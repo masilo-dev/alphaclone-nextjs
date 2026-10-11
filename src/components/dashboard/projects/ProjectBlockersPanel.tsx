@@ -132,7 +132,7 @@ export function ProjectBlockersPanel({
       </div>
       <div className="space-y-2">
         {blockedTasks.map((task) => (
-          <div key={task.id} className="flex items-start justify-between gap-2 rounded-md bg-[var(--ws-canvas)]/50 px-2.5 py-2">
+          <div key={task.id} className="flex items-start justify-between gap-2 rounded-md bg-[var(--ws-canvas)] px-2.5 py-2">
             <div className="min-w-0">
               <p className="type-card-description font-medium text-[var(--ws-text-primary)] truncate">{task.title}</p>
               <p className="type-card-description text-amber-200/80">Blocked task</p>
@@ -147,7 +147,7 @@ export function ProjectBlockersPanel({
           </div>
         ))}
         {issues.map((issue) => (
-          <div key={issue.id} className="flex items-start justify-between gap-2 rounded-md bg-[var(--ws-canvas)]/50 px-2.5 py-2">
+          <div key={issue.id} className="flex items-start justify-between gap-2 rounded-md bg-[var(--ws-canvas)] px-2.5 py-2">
             <div className="min-w-0">
               <p className="type-card-description font-medium text-[var(--ws-text-primary)] truncate">{issue.title}</p>
               <p className="type-caption text-[var(--ws-text-muted)] capitalize">{issue.severity} · {issue.status}</p>

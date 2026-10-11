@@ -188,7 +188,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            className="h-full bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-8 flex items-center justify-center"
+                            className="h-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-8 flex items-center justify-center"
                         >
                             <div className="text-center max-w-lg">
                                 <Network className="w-16 h-16 text-slate-700 mx-auto mb-6" />
@@ -242,7 +242,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-2xl p-4">
+                                    <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4">
                                         <div className="flex items-center gap-2 mb-2">
                                             <div className="p-2 rounded-lg bg-teal-500/10 border border-teal-500/20">
                                                 <Inbox className="w-4 h-4 text-teal-400" />
@@ -254,15 +254,15 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                         </div>
 
                                         <div className="grid grid-cols-3 gap-2 mb-3">
-                                            <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-2.5">
+                                            <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2.5">
                                                 <div className="type-caption uppercase tracking-widest text-[var(--ws-text-muted)]">Members</div>
                                                 <div className="text-lg font-black text-[var(--ws-text-primary)]">{teamMembers.length}</div>
                                             </div>
-                                            <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-2.5">
+                                            <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2.5">
                                                 <div className="type-caption uppercase tracking-widest text-[var(--ws-text-muted)]">Chat</div>
                                                 <div className="text-lg font-black text-[var(--ws-text-primary)]">Live</div>
                                             </div>
-                                            <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-2.5">
+                                            <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2.5">
                                                 <div className="type-caption uppercase tracking-widest text-[var(--ws-text-muted)]">Email</div>
                                                 <div className="text-lg font-black text-[var(--ws-text-primary)]">On</div>
                                             </div>
@@ -271,7 +271,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                         <div className="space-y-2">
                                             <button
                                                 onClick={() => router.push('/dashboard/business/messages')}
-                                                className="w-full flex items-center justify-between gap-3 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 hover:bg-[var(--ws-panel)] px-3 py-2.5 text-left transition-colors"
+                                                className="w-full flex items-center justify-between gap-3 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] hover:bg-[var(--ws-panel)] px-3 py-2.5 text-left transition-colors"
                                             >
                                                 <div className="flex items-center gap-2 min-w-0">
                                                     <Mail className="w-4 h-4 text-sky-400 shrink-0" />
@@ -281,7 +281,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                             </button>
                                             <button
                                                 onClick={() => router.push('/dashboard/zoho/mail')}
-                                                className="w-full flex items-center justify-between gap-3 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 hover:bg-[var(--ws-panel)] px-3 py-2.5 text-left transition-colors"
+                                                className="w-full flex items-center justify-between gap-3 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] hover:bg-[var(--ws-panel)] px-3 py-2.5 text-left transition-colors"
                                             >
                                                 <div className="flex items-center gap-2 min-w-0">
                                                     <Inbox className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -291,7 +291,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                             </button>
                                             <button
                                                 onClick={() => router.push('/dashboard/tasks')}
-                                                className="w-full flex items-center justify-between gap-3 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 hover:bg-[var(--ws-panel)] px-3 py-2.5 text-left transition-colors"
+                                                className="w-full flex items-center justify-between gap-3 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] hover:bg-[var(--ws-panel)] px-3 py-2.5 text-left transition-colors"
                                             >
                                                 <div className="flex items-center gap-2 min-w-0">
                                                     <CheckSquare className="w-4 h-4 text-orange-400 shrink-0" />
@@ -302,7 +302,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                         </div>
                                         <div className="mt-3 flex flex-wrap gap-2">
                                             {teamMembers.slice(0, 4).map((member) => (
-                                                <div key={member.user_id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)]">
+                                                <div key={member.user_id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-[var(--ws-canvas)] border border-[var(--ws-border)]">
                                                     <div className="w-5 h-5 rounded-full bg-[var(--ws-surface-secondary)] flex items-center justify-center type-ui font-black text-[var(--ws-text-primary)]">
                                                         {member.user?.name?.charAt(0) || '?'}
                                                     </div>
@@ -310,7 +310,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                                 </div>
                                             ))}
                                             {teamMembers.length > 4 && (
-                                                <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)]">
+                                                <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-[var(--ws-canvas)] border border-[var(--ws-border)]">
                                                     <span className="type-caption text-[var(--ws-text-muted)]">+{teamMembers.length - 4} more</span>
                                                 </div>
                                             )}
@@ -342,7 +342,7 @@ const TeamMemberCard = ({ member, onRemove, isCurrentUser, canManage }: any) => 
     };
 
     return (
-        <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] hover:border-teal-500/30 rounded-2xl p-6 transition-all group">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-teal-500/30 rounded-2xl p-6 transition-all group">
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-lg text-[var(--text-inverse)] shadow-lg">
@@ -389,7 +389,7 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
             <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold text-[var(--ws-text-primary)]">Invite Team Member</h3>
@@ -429,7 +429,7 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
                                 </button>
                             ))}
                         </div>
-                        <p className="type-card-description text-[var(--ws-text-muted)] mt-3 bg-[var(--ws-surface-secondary)]/50 p-3 rounded-lg border border-[var(--ws-border)]">
+                        <p className="type-card-description text-[var(--ws-text-muted)] mt-3 bg-[var(--ws-surface-secondary)] p-3 rounded-lg border border-[var(--ws-border)]">
                             {role === 'member' && "Can view projects and tasks assigned to them."}
                             {role === 'manager' && "Can create projects, manage tasks, and view reports."}
                             {role === 'admin' && "Full access to all settings, billing, and team management."}

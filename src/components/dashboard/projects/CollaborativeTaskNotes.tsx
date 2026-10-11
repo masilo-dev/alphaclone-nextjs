@@ -153,7 +153,7 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
     return (
         <div className={`flex h-full flex-col overflow-hidden transition-all duration-500 ${WORKSPACE.panel.base} rounded-lg ${isFullscreen ? 'fixed inset-4 z-50' : 'relative'}`}>
             {/* Toolbar */}
-            <div className="flex items-center justify-between border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/40 px-6 py-4 backdrop-blur-xl">
+            <div className="flex items-center justify-between border-b border-[var(--ws-border)] bg-[var(--ws-panel)] px-6 py-4">
                 <div className="flex items-center gap-4">
                     <div className="p-2 bg-teal-500/10 rounded-xl">
                         <Users className="w-5 h-5 text-teal-400" />
@@ -220,7 +220,7 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
             </div>
 
             {/* Status Footer */}
-            <div className="flex items-center gap-1.5 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/20 px-6 py-2 type-caption text-slate-600">
+            <div className="flex items-center gap-1.5 border-t border-[var(--ws-border)] bg-[var(--ws-panel)] px-6 py-2 type-caption text-slate-600">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                 <span>Auto-saving</span>
             </div>

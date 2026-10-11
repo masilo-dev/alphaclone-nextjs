@@ -2411,7 +2411,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </p>
           </div>
 
-          <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-4 type-ui text-[var(--ws-text-secondary)]">
+          <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 type-ui text-[var(--ws-text-secondary)]">
             Card details are collected on Stripe&apos;s hosted checkout and
             never pass through AlphaClone.
           </div>
@@ -2685,7 +2685,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </button>
                 )}
                 {activeBgTasksCount > 0 && (
-                  <div className="ac-pwa-desktop-only hidden xl:flex items-center gap-2 bg-[var(--ws-surface-secondary)]/50 text-teal-400 px-3 py-1.5 rounded-full type-caption font-semibold animate-pulse border border-teal-500/30">
+                  <div className="ac-pwa-desktop-only hidden xl:flex items-center gap-2 bg-[var(--ws-surface-secondary)] text-teal-400 px-3 py-1.5 rounded-full type-caption font-semibold animate-pulse border border-teal-500/30">
                     <RefreshCw className="w-4 h-4 animate-spin" />
                     <span className="hidden sm:inline">
                       {activeBgTasksCount} Task(s)
@@ -2795,7 +2795,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[54]"
+              className="fixed inset-0 bg-black/40 z-[54]"
               onClick={() => setTaskSchedulerOpen(false)}
             />
             <motion.div
@@ -2806,7 +2806,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
               className="fixed right-0 top-0 bottom-0 w-full sm:w-[500px] bg-[var(--ws-canvas)] border-l border-white/10 z-[55] flex flex-col shadow-2xl"
             >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-[var(--ws-panel)]/80 backdrop-blur-sm shrink-0">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-[var(--ws-panel)] shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-violet-500/10 rounded-xl">
                     <Clock className="w-4 h-4 text-violet-400" />

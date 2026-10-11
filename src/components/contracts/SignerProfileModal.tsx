@@ -92,9 +92,9 @@ export const SignerProfileModal: React.FC<SignerProfileModalProps> = ({ profile,
 
     return (
         <div className="fixed inset-0 ac-layer-modal flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="signer-profile-title">
-            <div className="absolute inset-0 bg-[var(--ws-canvas)]/80 backdrop-blur-sm" onClick={onClose} />
+            <div className="absolute inset-0 bg-[var(--ws-canvas)]" onClick={onClose} />
             <div className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] shadow-2xl">
-                <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/95 px-6 py-4 backdrop-blur">
+                <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)] px-6 py-4">
                     <div>
                         <h2 id="signer-profile-title" className="text-white font-bold text-lg flex items-center gap-2">
                             <PenTool className="w-4 h-4 text-teal-400" /> {t('My signature & signer details')}
@@ -114,7 +114,7 @@ export const SignerProfileModal: React.FC<SignerProfileModalProps> = ({ profile,
                             <BookmarkCheck className="w-3.5 h-3.5" /> {t('Saved signature')}
                         </h3>
                         {draft.signature && !replacingSignature ? (
-                            <div className="rounded-2xl border border-teal-500/30 bg-[var(--ws-canvas)]/40 p-5 flex flex-col items-center gap-3">
+                            <div className="rounded-2xl border border-teal-500/30 bg-[var(--ws-canvas)] p-5 flex flex-col items-center gap-3">
                                 <img src={draft.signature.dataUrl} alt={t('Saved signature')} className="h-20 object-contain bg-white px-4 py-2 rounded-xl" />
                                 <p className="type-card-description font-semibold text-white font-mono">{draft.signature.fullName}</p>
                                 <div className="flex flex-wrap justify-center gap-2">
@@ -179,7 +179,7 @@ export const SignerProfileModal: React.FC<SignerProfileModalProps> = ({ profile,
                     </section>
                 </div>
 
-                <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row justify-end gap-2 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/95 px-6 py-4 backdrop-blur">
+                <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row justify-end gap-2 border-t border-[var(--ws-border)] bg-[var(--ws-panel)] px-6 py-4">
                     <button type="button" onClick={onClose} className="px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-xl type-ui font-semibold">
                         {t('Close')}
                     </button>

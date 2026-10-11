@@ -233,7 +233,7 @@ export default function UnifiedContactsList({
               key={`${row.source}-${row.id}-${row.business_client_id || 'none'}`}
               type="button"
               onClick={() => openRow(row)}
-              className="flex w-full items-center justify-between rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 px-4 py-3 text-left transition hover:border-teal-500/30"
+              className="flex w-full items-center justify-between rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3 text-left transition hover:border-teal-500/30"
             >
               <div className="min-w-0">
                 <p className="truncate font-semibold text-[var(--ws-text-primary)]">{row.full_name}</p>

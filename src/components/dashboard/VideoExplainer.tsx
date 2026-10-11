@@ -42,7 +42,7 @@ const VideoExplainer = () => {
                             desc: "One platform for your entire organization, globally accessible and infinitely scalable."
                         }
                     ].map((item, i) => (
-                        <div key={i} className="p-8 bg-[var(--ws-panel)]/40 border border-[var(--ws-border)]/50 rounded-2xl backdrop-blur-sm hover:border-[var(--ws-border)] transition-colors group">
+                        <div key={i} className="p-8 bg-[var(--ws-panel)] border border-[var(--ws-border)]/50 rounded-2xl hover:border-[var(--ws-border)] transition-colors group">
                             <div className="mb-4">{item.icon}</div>
                             <h4 className="text-lg font-bold text-[var(--ws-text-primary)] mb-2 group-hover:text-teal-400 transition-colors">{item.title}</h4>
                             <p className="text-[var(--ws-text-muted)] type-card-description leading-relaxed">{item.desc}</p>

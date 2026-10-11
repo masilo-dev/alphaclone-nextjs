@@ -75,7 +75,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({ tasks, edges }) => {
   };
 
   return (
-    <div className="w-full overflow-x-auto bg-[var(--ws-panel)]/50 rounded-xl border border-[var(--ws-border)] p-4">
+    <div className="w-full overflow-x-auto bg-[var(--ws-panel)] rounded-xl border border-[var(--ws-border)] p-4">
       <div 
         style={{ 
           width: dates.length * COLUMN_WIDTH, 
@@ -90,7 +90,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({ tasks, edges }) => {
             className="absolute top-0 bottom-0 border-l border-[var(--ws-border)]/30"
             style={{ left: i * COLUMN_WIDTH }}
           >
-            <span className="type-caption text-[var(--ws-text-muted)] p-1 block bg-[var(--ws-surface-secondary)]/80 rounded mt-1 ml-1">
+            <span className="type-caption text-[var(--ws-text-muted)] p-1 block bg-[var(--ws-surface-secondary)] rounded mt-1 ml-1">
               {date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
             </span>
           </div>

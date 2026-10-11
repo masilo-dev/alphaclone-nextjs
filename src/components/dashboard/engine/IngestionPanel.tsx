@@ -32,7 +32,7 @@ interface IngestionEvent {
 }
 
 const INTENT_STYLE: Record<string, string> = {
-    unknown:  'bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)]',
+    unknown:  'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] border-[var(--ws-border)]',
     low:      'bg-slate-600/30 text-[var(--ws-text-muted)] border-slate-600',
     medium:   'bg-blue-500/15 text-blue-400 border-blue-500/30',
     high:     'bg-amber-500/15 text-amber-400 border-amber-500/30',
@@ -184,7 +184,7 @@ export default function IngestionPanel() {
                     { label: 'Leads Created', value: leadsCreated, color: 'text-teal-400' },
                     { label: 'Sources', value: sources.length, color: 'text-blue-400' },
                 ].map(s => (
-                    <div key={s.label} className="bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)] rounded-xl p-3 text-center">
+                    <div key={s.label} className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl p-3 text-center">
                         <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
                         <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">{s.label}</p>
                     </div>
@@ -193,7 +193,7 @@ export default function IngestionPanel() {
 
             {/* Manual ingestion form */}
             {showForm && (
-                <div className="bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-2xl p-6 space-y-4">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 space-y-4">
                     <div className="flex items-center justify-between">
                         <h3 className="font-bold text-[var(--ws-text-primary)]">Ingest Content</h3>
                         <button onClick={() => setShowForm(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"><X className="w-4 h-4" /></button>
@@ -290,7 +290,7 @@ export default function IngestionPanel() {
             ) : (
                 <div className="space-y-2">
                     {filtered.map(event => (
-                        <div key={event.id} className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-4 hover:border-[var(--ws-border)] transition-colors">
+                        <div key={event.id} className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 hover:border-[var(--ws-border)] transition-colors">
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex items-start gap-3 min-w-0 flex-1">
                                     <div className="flex-shrink-0 mt-0.5 flex flex-col gap-3">

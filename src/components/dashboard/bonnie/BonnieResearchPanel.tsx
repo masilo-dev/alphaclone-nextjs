@@ -109,7 +109,7 @@ export function BonnieResearchPanel({ tenantId }: BonnieResearchPanelProps) {
               {briefing.findings.map((finding) => (
                 <div
                   key={finding.targetId}
-                  className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-3 space-y-1.5"
+                  className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3 space-y-1.5"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{finding.name}</p>

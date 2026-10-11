@@ -133,7 +133,7 @@ export default function MarketingOutreachPage() {
               <div className="ac-workspace-panel p-4 flex flex-wrap items-center gap-1">
                 {PIPELINE_STAGES.map((stage, i) => (
                   <React.Fragment key={stage.id}>
-                    <span className="type-ui font-medium text-[var(--ws-text-secondary)] px-2 py-1 rounded bg-[var(--ws-surface-secondary)]/50">
+                    <span className="type-ui font-medium text-[var(--ws-text-secondary)] px-2 py-1 rounded bg-[var(--ws-surface-secondary)]">
                       {stage.label}
                     </span>
                     {i < PIPELINE_STAGES.length - 1 ? (

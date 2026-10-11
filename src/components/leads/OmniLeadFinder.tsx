@@ -24,7 +24,7 @@ import { EmptyState } from '../ui/EmptyState';
 const LeadMapView = dynamic(() => import('./LeadMapView'), {
   ssr: false,
   loading: () => (
-    <div className="w-full min-h-[min(100vw,260px)] h-[min(50svh,520px)] sm:min-h-[320px] md:h-[480px] max-h-[640px] flex items-center justify-center rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40">
+    <div className="w-full min-h-[min(100vw,260px)] h-[min(50svh,520px)] sm:min-h-[320px] md:h-[480px] max-h-[640px] flex items-center justify-center rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]">
       <div className="text-[var(--ws-text-muted)] type-ui flex items-center gap-2">
         <RefreshCw className="w-4 h-4 animate-spin" /> Loading map...
       </div>
@@ -177,7 +177,7 @@ function IndustrySelect({ value, onChange, disabled }: { value: string; onChange
         type="button" disabled={disabled}
         onClick={() => !disabled && setOpen(o => !o)}
         className={`w-full flex items-center gap-2 px-3 py-2.5 type-ui rounded-xl border transition-all outline-none ${
-          open ? 'border-teal-500 ring-2 ring-teal-500/20 bg-[var(--ws-panel)]' : 'border-[var(--ws-border)] bg-[var(--ws-panel)]/80 hover:border-slate-600'
+          open ? 'border-teal-500 ring-2 ring-teal-500/20 bg-[var(--ws-panel)]' : 'border-[var(--ws-border)] bg-[var(--ws-panel)] hover:border-slate-600'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       >
         <Building2 className="w-4 h-4 text-teal-400 flex-shrink-0" />
@@ -225,7 +225,7 @@ function IndustrySelect({ value, onChange, disabled }: { value: string; onChange
                 if (!filtered.length) return null;
                 return (
                   <div key={group}>
-                    <p className="px-3 py-1 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest bg-[var(--ws-panel)]/60 border-b border-[var(--ws-border)]/40">{group}</p>
+                    <p className="px-3 py-1 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest bg-[var(--ws-panel)] border-b border-[var(--ws-border)]/40">{group}</p>
                     {filtered.map(industry => (
                       <div key={industry}
                            className={`px-4 py-2 type-ui cursor-pointer transition-colors ${value === industry ? 'bg-teal-500/20 text-[var(--brand-blue-300)] font-semibold' : 'text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)] hover:text-white'}`}
@@ -781,7 +781,7 @@ export default function OmniLeadFinder() {
         )}
       </AnimatePresence>
 
-      <div className="p-3 sm:p-4 bg-gradient-to-r from-teal-900/40 via-slate-900/50 to-slate-900 rounded-xl border border-teal-500/20 shadow-xl backdrop-blur-xl">
+      <div className="p-3 sm:p-4 bg-gradient-to-r from-teal-900/40 via-slate-900/50 to-slate-900 rounded-xl border border-teal-500/20 shadow-xl">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="min-w-0">
             <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-teal-500/20 border border-teal-500/30 text-[var(--brand-blue-300)] type-caption font-bold tracking-wider uppercase mb-1">
@@ -849,7 +849,7 @@ export default function OmniLeadFinder() {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 disabled={scanning}
-                className="w-full bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-xl px-4 py-2.5 type-ui text-white focus:ring-1 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all pr-12 hover:border-slate-600 shadow-inner"
+                className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-2.5 type-ui text-white focus:ring-1 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all pr-12 hover:border-slate-600 shadow-inner"
               />
               <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
                 <Globe className="w-3.5 h-3.5 text-teal-400" />
@@ -889,7 +889,7 @@ export default function OmniLeadFinder() {
                       onChange={(e) => setSpecificCity(e.target.value)}
                       placeholder='Exact city (e.g. Harare)'
                       disabled={scanning}
-                      className="w-full bg-[var(--ws-panel)]/80 border border-amber-500/40 rounded-xl px-3 py-2 type-caption text-white placeholder-slate-500 focus:ring-1 focus:ring-amber-500/40 focus:border-amber-500 outline-none"
+                      className="w-full bg-[var(--ws-panel)] border border-amber-500/40 rounded-xl px-3 py-2 type-caption text-white placeholder-slate-500 focus:ring-1 focus:ring-amber-500/40 focus:border-amber-500 outline-none"
                     />
                     {citySuggestions.length > 0 && (
                       <div className="max-h-24 overflow-y-auto space-y-1">
@@ -951,7 +951,7 @@ export default function OmniLeadFinder() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 p-3 bg-[var(--ws-panel)]/40 rounded-xl border border-[var(--ws-border)] min-w-0">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 p-3 bg-[var(--ws-panel)] rounded-xl border border-[var(--ws-border)] min-w-0">
           <div className="flex items-center gap-2 min-w-0 overflow-x-auto pb-0.5 -mx-0.5 px-0.5 [scrollbar-width:thin] sm:overflow-visible sm:pb-0 sm:mx-0 sm:px-0">
             <ArrowUpDown className="w-3.5 h-3.5 text-[var(--ws-text-muted)] shrink-0" />
             <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider shrink-0">Sort</span>
@@ -994,7 +994,7 @@ export default function OmniLeadFinder() {
       <AnimatePresence>
         {scanning && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            className="p-3 bg-[var(--ws-panel)]/50 rounded-xl border border-[var(--ws-border)] overflow-hidden">
+            className="p-3 bg-[var(--ws-panel)] rounded-xl border border-[var(--ws-border)] overflow-hidden">
             <div className="mb-2 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-2">
               <div className="relative h-4 overflow-hidden">
                 <motion.div
@@ -1019,7 +1019,7 @@ export default function OmniLeadFinder() {
       </AnimatePresence>
 
       {results.length > 0 && (
-        <div className="p-3 bg-[var(--ws-panel)]/40 rounded-xl border border-[var(--ws-border)] space-y-3">
+        <div className="p-3 bg-[var(--ws-panel)] rounded-xl border border-[var(--ws-border)] space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <Filter className="w-3.5 h-3.5 text-teal-400" />
@@ -1044,7 +1044,7 @@ export default function OmniLeadFinder() {
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--ws-text-muted)]" />
                 <input type="text" placeholder="Search business name, email, phone, address..."
                   value={filterText} onChange={e => setFilterText(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-secondary)] focus:ring-1 focus:ring-teal-500/30 focus:border-teal-500 outline-none"
+                  className="w-full pl-8 pr-3 py-1.5 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-secondary)] focus:ring-1 focus:ring-teal-500/30 focus:border-teal-500 outline-none"
                 />
               </div>
             </div>
@@ -1115,7 +1115,7 @@ export default function OmniLeadFinder() {
                 </>
               )}
             </div>
-            <div className="flex gap-1 bg-[var(--ws-canvas)]/70 rounded-lg p-0.5 border border-[var(--ws-border)] self-start sm:self-auto shrink-0">
+            <div className="flex gap-1 bg-[var(--ws-canvas)] rounded-lg p-0.5 border border-[var(--ws-border)] self-start sm:self-auto shrink-0">
               {(['grid', 'map'] as const).map(mode => (
                 <button key={mode} onClick={() => setViewMode(mode)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md type-caption font-semibold transition-all ${viewMode === mode ? 'bg-teal-500/20 text-[var(--brand-blue-300)] border border-teal-500/30' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}>
@@ -1128,7 +1128,7 @@ export default function OmniLeadFinder() {
       )}
 
       {mapHistory.length > 0 && (
-        <div className="p-3 bg-[var(--ws-panel)]/40 rounded-xl border border-[var(--ws-border)] space-y-3">
+        <div className="p-3 bg-[var(--ws-panel)] rounded-xl border border-[var(--ws-border)] space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <History className="w-4 h-4 text-teal-400" />
@@ -1144,7 +1144,7 @@ export default function OmniLeadFinder() {
           </div>
           <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
             {mapHistory.map((entry) => (
-              <div key={entry.id} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div key={entry.id} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] p-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div className="min-w-0">
                   <p className="type-card-description text-white font-semibold truncate">
                     {entry.niche} in {entry.location}
@@ -1178,7 +1178,7 @@ export default function OmniLeadFinder() {
       )}
 
       {geocodePreview && !scanning && (
-        <div className="p-3 bg-[var(--ws-panel)]/40 rounded-xl border border-[var(--ws-border)] space-y-2">
+        <div className="p-3 bg-[var(--ws-panel)] rounded-xl border border-[var(--ws-border)] space-y-2">
           <div className="flex items-center justify-between">
             <p className="type-card-description font-semibold text-[var(--ws-text-secondary)]">Geocode preview before search</p>
             <p className="type-card-description text-[var(--ws-text-muted)]">{geocodeLoading ? 'Resolving...' : geocodePreview.type || 'location'}</p>
@@ -1229,8 +1229,8 @@ export default function OmniLeadFinder() {
             const qual       = lead.qualification;
             return (
               <motion.div key={idx} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.018 }}
-                className={`group bg-[var(--ws-panel)]/60 border rounded-xl p-3.5 hover:bg-[var(--ws-surface-secondary)]/70 transition-all duration-200 flex flex-col shadow cursor-pointer ${
-                  isSelected ? 'border-teal-500/60 ring-1 ring-teal-500/20 bg-[var(--ws-surface-secondary)]/60' : 'border-[var(--ws-border)] hover:border-teal-500/40'
+                className={`group bg-[var(--ws-panel)] border rounded-xl p-3.5 hover:bg-[var(--ws-surface-secondary)] transition-all duration-200 flex flex-col shadow cursor-pointer ${
+                  isSelected ? 'border-teal-500/60 ring-1 ring-teal-500/20 bg-[var(--ws-surface-secondary)]' : 'border-[var(--ws-border)] hover:border-teal-500/40'
                 }`}
                 onClick={() => toggleSelect(idx)}
               >

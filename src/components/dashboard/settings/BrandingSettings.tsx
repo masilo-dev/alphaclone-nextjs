@@ -99,7 +99,7 @@ const BrandingSettings = () => {
                     <div className="mb-6">
                         <label className="block type-label font-medium text-[var(--ws-text-muted)] mb-2">Organization Logo</label>
                         <div className="flex items-center gap-4">
-                            <div className="w-24 h-24 rounded-2xl bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] flex items-center justify-center overflow-hidden relative group">
+                            <div className="w-24 h-24 rounded-2xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] flex items-center justify-center overflow-hidden relative group">
                                 {isUploading ? (
                                     <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
                                 ) : branding.logo_url ? (
@@ -186,7 +186,7 @@ const BrandingSettings = () => {
                                 type="text"
                                 value={branding.legal_name}
                                 onChange={(e) => setBranding({ ...branding, legal_name: e.target.value })}
-                                className={`w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/50 outline-none ${currentTenant?.legal_name ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                className={`w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/50 outline-none ${currentTenant?.legal_name ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 placeholder="Legal Entity Name"
                                 disabled={!!currentTenant?.legal_name}
                             />

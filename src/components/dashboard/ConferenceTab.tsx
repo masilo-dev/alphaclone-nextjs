@@ -16,7 +16,7 @@ const ConferenceTab: React.FC<ConferenceTabProps> = ({ user }) => {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-5 p-4 sm:p-6">
-      <div className="flex flex-col gap-4 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="mb-2 flex items-center gap-2 type-caption font-bold uppercase tracking-caps text-[var(--brand-blue-300)]"><ShieldCheck className="h-4 w-4" /> Secure workspace video</div>
           <h1 className="text-2xl font-bold text-[var(--ws-text-primary)]">Meetings</h1>
@@ -27,7 +27,7 @@ const ConferenceTab: React.FC<ConferenceTabProps> = ({ user }) => {
         </button>
       </div>
 
-      <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-1 sm:p-3">
+      <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-1 sm:p-3">
         <div className="mb-2 flex items-center gap-2 px-3 pt-3 type-ui font-semibold text-[var(--ws-text-primary)]"><Video className="h-4 w-4 text-teal-400" /> Permanent room and meeting history</div>
         <SimpleVideoMeeting key={refreshKey} user={user} onJoinRoom={(callId) => router.push(`/meet/${callId}`)} />
       </div>

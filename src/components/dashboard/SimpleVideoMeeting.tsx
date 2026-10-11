@@ -247,7 +247,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                 </div>
 
                 {/* Meeting Details Card */}
-                <div className="bg-gray-900/50 border border-teal-500/20 rounded-lg p-3 mb-4 backdrop-blur-sm space-y-3">
+                <div className="bg-gray-900/50 border border-teal-500/20 rounded-lg p-3 mb-4 space-y-3">
                     {/* Link Section */}
                     <div>
                         <div className="flex items-center justify-between mb-1">
@@ -297,7 +297,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                                 </Button>
                                 <Button
                                     onClick={handleRegeneratePin}
-                                    className="shrink-0 h-[34px] w-[34px] p-0 bg-[var(--ws-surface-tertiary)]/50 hover:bg-slate-600/50 text-[var(--ws-text-muted)] border border-[var(--ws-border)]"
+                                    className="shrink-0 h-[34px] w-[34px] p-0 bg-[var(--ws-surface-tertiary)] hover:bg-slate-600/50 text-[var(--ws-text-muted)] border border-[var(--ws-border)]"
                                     title="Regenerate Code"
                                     disabled={isRegenerating}
                                 >
@@ -340,7 +340,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                     {showPastMeetings && (
                         <div className="space-y-3">
                             {pastMeetings.map((meeting) => (
-                                <div key={meeting.id} className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-lg p-4 hover:bg-[var(--ws-panel)]/70 transition-colors">
+                                <div key={meeting.id} className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg p-4 hover:bg-[var(--ws-panel)] transition-colors">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1 min-w-0">
                                             <h4 className="type-ui font-bold text-[var(--ws-text-primary)] truncate">{meeting.title}</h4>

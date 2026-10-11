@@ -33,7 +33,7 @@ const EnterpriseDPA: React.FC<EnterpriseDPAProps> = ({ tenantId, userId, onAccep
   };
 
   return (
-    <div className="bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-2xl overflow-hidden max-w-2xl mx-auto shadow-2xl">
+    <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden max-w-2xl mx-auto shadow-2xl">
       <div className="p-6 border-b border-[var(--ws-border)] bg-gradient-to-r from-indigo-500/10 to-teal-500/10">
         <div className="flex items-center gap-3 mb-2">
           <Shield className="w-6 h-6 text-teal-400" />
@@ -98,7 +98,7 @@ const EnterpriseDPA: React.FC<EnterpriseDPAProps> = ({ tenantId, userId, onAccep
         </div>
       </div>
 
-      <div className="px-6 py-4 bg-[var(--ws-canvas)]/50 border-t border-[var(--ws-border)] flex items-center gap-2">
+      <div className="px-6 py-4 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] flex items-center gap-2">
         <AlertCircle className="w-4 h-4 text-amber-400" />
         <p className="type-caption text-[var(--ws-text-muted)] uppercase tracking-widest font-semibold">
           Acceptance will be cryptographically logged for compliance.

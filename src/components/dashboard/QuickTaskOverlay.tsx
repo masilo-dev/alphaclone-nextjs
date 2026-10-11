@@ -77,7 +77,7 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-[var(--ws-canvas)]/80 backdrop-blur-xl"
+                        className="fixed inset-0 bg-[var(--ws-canvas)]"
                     />
 
                     <motion.div
@@ -122,7 +122,7 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
 
                                 <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-[var(--ws-border)]">
                                     {/* Priority Picker */}
-                                    <div className="flex items-center gap-1 bg-[var(--ws-canvas)]/50 p-1 rounded-xl border border-[var(--ws-border)]">
+                                    <div className="flex items-center gap-1 bg-[var(--ws-canvas)] p-1 rounded-xl border border-[var(--ws-border)]">
                                         {(['low', 'medium', 'high', 'urgent'] as const).map((p) => (
                                             <button
                                                 key={p}
@@ -140,7 +140,7 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                     </div>
 
                                     {/* Due Date */}
-                                    <div className="flex items-center gap-2 px-3 py-2 bg-[var(--ws-canvas)]/50 rounded-xl border border-[var(--ws-border)] group hover:border-teal-500/30 transition-all">
+                                    <div className="flex items-center gap-2 px-3 py-2 bg-[var(--ws-canvas)] rounded-xl border border-[var(--ws-border)] group hover:border-teal-500/30 transition-all">
                                         <Calendar className="w-3.5 h-3.5 text-[var(--ws-text-muted)] group-hover:text-teal-400" />
                                         <AlphaCloneInput
                                             type="date"

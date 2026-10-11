@@ -167,7 +167,7 @@ export default function WorkerMonitoringDashboard() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-xl p-4"
+          className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl p-4"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -188,7 +188,7 @@ export default function WorkerMonitoringDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-xl p-4"
+          className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl p-4"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -206,7 +206,7 @@ export default function WorkerMonitoringDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-xl p-4"
+          className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl p-4"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -229,7 +229,7 @@ export default function WorkerMonitoringDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-xl p-4"
+          className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl p-4"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -387,26 +387,26 @@ export default function WorkerMonitoringDashboard() {
                       className="mt-3 pt-3 border-t border-[var(--ws-border)] space-y-2"
                     >
                       <div className="grid grid-cols-2 gap-2 type-ui">
-                        <div className="bg-[var(--ws-panel)]/50 rounded p-2">
+                        <div className="bg-[var(--ws-panel)] rounded p-2">
                           <p className="text-[var(--ws-text-muted)] type-card-description">Today's Activities</p>
                           <p className="text-[var(--ws-text-primary)] font-semibold">{prod.total_activities}</p>
                         </div>
-                        <div className="bg-[var(--ws-panel)]/50 rounded p-2">
+                        <div className="bg-[var(--ws-panel)] rounded p-2">
                           <p className="text-[var(--ws-text-muted)] type-card-description">Active Hours</p>
                           <p className="text-[var(--ws-text-primary)] font-semibold">{prod.active_hours}h</p>
                         </div>
-                        <div className="bg-[var(--ws-panel)]/50 rounded p-2">
+                        <div className="bg-[var(--ws-panel)] rounded p-2">
                           <p className="text-[var(--ws-text-muted)] type-card-description">Apps Used</p>
                           <p className="text-[var(--ws-text-primary)] font-semibold">{prod.unique_apps}</p>
                         </div>
-                        <div className="bg-[var(--ws-panel)]/50 rounded p-2">
+                        <div className="bg-[var(--ws-panel)] rounded p-2">
                           <p className="text-[var(--ws-text-muted)] type-card-description">Entities</p>
                           <p className="text-[var(--ws-text-primary)] font-semibold">{prod.entities_touched}</p>
                         </div>
                       </div>
                       
                       {worker.metadata && Object.keys(worker.metadata).length > 0 && (
-                        <div className="bg-[var(--ws-panel)]/50 rounded p-2">
+                        <div className="bg-[var(--ws-panel)] rounded p-2">
                           <p className="text-[var(--ws-text-muted)] type-card-description mb-1">Current Context</p>
                           <pre className="type-caption text-[var(--ws-text-secondary)] overflow-x-auto">
                             {JSON.stringify(worker.metadata, null, 2)}

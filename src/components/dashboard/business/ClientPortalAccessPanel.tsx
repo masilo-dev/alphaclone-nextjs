@@ -77,7 +77,7 @@ export default function ClientPortalAccessPanel({ client, tenantId, onClose, onC
   };
 
   return (
-    <div className="fixed inset-0 ac-layer-modal flex items-end justify-center overflow-y-auto bg-[var(--ws-overlay-backdrop)] p-3 backdrop-blur-sm sm:items-center sm:p-6" role="presentation">
+    <div className="fixed inset-0 ac-layer-modal flex items-end justify-center overflow-y-auto bg-[var(--ws-overlay-backdrop)] p-3 sm:items-center sm:p-6" role="presentation">
       <div className="w-full max-w-lg max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain rounded-3xl border border-[var(--ws-border-strong)] bg-[var(--ws-panel)] shadow-2xl shadow-black/60 sm:max-h-[calc(100dvh-3rem)]" role="dialog" aria-modal="true" aria-labelledby="client-portal-access-title">
         <div className="border-b border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-5 sm:p-6">
           <div className="flex items-start justify-between gap-4">

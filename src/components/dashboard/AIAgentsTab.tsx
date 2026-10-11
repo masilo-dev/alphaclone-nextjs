@@ -518,19 +518,19 @@ const AIAgentsTab: React.FC = () => {
       <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl p-4">
         <div className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)] mb-3 px-1">Autonomous Engine Health</div>
         <div className="grid grid-cols-4 gap-2 text-center">
-          <div className="bg-[var(--ws-canvas)]/40 p-2.5 rounded-2xl border border-[var(--ws-border)]">
+          <div className="bg-[var(--ws-canvas)] p-2.5 rounded-2xl border border-[var(--ws-border)]">
             <div className="text-lg md:text-2xl font-black text-[var(--ws-text-primary)]">{runs.length}</div>
             <div className="type-caption text-[var(--ws-text-muted)] font-bold uppercase mt-0.5">Total Runs</div>
           </div>
-          <div className="bg-[var(--ws-canvas)]/40 p-2.5 rounded-2xl border border-[var(--ws-border)]">
+          <div className="bg-[var(--ws-canvas)] p-2.5 rounded-2xl border border-[var(--ws-border)]">
             <div className={`text-lg md:text-2xl font-black ${successRate >= 90 ? 'text-emerald-400' : successRate >= 70 ? 'text-yellow-400' : 'text-red-400'}`}>{successRate}%</div>
             <div className="type-caption text-[var(--ws-text-muted)] font-bold uppercase mt-0.5">Success Rate</div>
           </div>
-          <div className="bg-[var(--ws-canvas)]/40 p-2.5 rounded-2xl border border-[var(--ws-border)]">
+          <div className="bg-[var(--ws-canvas)] p-2.5 rounded-2xl border border-[var(--ws-border)]">
             <div className={`text-lg md:text-2xl font-black ${failures > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>{failures}</div>
             <div className="type-caption text-[var(--ws-text-muted)] font-bold uppercase mt-0.5">Failures</div>
           </div>
-          <div className="bg-[var(--ws-canvas)]/40 p-2.5 rounded-2xl border border-[var(--ws-border)] relative">
+          <div className="bg-[var(--ws-canvas)] p-2.5 rounded-2xl border border-[var(--ws-border)] relative">
             <div className={`text-lg md:text-2xl font-black ${pendingQueueTotal > 0 ? 'text-purple-400' : 'text-[var(--ws-text-muted)]'}`}>{pendingQueueTotal}</div>
             <div className="type-caption text-[var(--ws-text-muted)] font-bold uppercase mt-0.5">Pending Action</div>
             {pendingQueueTotal > 0 && (
@@ -579,7 +579,7 @@ const AIAgentsTab: React.FC = () => {
                   <div 
                     key={pb.id}
                     onClick={() => setSelectedPlaybook(pb)}
-                    className="p-4 bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] hover:border-purple-500/20 rounded-2xl flex flex-col justify-between gap-3 cursor-pointer transition-all hover:bg-[var(--ws-panel)] group"
+                    className="p-4 bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-purple-500/20 rounded-2xl flex flex-col justify-between gap-3 cursor-pointer transition-all hover:bg-[var(--ws-panel)] group"
                   >
                     <div className="space-y-2">
                       <div className="flex justify-between items-start gap-2">
@@ -617,7 +617,7 @@ const AIAgentsTab: React.FC = () => {
                 <Shield className="w-3.5 h-3.5" /> Core Approvals Queue ({pendingApprovalsCount})
               </div>
               {approvals.filter(a => a.status === 'pending').length === 0 ? (
-                <div className="py-8 text-center bg-[var(--ws-panel)]/20 rounded-2xl border border-dashed border-[var(--ws-border)] type-ui text-[var(--ws-text-muted)]">
+                <div className="py-8 text-center bg-[var(--ws-panel)] rounded-2xl border border-dashed border-[var(--ws-border)] type-ui text-[var(--ws-text-muted)]">
                   No pending write approvals in the queue.
                 </div>
               ) : (
@@ -696,7 +696,7 @@ const AIAgentsTab: React.FC = () => {
                 <Clock className="w-3.5 h-3.5" /> Deferred AI Actions ({deferredActions.length})
               </div>
               {deferredActions.length === 0 ? (
-                <div className="py-8 text-center bg-[var(--ws-panel)]/20 rounded-2xl border border-dashed border-[var(--ws-border)] type-ui text-[var(--ws-text-muted)]">
+                <div className="py-8 text-center bg-[var(--ws-panel)] rounded-2xl border border-dashed border-[var(--ws-border)] type-ui text-[var(--ws-text-muted)]">
                   No deferred actions in cooldown queue.
                 </div>
               ) : (
@@ -736,7 +736,7 @@ const AIAgentsTab: React.FC = () => {
                 <Brain className="w-3.5 h-3.5" /> Dreaming Evolutionary Sessions ({pendingDreamSessions.length})
               </div>
               {pendingDreamSessions.length === 0 ? (
-                <div className="py-8 text-center bg-[var(--ws-panel)]/20 rounded-2xl border border-dashed border-[var(--ws-border)] type-ui text-[var(--ws-text-muted)]">
+                <div className="py-8 text-center bg-[var(--ws-panel)] rounded-2xl border border-dashed border-[var(--ws-border)] type-ui text-[var(--ws-text-muted)]">
                   No pending dreaming updates ready for review.
                 </div>
               ) : (
@@ -787,20 +787,20 @@ const AIAgentsTab: React.FC = () => {
           <div className="space-y-3">
             <div className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)] px-1">Recent Execution Telemetry</div>
             {runs.length === 0 ? (
-              <div className="py-12 text-center bg-[var(--ws-panel)]/20 rounded-2xl border border-dashed border-[var(--ws-border)]">
+              <div className="py-12 text-center bg-[var(--ws-panel)] rounded-2xl border border-dashed border-[var(--ws-border)]">
                 <Clock className="w-8 h-8 text-slate-700 mx-auto mb-2" />
                 <h4 className="type-card-title font-bold text-[var(--ws-text-muted)]">No logs on file</h4>
                 <p className="type-card-description text-slate-600 mt-1">Manual triggers or cron schedules will populate execution telemetry.</p>
               </div>
             ) : (
-              <div className="space-y-2 bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl overflow-hidden divide-y divide-white/5">
+              <div className="space-y-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden divide-y divide-white/5">
                 {runs.map((run) => {
                   const style = STATUS_STYLES[run.status];
                   const isExpanded = expandedRunId === run.id;
                   const runActions = run.summary?.actions || [];
 
                   return (
-                    <div key={run.id} className="transition-all hover:bg-[var(--ws-panel)]/20">
+                    <div key={run.id} className="transition-all hover:bg-[var(--ws-panel)]">
                       {/* Trigger Row */}
                       <button 
                         onClick={() => setExpandedRunId(isExpanded ? null : run.id)}
@@ -829,7 +829,7 @@ const AIAgentsTab: React.FC = () => {
 
                       {/* Expandable Details Log */}
                       {isExpanded && (
-                        <div className="bg-[var(--ws-canvas)]/80 p-3.5 border-t border-[var(--ws-border)] space-y-2">
+                        <div className="bg-[var(--ws-canvas)] p-3.5 border-t border-[var(--ws-border)] space-y-2">
                           <div className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)] mb-1 flex justify-between">
                             <span>Step Process Report</span>
                             <span>Source: {run.trigger_snapshot?.source || 'unknown'}</span>
@@ -1026,7 +1026,7 @@ const AIAgentsTab: React.FC = () => {
                 </div>
 
                 {sortedRefusalLogs.length === 0 ? (
-                  <div className="type-ui text-[var(--ws-text-muted)] italic p-3 bg-[var(--ws-canvas)]/40 rounded-xl border border-[var(--ws-border)]">
+                  <div className="type-ui text-[var(--ws-text-muted)] italic p-3 bg-[var(--ws-canvas)] rounded-xl border border-[var(--ws-border)]">
                     All active systems operational. No AI action refusals or gate events logged in the current window.
                   </div>
                 ) : (
@@ -1047,7 +1047,7 @@ const AIAgentsTab: React.FC = () => {
                             {log.type === 'warning' ? 'Gate (Pending)' : log.type === 'failed' ? 'Refused' : 'Skipped'}
                           </span>
                         </div>
-                        <p className="text-[var(--ws-text-secondary)] leading-relaxed font-mono type-card-description bg-[var(--ws-panel)]/60 p-2 rounded-lg border border-[var(--ws-border)] mt-1">
+                        <p className="text-[var(--ws-text-secondary)] leading-relaxed font-mono type-card-description bg-[var(--ws-panel)] p-2 rounded-lg border border-[var(--ws-border)] mt-1">
                           {log.reason}
                         </p>
                         <span className="type-ui text-[var(--ws-text-muted)] text-right mt-0.5">
@@ -1070,7 +1070,7 @@ const AIAgentsTab: React.FC = () => {
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-xs"
+            className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60"
           >
             <div className="flex-1" onClick={() => setSelectedPlaybook(null)} />
             <motion.div 
@@ -1136,7 +1136,7 @@ const AIAgentsTab: React.FC = () => {
                 <div className="space-y-2">
                   <div className="type-caption text-[var(--ws-text-muted)] uppercase font-black tracking-wider px-1">Pipeline Run Log</div>
                   {(Array.isArray(runs) ? runs : []).filter(r => Array.isArray(r.summary?.actions) && r.summary.actions.some(a => a.key === selectedPlaybook.key)).slice(0, 5).length === 0 ? (
-                    <div className="type-ui text-[var(--ws-text-muted)] italic p-3 bg-[var(--ws-canvas)]/40 rounded-xl border border-[var(--ws-border)]">
+                    <div className="type-ui text-[var(--ws-text-muted)] italic p-3 bg-[var(--ws-canvas)] rounded-xl border border-[var(--ws-border)]">
                       No matching executions recorded for this playbook yet.
                     </div>
                   ) : (

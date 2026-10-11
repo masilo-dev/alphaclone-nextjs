@@ -350,7 +350,7 @@ const GlobalSettingsTab: React.FC = () => {
                                             ariaLabel="Toggle open registration preference"
                                         />
                                     </div>
-                                    <div className="p-4 bg-[var(--ws-panel)]/50 rounded-2xl border border-red-500/20 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="p-4 bg-[var(--ws-panel)] rounded-2xl border border-red-500/20 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                         <div className="min-w-0">
                                             <h4 className="type-ui font-bold text-red-400">Maintenance Mode</h4>
                                             <p className="type-card-description text-[var(--ws-text-muted)]">Mark the platform as in maintenance (enforcement depends on app middleware).</p>
@@ -459,7 +459,7 @@ const IntegrationItem = ({
 }) => {
     const status = configured ? 'Connected' : 'Not configured';
     return (
-        <div className="p-4 bg-[var(--ws-panel)]/50 rounded-2xl border border-[var(--ws-border)] hover:border-[var(--ws-border)] transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="p-4 bg-[var(--ws-panel)] rounded-2xl border border-[var(--ws-border)] hover:border-[var(--ws-border)] transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
                     <h4 className="type-ui font-bold text-[var(--ws-text-primary)]">{name}</h4>

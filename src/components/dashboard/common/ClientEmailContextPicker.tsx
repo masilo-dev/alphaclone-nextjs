@@ -89,7 +89,7 @@ export function ClientEmailContextPicker({
   };
 
   return (
-    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-3 space-y-3">
+    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 type-caption font-semibold text-[var(--ws-text-secondary)] uppercase tracking-wider">
           <Paperclip className="w-3.5 h-3.5 text-teal-400" />

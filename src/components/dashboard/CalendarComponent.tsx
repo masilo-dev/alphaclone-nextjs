@@ -737,7 +737,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                 <p className="text-[var(--ws-text-muted)] type-card-description">
                                     Your new event conflicts with an existing event:
                                 </p>
-                                <div className="mt-2 p-2 bg-[var(--ws-panel)]/50 rounded">
+                                <div className="mt-2 p-2 bg-[var(--ws-panel)] rounded">
                                     <p className="text-[var(--ws-text-primary)] font-medium">{conflictWarning.title}</p>
                                     <p className="text-[var(--ws-text-muted)] type-card-description">
                                         {format(new Date(conflictWarning.start_time), 'MMM d, h:mm a')} - {format(new Date(conflictWarning.end_time), 'h:mm a')}
@@ -827,7 +827,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                             <div className="type-ui font-semibold text-[var(--ws-text-secondary)] border-b border-[var(--ws-border)] pb-2">Questions & Answers</div>
                                             <div className="grid gap-3">
                                                 {qa.map((item, idx) => (
-                                                    <div key={idx} className="bg-[var(--ws-panel)]/50 p-3 rounded border border-[var(--ws-border)]">
+                                                    <div key={idx} className="bg-[var(--ws-panel)] p-3 rounded border border-[var(--ws-border)]">
                                                         <div className="type-caption font-bold text-teal-400 uppercase tracking-wider mb-1">{item.question}</div>
                                                         <div className="text-[var(--ws-text-secondary)] type-ui whitespace-pre-wrap">{item.answer}</div>
                                                     </div>
@@ -847,13 +847,13 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
                             {/* Time Details */}
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-[var(--ws-surface-secondary)]/50 p-4 rounded-lg border border-[var(--ws-border)]">
+                                <div className="bg-[var(--ws-surface-secondary)] p-4 rounded-lg border border-[var(--ws-border)]">
                                     <div className="type-caption font-semibold text-[var(--ws-text-muted)] mb-1">Start Time</div>
                                     <div className="text-[var(--ws-text-primary)] font-semibold">
                                         {format(new Date(selectedEvent.start_time), 'PPp')}
                                     </div>
                                 </div>
-                                <div className="bg-[var(--ws-surface-secondary)]/50 p-4 rounded-lg border border-[var(--ws-border)]">
+                                <div className="bg-[var(--ws-surface-secondary)] p-4 rounded-lg border border-[var(--ws-border)]">
                                     <div className="type-caption font-semibold text-[var(--ws-text-muted)] mb-1">End Time</div>
                                     <div className="text-[var(--ws-text-primary)] font-semibold">
                                         {format(new Date(selectedEvent.end_time), 'PPp')}
@@ -863,7 +863,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
                             {/* Location */}
                             {selectedEvent.location && (
-                                <div className="flex items-center gap-3 p-4 bg-[var(--ws-surface-secondary)]/50 rounded-lg border border-[var(--ws-border)]">
+                                <div className="flex items-center gap-3 p-4 bg-[var(--ws-surface-secondary)] rounded-lg border border-[var(--ws-border)]">
                                     <MapPin className="w-5 h-5 text-teal-400 flex-shrink-0" />
                                     <span className="text-[var(--ws-text-secondary)]">{selectedEvent.location}</span>
                                 </div>

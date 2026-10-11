@@ -204,7 +204,7 @@ export default function ClientOnboardingTab() {
         
         {/* Left 2 Cols: Workflow designer & checklist */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-[var(--ws-panel)]/20 border border-[var(--ws-border)] rounded-3xl p-5 space-y-4">
+          <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl p-5 space-y-4">
             <div className="flex justify-between items-center border-b border-[var(--ws-border)] pb-3">
               <span className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
                 <Layers className="w-4 h-4 text-teal-400" />
@@ -223,7 +223,7 @@ export default function ClientOnboardingTab() {
                 </div>
               ) : (
                 steps.map(step => (
-                  <div key={step.id} className="p-4 bg-[var(--ws-canvas)]/40 border border-slate-850 rounded-2xl flex items-center justify-between">
+                  <div key={step.id} className="p-4 bg-[var(--ws-canvas)] border border-slate-850 rounded-2xl flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="w-5 h-5 rounded-full bg-teal-500/10 text-teal-400 flex items-center justify-center font-bold type-caption">
@@ -288,7 +288,7 @@ export default function ClientOnboardingTab() {
 
         {/* Right Col: Submissions reviewer */}
         <div className="space-y-6">
-          <div className="bg-[var(--ws-panel)]/20 border border-[var(--ws-border)] rounded-3xl p-5 space-y-4">
+          <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl p-5 space-y-4">
             <span className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider block">Recent client submissions</span>
 
             <div className="space-y-3">
@@ -300,7 +300,7 @@ export default function ClientOnboardingTab() {
                 </div>
               ) : (
                 submissions.map(sub => (
-                  <div key={sub.id} className="p-3 bg-[var(--ws-canvas)]/60 border border-slate-850 rounded-xl space-y-3">
+                  <div key={sub.id} className="p-3 bg-[var(--ws-canvas)] border border-slate-850 rounded-xl space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-850 pb-2">
                       <div>
                         <p className="type-card-description font-bold text-[var(--ws-text-primary)]">
@@ -352,9 +352,9 @@ export default function ClientOnboardingTab() {
 
       {/* Modal Dialog */}
       {showStepModal && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
           <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
-            <div className="p-5 border-b border-[var(--ws-border)] flex justify-between items-center bg-[var(--ws-canvas)]/40">
+            <div className="p-5 border-b border-[var(--ws-border)] flex justify-between items-center bg-[var(--ws-canvas)]">
               <h3 className="font-bold text-[var(--ws-text-primary)] type-ui">Add Onboarding Step</h3>
               <button onClick={() => setShowStepModal(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] type-ui">Close</button>
             </div>

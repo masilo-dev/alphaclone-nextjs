@@ -191,7 +191,7 @@ export default function PlatformOwnerHome() {
       {loading && !health && tenants.length === 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[0, 1, 2].map((key) => (
-            <div key={key} className="h-24 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 animate-pulse" />
+            <div key={key} className="h-24 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] animate-pulse" />
           ))}
         </div>
       ) : null}
@@ -214,7 +214,7 @@ export default function PlatformOwnerHome() {
                 {missingKeys.map((item) => (
                   <span
                     key={item.key}
-                    className="rounded-lg border border-amber-500/20 bg-[var(--ws-canvas)]/40 px-2.5 py-1 type-ui font-semibold text-amber-100"
+                    className="rounded-lg border border-amber-500/20 bg-[var(--ws-canvas)] px-2.5 py-1 type-ui font-semibold text-amber-100"
                   >
                     {item.label}
                   </span>
@@ -222,7 +222,7 @@ export default function PlatformOwnerHome() {
                 {healthGaps.map((gap) => (
                   <span
                     key={gap}
-                    className="rounded-lg border border-amber-500/20 bg-[var(--ws-canvas)]/40 px-2.5 py-1 type-ui font-semibold text-amber-100"
+                    className="rounded-lg border border-amber-500/20 bg-[var(--ws-canvas)] px-2.5 py-1 type-ui font-semibold text-amber-100"
                   >
                     {gap}
                   </span>
@@ -240,7 +240,7 @@ export default function PlatformOwnerHome() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4">
+        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
           <div className="flex items-center gap-2 text-[var(--ws-text-muted)] type-caption font-black uppercase tracking-widest">
             <HeartPulse className="h-3.5 w-3.5" /> Health
           </div>
@@ -248,13 +248,13 @@ export default function PlatformOwnerHome() {
             {healthStatus}
           </p>
         </div>
-        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4">
+        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
           <div className="flex items-center gap-2 text-[var(--ws-text-muted)] type-caption font-black uppercase tracking-widest">
             <Building2 className="h-3.5 w-3.5" /> Active tenants
           </div>
           <p className="mt-2 text-xl font-black text-[var(--ws-text-primary)]">{loading ? '—' : activeTenants || tenants.length}</p>
         </div>
-        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4">
+        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
           <div className="flex items-center gap-2 text-[var(--ws-text-muted)] type-caption font-black uppercase tracking-widest">
             <AlertTriangle className="h-3.5 w-3.5" /> Recent signals
           </div>
@@ -267,7 +267,7 @@ export default function PlatformOwnerHome() {
           <Link
             key={item.href}
             href={item.href}
-            className="group rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 p-4 hover:border-teal-500/30 hover:bg-[var(--ws-panel)]/70 transition-colors"
+            className="group rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 hover:border-teal-500/30 hover:bg-[var(--ws-panel)] transition-colors"
           >
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-500/10 border border-teal-500/20">
@@ -283,7 +283,7 @@ export default function PlatformOwnerHome() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <section className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 p-4">
+        <section className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
           <h2 className="type-caption font-black text-[var(--ws-text-primary)] uppercase tracking-widest mb-3">Latest tenants</h2>
           {tenants.length === 0 ? (
             <p className="type-card-description text-[var(--ws-text-muted)]">{loading ? 'Loading…' : 'No tenants loaded.'}</p>
@@ -304,7 +304,7 @@ export default function PlatformOwnerHome() {
           </Link>
         </section>
 
-        <section className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 p-4">
+        <section className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
           <h2 className="type-caption font-black text-[var(--ws-text-primary)] uppercase tracking-widest mb-3">Ops log snapshot</h2>
           {recentErrors.length === 0 ? (
             <p className="type-card-description text-[var(--ws-text-muted)]">{loading ? 'Loading…' : 'No recent error signals.'}</p>

@@ -92,7 +92,7 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                 animate={{ opacity: 1 }} 
                 exit={{ opacity: 0 }}
                 onClick={onClose}
-                className="absolute inset-0 bg-gray-950/80 backdrop-blur-sm"
+                className="absolute inset-0 bg-gray-950/80"
             />
             
             <motion.div 

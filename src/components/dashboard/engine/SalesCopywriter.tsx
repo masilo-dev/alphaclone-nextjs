@@ -85,7 +85,7 @@ export default function SalesCopywriter() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Input Section */}
                 <div className="space-y-6">
-                    <div className="bg-gray-900/40 backdrop-blur-3xl border border-[var(--ws-border)] rounded-3xl p-6 shadow-2xl relative overflow-hidden group">
+                    <div className="bg-gray-900/40 border border-[var(--ws-border)] rounded-3xl p-6 shadow-2xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
                             <Quote size={120} />
                         </div>
@@ -148,7 +148,7 @@ export default function SalesCopywriter() {
                                 className="space-y-6"
                             >
                                 {/* Optimized Message */}
-                                <div className="bg-indigo-600/5 backdrop-blur-3xl border border-indigo-500/20 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+                                <div className="bg-indigo-600/5 border border-indigo-500/20 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
                                     <div className="flex justify-between items-center mb-6">
                                         <div className="flex items-center gap-2">
                                             <div className="p-2 bg-indigo-500 rounded-lg text-[var(--ws-text-primary)]">

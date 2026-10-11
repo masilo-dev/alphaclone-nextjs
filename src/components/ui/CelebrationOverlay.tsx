@@ -34,7 +34,7 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
                         initial={{ opacity: 0, scale: 0.8, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.8, y: -20 }}
-                        className="bg-[var(--ws-panel)] border-2 border-teal-500 rounded-[2rem] p-8 max-w-md w-full shadow-[0_0_50px_rgba(20,184,166,0.3)] backdrop-blur-xl pointer-events-auto relative overflow-hidden"
+                        className="bg-[var(--ws-panel)] border-2 border-teal-500 rounded-[2rem] p-8 max-w-md w-full shadow-[0_0_50px_rgba(20,184,166,0.3)] pointer-events-auto relative overflow-hidden"
                     >
                         <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 to-blue-500/10" />
                         

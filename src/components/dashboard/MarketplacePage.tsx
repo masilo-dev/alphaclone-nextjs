@@ -425,7 +425,7 @@ const MarketplacePage: React.FC = () => {
   if (activeMcp) {
     return (
       <div className="min-h-screen bg-[var(--ws-canvas)]">
-        <div className="sticky top-0 z-10 flex items-center gap-3 px-6 py-4 bg-[var(--ws-canvas)]/90 backdrop-blur border-b border-[var(--ws-border)]">
+        <div className="sticky top-0 z-10 flex items-center gap-3 px-6 py-4 bg-[var(--ws-canvas)] border-b border-[var(--ws-border)]">
           <button
             onClick={() => {
               setActiveMcp(null);
@@ -585,7 +585,7 @@ const MarketplacePage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2, delay: i * 0.03 }}
-                className="group relative flex flex-col bg-[var(--ws-panel)]/70 border border-[var(--ws-border)] rounded-2xl p-5 transition-all hover:border-teal-500/30 hover:bg-[var(--ws-panel)] hover:shadow-xl hover:shadow-teal-900/10 cursor-pointer"
+                className="group relative flex flex-col bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-5 transition-all hover:border-teal-500/30 hover:bg-[var(--ws-panel)] hover:shadow-xl hover:shadow-teal-900/10 cursor-pointer"
                 onClick={() => handleAction(item)}
               >
                 {/* Hover glow */}

@@ -175,7 +175,7 @@ export default function PlanAndUsageView({
               const isMaxed = !isMetricUnlimited && percent >= 100;
 
               return (
-                <div key={key} className="bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)] rounded-xl p-4">
+                <div key={key} className="bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl p-4">
                   <div className="flex justify-between items-center mb-2">
                     <span className="type-ui font-semibold text-[var(--ws-text-secondary)] flex items-center gap-2">
                       <span>{meta.icon}</span>

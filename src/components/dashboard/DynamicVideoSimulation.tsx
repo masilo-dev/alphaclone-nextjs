@@ -158,7 +158,7 @@ const DynamicVideoSimulation = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="absolute top-1/4 right-1/4 bg-[var(--ws-panel)]/80 border border-teal-500/30 p-4 rounded-lg backdrop-blur-md shadow-2xl"
+                            className="absolute top-1/4 right-1/4 bg-[var(--ws-panel)] border border-teal-500/30 p-4 rounded-lg shadow-2xl"
                         >
                             <div className="flex gap-2 items-center mb-2">
                                 <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
@@ -231,7 +231,7 @@ const DynamicVideoSimulation = () => {
             <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent z-20">
                 <div className="flex flex-col gap-6">
                     {/* Progress Bar */}
-                    <div className="relative w-full h-1.5 bg-[var(--ws-hover)] rounded-full overflow-hidden backdrop-blur-sm">
+                    <div className="relative w-full h-1.5 bg-[var(--ws-hover)] rounded-full overflow-hidden">
                         <motion.div
                             className="absolute top-0 left-0 h-full bg-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.8)]"
                             style={{ width: `${progress}%` }}
@@ -274,7 +274,7 @@ const DynamicVideoSimulation = () => {
 
             {/* Play Overlay (Initial State) */}
             {!isPlaying && progress === 0 && (
-                <div className="absolute inset-0 z-30 flex items-center justify-center bg-[var(--ws-canvas)]/40 backdrop-blur-md">
+                <div className="absolute inset-0 z-30 flex items-center justify-center bg-[var(--ws-canvas)]">
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}

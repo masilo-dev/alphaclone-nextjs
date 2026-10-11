@@ -498,7 +498,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             {expandedRows['profile'] && (
                                 <motion.div 
                                     initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
-                                    className="overflow-hidden bg-[var(--ws-canvas)]/40"
+                                    className="overflow-hidden bg-[var(--ws-canvas)]"
                                 >
                                     <div className="p-4 space-y-4 border-t border-[var(--ws-border)]">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -536,7 +536,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             {expandedRows['security'] && (
                                 <motion.div 
                                     initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
-                                    className="overflow-hidden bg-[var(--ws-canvas)]/40"
+                                    className="overflow-hidden bg-[var(--ws-canvas)]"
                                 >
                                     <div className="p-4 space-y-4 border-t border-[var(--ws-border)]">
                                         <div className="space-y-3">
@@ -611,7 +611,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             {expandedRows['business_profile'] && (
                                 <motion.div 
                                     initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
-                                    className="overflow-hidden bg-[var(--ws-canvas)]/40"
+                                    className="overflow-hidden bg-[var(--ws-canvas)]"
                                 >
                                     <div className="p-4 space-y-4 border-t border-[var(--ws-border)]">
                                         <div className="space-y-3">
@@ -647,7 +647,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             {expandedRows['regional'] && (
                                 <motion.div 
                                     initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
-                                    className="overflow-hidden bg-[var(--ws-canvas)]/40"
+                                    className="overflow-hidden bg-[var(--ws-canvas)]"
                                 >
                                     <div className="p-4 space-y-4 border-t border-[var(--ws-border)]">
                                         <div className="space-y-1">
@@ -724,7 +724,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             {expandedRows['sectors'] && (
                                 <motion.div 
                                     initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
-                                    className="overflow-hidden bg-[var(--ws-canvas)]/40"
+                                    className="overflow-hidden bg-[var(--ws-canvas)]"
                                 >
                                     <div className="p-4 space-y-4 border-t border-[var(--ws-border)]">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -856,7 +856,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transform transition-transform ${expandedRows['email_provider'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['email_provider'] && (
-                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-[var(--ws-border)]">
+                            <div className="p-4 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)]">
                                 <EmailProviderSettings />
                             </div>
                         )}
@@ -872,7 +872,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transform transition-transform ${expandedRows['integ_zoho'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_zoho'] && (
-                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-[var(--ws-border)]"><ZohoIntegration user={user} /></div>
+                            <div className="p-4 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)]"><ZohoIntegration user={user} /></div>
                         )}
                     </div>
 
@@ -886,7 +886,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transform transition-transform ${expandedRows['integ_m365'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_m365'] && (
-                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-[var(--ws-border)]"><Microsoft365Integration /></div>
+                            <div className="p-4 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)]"><Microsoft365Integration /></div>
                         )}
                     </div>
 
@@ -900,7 +900,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transform transition-transform ${expandedRows['integ_resend'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_resend'] && (
-                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-[var(--ws-border)]"><ResendIntegration /></div>
+                            <div className="p-4 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)]"><ResendIntegration /></div>
                         )}
                     </div>
 
@@ -914,7 +914,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transform transition-transform ${expandedRows['integ_sendgrid'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_sendgrid'] && (
-                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-[var(--ws-border)]"><SendGridIntegration /></div>
+                            <div className="p-4 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)]"><SendGridIntegration /></div>
                         )}
                     </div>
 
@@ -928,7 +928,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transform transition-transform ${expandedRows['integ_stripe'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_stripe'] && (
-                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-[var(--ws-border)]"><StripeConnectSettings /></div>
+                            <div className="p-4 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)]"><StripeConnectSettings /></div>
                         )}
                     </div>
 
@@ -942,7 +942,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transform transition-transform ${expandedRows['integ_calendly'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_calendly'] && (
-                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-[var(--ws-border)]"><CalendlySettings /></div>
+                            <div className="p-4 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)]"><CalendlySettings /></div>
                         )}
                     </div>
 
@@ -1096,7 +1096,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Subscription tier summary */}
-                    <div className="p-4 flex justify-between items-center bg-[var(--ws-canvas)]/30">
+                    <div className="p-4 flex justify-between items-center bg-[var(--ws-canvas)]">
                         <div>
                             <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase">{translate('Current active tier')}</span>
                             <h4 className="type-ui font-black text-[var(--ws-text-primary)] capitalize">{currentTenant?.subscription_plan || 'free'} plan</h4>
@@ -1112,7 +1112,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     </div>
 
                     {/* Pricing Grid */}
-                    <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[var(--ws-canvas)]/10">
+                    <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[var(--ws-canvas)]">
                         {(['starter', 'pro', 'enterprise'] as SubscriptionPlan[]).map((planId) => {
                             const plan = PLAN_PRICING[planId];
                             const isCurrent = currentTenant?.subscription_plan === planId;
@@ -1175,7 +1175,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transform transition-transform ${expandedRows['deleted_records'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['deleted_records'] && (
-                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-[var(--ws-border)]">
+                            <div className="p-4 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)]">
                                 <p className="type-card-description text-[var(--ws-text-muted)] mb-3">
                                     {translate('Restore soft-deleted contacts and archived clients, or permanently purge contacts.')}
                                 </p>
@@ -1241,7 +1241,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             {/* 8. DANGER ZONE */}
             <div className="space-y-3">
                 <span className="type-caption font-black uppercase tracking-widest text-rose-500 px-2 block">{translate('Danger Zone')}</span>
-                <div className="bg-[var(--ws-panel)]/40 border border-rose-900/20 rounded-2xl divide-y divide-rose-900/10 overflow-hidden">
+                <div className="bg-[var(--ws-panel)] border border-rose-900/20 rounded-2xl divide-y divide-rose-900/10 overflow-hidden">
                     <div className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div>
                             <h4 className="type-ui font-bold text-rose-400">{translate('Delete Account Now')}</h4>
@@ -1260,7 +1260,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             {/* Deletion Dialog Modal */}
             <AnimatePresence>
                 {deleteModalOpen && (
-                    <div className="fixed inset-0 ac-layer-overlay bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="fixed inset-0 ac-layer-overlay bg-black/80 flex items-center justify-center p-4">
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}

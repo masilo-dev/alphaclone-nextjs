@@ -139,12 +139,12 @@ export default function Microsoft365Integration() {
 
             <div className="p-6 space-y-6">
                 <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-4">
+                    <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-4">
                         <p className="type-caption uppercase tracking-widest font-black text-[var(--ws-text-muted)] mb-2">Connection</p>
                         <p className="type-card-description text-[var(--ws-text-primary)] font-semibold">{displayName || 'No Microsoft account connected'}</p>
                         <p className="type-card-description text-[var(--ws-text-muted)] mt-1">{connectionEmail || 'Connect a work or school account to enable Outlook + Teams.'}</p>
                     </div>
-                    <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-4">
+                    <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-4">
                         <p className="type-caption uppercase tracking-widest font-black text-[var(--ws-text-muted)] mb-2">Status</p>
                         <p className={`type-caption font-semibold ${status === 'connected' ? 'text-emerald-400' : status === 'error' ? 'text-rose-400' : 'text-[var(--ws-text-secondary)]'}`}>
                             {status === 'connected' ? 'Delegated Microsoft Graph access active' : status === 'error' ? 'Connection issue detected' : 'Not connected'}
@@ -169,7 +169,7 @@ export default function Microsoft365Integration() {
                     ].map((item) => {
                         const Icon = item.icon;
                         return (
-                            <div key={item.label} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 p-4">
+                            <div key={item.label} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-4">
                                 <Icon className="w-4 h-4 text-blue-400 mb-2" />
                                 <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{item.label}</p>
                                 <p className="type-card-description text-[var(--ws-text-muted)] mt-1">{item.desc}</p>

@@ -63,7 +63,7 @@ export function ReceiptOCRScannerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--ws-canvas)]/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--ws-canvas)] animate-in fade-in duration-200">
       <div className="w-full max-w-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--ws-border)] bg-[var(--ws-canvas)]">
@@ -110,7 +110,7 @@ export function ReceiptOCRScannerModal({
               <div className="relative rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] overflow-hidden h-56 flex items-center justify-center">
                 <img src={imagePreview} alt="Receipt" className="max-h-full object-contain" />
                 {scanning && (
-                  <div className="absolute inset-0 bg-[var(--ws-canvas)]/80 backdrop-blur-sm flex flex-col items-center justify-center text-teal-400 space-y-2">
+                  <div className="absolute inset-0 bg-[var(--ws-canvas)] flex flex-col items-center justify-center text-teal-400 space-y-2">
                     <Scan size={28} className="animate-bounce" />
                     <span className="type-caption font-bold uppercase tracking-wider">Scanning Receipt OCR...</span>
                   </div>

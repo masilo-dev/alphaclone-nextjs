@@ -209,7 +209,7 @@ export default function WhatsAppIntegration() {
       <div className="p-6 space-y-6">
         {activeIntegration ? (
           <div className="space-y-4">
-            <div className="p-4 rounded-lg bg-[var(--ws-canvas)]/45 border border-[var(--ws-border)] space-y-3">
+            <div className="p-4 rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] space-y-3">
               <h3 className="type-ui font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 Active Integration: {activeIntegration.alias}
@@ -328,7 +328,7 @@ export default function WhatsAppIntegration() {
                   className={`rounded-lg border px-4 py-3 text-left transition-colors ${
                     provider === 'meta'
                       ? 'border-emerald-500/40 bg-emerald-500/10'
-                      : 'border-[var(--ws-border)] bg-[var(--ws-panel)]/40 hover:border-slate-500'
+                      : 'border-[var(--ws-border)] bg-[var(--ws-panel)] hover:border-slate-500'
                   }`}
                 >
                   <div className="flex items-center gap-2 type-ui font-bold text-[var(--ws-text-primary)]">
@@ -343,7 +343,7 @@ export default function WhatsAppIntegration() {
                   className={`rounded-lg border px-4 py-3 text-left transition-colors ${
                     provider === 'zernio'
                       ? 'border-violet-500/40 bg-violet-500/10'
-                      : 'border-[var(--ws-border)] bg-[var(--ws-panel)]/40 hover:border-slate-500'
+                      : 'border-[var(--ws-border)] bg-[var(--ws-panel)] hover:border-slate-500'
                   }`}
                 >
                   <div className="flex items-center gap-2 type-ui font-bold text-[var(--ws-text-primary)]">

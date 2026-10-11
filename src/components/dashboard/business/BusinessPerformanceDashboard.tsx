@@ -216,7 +216,7 @@ const BusinessPerformanceDashboard: React.FC = () => {
       {/* Main Content Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Revenue Performance Chart */}
-        <Card className="lg:col-span-2 p-8 border-[var(--ws-border)] bg-[var(--ws-hover)] backdrop-blur-md overflow-hidden relative">
+        <Card className="lg:col-span-2 p-8 border-[var(--ws-border)] bg-[var(--ws-hover)] overflow-hidden relative">
           <div className="absolute top-0 right-0 p-8">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
@@ -282,7 +282,7 @@ const BusinessPerformanceDashboard: React.FC = () => {
         {/* Sidebar Insights */}
         <div className="space-y-6">
           {/* Strategic Insights */}
-          <Card className="p-6 border-[var(--ws-border)] bg-[var(--ws-hover)] backdrop-blur-md">
+          <Card className="p-6 border-[var(--ws-border)] bg-[var(--ws-hover)]">
             <h3 className="text-lg font-bold text-[var(--surface-secondary)] mb-6 flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-[var(--success-500)]" /> Executive Insights
             </h3>
@@ -345,7 +345,7 @@ const BusinessPerformanceDashboard: React.FC = () => {
           </Card>
 
           {/* Activity Log Snapshot */}
-          <Card className="p-6 border-[var(--ws-border)] bg-[var(--ws-hover)] backdrop-blur-md">
+          <Card className="p-6 border-[var(--ws-border)] bg-[var(--ws-hover)]">
             <h3 className="text-lg font-bold text-[var(--surface-secondary)] mb-6 flex items-center gap-2">
               <Clock className="w-5 h-5 text-[var(--border-default)]" /> Recent Events
             </h3>

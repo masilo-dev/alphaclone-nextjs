@@ -316,7 +316,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                             {assignedProjects.slice(0, 3).map(project => (
                                                 <div
                                                     key={project.id}
-                                                    className="type-caption bg-[var(--ws-surface-secondary)]/50 px-2 py-1 rounded border border-[var(--ws-border)]/50"
+                                                    className="type-caption bg-[var(--ws-surface-secondary)] px-2 py-1 rounded border border-[var(--ws-border)]/50"
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-[var(--ws-text-secondary)] truncate">{project.name}</span>
@@ -331,7 +331,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                             )}
                                         </div>
                                     ) : (
-                                        <div className="type-caption text-[var(--ws-text-muted)] text-center py-2 bg-[var(--ws-panel)]/30 rounded border border-dashed border-[var(--ws-border)]">
+                                        <div className="type-caption text-[var(--ws-text-muted)] text-center py-2 bg-[var(--ws-panel)] rounded border border-dashed border-[var(--ws-border)]">
                                             No assignments
                                         </div>
                                     )}
@@ -389,7 +389,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                                 onClick={() => handleToggleProject(project.id)}
                                                 className={`w-full p-3 rounded-lg border transition-all text-left min-h-11 ${isAssigned
                                                     ? 'border-teal-500 bg-teal-500/10'
-                                                    : 'border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/50 hover:border-slate-600'
+                                                    : 'border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] hover:border-slate-600'
                                                     }`}
                                             >
                                                 <div className="flex items-start justify-between">

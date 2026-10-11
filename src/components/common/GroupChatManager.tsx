@@ -114,7 +114,7 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
                   value={groupName}
                   onChange={e => setGroupName(e.target.value)}
                   placeholder="e.g. Design Team"
-                  className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/60 px-3 py-2.5 type-ui text-white placeholder:text-[var(--ws-text-muted)] focus:border-teal-500 focus:outline-none min-h-11"
+                  className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 type-ui text-white placeholder:text-[var(--ws-text-muted)] focus:border-teal-500 focus:outline-none min-h-11"
                 />
               </div>
 
@@ -127,7 +127,7 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
                   onChange={e => setGroupDescription(e.target.value)}
                   placeholder="Optional description"
                   rows={2}
-                  className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/60 px-3 py-2.5 type-ui text-white placeholder:text-[var(--ws-text-muted)] focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 type-ui text-white placeholder:text-[var(--ws-text-muted)] focus:border-teal-500 focus:outline-none"
                 />
               </div>
 
@@ -143,7 +143,7 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
                       'flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2.5 type-ui transition-colors min-h-11',
                       groupType === 'public'
                         ? 'border-teal-500/50 bg-teal-500/10 text-teal-400'
-                        : 'border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/40 text-[var(--ws-text-muted)] hover:border-slate-600'
+                        : 'border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:border-slate-600'
                     )}
                   >
                     <Globe className="h-4 w-4" />
@@ -156,7 +156,7 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
                       'flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2.5 type-ui transition-colors min-h-11',
                       groupType === 'private'
                         ? 'border-teal-500/50 bg-teal-500/10 text-teal-400'
-                        : 'border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/40 text-[var(--ws-text-muted)] hover:border-slate-600'
+                        : 'border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:border-slate-600'
                     )}
                   >
                     <Lock className="h-4 w-4" />
@@ -169,7 +169,7 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
                 <label className="mb-1.5 block type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">
                   Members ({selectedMembers.length})
                 </label>
-                <div className="max-h-48 space-y-1 overflow-y-auto rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/30 p-2">
+                <div className="max-h-48 space-y-1 overflow-y-auto rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-2">
                   {teamMembers.length === 0 ? (
                     <p className="py-4 text-center type-card-description text-[var(--ws-text-muted)]">No team members available</p>
                   ) : (
@@ -184,7 +184,7 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
                             'flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors min-h-11',
                             selected
                               ? 'bg-teal-500/10 text-white'
-                              : 'hover:bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-secondary)]'
+                              : 'hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)]'
                           )}
                         >
                           <Avatar src={member.avatar_url} name={member.name} email={member.email} size={32} />

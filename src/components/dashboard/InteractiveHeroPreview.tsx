@@ -61,10 +61,10 @@ const InteractiveHeroPreview = () => {
             {/* Main Dashboard Frame */}
             <motion.div
                 style={{ rotateX: useTransform(y, [-20, 20], [5, -5]), rotateY: useTransform(x, [-20, 20], [-5, 5]), x, y }}
-                className="absolute inset-0 bg-[var(--ws-panel)]/60 backdrop-blur-lg border border-[var(--ws-border)]/50 rounded-3xl overflow-hidden shadow-2xl flex transform-gpu"
+                className="absolute inset-0 bg-[var(--ws-panel)] border border-[var(--ws-border)]/50 rounded-3xl overflow-hidden shadow-2xl flex transform-gpu"
             >
                 {/* Sidebar */}
-                <div className="w-16 lg:w-48 border-r border-[var(--ws-border)]/50 p-4 hidden lg:flex flex-col gap-6 bg-[var(--ws-canvas)]/20">
+                <div className="w-16 lg:w-48 border-r border-[var(--ws-border)]/50 p-4 hidden lg:flex flex-col gap-6 bg-[var(--ws-canvas)]">
                     <div className="flex items-center gap-2 mb-4">
                         <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center shrink-0">
                             <Zap className="w-5 h-5 text-slate-950" />
@@ -80,7 +80,7 @@ const InteractiveHeroPreview = () => {
                         ].map((item) => (
                             <div
                                 key={item.label}
-                                className={`flex items-center gap-3 p-2 rounded-lg transition-colors cursor-pointer ${activeTab === item.label ? 'bg-teal-500/10 text-teal-400' : 'text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-secondary)]/50'}`}
+                                className={`flex items-center gap-3 p-2 rounded-lg transition-colors cursor-pointer ${activeTab === item.label ? 'bg-teal-500/10 text-teal-400' : 'text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-secondary)]'}`}
                                 onClick={() => setActiveTab(item.label)}
                             >
                                 <item.icon className="w-5 h-5" />
@@ -93,8 +93,8 @@ const InteractiveHeroPreview = () => {
                 {/* Content Area */}
                 <div className="flex-1 flex flex-col min-w-0">
                     {/* Header */}
-                    <div className="h-16 border-b border-[var(--ws-border)]/50 flex items-center justify-between px-6 bg-[var(--ws-canvas)]/20">
-                        <div className="flex items-center gap-3 bg-[var(--ws-panel)]/50 rounded-lg px-3 py-1.5 border border-[var(--ws-border)]">
+                    <div className="h-16 border-b border-[var(--ws-border)]/50 flex items-center justify-between px-6 bg-[var(--ws-canvas)]">
+                        <div className="flex items-center gap-3 bg-[var(--ws-panel)] rounded-lg px-3 py-1.5 border border-[var(--ws-border)]">
                             <Search className="w-4 h-4 text-[var(--ws-text-muted)]" />
                             <span className="type-caption text-[var(--ws-text-muted)] hidden sm:block">Search projects...</span>
                         </div>
@@ -116,14 +116,14 @@ const InteractiveHeroPreview = () => {
 
                         {/* Cards Row */}
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-[var(--ws-panel)]/60 p-4 rounded-2xl border border-[var(--ws-border)]/50">
+                            <div className="bg-[var(--ws-panel)] p-4 rounded-2xl border border-[var(--ws-border)]/50">
                                 <div className="type-caption text-[var(--ws-text-muted)] mb-1">Active Projects</div>
                                 <div className="text-2xl font-bold text-teal-400 flex items-center gap-2">
                                     <TrendingUp className="w-5 h-5" />
                                     12
                                 </div>
                             </div>
-                            <div className="bg-[var(--ws-panel)]/60 p-4 rounded-2xl border border-[var(--ws-border)]/50">
+                            <div className="bg-[var(--ws-panel)] p-4 rounded-2xl border border-[var(--ws-border)]/50">
                                 <div className="type-caption text-[var(--ws-text-muted)] mb-1">Q3 Forecast</div>
                                 <div className="text-2xl font-bold text-blue-400">$64.2k</div>
                             </div>
@@ -140,7 +140,7 @@ const InteractiveHeroPreview = () => {
                                     initial={{ x: -20, opacity: 0 }}
                                     animate={{ x: 0, opacity: 1 }}
                                     transition={{ delay: 0.5 + i * 0.1 }}
-                                    className="flex items-center justify-between p-3 bg-[var(--ws-canvas)]/30 rounded-xl border border-[var(--ws-border)]/30"
+                                    className="flex items-center justify-between p-3 bg-[var(--ws-canvas)] rounded-xl border border-[var(--ws-border)]/30"
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className={`w-2 h-2 rounded-full bg-${proj.color}-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]`} />
@@ -159,7 +159,7 @@ const InteractiveHeroPreview = () => {
             {/* Floating Terminal (AI Agent) */}
             <motion.div
                 style={{ x: useTransform(x, (val) => val * 1.5), y: useTransform(y, (val) => val * 1.5 - 20) }}
-                className="absolute -bottom-10 -right-6 lg:-right-12 w-80 lg:w-96 bg-[var(--ws-canvas)]/90 backdrop-blur-xl border border-teal-500/30 rounded-2xl p-4 shadow-2xl z-20 overflow-hidden transform-gpu"
+                className="absolute -bottom-10 -right-6 lg:-right-12 w-80 lg:w-96 bg-[var(--ws-canvas)] border border-teal-500/30 rounded-2xl p-4 shadow-2xl z-20 overflow-hidden transform-gpu"
             >
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">

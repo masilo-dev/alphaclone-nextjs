@@ -67,7 +67,7 @@ export function VideoMeetingsAndMcpSetup() {
   const [openDaily, setOpenDaily] = useState(true);
 
   return (
-    <div className="rounded-xl border border-[var(--ws-border)]/80 bg-[var(--ws-panel)]/40 overflow-hidden">
+    <div className="rounded-xl border border-[var(--ws-border)]/80 bg-[var(--ws-panel)] overflow-hidden">
       <div className="px-4 py-3 border-b border-[var(--ws-border)]/80 flex items-center gap-2">
         <Video className="w-5 h-5 text-teal-400" />
         <div>
@@ -82,7 +82,7 @@ export function VideoMeetingsAndMcpSetup() {
         <button
           type="button"
           onClick={() => setOpenDaily((v) => !v)}
-          className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-[var(--ws-surface-secondary)]/30 transition-colors"
+          className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-[var(--ws-surface-secondary)] transition-colors"
         >
           <span className="type-ui font-medium text-[var(--ws-text-secondary)] flex items-center gap-2">
             Built-in video (Daily.co / LiveKit)
@@ -119,7 +119,7 @@ export function VideoMeetingsAndMcpSetup() {
         <button
           type="button"
           onClick={() => setOpenZoom((v) => !v)}
-          className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-[var(--ws-surface-secondary)]/30 transition-colors"
+          className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-[var(--ws-surface-secondary)] transition-colors"
         >
           <span className="type-ui font-medium text-[var(--ws-text-secondary)]">Zoom (Meeting API or Video SDK)</span>
           {openZoom ? (
@@ -185,7 +185,7 @@ export function VideoMeetingsAndMcpSetup() {
         <button
           type="button"
           onClick={() => setOpenMcp((v) => !v)}
-          className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-[var(--ws-surface-secondary)]/30 transition-colors"
+          className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-[var(--ws-surface-secondary)] transition-colors"
         >
           <span className="type-ui font-medium text-[var(--ws-text-secondary)] flex items-center gap-2">
             <Bot className="w-4 h-4 text-violet-400" />

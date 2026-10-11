@@ -104,7 +104,7 @@ export function OutreachSequencePanel({
                   {isCompleted ? <CheckCircle2 size={12} /> : idx + 1}
                 </div>
                 <div className={`flex-1 rounded-xl p-3 border transition-all ${
-                  isCurrent ? 'bg-teal-500/10 border-teal-500/30' : 'bg-[var(--ws-panel)]/50 border-[var(--ws-border)]'
+                  isCurrent ? 'bg-teal-500/10 border-teal-500/30' : 'bg-[var(--ws-panel)] border-[var(--ws-border)]'
                 }`}>
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">

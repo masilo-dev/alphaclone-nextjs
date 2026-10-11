@@ -242,7 +242,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => setIsOpen(false)}
-                        className="fixed inset-0 bg-[rgba(13,15,24,0.72)] backdrop-blur-sm"
+                        className="fixed inset-0 bg-[rgba(13,15,24,0.72)]"
                         aria-hidden="true"
                     />
 
@@ -311,7 +311,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                         onMouseEnter={() => setSelectedIndex(globalIndex)}
                                                         className={`w-full text-left p-3 rounded-2xl transition-all flex items-center gap-4 group ${isSelected
                                                             ? 'bg-teal-500/10 border-teal-500/20'
-                                                            : 'hover:bg-[var(--ws-surface-secondary)]/50 border-transparent'
+                                                            : 'hover:bg-[var(--ws-surface-secondary)] border-transparent'
                                                             } border`}
                                                     >
                                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isSelected ? 'bg-teal-500 text-slate-950' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'
@@ -363,7 +363,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                             onMouseEnter={() => setSelectedIndex(globalIndex)}
                                                             className={`w-full text-left p-3 rounded-lg transition-all flex items-center gap-4 group ${isSelected
                                                                 ? 'bg-teal-500/10 border-teal-500/20'
-                                                                : 'hover:bg-[var(--ws-surface-secondary)]/50 border-transparent'
+                                                                : 'hover:bg-[var(--ws-surface-secondary)] border-transparent'
                                                                 } border`}
                                                         >
                                                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isSelected ? 'bg-teal-500 text-slate-950' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'

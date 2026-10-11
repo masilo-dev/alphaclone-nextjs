@@ -74,7 +74,7 @@ export default function PlatformHelpTab() {
                   <p className="type-card-description text-[var(--ws-text-muted)] mt-1 leading-relaxed">{section.description}</p>
                 ) : null}
               </div>
-              <div className="divide-y divide-white/5 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 overflow-hidden">
+              <div className="divide-y divide-white/5 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] overflow-hidden">
                 {section.entries.map((entry) => (
                   <div key={entry.term} className="p-4 hover:bg-white/[0.02] transition-colors">
                     <p className="type-card-description font-semibold text-[var(--brand-blue-300)]">{entry.term}</p>

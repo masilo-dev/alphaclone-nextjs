@@ -219,7 +219,7 @@ function PublicInvoiceContent() {
                     </div>
 
                     {/* Status Pipeline */}
-                    <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-5">
+                    <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-5">
                         <p className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)] mb-4">Invoice Status</p>
                         <InvoiceStatusPipeline
                             status={(invoice.status || 'draft') as InvoiceStatus}
@@ -233,7 +233,7 @@ function PublicInvoiceContent() {
                         />
                     </div>
 
-                    <Card className="p-4 sm:p-8 border-[var(--ws-border)] bg-[var(--ws-panel)]/50 backdrop-blur-xl">
+                    <Card className="p-4 sm:p-8 border-[var(--ws-border)] bg-[var(--ws-panel)]">
                         <div className="flex flex-wrap justify-between items-start gap-3 mb-8 sm:mb-12">
                             <div className="min-w-0">
                                 <p className="text-[var(--ws-text-muted)] type-caption uppercase tracking-widest font-bold mb-1">Invoice Reference</p>
@@ -257,7 +257,7 @@ function PublicInvoiceContent() {
                             <p className="text-[var(--ws-text-muted)] type-caption uppercase font-bold mb-4">Billing Summary</p>
                             <div className="space-y-3">
                                 {normalizedItems.map((item: any, idx: number) => (
-                                    <div key={idx} className="flex justify-between items-center gap-3 bg-[var(--ws-canvas)]/30 p-4 rounded-xl border border-white/5">
+                                    <div key={idx} className="flex justify-between items-center gap-3 bg-[var(--ws-canvas)] p-4 rounded-xl border border-white/5">
                                         <div className="min-w-0">
                                             <p className="font-semibold text-[var(--ws-text-secondary)] break-words">{item.description}</p>
                                             <p className="type-card-description text-[var(--ws-text-muted)]">Qty: {item.quantity} &times; {formatMoney(item.rate)}</p>
@@ -297,7 +297,7 @@ function PublicInvoiceContent() {
                     </Card>
 
                     <div className="flex flex-col sm:flex-row gap-4">
-                        <Button variant="outline" className="flex-1 gap-2 border-[var(--ws-border)] bg-[var(--ws-panel)]/50" onClick={handleDownloadPDF}>
+                        <Button variant="outline" className="flex-1 gap-2 border-[var(--ws-border)] bg-[var(--ws-panel)]" onClick={handleDownloadPDF}>
                             <Download className="w-4 h-4" /> Download PDF
                         </Button>
                     </div>
@@ -363,14 +363,14 @@ function PublicInvoiceContent() {
                                     </div>
 
                                     {hasManualPaymentDetails && (
-                                        <Card className="p-5 border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 space-y-4">
+                                        <Card className="p-5 border-[var(--ws-border)] bg-[var(--ws-canvas)] space-y-4">
                                             <p className="type-card-description font-bold text-[var(--ws-text-secondary)] flex items-center gap-2">
                                                 <Building2 className="w-4 h-4" /> Alternative payment details
                                             </p>
                                             {bankDetails && (
                                                 <div className="space-y-1">
                                                     <p className="type-caption uppercase tracking-widest text-[var(--ws-text-muted)]">Bank transfer</p>
-                                                    <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/80 p-3 type-ui text-[var(--ws-text-secondary)] whitespace-pre-wrap break-words">
+                                                    <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] p-3 type-ui text-[var(--ws-text-secondary)] whitespace-pre-wrap break-words">
                                                         {bankDetails}
                                                     </div>
                                                 </div>
@@ -378,7 +378,7 @@ function PublicInvoiceContent() {
                                             {mobilePaymentDetails && (
                                                 <div className="space-y-1">
                                                     <p className="type-caption uppercase tracking-widest text-[var(--ws-text-muted)]">Mobile payment</p>
-                                                    <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/80 p-3 type-ui text-[var(--ws-text-secondary)] whitespace-pre-wrap break-words">
+                                                    <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] p-3 type-ui text-[var(--ws-text-secondary)] whitespace-pre-wrap break-words">
                                                         {mobilePaymentDetails}
                                                     </div>
                                                 </div>
@@ -386,7 +386,7 @@ function PublicInvoiceContent() {
                                         </Card>
                                     )}
 
-                                    <Card className="p-5 border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 space-y-3">
+                                    <Card className="p-5 border-[var(--ws-border)] bg-[var(--ws-canvas)] space-y-3">
                                         <p className="type-card-description font-bold text-[var(--ws-text-secondary)] flex items-center gap-2">
                                             <Building2 className="w-4 h-4" /> Paid by bank transfer?
                                         </p>
@@ -408,7 +408,7 @@ function PublicInvoiceContent() {
                                     </div>
                                 </Card>
 
-                                <div className="p-6 bg-[var(--ws-panel)]/30 border border-slate-900 rounded-2xl">
+                                <div className="p-6 bg-[var(--ws-panel)] border border-slate-900 rounded-2xl">
                                     <p className="text-[var(--ws-text-muted)] type-card-description italic text-center">
                                         By paying, you agree to {branding.name}&apos;s terms of service.
                                     </p>

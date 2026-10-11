@@ -349,7 +349,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
     return (
             <div className="flex flex-col h-[600px] bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden">
                 {/* Chat Header */}
-                <div className="p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/50 backdrop-blur-sm flex justify-between items-center">
+                <div className="p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)] flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-indigo-500/10 rounded-lg">
                             <MessageCircle className="w-5 h-5 text-indigo-400" />
@@ -374,7 +374,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {loading ? (
-                        <div className="space-y-3">{[...Array(4)].map((_, i) => <div key={i} className="h-10 bg-[var(--ws-surface-secondary)]/40 rounded-xl animate-pulse" />)}</div>
+                        <div className="space-y-3">{[...Array(4)].map((_, i) => <div key={i} className="h-10 bg-[var(--ws-surface-secondary)] rounded-xl animate-pulse" />)}</div>
                     ) : messages.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-center text-[var(--ws-text-muted)] gap-2">
                             <MessageCircle className="w-8 h-8 text-slate-700" />
@@ -388,7 +388,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
                         if (isSystem) {
                             return (
                                 <div key={msg.id} className="flex justify-center my-4">
-                                    <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]/50 rounded-full px-4 py-1 type-caption text-[var(--ws-text-muted)] flex items-center gap-2">
+                                    <div className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/50 rounded-full px-4 py-1 type-caption text-[var(--ws-text-muted)] flex items-center gap-2">
                                         {msg.type === 'task_created' && <CheckCircle className="w-3 h-3 text-green-400" />}
                                         {msg.content}
                                     </div>

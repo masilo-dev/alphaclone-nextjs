@@ -49,7 +49,7 @@ export default function LeadFinderSmartBar({ onProfileLoaded, onSmartSearch, sea
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 px-4 py-3 type-ui text-[var(--ws-text-muted)] flex items-center gap-2">
+      <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-3 type-ui text-[var(--ws-text-muted)] flex items-center gap-2">
         <Loader2 className="w-4 h-4 animate-spin" />
         Loading your prospecting profile…
       </div>

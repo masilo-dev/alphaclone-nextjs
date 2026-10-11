@@ -59,8 +59,8 @@
 .ac-dashboard-root .ac-v3-sheet,
 .ac-dashboard-root .ac-v3-popover,
 .ac-dashboard-root .glass-panel {
-  -webkit-backdrop-filter: blur(4px) saturate(101%) !important;
-  backdrop-filter: blur(4px) saturate(101%) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 /* Headers and sticky toolbars: previously blurred at 20px + 150% saturation.
@@ -78,8 +78,8 @@ header,
 .ac-dashboard-root [data-workspace-toolbar],
 .ac-dashboard-root [data-sticky-toolbar],
 .ac-dashboard-root .ac-workspace-toolbar {
-  -webkit-backdrop-filter: blur(4px) saturate(104%) !important;
-  backdrop-filter: blur(4px) saturate(104%) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 /* Dialogs/sheets still need separation from the page, but 28px was excessive.
@@ -96,8 +96,8 @@ aside[data-drawer],
 .ac-dashboard-root [role="dialog"],
 .ac-dashboard-root [data-sheet],
 .ac-dashboard-root [data-popover-content] {
-  -webkit-backdrop-filter: blur(6px) saturate(104%) !important;
-  backdrop-filter: blur(6px) saturate(104%) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 /* Protect text clarity from accidental inherited filter/opacity effects. */

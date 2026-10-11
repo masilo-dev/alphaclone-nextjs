@@ -39,7 +39,7 @@ export function ComposeContactPicker({ tenantId, onSelect, className = '' }: Com
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/80 type-caption font-bold uppercase tracking-wider text-[var(--brand-blue-300)] hover:bg-[var(--ws-surface-secondary)] hover:text-teal-200 transition-colors"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] type-caption font-bold uppercase tracking-wider text-[var(--brand-blue-300)] hover:bg-[var(--ws-surface-secondary)] hover:text-teal-200 transition-colors"
       >
         <UserPlus className="w-3.5 h-3.5" />
         Pick contact

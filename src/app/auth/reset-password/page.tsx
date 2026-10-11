@@ -196,7 +196,7 @@ export default function ResetPasswordPage() {
                             </button>
                         </div>
 
-                        <div className="bg-[var(--ws-surface-secondary)]/30 border border-[var(--ws-border)]/50 rounded-xl p-3 space-y-2">
+                        <div className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/50 rounded-xl p-3 space-y-2">
                             <p className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Security Requirements</p>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                                 <div className={`flex items-center gap-2 type-caption ${password.length >= 12 ? 'text-[var(--brand-teal)]' : 'text-[var(--ws-text-muted)]'}`}>

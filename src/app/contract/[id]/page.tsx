@@ -160,7 +160,7 @@ export default function PublicContractPage() {
             <Toaster position="top-center" />
             <div className="max-w-4xl mx-auto bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl overflow-hidden shadow-2xl">
                 {/* Header */}
-                <div className="bg-[var(--ws-canvas)]/50 p-6 border-b border-[var(--ws-border)] flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="bg-[var(--ws-canvas)] p-6 border-b border-[var(--ws-border)] flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-teal-500/10 rounded-xl">
                             <FileText className="w-8 h-8 text-teal-400" />
@@ -178,7 +178,7 @@ export default function PublicContractPage() {
                     )}
                 </div>
 
-                <div className="p-4 sm:p-6 bg-[var(--ws-canvas)]/20 border-y border-[var(--ws-border)] print-content">
+                <div className="p-4 sm:p-6 bg-[var(--ws-canvas)] border-y border-[var(--ws-border)] print-content">
                     <DocumentPreview
                         className="!mb-0"
                         hideLabel
@@ -192,14 +192,14 @@ export default function PublicContractPage() {
 
                 {/* Signature Section */}
                 {reviewOnly ? (<p className="type-card-description text-[var(--ws-text-muted)]">Draft for review only. No signature is requested or permitted.</p>) : declined ? (
-                    <div className="p-8 bg-[var(--ws-canvas)]/30 border-t border-[var(--ws-border)] text-center">
+                    <div className="p-8 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--error-500)]/10 text-red-400 rounded-lg border border-red-500/20">
                             <XCircle className="w-5 h-5" />
                             <span className="font-bold type-ui">Contract Declined</span>
                         </div>
                     </div>
                 ) : !signed ? (
-                    <div className="p-8 bg-[var(--ws-canvas)]/30 border-t border-[var(--ws-border)]">
+                    <div className="p-8 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)]">
                         {/* ESIGN Disclosure */}
                         <div className="mb-8 p-6 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl">
                             <div
@@ -315,7 +315,7 @@ export default function PublicContractPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="p-8 bg-[var(--ws-canvas)]/30 border-t border-[var(--ws-border)] text-center space-y-4">
+                    <div className="p-8 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] text-center space-y-4">
                         <CheckCircle2 className="mx-auto mb-2 h-10 w-10 text-emerald-400" />
                         <h2 className="text-lg font-semibold text-white">Your signature is recorded</h2>
                         <p className="mx-auto max-w-lg type-card-description text-[var(--ws-text-muted)]">

@@ -167,7 +167,7 @@ function McpOAuthCredentialsPanel({
   const tokenUrl = `${mcpOrigin}/api/mcp/token`;
 
   return (
-    <div className="mb-6 p-5 rounded-2xl bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)]/80 space-y-4">
+    <div className="mb-6 p-5 rounded-2xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/80 space-y-4">
       <div>
         <p className="type-card-description font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
           <Shield className="w-4 h-4 text-teal-400" />
@@ -352,7 +352,7 @@ function McpBusinessPromptPlaybook({
               <button
                 type="button"
                 onClick={() => setExpandedGroup(isOpen ? null : group.title)}
-                className="w-full flex items-center justify-between gap-3 p-4 text-left hover:bg-[var(--ws-surface-secondary)]/30 transition-colors"
+                className="w-full flex items-center justify-between gap-3 p-4 text-left hover:bg-[var(--ws-surface-secondary)] transition-colors"
               >
                 <div>
                   <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{group.title}</p>
@@ -365,7 +365,7 @@ function McpBusinessPromptPlaybook({
                   {group.prompts.map((prompt) => (
                     <div
                       key={prompt}
-                      className="flex items-start gap-3 p-3 rounded-xl bg-[var(--ws-panel)]/70 border border-[var(--ws-border)]"
+                      className="flex items-start gap-3 p-3 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)]"
                     >
                       <MessageSquare className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
                       <p className="flex-1 type-card-description text-[var(--ws-text-secondary)] leading-relaxed">{prompt}</p>
@@ -639,7 +639,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         </div>
 
         {/* Setup Type Selector */}
-        <div className="flex gap-2 mb-8 bg-[var(--ws-panel)]/50 p-1 rounded-xl w-fit border border-[var(--ws-border)]">
+        <div className="flex gap-2 mb-8 bg-[var(--ws-panel)] p-1 rounded-xl w-fit border border-[var(--ws-border)]">
           <button
             onClick={() => setSetupType('claude')}
             className={`px-4 py-2 rounded-lg type-ui font-semibold transition-all ${setupType === 'claude' ? 'bg-indigo-600 text-[var(--ws-text-primary)] shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
@@ -727,7 +727,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         {/* Capabilities grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
           {CLAUDE_CAPABILITIES.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="p-4 rounded-xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] hover:border-[var(--ws-border)] transition-all">
+            <div key={title} className="p-4 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-[var(--ws-border)] transition-all">
               <div className="flex items-center gap-2 mb-2">
                 <Icon className="w-4 h-4 text-teal-400" />
                 <span className="text-[var(--ws-text-primary)] type-ui font-semibold">{title}</span>
@@ -808,8 +808,8 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                   isDone
                     ? 'border-teal-500/30 bg-teal-500/5'
                     : isOpen
-                    ? 'border-indigo-500/40 bg-[var(--ws-panel)]/80'
-                    : 'border-[var(--ws-border)] bg-[var(--ws-panel)]/40'
+                    ? 'border-indigo-500/40 bg-[var(--ws-panel)]'
+                    : 'border-[var(--ws-border)] bg-[var(--ws-panel)]'
                 }`}
               >
                 {/* Step header */}
@@ -860,7 +860,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
 
                         {/* Copy key step */}
                         {step.isCopyStep && (
-                          <div className="p-4 rounded-xl bg-[var(--ws-surface-secondary)]/80 border border-[var(--ws-border)] mb-4">
+                          <div className="p-4 rounded-xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] mb-4">
                             <p className="type-caption text-[var(--ws-text-muted)] mb-2 font-medium uppercase tracking-wider">
                               {setupType === 'cursor' ? 'Your Connection Key' : 'Your Connection URL'}
                             </p>
@@ -916,7 +916,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                           <div className="space-y-2 mb-4">
                             <p className="text-[var(--ws-text-muted)] type-card-description font-medium mb-2">Where to find the file on your computer:</p>
                             {step.subSteps.map(sub => (
-                              <div key={sub.platform} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)]/60">
+                              <div key={sub.platform} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/60">
                                 <Monitor className="w-4 h-4 text-[var(--ws-text-muted)] flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
                                   <span className="text-[var(--ws-text-secondary)] type-caption font-semibold">{sub.platform}: </span>
@@ -1029,7 +1029,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                                   <button
                                     type="button"
                                     onClick={() => copyText(prompt, 'Test prompt')}
-                                    className="p-1.5 rounded-lg bg-[var(--ws-surface-secondary)]/80 hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors shrink-0"
+                                    className="p-1.5 rounded-lg bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors shrink-0"
                                     aria-label="Copy test prompt"
                                   >
                                     <Copy className="w-3.5 h-3.5" />
@@ -1080,7 +1080,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
       )}
 
       {/* Help section */}
-      <div className="mt-8 p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)]">
+      <div className="mt-8 p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)]">
         <div className="flex items-center gap-2 mb-3">
           <Info className="w-4 h-4 text-[var(--ws-text-muted)]" />
           <span className="text-[var(--ws-text-primary)] type-ui font-semibold">Need help?</span>

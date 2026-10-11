@@ -46,7 +46,7 @@ interface SMSMessage {
 }
 
 const STATUS_STYLE: Record<string, string> = {
-    draft:     'bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)]',
+    draft:     'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] border-[var(--ws-border)]',
     scheduled: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
     running:   'bg-amber-500/15 text-amber-400 border-amber-500/30',
     completed: 'bg-green-500/15 text-green-400 border-green-500/30',
@@ -298,7 +298,7 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                     { label: 'Failed', value: totalFailed, color: 'text-red-400' },
                     { label: 'Messages Log', value: messages.length, color: 'text-blue-400' },
                 ].map(s => (
-                    <div key={s.label} className="bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)] rounded-xl p-3 text-center">
+                    <div key={s.label} className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl p-3 text-center">
                         <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
                         <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">{s.label}</p>
                     </div>
@@ -306,7 +306,7 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)] rounded-xl w-fit">
+            <div className="flex gap-1 p-1 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl w-fit">
                 {(['campaigns', 'messages', 'quick'] as const).map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
                         className={`px-4 py-2 rounded-lg type-ui font-semibold capitalize transition-all ${activeTab === tab ? 'bg-teal-500 text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}>
@@ -317,7 +317,7 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
 
             {/* Create Campaign Form */}
             {showForm && (
-                <div className="bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-2xl p-6 space-y-4">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 space-y-4">
                     <div className="flex items-center justify-between">
                         <h3 className="font-bold text-[var(--ws-text-primary)]">New SMS Campaign</h3>
                         <button onClick={() => setShowForm(false)} aria-label="Close form" className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"><X className="w-4 h-4" /></button>
@@ -424,7 +424,7 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                             <p className="text-slate-600 type-card-description mt-1">Create your first SMS campaign to reach leads and clients.</p>
                         </div>
                     ) : campaigns.map(campaign => (
-                        <div key={campaign.id} className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-4">
+                        <div key={campaign.id} className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4">
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
@@ -510,14 +510,14 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                         <>
                         <ResponsiveTableMobile>
                             {messages.map((msg) => (
-                                <MobileDataCard key={msg.id} className="border-[var(--ws-border)] bg-[var(--ws-panel)]/40">
+                                <MobileDataCard key={msg.id} className="border-[var(--ws-border)] bg-[var(--ws-panel)]">
                                     <p className="text-[var(--ws-text-secondary)] type-card-description font-mono">{msg.to_number}</p>
                                     <p className="text-[var(--ws-text-muted)] type-card-description line-clamp-3">{msg.body}</p>
                                     <div className="flex flex-wrap justify-between gap-2 type-caption">
                                         <span className={`px-2 py-0.5 rounded-full border ${
                                             msg.status === 'sent' || msg.status === 'delivered' ? 'bg-green-500/15 text-green-400 border-green-500/30'
                                             : msg.status === 'failed' ? 'bg-[var(--error-500)]/15 text-red-400 border-red-500/30'
-                                            : 'bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)]'}`}>
+                                            : 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] border-[var(--ws-border)]'}`}>
                                             {msg.status}
                                         </span>
                                         <span className="text-slate-600">{msg.sent_at ? new Date(msg.sent_at).toLocaleString() : '—'}</span>
@@ -528,7 +528,7 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                         <ResponsiveTableDesktop className="rounded-2xl border border-[var(--ws-border)] min-w-0">
                             <table className="w-full min-w-[640px] type-ui">
                                 <thead>
-                                    <tr className="border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/50">
+                                    <tr className="border-b border-[var(--ws-border)] bg-[var(--ws-panel)]">
                                         {['To', 'Message', 'Status', 'SID', 'Sent'].map(h => (
                                             <th key={h} className="text-left px-4 py-3 type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">{h}</th>
                                         ))}
@@ -536,14 +536,14 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                                 </thead>
                                 <tbody className="divide-y divide-slate-800">
                                     {messages.map(msg => (
-                                        <tr key={msg.id} className="hover:bg-[var(--ws-surface-secondary)]/30">
+                                        <tr key={msg.id} className="hover:bg-[var(--ws-surface-secondary)]">
                                             <td className="px-4 py-3 text-[var(--ws-text-secondary)] type-table-cell font-mono">{msg.to_number}</td>
                                             <td className="px-4 py-3 text-[var(--ws-text-muted)] type-table-cell max-w-[200px] truncate">{msg.body}</td>
                                             <td className="px-4 py-3">
                                                 <span className={`type-caption px-2 py-0.5 rounded-full border ${
                                                     msg.status === 'sent' || msg.status === 'delivered' ? 'bg-green-500/15 text-green-400 border-green-500/30'
                                                     : msg.status === 'failed' ? 'bg-[var(--error-500)]/15 text-red-400 border-red-500/30'
-                                                    : 'bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)]'}`}>
+                                                    : 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] border-[var(--ws-border)]'}`}>
                                                     {msg.status}
                                                 </span>
                                             </td>

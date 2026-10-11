@@ -608,7 +608,7 @@ export default function AutomationBuilder() {
             <div className="pointer-events-auto flex items-center gap-2">
                 <button 
                   onClick={centerView}
-                  className="bg-white/80 dark:bg-[var(--ws-panel)]/80 backdrop-blur-md p-2.5 min-h-11 min-w-11 rounded-xl shadow-lg border border-slate-200/50 dark:border-[var(--ws-border)]/50 text-slate-600 dark:text-[var(--ws-text-muted)] hover:text-indigo-500 transition"
+                  className="bg-white/80 dark:bg-[var(--ws-panel)] p-2.5 min-h-11 min-w-11 rounded-xl shadow-lg border border-slate-200/50 dark:border-[var(--ws-border)]/50 text-slate-600 dark:text-[var(--ws-text-muted)] hover:text-indigo-500 transition"
                   title="Center View"
                 >
                   <Maximize className="w-5 h-5" />
@@ -687,7 +687,7 @@ export default function AutomationBuilder() {
                                     <button
                                         key={idx}
                                         onClick={() => addActionNode(template)}
-                                        className="w-full px-3 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-[var(--ws-surface-tertiary)]/50 transition flex items-center gap-3 border-b border-slate-100/50 dark:border-[var(--ws-border)]/50 last:border-0"
+                                        className="w-full px-3 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-[var(--ws-surface-tertiary)] transition flex items-center gap-3 border-b border-slate-100/50 dark:border-[var(--ws-border)]/50 last:border-0"
                                     >
                                         <span className="text-base w-6 text-center shrink-0">
                                             {NODE_STYLES[template.type]?.icon || '⚡'}
@@ -747,7 +747,7 @@ export default function AutomationBuilder() {
                     return 'var(--color-white)';
                 }}
                 maskColor="rgba(0, 0, 0, 0.1)"
-                className="rounded-lg border border-slate-200 bg-white/50 shadow-none backdrop-blur dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)]/50" 
+                className="rounded-lg border border-slate-200 bg-white/50 shadow-none dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)]" 
             />
             <Background color="var(--ws-text-secondary)" gap={24} size={1} />
         </ReactFlow>
@@ -824,7 +824,7 @@ export default function AutomationBuilder() {
                     <ResponsiveTableDesktop className="rounded-lg border border-slate-200 bg-white shadow-none dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)]">
                         <table className="w-full min-w-[520px] text-left border-collapse">
                             <thead>
-                                <tr className="bg-slate-50 dark:bg-[var(--ws-surface-secondary)]/50 border-b border-slate-100 dark:border-[var(--ws-border)]">
+                                <tr className="bg-slate-50 dark:bg-[var(--ws-surface-secondary)] border-b border-slate-100 dark:border-[var(--ws-border)]">
                                     <th className="px-6 py-4 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Execution Date</th>
                                     <th className="px-6 py-4 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Status</th>
                                     <th className="px-6 py-4 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Details</th>

@@ -178,12 +178,12 @@ const BookingTab: React.FC = () => {
                     {loadingEvents ? (
                         <div className="grid grid-cols-1 gap-3">
                             {[1, 2, 3].map(i => (
-                                <div key={i} className="h-24 bg-[var(--ws-panel)]/50 rounded-2xl animate-pulse border border-[var(--ws-border)]" />
+                                <div key={i} className="h-24 bg-[var(--ws-panel)] rounded-2xl animate-pulse border border-[var(--ws-border)]" />
                             ))}
                         </div>
                     ) : (
                         <>
-                            <Card className="bg-[var(--ws-panel)]/60 border-[var(--ws-border)] p-4 mb-6 flex items-start gap-4">
+                            <Card className="bg-[var(--ws-panel)] border-[var(--ws-border)] p-4 mb-6 flex items-start gap-4">
                                 <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0 text-teal-400">
                                     <AlertCircle className="w-5 h-5" />
                                 </div>
@@ -211,7 +211,7 @@ const BookingTab: React.FC = () => {
                                         const hasActions = invitee?.cancel_url || invitee?.reschedule_url;
 
                                         return (
-                                            <Card key={event.id} className="p-5 bg-[var(--ws-panel)]/40 border-[var(--ws-border)] hover:border-teal-500/30 transition-all flex flex-col justify-between group">
+                                            <Card key={event.id} className="p-5 bg-[var(--ws-panel)] border-[var(--ws-border)] hover:border-teal-500/30 transition-all flex flex-col justify-between group">
                                                 <div>
                                                     <div className="flex justify-between items-start mb-3">
                                                         <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400 group-hover:scale-110 transition-transform">
@@ -228,7 +228,7 @@ const BookingTab: React.FC = () => {
                                                     </div>
 
                                                     {invitee && (
-                                                        <div className="bg-[var(--ws-canvas)]/50 rounded-xl p-3 mb-4 space-y-2 border border-[var(--ws-border)]/50">
+                                                        <div className="bg-[var(--ws-canvas)] rounded-xl p-3 mb-4 space-y-2 border border-[var(--ws-border)]/50">
                                                             <div className="flex items-center justify-between">
                                                                 <span className="type-caption text-[var(--ws-text-muted)]">Participant</span>
                                                                 <span className="type-caption font-medium text-[var(--ws-text-secondary)]">{invitee.name}</span>
@@ -291,7 +291,7 @@ const BookingTab: React.FC = () => {
                                     })}
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center py-16 bg-[var(--ws-panel)]/20 border border-[var(--ws-border)] border-dashed rounded-3xl">
+                                <div className="flex flex-col items-center justify-center py-16 bg-[var(--ws-panel)] border border-[var(--ws-border)] border-dashed rounded-3xl">
                                     <Calendar className="w-10 h-10 text-slate-700 mb-4" />
                                     <p className="text-[var(--ws-text-muted)] font-medium type-card-description">No upcoming appointments found.</p>
                                     <p className="type-caption text-slate-600 mt-1 uppercase tracking-widest">Bookings sync automatically</p>

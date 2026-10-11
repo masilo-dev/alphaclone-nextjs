@@ -312,7 +312,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       </div>
 
       {/* Footer with additional controls */}
-      <div className="flex items-center justify-between p-3 bg-[var(--ws-surface-tertiary)]/50 border-t border-[var(--ws-border)]">
+      <div className="flex items-center justify-between p-3 bg-[var(--ws-surface-tertiary)] border-t border-[var(--ws-border)]">
         <div className="flex items-center gap-2 type-ui text-[var(--ws-text-muted)]">
           <span>Page {currentPage} of {totalPages}</span>
         </div>

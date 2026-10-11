@@ -29,7 +29,7 @@ export const TabSkeleton: React.FC<{ rows?: number; showStats?: boolean }> = ({
       )}
 
       <div className="ac-data-table border border-[var(--ws-border)] rounded-lg overflow-hidden ac-skeleton-pulse">
-        <div className="flex gap-4 px-3 py-3 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/80">
+        <div className="flex gap-4 px-3 py-3 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-3 bg-[var(--ws-surface-secondary)] rounded flex-1" />
           ))}
@@ -37,7 +37,7 @@ export const TabSkeleton: React.FC<{ rows?: number; showStats?: boolean }> = ({
         {Array.from({ length: safeRows }).map((_, i) => (
           <div
             key={i}
-            className="flex gap-4 px-3 py-3 border-b border-[var(--ws-border)]/50 last:border-0 even:bg-[var(--ws-surface-secondary)]/30"
+            className="flex gap-4 px-3 py-3 border-b border-[var(--ws-border)]/50 last:border-0 even:bg-[var(--ws-surface-secondary)]"
           >
             <div className="h-4 w-8 bg-[var(--ws-surface-secondary)] rounded" />
             <div className="h-4 flex-1 bg-[var(--ws-surface-secondary)] rounded" />

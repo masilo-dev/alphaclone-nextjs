@@ -332,7 +332,7 @@ export function ContractTemplateLibrary({ onUseTemplate }: ContractTemplateLibra
                       )}
                     </div>
                   </div>
-                  <pre className="px-5 py-4 type-caption text-[var(--ws-text-secondary)] whitespace-pre-wrap font-mono leading-relaxed max-h-72 overflow-y-auto bg-[var(--ws-canvas)]/40">
+                  <pre className="px-5 py-4 type-caption text-[var(--ws-text-secondary)] whitespace-pre-wrap font-mono leading-relaxed max-h-72 overflow-y-auto bg-[var(--ws-canvas)]">
                     {template.body}
                   </pre>
                 </div>

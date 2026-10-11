@@ -31,7 +31,7 @@ export function WorkspaceGuide({ user }: WorkspaceGuideProps) {
   };
 
   return (
-    <section className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/80 p-4 shadow-sm md:p-5" aria-labelledby="workspace-guide-title">
+    <section className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 shadow-sm md:p-5" aria-labelledby="workspace-guide-title">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="type-caption font-semibold uppercase tracking-caps text-[var(--ac-accent)]">Workspace map</p>

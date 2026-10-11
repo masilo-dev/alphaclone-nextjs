@@ -302,7 +302,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
                             return (
                                 <div
                                     key={contact.id}
-                                    className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 p-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+                                    className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
                                 >
                                     <div className="min-w-0">
                                         <p className="font-semibold text-[var(--ws-text-primary)] truncate">{fullName}</p>

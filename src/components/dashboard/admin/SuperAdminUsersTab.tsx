@@ -341,7 +341,7 @@ export const SuperAdminUsersTab: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
             <Input
               placeholder="Search email or name..."
-              className="pl-10 w-full sm:w-64 h-10 bg-[var(--ws-panel)]/50 border-[var(--ws-border)]"
+              className="pl-10 w-full sm:w-64 h-10 bg-[var(--ws-panel)] border-[var(--ws-border)]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -358,7 +358,7 @@ export const SuperAdminUsersTab: React.FC = () => {
               className={`px-4 py-1.5 rounded-full type-caption font-bold uppercase tracking-wider transition-all border ${
                 filter === f
                   ? 'bg-teal-500 text-[var(--text-inverse)] border-teal-500 shadow-lg shadow-teal-500/20'
-                  : 'bg-[var(--ws-panel)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-[var(--ws-border)]'
+                  : 'bg-[var(--ws-panel)] text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-[var(--ws-border)]'
               }`}
             >
               {f}
@@ -372,12 +372,12 @@ export const SuperAdminUsersTab: React.FC = () => {
         data={filteredUsers}
         getRowId={(u) => u.id}
         emptyMessage="No users match your current criteria."
-        className="bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl p-2"
+        className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-2"
       />
 
       {/* Role Promotion Confirmation Modal */}
       {showRoleModal && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
           <div className="bg-[var(--ws-panel)] border border-purple-500/30 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
             <div className="flex items-center justify-between border-b border-[var(--ws-border)] pb-3">
               <h3 className="text-lg font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
@@ -433,7 +433,7 @@ export const SuperAdminUsersTab: React.FC = () => {
 
       {/* User Details Modal */}
       {showDetailModal && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
           <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 max-w-lg w-full space-y-5 shadow-2xl">
             <div className="flex items-center justify-between border-b border-[var(--ws-border)] pb-3">
               <div className="flex items-center gap-3">
@@ -496,7 +496,7 @@ export const SuperAdminUsersTab: React.FC = () => {
 
       {/* Transfer Ownership Modal */}
       {showTransferModal && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
           <div className="bg-[var(--ws-panel)] border border-amber-500/30 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
             <div className="flex items-center justify-between border-b border-[var(--ws-border)] pb-3">
               <h3 className="text-lg font-bold text-[var(--ws-text-primary)] flex items-center gap-2">

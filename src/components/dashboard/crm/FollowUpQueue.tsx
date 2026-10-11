@@ -113,7 +113,7 @@ export default function FollowUpQueue() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/80 p-4">
+        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
           <p className="type-caption text-[var(--ws-text-muted)] uppercase tracking-wide">Total</p>
           <p className="text-2xl font-bold text-[var(--ws-text-primary)]">{counts.total}</p>
         </div>
@@ -133,7 +133,7 @@ export default function FollowUpQueue() {
           Loading follow-ups…
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-10 text-center text-[var(--ws-text-muted)]">
+        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-10 text-center text-[var(--ws-text-muted)]">
           No follow-ups due right now. Your pipeline is up to date.
         </div>
       ) : (
@@ -141,7 +141,7 @@ export default function FollowUpQueue() {
           {items.map((item) => (
             <div
               key={`${item.entityType}-${item.id}`}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/80 px-4 py-3"
+              className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-3"
             >
               <Link href={item.href} className="min-w-0 flex-1 hover:opacity-90">
                 <p className="type-card-description font-semibold text-[var(--ws-text-primary)] truncate">{item.title}</p>

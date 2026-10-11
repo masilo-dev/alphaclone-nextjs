@@ -63,7 +63,7 @@ function IntegrationCard({
   return (
     <motion.div
       whileHover={{ y: -2 }}
-      className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-xl p-5 hover:border-slate-600 transition-all flex flex-col"
+      className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl p-5 hover:border-slate-600 transition-all flex flex-col"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">

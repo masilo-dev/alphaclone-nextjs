@@ -97,13 +97,13 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
       <div className={panelClass}>
         <DashboardPanelHeader title="System analytics" subtitle="Loading pipeline data…" />
         {/* Blurred skeleton — perceived as "something's happening" instead of empty space */}
-        <div className="h-24 ac-skeleton-pulse rounded-lg bg-[var(--ws-surface-secondary)]/40 backdrop-blur-sm saturate-50 animate-[pulse_1.8s_ease-in-out_infinite]" />
+        <div className="h-24 ac-skeleton-pulse rounded-lg bg-[var(--ws-surface-secondary)] saturate-50 animate-[pulse_1.8s_ease-in-out_infinite]" />
         <div className="h-28 grid grid-cols-4 gap-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-lg border border-[var(--ws-border)]/50 bg-[var(--ws-panel)]/50 ac-skeleton-pulse opacity-60 backdrop-blur-[2px]" />
+            <div key={i} className="rounded-lg border border-[var(--ws-border)]/50 bg-[var(--ws-panel)] ac-skeleton-pulse opacity-60" />
           ))}
         </div>
-        <div className="h-16 rounded-lg border border-[var(--ws-border)]/50 bg-[var(--ws-panel)]/20 ac-skeleton-pulse saturate-0 backdrop-blur-sm" />
+        <div className="h-16 rounded-lg border border-[var(--ws-border)]/50 bg-[var(--ws-panel)] ac-skeleton-pulse saturate-0" />
       </div>
     );
   }
@@ -211,7 +211,7 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
           <p className="type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">Lead grades</p>
           <div className="grid grid-cols-4 gap-2">
             {(['A', 'B', 'C', 'D'] as const).map((g) => (
-              <div key={g} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-2 py-1.5 text-center">
+              <div key={g} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] px-2 py-1.5 text-center">
                 <div className="text-lg font-bold text-[var(--ws-text-primary)] tabular-nums">{stats.leads.byGrade[g] ?? 0}</div>
                 <div className="type-ui text-[var(--ws-text-muted)]">Grade {g}</div>
               </div>

@@ -273,7 +273,7 @@ export default function AccountingDashboard() {
                         <button onClick={() => setIsManualEntryOpen(true)} className="flex-1 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-[var(--text-inverse)] type-caption font-black uppercase tracking-widest shadow-lg shadow-emerald-900/20"><Plus size={18} className="mr-2" /> New Entry</button>
                     ) : (
                         <>
-                            <Button variant="ghost" onClick={() => setIsManualEntryOpen(true)} className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] text-[var(--ws-text-secondary)]"><Wallet className="w-4 h-4 mr-2" /> Record Entry</Button>
+                            <Button variant="ghost" onClick={() => setIsManualEntryOpen(true)} className="bg-[var(--ws-panel)] border border-[var(--ws-border)] text-[var(--ws-text-secondary)]"><Wallet className="w-4 h-4 mr-2" /> Record Entry</Button>
                             <Button className="bg-emerald-600 text-[var(--text-inverse)]" onClick={() => setIsUploadOpen(true)}><Upload className="w-4 h-4 mr-2" /> Add Receipt</Button>
                         </>
                     )}
@@ -488,7 +488,7 @@ export default function AccountingDashboard() {
 
             {/* Mobile Action Bar */}
             {isMobile && (
-                <div className="sticky bottom-0 p-4 bg-[var(--ws-toolbar)]/95 backdrop-blur-md border-t border-[var(--ws-border)] z-20 flex gap-2 native-bottom-bar">
+                <div className="sticky bottom-0 p-4 bg-[var(--ws-toolbar)] border-t border-[var(--ws-border)] z-20 flex gap-2 native-bottom-bar">
                     <button onClick={() => setIsUploadOpen(true)} className="flex-1 h-12 bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-xl flex items-center justify-center text-[var(--ws-text-primary)] type-caption font-black uppercase tracking-widest"><Upload size={18} className="mr-2" /> Add Receipt</button>
                     <button onClick={() => setIsReceiptGeneratorOpen(true)} className="flex-1 h-12 bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-xl flex items-center justify-center text-[var(--ws-text-primary)] type-caption font-black uppercase tracking-widest"><FileText size={18} className="mr-2" /> New Slip</button>
                 </div>

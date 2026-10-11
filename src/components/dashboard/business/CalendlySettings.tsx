@@ -202,7 +202,7 @@ const CalendlySettings: React.FC = () => {
                 </div>
             )}
 
-            <div className={`p-6 rounded-2xl border ${isConnected ? 'bg-teal-500/5 border-teal-500/20' : 'bg-[var(--ws-panel)]/50 border-[var(--ws-border)]'}`}>
+            <div className={`p-6 rounded-2xl border ${isConnected ? 'bg-teal-500/5 border-teal-500/20' : 'bg-[var(--ws-panel)] border-[var(--ws-border)]'}`}>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex items-start gap-4">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${isConnected ? 'bg-teal-500/10 text-teal-400' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'}`}>
@@ -301,7 +301,7 @@ const CalendlySettings: React.FC = () => {
                         <h5 className="type-caption font-bold text-[var(--ws-text-primary)] mb-4 uppercase tracking-wider">Your Active Event Types</h5>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {eventTypes.filter(et => et.active).map(et => (
-                                <div key={et.uri} className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)]/50 rounded-xl p-4 flex flex-col justify-between hover:border-teal-500/30 transition-colors">
+                                <div key={et.uri} className="bg-[var(--ws-panel)] border border-[var(--ws-border)]/50 rounded-xl p-4 flex flex-col justify-between hover:border-teal-500/30 transition-colors">
                                     <div>
                                         <div className="flex items-center justify-between mb-2">
                                             <h6 className="font-bold text-[var(--ws-text-primary)] truncate pr-2">{et.name}</h6>
@@ -322,7 +322,7 @@ const CalendlySettings: React.FC = () => {
                                             href={et.scheduling_url}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="px-3 py-1.5 bg-[var(--ws-surface-secondary)]/50 hover:bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] rounded-lg transition-colors"
+                                            className="px-3 py-1.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] rounded-lg transition-colors"
                                         >
                                             <ExternalLink className="w-3 h-3" />
                                         </a>
@@ -380,7 +380,7 @@ const CalendlySettings: React.FC = () => {
 
             {/* Informational Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-                <div className="p-4 bg-[var(--ws-panel)]/30 border border-[var(--ws-border)]/50 rounded-xl">
+                <div className="p-4 bg-[var(--ws-panel)] border border-[var(--ws-border)]/50 rounded-xl">
                     <h5 className="type-caption font-bold text-[var(--ws-text-primary)] mb-2 uppercase tracking-wider flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-teal-400" />
                         Branded Experience
@@ -389,7 +389,7 @@ const CalendlySettings: React.FC = () => {
                         AlphaClone automatically skins your Calendly booking page with your brand colors for a seamless client experience.
                     </p>
                 </div>
-                <div className="p-4 bg-[var(--ws-panel)]/30 border border-[var(--ws-border)]/50 rounded-xl">
+                <div className="p-4 bg-[var(--ws-panel)] border border-[var(--ws-border)]/50 rounded-xl">
                     <h5 className="type-caption font-bold text-[var(--ws-text-primary)] mb-2 uppercase tracking-wider flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-teal-400" />
                         Automated Sync

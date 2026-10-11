@@ -90,14 +90,14 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
     }, []);
 
     return (
-        <div className="fixed inset-0 bg-[var(--ws-canvas)]/90 backdrop-blur-sm flex items-center justify-center z-[100] p-0 sm:p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-[var(--ws-canvas)] flex items-center justify-center z-[100] p-0 sm:p-4 animate-in fade-in duration-300">
             <div
                 className="absolute inset-0 bg-transparent"
                 onClick={onClose}
             />
             <Card className="relative bg-[var(--ws-panel)] border border-[var(--ws-border)] sm:rounded-3xl p-0 flex flex-col w-full max-w-2xl h-full sm:h-auto sm:max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
                 {/* Header */}
-                <div className="flex items-start sm:items-center justify-between p-4 sm:p-6 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/50 backdrop-blur-xl shrink-0">
+                <div className="flex items-start sm:items-center justify-between p-4 sm:p-6 border-b border-[var(--ws-border)] bg-[var(--ws-panel)] shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="p-2 sm:p-3 bg-teal-500/10 rounded-xl">
                             <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-teal-400" />
@@ -225,7 +225,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                         h-12 sm:h-auto aspect-square sm:aspect-auto sm:py-4 rounded-2xl type-caption font-black uppercase tracking-widest border transition-all active:scale-95
                                         ${settings.availability.days.includes(idx)
                                                 ? 'bg-white text-slate-950 border-white shadow-[0_0_20px_rgba(255,255,255,0.1)]'
-                                                : 'bg-[var(--ws-panel)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-slate-600'}
+                                                : 'bg-[var(--ws-panel)] text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-slate-600'}
                                     `}
                                     >
                                         {day}
@@ -396,7 +396,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                             </div>
                             <div className="space-y-4">
                                 {settings.meetingTypes.map((type, idx) => (
-                                    <div key={type.id} className="group flex flex-col sm:flex-row gap-4 sm:items-center bg-[var(--ws-panel)]/40 p-5 rounded-2xl border border-[var(--ws-border)] hover:border-slate-600 transition-all">
+                                    <div key={type.id} className="group flex flex-col sm:flex-row gap-4 sm:items-center bg-[var(--ws-panel)] p-5 rounded-2xl border border-[var(--ws-border)] hover:border-slate-600 transition-all">
                                         <div className="flex-1 flex items-center gap-4">
                                             <div className="w-10 h-10 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl flex items-center justify-center shrink-0">
                                                 <span className="type-caption font-black text-slate-600">0{idx + 1}</span>
@@ -445,7 +445,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-4 md:p-6 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/50 backdrop-blur-xl flex gap-4 shrink-0">
+                <div className="p-4 md:p-6 border-t border-[var(--ws-border)] bg-[var(--ws-panel)] flex gap-4 shrink-0">
                     <button
                         onClick={onClose}
                         className="flex-1 py-4 type-caption font-black tracking-widest uppercase text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)] rounded-2xl transition-all"

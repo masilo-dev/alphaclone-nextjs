@@ -376,9 +376,9 @@ export default function ScraperLeadsTable({
   };
 
   return (
-    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 overflow-hidden min-h-0 flex flex-col">
+    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] overflow-hidden min-h-0 flex flex-col">
       {selectedIds.size > 0 && (
-        <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 bg-[var(--ws-canvas)]/80 border-b border-[var(--ws-border)]">
+        <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 bg-[var(--ws-canvas)] border-b border-[var(--ws-border)]">
           <span className="type-caption text-[var(--ws-text-muted)] mr-1">{selectedIds.size} selected</span>
           <button
             type="button"
@@ -470,7 +470,7 @@ export default function ScraperLeadsTable({
 
         <div className="overflow-x-auto overflow-y-auto max-h-[min(52vh,520px)] min-h-[200px] ac-scroll-full -mx-1 px-1">
           <table className="w-full type-ui">
-            <thead className="sticky top-0 bg-[var(--ws-panel)]/95 backdrop-blur-sm z-10">
+            <thead className="sticky top-0 bg-[var(--ws-panel)] z-10">
               <tr className="text-[var(--ws-text-muted)] border-b border-[var(--ws-border)]">
                 <th className="py-2 px-2 w-8">
                   <button type="button" onClick={toggleAll} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
@@ -492,7 +492,7 @@ export default function ScraperLeadsTable({
               {leads.map((lead) => (
                 <tr
                   key={lead.id}
-                  className={`border-b border-[var(--ws-border)]/50 hover:bg-[var(--ws-surface-secondary)]/30 ${
+                  className={`border-b border-[var(--ws-border)]/50 hover:bg-[var(--ws-surface-secondary)] ${
                     selectedIds.has(lead.id) ? 'bg-teal-500/5' : ''
                   }`}
                 >

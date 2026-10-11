@@ -141,7 +141,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                     <h2 className="text-lg font-bold text-[var(--ws-text-primary)] mt-1">Active and upcoming meetings</h2>
                 </div>
                 {loading ? (
-                    <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="h-16 bg-[var(--ws-surface-secondary)]/40 rounded-xl animate-pulse" />)}</div>
+                    <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="h-16 bg-[var(--ws-surface-secondary)] rounded-xl animate-pulse" />)}</div>
                 ) : meetings.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 text-center gap-3">
                         <div className="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">

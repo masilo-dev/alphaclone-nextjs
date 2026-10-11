@@ -576,7 +576,7 @@ export default function AlphaCloneEmailWorkspace() {
             </div>
           </div>
 
-          <div className="hidden lg:flex items-center gap-1 ml-4 p-1 rounded-xl bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)]">
+          <div className="hidden lg:flex items-center gap-1 ml-4 p-1 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)]">
             <button
               onClick={() => setActiveTab('inbox')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${
@@ -691,7 +691,7 @@ export default function AlphaCloneEmailWorkspace() {
         {/* Connected Status & User Profile */}
         <div className="flex min-w-max items-center gap-3">
           {/* Accounts status badge */}
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)] type-caption">
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] type-caption">
             <div className="w-2 h-2 rounded-full bg-[var(--success-500)] animate-pulse" />
             <span className="text-[var(--ws-text-secondary)] font-medium">Outlook + Zoho Synced</span>
           </div>
@@ -725,7 +725,7 @@ export default function AlphaCloneEmailWorkspace() {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl type-caption font-bold whitespace-nowrap transition-all ${
                 isActive
                   ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                  : 'bg-[var(--ws-panel)]/80 text-[var(--ws-text-muted)] border border-[var(--ws-border)] hover:text-[var(--ws-text-primary)]'
+                  : 'bg-[var(--ws-panel)] text-[var(--ws-text-muted)] border border-[var(--ws-border)] hover:text-[var(--ws-text-primary)]'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -753,7 +753,7 @@ export default function AlphaCloneEmailWorkspace() {
           <aside
             className={`${
               sidebarCollapsed ? 'w-16' : 'w-64'
-            } border-r border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 backdrop-blur-md flex flex-col transition-all duration-200 shrink-0 select-none min-h-0 max-md:hidden`}
+            } border-r border-[var(--ws-border)] bg-[var(--ws-canvas)]  flex flex-col transition-all duration-200 shrink-0 select-none min-h-0 max-md:hidden`}
           >
             {/* Compose & Collapse toggle */}
             <div className="p-3 flex items-center justify-between border-b border-[var(--ws-border)]">
@@ -967,7 +967,7 @@ export default function AlphaCloneEmailWorkspace() {
 
               {/* CONNECTED ACCOUNTS OVERVIEW */}
               {!sidebarCollapsed && (
-                <div className="mt-auto p-3 rounded-xl bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)] space-y-2">
+                <div className="mt-auto p-3 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="type-caption font-bold uppercase text-[var(--ws-text-muted)]">Connected Dispatchers</span>
                     <span className="w-2 h-2 rounded-full bg-[var(--success-500)]" />
@@ -1099,7 +1099,7 @@ export default function AlphaCloneEmailWorkspace() {
                         isSelected
                           ? 'bg-emerald-500/10 border-l-4 border-emerald-400'
                           : thread.unread
-                          ? 'bg-[var(--ws-panel)]/80 hover:bg-[var(--ws-panel)]'
+                          ? 'bg-[var(--ws-panel)] hover:bg-[var(--ws-panel)]'
                           : 'hover:bg-white/[0.03]'
                       }`}
                     >
@@ -1308,7 +1308,7 @@ export default function AlphaCloneEmailWorkspace() {
                     {selectedThread.messages.map((msg) => (
                       <div
                         key={msg.id}
-                        className="p-5 rounded-2xl bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)] space-y-3"
+                        className="p-5 rounded-2xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] space-y-3"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
@@ -1354,7 +1354,7 @@ export default function AlphaCloneEmailWorkspace() {
                     ))}
 
                     {/* Quick Inline Reply Field */}
-                    <div className="p-4 rounded-2xl bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)] space-y-3">
+                    <div className="p-4 rounded-2xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] space-y-3">
                       <div className="flex items-center justify-between type-caption text-[var(--ws-text-muted)]">
                         <span>Reply to {selectedThread.senderEmail}...</span>
                         <div className="flex items-center gap-2">
@@ -1402,7 +1402,7 @@ export default function AlphaCloneEmailWorkspace() {
                     {/* Contact Profile */}
                     <div className="space-y-3">
                       <h3 className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">CRM Contact Card</h3>
-                      <div className="p-4 rounded-xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] space-y-2">
+                      <div className="p-4 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-2">
                         <div className="flex items-center gap-3">
                           {selectedThread.senderAvatar ? (
                             <img
@@ -1431,7 +1431,7 @@ export default function AlphaCloneEmailWorkspace() {
                     {selectedThread.dealValue && (
                       <div className="space-y-2">
                         <h3 className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Active Pipeline Deal</h3>
-                        <div className="p-4 rounded-xl bg-[var(--ws-panel)]/80 border border-emerald-500/30 space-y-2">
+                        <div className="p-4 rounded-xl bg-[var(--ws-panel)] border border-emerald-500/30 space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="type-caption font-bold text-[var(--ws-text-primary)]">{selectedThread.dealName}</span>
                             <span className="type-caption font-black text-emerald-400">${selectedThread.dealValue.toLocaleString()}</span>
@@ -1500,7 +1500,7 @@ export default function AlphaCloneEmailWorkspace() {
           </div>
 
           {/* Campaign List */}
-          <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] space-y-4">
+          <div className="p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="type-ui font-black text-[var(--ws-text-primary)]">Active Outreach Campaigns</h2>
               <button
@@ -1622,7 +1622,7 @@ export default function AlphaCloneEmailWorkspace() {
                 body: 'Hi {{firstName}},\n\nLooking forward to our upcoming sync. Here is the meeting link and agenda for our call on {{date}}.\n\nAgenda:\n1. Infrastructure overview\n2. Integrations demo\n3. Q&A\n\nSee you then!\n{{senderName}}',
               },
             ].map((tmpl, idx) => (
-              <div key={idx} className="p-4 rounded-2xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] flex flex-col justify-between space-y-3 hover:border-emerald-500/40 transition-all">
+              <div key={idx} className="p-4 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] flex flex-col justify-between space-y-3 hover:border-emerald-500/40 transition-all">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 type-ui font-bold text-emerald-400">
@@ -1670,25 +1670,25 @@ export default function AlphaCloneEmailWorkspace() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-2xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] space-y-1">
+            <div className="p-4 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-1">
               <span className="type-ui text-[var(--ws-text-muted)] font-medium">Active Dispatchers</span>
               <p className="text-2xl font-black text-[var(--ws-text-primary)]">{connectedProviders.length}</p>
               <span className="type-ui text-[var(--ws-text-muted)] font-bold">Connected providers only</span>
             </div>
-            <div className="p-4 rounded-2xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] space-y-1">
+            <div className="p-4 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-1">
               <span className="type-ui text-[var(--ws-text-muted)] font-medium">Deliverability metrics</span>
               <p className="text-lg font-black text-[var(--ws-text-secondary)]">Not reported</p>
               <span className="type-ui text-[var(--ws-text-muted)] font-bold">Connect a provider with reporting to view verified data</span>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] space-y-2">
+          <div className="p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-2">
             <h3 className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">DNS & Protocol Authentication</h3>
             <p className="type-card-description text-[var(--ws-text-secondary)]">No workspace domain result has been verified in this view. Configure a sender domain and use the provider’s verified health report before relying on SPF, DKIM, DMARC, bounce, or complaint data.</p>
           </div>
 
           {/* Dispatcher Connections */}
-          <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] space-y-4">
+          <div className="p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-4">
             <h3 className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Connected Dispatch Providers</h3>
             <div className="divide-y divide-white/5 type-caption">
               {providerOptions.length > 0 ? providerOptions.map((prov, i) => (
@@ -1714,10 +1714,10 @@ export default function AlphaCloneEmailWorkspace() {
       {/* RICH EMAIL COMPOSER MODAL */}
       {/* ------------------------------------------------------------- */}
       {composerOpen && (
-        <div className="fixed inset-0 ac-layer-modal bg-[var(--ws-canvas)]/95 backdrop-blur-md flex items-center justify-center p-4">
+        <div className="fixed inset-0 ac-layer-modal bg-[var(--ws-canvas)] flex items-center justify-center p-4">
           <div className="w-full max-w-2xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             
-            <div className="p-4 border-b border-[var(--ws-border)] flex items-center justify-between bg-[var(--ws-panel)]/60">
+            <div className="p-4 border-b border-[var(--ws-border)] flex items-center justify-between bg-[var(--ws-panel)]">
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-emerald-400" />
                 <h3 className="type-card-title font-bold text-[var(--ws-text-primary)]">New AlphaClone Message</h3>
@@ -1784,7 +1784,7 @@ export default function AlphaCloneEmailWorkspace() {
               />
             </div>
 
-            <div className="p-4 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/60 flex items-center justify-between">
+            <div className="p-4 border-t border-[var(--ws-border)] bg-[var(--ws-panel)] flex items-center justify-between">
               <div className="flex items-center gap-2 type-caption text-[var(--ws-text-muted)]">
                 <span>Dispatch:</span>
                 <AlphaCloneSelect

@@ -91,7 +91,7 @@ export default function EnhancedTeamChat() {
   return (
       <div className="flex flex-col h-[600px] bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden">
         {/* Header */}
-        <div className="p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/50 flex justify-between items-center">
+        <div className="p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)] flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-500/10 rounded-lg">
               <MessageCircle className="w-5 h-5 text-indigo-400" />
@@ -138,7 +138,7 @@ export default function EnhancedTeamChat() {
               if (isSystem) {
                 return (
                   <div key={msg.id} className="flex justify-center">
-                    <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]/50 rounded-full px-4 py-1 type-caption text-[var(--ws-text-muted)] flex items-center gap-2">
+                    <div className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/50 rounded-full px-4 py-1 type-caption text-[var(--ws-text-muted)] flex items-center gap-2">
                       <CheckCircle className="w-3 h-3 text-green-400" />
                       {msg.text}
                     </div>

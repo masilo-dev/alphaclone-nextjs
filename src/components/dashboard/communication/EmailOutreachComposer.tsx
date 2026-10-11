@@ -197,7 +197,7 @@ export function EmailOutreachComposer() {
 
   return (
     <div className="h-full min-h-0 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-3 p-3 md:p-5">
-      <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 flex flex-col min-h-0 overflow-hidden">
+      <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] flex flex-col min-h-0 overflow-hidden">
         <div className="px-3 py-2.5 border-b border-[var(--ws-border)] flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <Users className="w-4 h-4 text-teal-400 shrink-0" />
@@ -264,7 +264,7 @@ export function EmailOutreachComposer() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 flex flex-col min-h-0 overflow-hidden">
+      <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] flex flex-col min-h-0 overflow-hidden">
         <div className="px-3 py-2.5 border-b border-[var(--ws-border)] flex flex-wrap items-center gap-2 justify-between">
           <div className="flex items-center gap-2">
             <Mail className="w-4 h-4 text-teal-400" />

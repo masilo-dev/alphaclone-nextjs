@@ -191,7 +191,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     return (
         <div className={`relative flex flex-col bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden ${isFullscreen ? 'fixed inset-0 z-[60] m-0 rounded-none' : 'h-[750px] shadow-2xl'}`}>
             {/* Toolbar */}
-            <div className="flex items-center justify-between p-3 sm:p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/90 backdrop-blur-xl shrink-0">
+            <div className="flex items-center justify-between p-3 sm:p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)] shrink-0">
                 <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
                     <Button size="sm" variant={tool === 'select' ? 'primary' : 'ghost'} onClick={() => setTool('select')} className="w-10 h-10 p-0 shrink-0">
                         <MousePointer2 className="w-4 h-4" />
@@ -290,7 +290,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                 )}
             </div>
 
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-2.5 bg-[var(--ws-panel)]/90 backdrop-blur-xl text-white type-caption font-bold rounded-full shadow-2xl border border-white/10 uppercase tracking-widest pointer-events-none z-50 ring-1 ring-white/5">
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-2.5 bg-[var(--ws-panel)] text-white type-caption font-bold rounded-full shadow-2xl border border-white/10 uppercase tracking-widest pointer-events-none z-50 ring-1 ring-white/5">
                 {tool === 'note' && <span className="flex items-center gap-2"><MessageSquare className="w-3 h-3 text-teal-400" /> Click to drop a note</span>}
                 {tool === 'redact' && <span className="flex items-center gap-2"><Eraser className="w-3 h-3 text-red-400" /> Click to redact content</span>}
                 {tool === 'text' && <span className="flex items-center gap-2"><Type className="w-3 h-3 text-blue-400" /> Click to type text</span>}
@@ -385,7 +385,7 @@ const PDFPage = React.forwardRef<HTMLDivElement, PDFPageProps>(({
         >
             <canvas ref={canvasRef} className="block shadow-inner" />
             {renderPending && (
-                <div className="absolute inset-0 bg-[var(--ws-panel)]/10 backdrop-blur-[1px] flex items-center justify-center">
+                <div className="absolute inset-0 bg-[var(--ws-panel)] flex items-center justify-center">
                     <Loader2 className="w-6 h-6 animate-spin text-teal-400 opacity-50" />
                 </div>
             )}
@@ -437,7 +437,7 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
                         <MessageSquare className="w-3.5 h-3.5 text-white" />
                     </button>
                     {isActive && (
-                        <div className="absolute top-0 left-full ml-4 w-72 bg-[var(--ws-panel)]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-4 z-[100] animate-in fade-in zoom-in duration-200 origin-left ring-1 ring-white/5">
+                        <div className="absolute top-0 left-full ml-4 w-72 bg-[var(--ws-panel)] border border-white/10 rounded-2xl shadow-2xl p-4 z-[100] animate-in fade-in zoom-in duration-200 origin-left ring-1 ring-white/5">
                             <div className="flex items-center justify-between mb-3">
                                 <span className="type-caption font-black text-teal-400 uppercase tracking-widest bg-[var(--brand-blue-400)]/10 px-2 py-0.5 rounded-md">Note - {annotation.author}</span>
                                 <button onClick={onDelete} className="text-[var(--ws-text-muted)] hover:text-red-400 transition-colors p-1 hover:bg-[var(--error-500)]/10 rounded-lg">
@@ -469,7 +469,7 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
                     {isActive ? (
                         <AlphaCloneInput
                             autoFocus
-                            className="backdrop-blur-sm font-serif p-2 leading-none min-w-[120px] pointer-events-auto"
+                            className="font-serif p-2 leading-none min-w-[120px] pointer-events-auto"
                             value={annotation.text}
                             onChange={(e) => onUpdate({ text: e.target.value })}
                             onBlur={onDeactivate}
@@ -531,9 +531,9 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
                     )}
 
                     {isActive && (
-                        <div className="absolute top-0 left-full ml-6 w-80 bg-[var(--ws-panel)]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-5 z-[100] animate-in fade-in zoom-in duration-200 pointer-events-auto origin-left ring-1 ring-white/5">
+                        <div className="absolute top-0 left-full ml-6 w-80 bg-[var(--ws-panel)] border border-white/10 rounded-2xl shadow-2xl p-5 z-[100] animate-in fade-in zoom-in duration-200 pointer-events-auto origin-left ring-1 ring-white/5">
                             <div className="flex items-center justify-between mb-5">
-                                <div className="flex bg-[var(--ws-canvas)]/80 p-1 rounded-xl border border-white/5 ring-1 ring-white/5">
+                                <div className="flex bg-[var(--ws-canvas)] p-1 rounded-xl border border-white/5 ring-1 ring-white/5">
                                     <button
                                         onClick={() => onUpdate({ signatureType: 'type' })}
                                         className={`px-4 py-2 type-caption font-black uppercase tracking-widest rounded-lg transition-all ${annotation.signatureType === 'type' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-[var(--ws-text-muted)] hover:text-white'}`}
@@ -631,7 +631,7 @@ const SignatureCanvas: React.FC<{ onSave: (data: string) => void; initialData?: 
                 ref={canvasRef}
                 width={280}
                 height={140}
-                className="w-full h-[140px] bg-[var(--ws-canvas)]/80 rounded-xl border border-white/5 cursor-crosshair touch-none shadow-inner"
+                className="w-full h-[140px] bg-[var(--ws-canvas)] rounded-xl border border-white/5 cursor-crosshair touch-none shadow-inner"
                 onMouseDown={startDrawing}
                 onMouseMove={draw}
                 onMouseUp={stopDrawing}

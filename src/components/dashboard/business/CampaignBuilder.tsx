@@ -1219,7 +1219,7 @@ Voice & rules:
     if (loading) {
         return (
             <BonnieModulePageShell showBonnieDock={false}>
-                <div className="flex flex-col bg-[var(--ws-canvas)] rounded-2xl md:rounded-3xl border border-[var(--ws-border)] overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
+                <div className="flex flex-col bg-[var(--ws-canvas)] rounded-2xl md:rounded-3xl border border-[var(--ws-border)] overflow-hidden relative min-h-[calc(100dvh-140px)]">
                     <div className="flex flex-1 items-center justify-center p-8 text-[var(--ws-text-muted)] text-center">
                         <div>
                             <Loader2 className="w-8 h-8 animate-spin mx-auto text-teal-500 mb-2" />
@@ -1233,7 +1233,7 @@ Voice & rules:
 
     return (
         <BonnieModulePageShell showBonnieDock={false}>
-        <div className="flex flex-col bg-[var(--ws-canvas)] rounded-2xl md:rounded-3xl border border-[var(--ws-border)] overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
+        <div className="flex flex-col bg-[var(--ws-canvas)] rounded-2xl md:rounded-3xl border border-[var(--ws-border)] overflow-hidden relative min-h-[calc(100dvh-140px)]">
 
             {recoveryBanner.length > 0 && (
                 <div className="border-b border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
@@ -1351,7 +1351,7 @@ Voice & rules:
                                     <p className="type-card-description text-slate-600 max-w-xs mx-auto mt-1">Create a simple campaign, choose who should receive it, and let the Copilot write the first draft.</p>
                                 </div>
                             ) : (
-                                <div className="divide-y divide-white/5 border border-[var(--ws-border)] rounded-2xl bg-[var(--ws-panel)]/30 overflow-hidden">
+                                <div className="divide-y divide-white/5 border border-[var(--ws-border)] rounded-2xl bg-[var(--ws-panel)] overflow-hidden">
                                     {campaigns.map((camp) => {
                                         const offset = swipeState[camp.id] || 0;
                                         const provider = (camp.metadata as any)?.provider || 'tenant-default';
@@ -1383,7 +1383,7 @@ Voice & rules:
                                                         setSelectedCampaign(camp);
                                                         setViewMode('detail');
                                                     }}
-                                                    className="relative z-10 flex items-center justify-between p-3.5 bg-[var(--ws-panel)]/70 active:bg-[var(--ws-surface-secondary)] transition-transform duration-150 cursor-pointer"
+                                                    className="relative z-10 flex items-center justify-between p-3.5 bg-[var(--ws-panel)] active:bg-[var(--ws-surface-secondary)] transition-transform duration-150 cursor-pointer"
                                                     style={{ transform: `translateX(${offset}px)` }}
                                                 >
                                                     <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -1421,7 +1421,7 @@ Voice & rules:
                         <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                             
                             {/* Title & metadata panel */}
-                            <div className="bg-[var(--ws-panel)]/50 p-5 rounded-3xl border border-[var(--ws-border)] space-y-3">
+                            <div className="bg-[var(--ws-panel)] p-5 rounded-3xl border border-[var(--ws-border)] space-y-3">
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <span className={`type-caption font-black uppercase px-2 py-0.5 rounded border ${statusColors[selectedCampaign.status]}`}>
@@ -1514,7 +1514,7 @@ Voice & rules:
                                     </div>
                                     <div className="grid gap-2 md:grid-cols-2">
                                         {(((selectedCampaign.metadata as any).dailyEducationSequence.emails || []) as EducationSequenceEmail[]).map((email, index) => (
-                                            <div key={`${email.subject}-${index}`} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-3">
+                                            <div key={`${email.subject}-${index}`} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3">
                                                 <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Day {email.day} · Email {email.slot}</p>
                                                 <p className="mt-1 type-card-description font-bold text-[var(--ws-text-primary)]">{email.subject}</p>
                                             </div>
@@ -1630,7 +1630,7 @@ Voice & rules:
                                         { label: 'Failed', value: selectedCampaignRecipients.filter((recipient) => recipient.status === 'failed' || recipient.status === 'bounced').length },
                                         { label: 'Unsubscribed', value: selectedCampaignRecipients.filter((recipient) => recipient.status === 'unsubscribed').length },
                                     ].map((stat) => (
-                                        <div key={stat.label} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 p-3">
+                                        <div key={stat.label} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3">
                                             <p className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">{stat.label}</p>
                                             <p className="mt-1 text-lg font-black text-[var(--ws-text-primary)]">{stat.value}</p>
                                         </div>
@@ -1648,7 +1648,7 @@ Voice & rules:
                                     </div>
                                 ) : (
                                     <div className="overflow-hidden rounded-2xl border border-[var(--ws-border)]">
-                                        <div className="grid grid-cols-[minmax(0,2fr)_auto_auto] gap-3 border-b border-[var(--ws-border)] bg-[var(--ws-canvas)]/80 px-4 py-3 type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">
+                                        <div className="grid grid-cols-[minmax(0,2fr)_auto_auto] gap-3 border-b border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3 type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">
                                             <span>Recipient</span>
                                             <span>Provider</span>
                                             <span>Status</span>
@@ -1695,7 +1695,7 @@ Voice & rules:
                             
                             {/* Main wizard step builder panel */}
                             <div className="flex-1 w-full space-y-6">
-                                <div className="bg-[var(--ws-panel)]/70 border border-[var(--ws-border)] rounded-3xl p-5 space-y-4">
+                                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl p-5 space-y-4">
                                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                                         <div className="space-y-2">
                                             <p className="type-caption font-black uppercase tracking-widest text-teal-400">Plain-English Start</p>
@@ -1783,7 +1783,7 @@ Voice & rules:
                                             />
                                         </div>
 
-                                        <div className="grid gap-3 sm:grid-cols-2 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 p-4">
+                                        <div className="grid gap-3 sm:grid-cols-2 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-4">
                                             <div className="space-y-1.5">
                                                 <label htmlFor="campaign-from-name" className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider px-1">Sender name</label>
                                                 <AlphaCloneInput
@@ -1908,7 +1908,7 @@ Voice & rules:
                                             </div>
 
                                             <div className="grid gap-3 md:grid-cols-2">
-                                                <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-3">
+                                                <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3">
                                                     <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Workspace provider</p>
                                                     <p className="mt-1 type-card-description font-semibold text-[var(--ws-text-primary)]">
                                                         {resolvedProviderMeta?.label || DELIVERY_PROVIDER_LABELS[resolvedProvider]}
@@ -1917,7 +1917,7 @@ Voice & rules:
                                                         {resolvedProviderMeta?.connected ? 'Connected and available.' : 'Not connected yet.'}
                                                     </p>
                                                 </div>
-                                                <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-3">
+                                                <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3">
                                                     <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Sender identity</p>
                                                     <p className="mt-1 type-card-description font-semibold text-[var(--ws-text-primary)]">{form.fromName || 'No sender name set'}</p>
                                                     <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">{form.fromEmail || 'No sender email set'}</p>
@@ -2321,7 +2321,7 @@ Voice & rules:
                                                 </div>
                                                 <div className="grid gap-2 md:grid-cols-2">
                                                     {form.sequenceEmails.map((email, index) => (
-                                                        <div key={`${email.subject}-${index}`} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-3">
+                                                        <div key={`${email.subject}-${index}`} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3">
                                                             <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Day {email.day} · Email {email.slot}</p>
                                                             <p className="mt-1 type-card-description font-bold text-[var(--ws-text-primary)]">{email.subject}</p>
                                                         </div>
@@ -2572,7 +2572,7 @@ Voice & rules:
                                                 </div>
                                             )}
 
-                                            <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-4 space-y-3">
+                                            <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-4 space-y-3">
                                                 <div className="flex items-center justify-between gap-3">
                                                     <div>
                                                         <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Send test</p>
@@ -2642,7 +2642,7 @@ Voice & rules:
                                                     ? 'border-sky-500/25 bg-sky-500/10 text-sky-100'
                                                     : submissionStatus?.includes('failed') || submissionStatus?.includes('blocked') || submissionStatus?.includes('could not')
                                                         ? 'border-rose-500/25 bg-rose-500/10 text-rose-100'
-                                                        : 'border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 text-[var(--ws-text-muted)]'
+                                                        : 'border-[var(--ws-border)] bg-[var(--ws-canvas)] text-[var(--ws-text-muted)]'
                                             }`}
                                         >
                                             {isSubmitting ? (

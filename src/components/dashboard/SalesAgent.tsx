@@ -1115,7 +1115,7 @@ const SalesAgent: React.FC = () => {
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2 type-caption uppercase tracking-widest font-bold text-[var(--ws-text-muted)] flex items-center gap-2">
+            <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-2 type-caption uppercase tracking-widest font-bold text-[var(--ws-text-muted)] flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
                 {t('Finding Leads & Autonomous SDR System Active')}
             </div>
@@ -1229,7 +1229,7 @@ const SalesAgent: React.FC = () => {
 
             {/* Email Preview Modal */}
             {viewingMessage && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
                     <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl w-full max-w-2xl shadow-2xl animate-fade-in-up">
                         <div className="flex justify-between items-center p-4 border-b border-[var(--ws-border)]">
                             <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] flex items-center gap-2">

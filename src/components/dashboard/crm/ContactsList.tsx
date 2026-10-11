@@ -390,7 +390,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
 
             {/* Contacts List */}
             {total === 0 ? (
-                <div className="text-center py-16 bg-[var(--ws-surface-secondary)]/50 rounded-lg border border-[var(--ws-border)]">
+                <div className="text-center py-16 bg-[var(--ws-surface-secondary)] rounded-lg border border-[var(--ws-border)]">
                     <User className="w-12 h-12 mx-auto text-slate-600 mb-4" />
                     <p className="text-[var(--ws-text-muted)]">
                         {searchQuery || statusFilter !== 'all' ? 'No contacts match these filters' : 'No contacts yet'}
@@ -638,7 +638,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
 
             {/* Bulk Delete Confirmation */}
             {showBulkDeleteConfirm && (
-                <div className="fixed inset-0 ac-layer-confirm bg-[var(--ws-overlay-backdrop)] backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="fixed inset-0 ac-layer-confirm bg-[var(--ws-overlay-backdrop)] flex items-center justify-center p-4">
                     <div className="bg-[var(--ws-surface-secondary)] rounded-xl border border-[var(--ws-border)] p-6 max-w-md w-full">
                         <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-2">Delete {selectedIds.length} contacts?</h3>
                         <p className="type-card-description text-[var(--ws-text-muted)] mb-6">
@@ -665,7 +665,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
 
             {/* Delete Confirmation */}
             {showDeleteConfirm && (
-                <div className="fixed inset-0 ac-layer-confirm bg-[var(--ws-overlay-backdrop)] backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="fixed inset-0 ac-layer-confirm bg-[var(--ws-overlay-backdrop)] flex items-center justify-center p-4">
                     <div className="bg-[var(--ws-surface-secondary)] rounded-xl border border-[var(--ws-border)] p-6 max-w-md w-full">
                         <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-2">Delete Contact?</h3>
                         <p className="type-card-description text-[var(--ws-text-muted)] mb-6">
@@ -698,7 +698,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                 />
             )}
             {previewContact && (
-                <div className="fixed inset-0 ac-layer-modal bg-[var(--ws-overlay-backdrop)] backdrop-blur-sm p-4 flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Contact 360 preview">
+                <div className="fixed inset-0 ac-layer-modal bg-[var(--ws-overlay-backdrop)] p-4 flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Contact 360 preview">
                     <div className="w-full max-w-2xl max-h-[90dvh] overflow-y-auto rounded-2xl border border-cyan-400/20 bg-[var(--ws-canvas)] shadow-2xl">
                         <div className="flex items-start justify-between gap-4 border-b border-[var(--ws-border)] p-5">
                             <div>

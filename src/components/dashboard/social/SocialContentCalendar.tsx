@@ -86,7 +86,7 @@ export function SocialContentCalendar<T extends CalendarPost>({
       : anchor.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 
   return (
-    <div className="mb-4 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 p-3 space-y-3">
+    <div className="mb-4 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <button
           type="button"
@@ -127,7 +127,7 @@ export function SocialContentCalendar<T extends CalendarPost>({
               className={`rounded-lg border p-1.5 overflow-hidden ${
                 isToday
                   ? 'border-teal-500/40 bg-teal-500/5'
-                  : 'border-[var(--ws-border)] bg-[var(--ws-panel)]/40'
+                  : 'border-[var(--ws-border)] bg-[var(--ws-panel)]'
               } ${mode === 'month' && !inMonth ? 'opacity-40' : ''}`}
             >
               <p className="type-card-description font-bold text-[var(--ws-text-muted)] mb-1">{day.getDate()}</p>

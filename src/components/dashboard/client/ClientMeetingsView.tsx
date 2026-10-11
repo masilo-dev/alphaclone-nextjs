@@ -91,7 +91,7 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
             {loading ? (
                 <div className="p-12 text-center text-[var(--ws-text-muted)]">Loading meetings...</div>
             ) : upcomingMeetings.length === 0 ? (
-                <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl p-12 text-center">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-12 text-center">
                     <div className="w-16 h-16 bg-[var(--ws-surface-secondary)] rounded-full flex items-center justify-center mx-auto mb-4 text-[var(--ws-text-muted)]">
                         <Calendar className="w-8 h-8" />
                     </div>
@@ -107,7 +107,7 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
                         const dateToFormat = meeting.scheduled_at ? new Date(meeting.scheduled_at) : new Date(meeting.created_at);
 
                         return (
-                            <div key={meeting.id} className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl p-6 hover:bg-[var(--ws-surface-secondary)]/30 transition-colors">
+                            <div key={meeting.id} className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-6 hover:bg-[var(--ws-surface-secondary)] transition-colors">
                                 <div className="flex flex-col md:flex-row justify-between md:items-center gap-6">
                                     <div className="flex items-start gap-4">
                                         <div className="flex flex-col items-center justify-center w-16 h-16 bg-[var(--ws-surface-secondary)] rounded-xl border border-[var(--ws-border)] shrink-0">

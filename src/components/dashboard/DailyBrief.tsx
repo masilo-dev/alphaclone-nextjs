@@ -161,7 +161,7 @@ export default function DailyBrief() {
           </div>
           
           {/* Footer Action */}
-          <div className="bg-[var(--ws-panel)]/50 px-6 py-3 border-t border-[var(--ws-border)] flex justify-end">
+          <div className="bg-[var(--ws-panel)] px-6 py-3 border-t border-[var(--ws-border)] flex justify-end">
             <button 
               onClick={() => setIsOpen(false)}
               className="type-caption font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 group"

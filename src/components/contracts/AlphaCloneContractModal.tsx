@@ -455,7 +455,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
 
     if (planFeatures && !planFeatures.contractGeneration && user.role === 'admin') {
         return (
-            <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-y-auto">
+            <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 overflow-y-auto">
                 <div className="w-full max-w-md bg-[var(--ws-panel)] rounded-2xl border border-[var(--ws-border)] shadow-2xl p-8 text-center">
                     <div className="w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                         <FileText className="w-8 h-8 text-teal-400" />
@@ -480,7 +480,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
         );
     }
     return (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-y-auto">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 overflow-y-auto">
             <div className="w-full max-w-6xl bg-[var(--ws-panel)] rounded-2xl border border-[var(--ws-border)] shadow-2xl my-8">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-[var(--ws-border)]">
@@ -788,7 +788,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
 
                             {/* Comments Section (Client Only) */}
                             {showComments && user.role === 'client' && (
-                                <div className="bg-[var(--ws-surface-secondary)]/50 rounded-xl p-4 border border-[var(--ws-border)]">
+                                <div className="bg-[var(--ws-surface-secondary)] rounded-xl p-4 border border-[var(--ws-border)]">
                                     <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                                         <MessageCircle className="w-5 h-5 text-purple-400" />
                                         Contract Comments

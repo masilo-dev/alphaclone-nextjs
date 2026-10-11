@@ -250,9 +250,9 @@ export function JournalEntriesPage() {
                                     <th className="px-4 md:px-6 py-3 text-right type-caption font-medium text-[var(--ws-text-muted)] uppercase">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-[var(--ws-panel)]/60 divide-y divide-white/5">
+                            <tbody className="bg-[var(--ws-panel)] divide-y divide-white/5">
                                 {entries.map((entry) => (
-                                    <tr key={entry.id} className={entry.status === 'void' ? 'bg-[var(--ws-panel)]/50 opacity-60' : ''}>
+                                    <tr key={entry.id} className={entry.status === 'void' ? 'bg-[var(--ws-panel)] opacity-60' : ''}>
                                         <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell font-medium text-[var(--ws-text-primary)]">
                                             {entry.entryNumber}
                                         </td>
@@ -322,7 +322,7 @@ export function JournalEntriesPage() {
             </div>
 
             {entries.length === 0 && (
-            <div className="text-center py-12 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40">
+            <div className="text-center py-12 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]">
                     <p className="text-[var(--ws-text-secondary)]">No journal entries found</p>
                 </div>
             )}
@@ -359,7 +359,7 @@ export function JournalEntriesPage() {
                         </div>
                         <div className="rounded-xl border border-[var(--ws-border)] overflow-x-auto">
                             <table className="min-w-[520px] w-full divide-y divide-white/5 type-ui">
-                                <thead className="bg-[var(--ws-panel)]/80">
+                                <thead className="bg-[var(--ws-panel)]">
                                     <tr>
                                         <th className="px-4 py-2 text-left type-caption text-[var(--ws-text-muted)] uppercase">Account</th>
                                         <th className="px-4 py-2 text-left type-caption text-[var(--ws-text-muted)] uppercase">Description</th>
@@ -377,7 +377,7 @@ export function JournalEntriesPage() {
                                         </tr>
                                     ))}
                                 </tbody>
-                                <tfoot className="bg-[var(--ws-panel)]/80">
+                                <tfoot className="bg-[var(--ws-panel)]">
                                     <tr>
                                         <td colSpan={2} className="px-4 py-2 text-right font-semibold text-[var(--ws-text-primary)]">Totals</td>
                                         <td className="px-4 py-2 text-right font-mono font-semibold text-[var(--ws-text-primary)]">${viewingEntry.totalDebits.toFixed(2)}</td>

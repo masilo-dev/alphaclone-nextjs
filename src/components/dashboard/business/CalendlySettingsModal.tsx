@@ -15,14 +15,14 @@ export const CalendlySettingsModal: React.FC<CalendlySettingsModalProps> = ({ on
     }, []);
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-0 sm:p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-0 sm:p-4 animate-in fade-in duration-300">
             <div
                 className="absolute inset-0 bg-transparent"
                 onClick={onClose}
             />
             <Card className="relative bg-[var(--ws-canvas)] border border-[var(--ws-border)]/50 sm:rounded-3xl p-0 flex flex-col w-full max-w-2xl h-full sm:h-auto sm:max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
                 {/* Header */}
-                <div className="flex items-start sm:items-center justify-between p-4 sm:p-6 border-b border-[var(--ws-border)]/50 bg-[var(--ws-panel)]/50 backdrop-blur-xl shrink-0">
+                <div className="flex items-start sm:items-center justify-between p-4 sm:p-6 border-b border-[var(--ws-border)]/50 bg-[var(--ws-panel)] shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="p-2 sm:p-3 bg-teal-500/10 rounded-xl">
                             <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-teal-400" />
@@ -43,7 +43,7 @@ export const CalendlySettingsModal: React.FC<CalendlySettingsModalProps> = ({ on
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-[var(--ws-border)]/50 bg-[var(--ws-panel)]/50 backdrop-blur-xl flex justify-end shrink-0">
+                <div className="p-6 border-t border-[var(--ws-border)]/50 bg-[var(--ws-panel)] flex justify-end shrink-0">
                     <button
                         onClick={onClose}
                         className="px-8 py-3 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] type-caption font-black uppercase tracking-widest rounded-xl transition-all active:scale-95"

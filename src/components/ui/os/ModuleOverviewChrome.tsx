@@ -41,7 +41,7 @@ export function ModuleOverviewChrome({
       className={cn('space-y-4 ac-scroll-full ac-module-section', className)}
       data-module={moduleId}
     >
-      <div className="flex items-start justify-between gap-3 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 px-4 py-3" data-tour="module-purpose">
+      <div className="flex items-start justify-between gap-3 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-3" data-tour="module-purpose">
         <div className="min-w-0">
           <p className="type-caption font-bold uppercase tracking-caps text-[var(--ac-accent)]">{identity.label}</p>
           <p className="mt-1 type-caption text-[var(--ws-text-secondary)]">{identity.meaning}</p>

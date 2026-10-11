@@ -794,7 +794,7 @@ export function OutreachLifecyclePanel() {
             {steps.map((step, index) => (
               <div
                 key={index}
-                className="grid gap-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-3 lg:grid-cols-[7rem_7rem_10rem_1fr_1fr_auto]"
+                className="grid gap-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3 lg:grid-cols-[7rem_7rem_10rem_1fr_1fr_auto]"
               >
                 <AlphaCloneSelect
                   value={step.channel}
@@ -968,7 +968,7 @@ export function OutreachLifecyclePanel() {
                   .map((step) => (
                     <span
                       key={step.id}
-                      className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-2 py-1 type-ui text-[var(--ws-text-muted)]"
+                      className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-2 py-1 type-ui text-[var(--ws-text-muted)]"
                     >
                       {step.step_order}. {step.channel} · {step.delay_minutes}m
                     </span>
@@ -1023,7 +1023,7 @@ export function OutreachLifecyclePanel() {
             {senders.map((sender) => (
               <article
                 key={sender.id}
-                className={`rounded-xl border p-3 ${sender.live_health?.unsafe ? "border-rose-500/25 bg-rose-500/5" : "border-[var(--ws-border)] bg-[var(--ws-canvas)]/40"}`}
+                className={`rounded-xl border p-3 ${sender.live_health?.unsafe ? "border-rose-500/25 bg-rose-500/5" : "border-[var(--ws-border)] bg-[var(--ws-canvas)]"}`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>

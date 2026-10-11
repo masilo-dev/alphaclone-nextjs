@@ -139,7 +139,7 @@ export function IntegratedIntelligencePanel() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         {topModules.map((moduleAssessment) => (
-          <div key={moduleAssessment.module} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/45 p-2.5">
+          <div key={moduleAssessment.module} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2.5">
             <div className="type-caption uppercase tracking-wide text-[var(--ws-text-muted)]">
               {MODULE_LABELS[moduleAssessment.module]}
             </div>
@@ -149,7 +149,7 @@ export function IntegratedIntelligencePanel() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-3">
-        <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 p-3">
+        <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3">
           <div className="type-caption font-black uppercase tracking-widest text-[var(--brand-blue-300)] mb-2 flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" />
             Priority Actions
@@ -163,7 +163,7 @@ export function IntegratedIntelligencePanel() {
           </ul>
         </div>
 
-        <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 p-3">
+        <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3">
           <div className="type-caption font-black uppercase tracking-widest text-[var(--warning-text,var(--warning-500))] mb-2 flex items-center gap-1">
             <AlertTriangle className="w-3.5 h-3.5" />
             Systemic Risks
@@ -178,7 +178,7 @@ export function IntegratedIntelligencePanel() {
         </div>
       </div>
       {trendPoints.length > 1 && (
-        <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 p-3">
+        <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3">
           <div className="type-caption text-[var(--ws-text-muted)] mb-2 uppercase tracking-widest font-black">Trend</div>
           <div className="flex items-end gap-1 h-16">
             {trendPoints.map((point, index) => (

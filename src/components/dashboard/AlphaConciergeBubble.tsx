@@ -48,7 +48,7 @@ export const AlphaConciergeBubble: React.FC = () => {
                         initial={{ opacity: 0, y: 20, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                        className="mb-4 w-80 md:w-96 overflow-hidden rounded-2xl border border-[var(--ws-border-strong)] bg-[var(--ws-panel)]/80 backdrop-blur-xl shadow-2xl shadow-indigo-500/20"
+                        className="mb-4 w-80 md:w-96 overflow-hidden rounded-2xl border border-[var(--ws-border-strong)] bg-[var(--ws-panel)] shadow-2xl shadow-indigo-500/20"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between bg-gradient-to-r from-indigo-600 to-purple-600 p-4">

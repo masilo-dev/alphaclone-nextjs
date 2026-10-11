@@ -14,7 +14,7 @@ const LOCATIONS = [
 
 const InteractiveMap = () => {
     return (
-        <div className="relative w-full aspect-[16/9] max-w-5xl mx-auto bg-[var(--ws-panel)]/20 rounded-3xl border border-[var(--ws-border)]/50 overflow-hidden backdrop-blur-xl group">
+        <div className="relative w-full aspect-[16/9] max-w-5xl mx-auto bg-[var(--ws-panel)] rounded-3xl border border-[var(--ws-border)]/50 overflow-hidden group">
             {/* Simple CSS World Map Placeholder */}
             <div className="absolute inset-0 opacity-20 pointer-events-none">
                 <svg viewBox="0 0 1000 500" className="w-full h-full fill-slate-700">
@@ -50,7 +50,7 @@ const InteractiveMap = () => {
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             whileHover={{ opacity: 1, y: 0 }}
-                            className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)] rounded type-caption text-teal-400 font-bold backdrop-blur-md pointer-events-none"
+                            className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded type-caption text-teal-400 font-bold pointer-events-none"
                         >
                             {loc.name}
                         </motion.div>

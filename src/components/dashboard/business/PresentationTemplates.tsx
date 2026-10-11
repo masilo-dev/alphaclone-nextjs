@@ -279,7 +279,7 @@ export default function PresentationTemplates() {
                         </div>
                         <div className="flex flex-col justify-center space-y-4">
                             {slide.content.map((item, i) => (
-                                <div key={i} className="bg-[var(--ws-hover)] backdrop-blur-sm rounded-lg p-4">
+                                <div key={i} className="bg-[var(--ws-hover)] rounded-lg p-4">
                                     <p className="text-xl">{item}</p>
                                 </div>
                             ))}

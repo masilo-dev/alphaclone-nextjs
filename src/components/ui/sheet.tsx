@@ -19,7 +19,7 @@ const SheetOverlay = React.forwardRef<
   <SheetPrimitive.Overlay
     ref={ref}
     className={cn(
-      'fixed inset-0 ac-layer-overlay bg-black/60 backdrop-blur-[2px] transition-opacity data-[state=closed]:opacity-0 data-[state=open]:opacity-100',
+      'fixed inset-0 ac-layer-overlay bg-black/75 transition-opacity data-[state=closed]:opacity-0 data-[state=open]:opacity-100',
       className
     )}
     {...props}
@@ -43,16 +43,22 @@ interface SheetContentProps extends React.ComponentPropsWithoutRef<typeof SheetP
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = 'right', className, children, ...props }, ref) => (
+>(({ side = 'right', className, children, style, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
     <SheetPrimitive.Content
       ref={ref}
+      style={{
+        backgroundColor: 'var(--ws-panel)',
+        borderColor: 'var(--ws-border)',
+        color: 'var(--ws-text-primary)',
+        ...style,
+      }}
       className={cn(
         // Layout & scroll
         'fixed ac-layer-panel flex flex-col gap-3 sm:gap-3.5 overflow-hidden',
         // Token-driven surface: adapts to dark / light theme
-        'border-[var(--ws-border)] bg-[var(--ws-panel)] shadow-xl',
+        'border-[var(--ws-border)] bg-[var(--ws-panel)] shadow-2xl',
         // Transition
         'transition-transform duration-300 ease-out data-[state=closed]:duration-200',
         sheetSideClasses[side],

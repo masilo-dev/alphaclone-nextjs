@@ -45,7 +45,7 @@ export default function HumanVerification({ onVerify, verified }: HumanVerificat
             </label>
             <div
                 ref={containerRef}
-                className={`relative h-14 rounded-xl flex items-center px-1.5 overflow-hidden transition-colors duration-500 ${isVerified ? 'bg-teal-500/10 border border-teal-500/30' : 'bg-[var(--ws-surface-secondary)]/80 border border-[var(--ws-border)]/80'
+                className={`relative h-14 rounded-xl flex items-center px-1.5 overflow-hidden transition-colors duration-500 ${isVerified ? 'bg-teal-500/10 border border-teal-500/30' : 'bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/80'
                     }`}
             >
                 <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${isVerified ? 'opacity-0' : 'opacity-100'

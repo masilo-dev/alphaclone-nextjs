@@ -343,7 +343,7 @@ const ArticleEditor: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-slate-700">
                         {articles.map((article) => (
-                            <tr key={article.id} className="hover:bg-[var(--ws-surface-tertiary)]/50">
+                            <tr key={article.id} className="hover:bg-[var(--ws-surface-tertiary)]">
                                 <td className="px-4 py-3">
                                     <div className="text-[var(--ws-text-primary)] font-medium">{article.title}</div>
                                     <div className="type-caption text-[var(--ws-text-muted)]">/blog/{article.slug}</div>

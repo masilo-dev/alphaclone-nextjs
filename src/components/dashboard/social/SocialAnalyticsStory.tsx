@@ -265,7 +265,7 @@ export function SocialAnalyticsStory({
                     </div>
                 </div>
 
-                <aside className="self-end rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-5">
+                <aside className="self-end rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-5">
                     {focused || topPost ? (
                         (() => {
                             const item = focused || topPost!;

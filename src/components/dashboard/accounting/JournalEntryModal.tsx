@@ -337,7 +337,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
 
                     <div className="space-y-3">
                         {formData.lines.map((line, index) => (
-                            <div key={index} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center bg-[var(--ws-panel)]/50 p-3 rounded-xl border border-[var(--ws-border)] group hover:border-[var(--ws-border)] transition-all">
+                            <div key={index} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center bg-[var(--ws-panel)] p-3 rounded-xl border border-[var(--ws-border)] group hover:border-[var(--ws-border)] transition-all">
                                 <div className="flex-[2] w-full">
                                     <AlphaCloneSelect
                                         value={line.accountId}
@@ -406,7 +406,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                         ))}
                     </div>
 
-                    <div className={`p-4 rounded-xl border flex items-center justify-between transition-all ${totalAmount > 0 ? 'bg-teal-500/5 border-teal-500/20 text-teal-400' : 'bg-[var(--ws-surface-secondary)]/50 border-[var(--ws-border)]/50 text-[var(--ws-text-muted)]'}`}>
+                    <div className={`p-4 rounded-xl border flex items-center justify-between transition-all ${totalAmount > 0 ? 'bg-teal-500/5 border-teal-500/20 text-teal-400' : 'bg-[var(--ws-surface-secondary)] border-[var(--ws-border)]/50 text-[var(--ws-text-muted)]'}`}>
                         <div className="flex items-center gap-2">
                             {totalAmount > 0 ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
                             <span className="type-caption font-bold uppercase tracking-tight">

@@ -262,7 +262,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
             </p>
           )}
 
-          <div className="mt-2 grid gap-1.5 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-2.5 type-ui text-[var(--ws-text-muted)]">
+          <div className="mt-2 grid gap-1.5 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2.5 type-ui text-[var(--ws-text-muted)]">
             <p>
               <span className="font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">What:</span>{' '}
               {approval.toolName
@@ -366,7 +366,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
                 <button
                   type="button"
                   onClick={() => setEditing((v) => !v)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/60 px-3 py-1.5 type-ui text-[var(--ws-text-secondary)] hover:border-teal-500/40 hover:text-[var(--brand-blue-300)] transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-1.5 type-ui text-[var(--ws-text-secondary)] hover:border-teal-500/40 hover:text-[var(--brand-blue-300)] transition-colors"
                 >
                   <Pencil className="h-3 w-3" />
                   {editing ? 'Preview' : 'Edit arguments'}
@@ -381,7 +381,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
       </AnimatePresence>
 
       {/* Action bar */}
-      <div className="flex items-center gap-2 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2.5">
+      <div className="flex items-center gap-2 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-2.5">
         {confirming === 'approve' && (
           <p className="mr-auto type-card-description text-[var(--success-text,var(--success-500))] font-semibold animate-pulse">
             Click again to confirm approval →

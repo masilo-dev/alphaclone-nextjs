@@ -190,9 +190,9 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                     </label>
 
                     {isAdmin ? (
-                        <div className="space-y-2 max-h-48 overflow-y-auto bg-[var(--ws-surface-secondary)]/50 border-2 border-[var(--ws-border)] rounded-lg p-3">
+                        <div className="space-y-2 max-h-48 overflow-y-auto bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg p-3">
                             {profiles.map(p => (
-                                <label key={p.id} className="flex items-center gap-3 p-2 hover:bg-[var(--ws-surface-tertiary)]/50 rounded cursor-pointer">
+                                <label key={p.id} className="flex items-center gap-3 p-2 hover:bg-[var(--ws-surface-tertiary)] rounded cursor-pointer">
                                     <input
                                         type="checkbox"
                                         checked={attendees.includes(p.id)}

@@ -299,14 +299,14 @@ export default function AuditTrailPage() {
 
                     {/* Technical details expandable drawer */}
                     {isExpanded && (
-                      <tr className="bg-[var(--ws-canvas)]/80">
+                      <tr className="bg-[var(--ws-canvas)]">
                         <td colSpan={9} className="px-6 py-4 border-t border-b border-[var(--ws-border)]">
                           <div className="font-mono type-caption space-y-2 text-[var(--ws-text-secondary)]">
                             <div className="flex items-center gap-2 text-purple-400 font-semibold mb-2">
                               <Terminal className="h-4 w-4" />
                               Technical Execution Context
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 bg-[var(--ws-panel)]/90 p-3 rounded-lg border border-[var(--ws-border)]">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 bg-[var(--ws-panel)] p-3 rounded-lg border border-[var(--ws-border)]">
                               <div><span className="text-[var(--ws-text-muted)]">Record ID:</span> {row.entity_id || row.resource_id || 'N/A'}</div>
                               <div><span className="text-[var(--ws-text-muted)]">Entity Type:</span> {row.entity_type || row.resource_type || 'N/A'}</div>
                               <div><span className="text-[var(--ws-text-muted)]">Severity:</span> {row.severity || 'low'}</div>

@@ -101,7 +101,7 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 ac-layer-overlay flex items-end justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 sm:items-center">
+        <div className="fixed inset-0 ac-layer-overlay flex items-end justify-center bg-black/60 animate-in fade-in duration-300 sm:items-center">
             <div className="w-full max-h-[92vh] overflow-y-auto rounded-t-[2.5rem] border-t border-[var(--ws-border)] bg-[var(--ws-panel)] p-6 shadow-2xl animate-in slide-in-from-bottom-full duration-500 sm:max-w-xl sm:rounded-[2.5rem] sm:border sm:p-8">
                 <div className="mb-7 flex items-start justify-between gap-4">
                     <div>
@@ -139,7 +139,7 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                                         className={`rounded-xl border px-4 py-3 type-ui font-bold transition-all ${
                                             tone === item
                                                 ? 'border-teal-500 bg-teal-500/10 text-teal-400 shadow-lg shadow-teal-500/10'
-                                                : 'border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/50 text-[var(--ws-text-muted)] hover:border-slate-600'
+                                                : 'border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:border-slate-600'
                                         }`}
                                     >
                                         {item.charAt(0).toUpperCase() + item.slice(1)}
@@ -204,8 +204,8 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                         </div>
 
                         <div className="overflow-hidden rounded-2xl border border-[var(--ws-border)]">
-                            <div className="border-b border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/70 px-4 py-3 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Recipients to queue</div>
-                            <div className="max-h-52 divide-y divide-slate-800 overflow-y-auto bg-[var(--ws-canvas)]/30">
+                            <div className="border-b border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-4 py-3 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Recipients to queue</div>
+                            <div className="max-h-52 divide-y divide-slate-800 overflow-y-auto bg-[var(--ws-canvas)]">
                                 {reviewedRecipients.map((recipient) => (
                                     <div key={`${recipient.kind}-${recipient.id}`} className="px-4 py-3">
                                         <p className="truncate type-card-description font-bold text-[var(--ws-text-primary)]">{recipient.name}</p>

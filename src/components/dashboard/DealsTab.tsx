@@ -426,7 +426,7 @@ const DealDetail: React.FC<{
           </div>
 
           {productsLoading ? (
-            <div className="space-y-2">{[...Array(2)].map((_, i) => <div key={i} className="h-9 bg-[var(--ws-surface-secondary)]/50 rounded animate-pulse" />)}</div>
+            <div className="space-y-2">{[...Array(2)].map((_, i) => <div key={i} className="h-9 bg-[var(--ws-surface-secondary)] rounded animate-pulse" />)}</div>
           ) : products.length === 0 ? (
             <p className="type-card-description text-[var(--ws-text-muted)]">No products added yet.</p>
           ) : (
@@ -526,7 +526,7 @@ const DealDetail: React.FC<{
           </div>
         </div>
       ) : (
-      <div className="fixed bottom-0 left-0 right-0 bg-[var(--ws-canvas)]/95 border-t border-[var(--ws-border)] flex flex-col pb-[env(safe-area-inset-bottom,0px)] z-20">
+      <div className="fixed bottom-0 left-0 right-0 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] flex flex-col pb-[env(safe-area-inset-bottom,0px)] z-20">
         <div className="flex divide-x divide-white/5 overflow-x-auto">
           <button type="button" onClick={() => navigate(deal.contact_id ? `/dashboard/contacts?directory=unified&contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/contacts?directory=unified')} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-[var(--ws-text-muted)] font-bold hover:bg-[var(--ws-hover)]">Customer</button>
           <button type="button" onClick={() => navigate(`/dashboard/business/quotes?dealId=${encodeURIComponent(deal.id)}`)} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-[var(--ws-text-muted)] font-bold hover:bg-[var(--ws-hover)]">Quote</button>
@@ -946,10 +946,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
               const id = e.dataTransfer.getData('text/plain');
               if (id) void handleBoardDrop(id, stage);
             }}
-            className="flex-1 min-w-[280px] max-w-[320px] bg-[var(--ws-panel)]/25 border border-[var(--ws-border)] rounded-2xl flex flex-col h-full overflow-hidden"
+            className="flex-1 min-w-[280px] max-w-[320px] bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl flex flex-col h-full overflow-hidden"
           >
             {/* Column Header */}
-            <div className="flex items-center justify-between p-3.5 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/40 shrink-0">
+            <div className="flex items-center justify-between p-3.5 border-b border-[var(--ws-border)] bg-[var(--ws-panel)] shrink-0">
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${col.text} bg-current`} />
                 <span className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-secondary)]">{stage.replace('_', ' ')}</span>
@@ -1054,7 +1054,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const renderList = () => (
     <div className="p-4 space-y-4">
       {/* Table Search & Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-[var(--ws-panel)]/20 border border-[var(--ws-border)] rounded-2xl p-4">
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4">
         <div className="relative w-full sm:w-72">
           <Search className="w-4 h-4 text-[var(--ws-text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
           <AlphaCloneInput
@@ -1092,7 +1092,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                 setSortOrder('desc');
               }
             }}
-            className={`flex items-center gap-1 px-3 py-1.5 bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)] rounded-xl type-caption shrink-0 ${
+            className={`flex items-center gap-1 px-3 py-1.5 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption shrink-0 ${
               sortBy === 'value' ? 'text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-muted)]'
             }`}
           >
@@ -1110,7 +1110,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                 setSortOrder('desc');
               }
             }}
-            className={`flex items-center gap-1 px-3 py-1.5 bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)] rounded-xl type-caption shrink-0 ${
+            className={`flex items-center gap-1 px-3 py-1.5 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption shrink-0 ${
               sortBy === 'created_at' ? 'text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-muted)]'
             }`}
           >
@@ -1121,10 +1121,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
       </div>
 
       {/* Table grid */}
-      <div className="overflow-x-auto rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/30">
+      <div className="overflow-x-auto rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]">
         <table className="ac-data-table w-full border-collapse text-left min-w-[700px]">
           <thead>
-            <tr className="border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/20">
+            <tr className="border-b border-[var(--ws-border)] bg-[var(--ws-panel)]">
               <th className="px-3 py-3 w-10">
                 <button
                   type="button"
@@ -1232,7 +1232,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
         return (
           <div key={stage}>
             {/* Stage header */}
-            <div className="flex items-center justify-between px-4 py-2.5 bg-[var(--ws-panel)]/60 border-b border-[var(--ws-border)] sticky top-[57px] sm:top-[73px] z-10">
+            <div className="flex items-center justify-between px-4 py-2.5 bg-[var(--ws-panel)] border-b border-[var(--ws-border)] sticky top-[57px] sm:top-[73px] z-10">
               <div className="flex items-center gap-2">
                 <span className="type-ui font-black uppercase tracking-wider text-[var(--ws-text-muted)]">{stage.replace('_', ' ')}</span>
                 <span className={`type-ui font-bold px-1.5 py-0.5 rounded-full ${col.bg} ${col.text}`}>{stageDeals.length}</span>
@@ -1288,7 +1288,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
           {/* Switcher pills */}
-          <div className="flex bg-[var(--ws-panel)]/60 p-1 rounded-full border border-[var(--ws-border)] shadow-inner">
+          <div className="flex bg-[var(--ws-panel)] p-1 rounded-full border border-[var(--ws-border)] shadow-inner">
             <button
               onClick={() => setViewMode('board')}
               className={`flex h-8 items-center gap-1.5 rounded-full px-3 type-ui font-bold transition-all ${
@@ -1335,10 +1335,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
           </div>
         )}
         stats={!loading && deals.length > 0 ? (
-          <div className="p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/20 space-y-4 shrink-0">
+          <div className="p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)] space-y-4 shrink-0">
             <RevenueLeakagePanel deals={deals} heading="What to fix next" />
             <ModuleStatCards stats={dealStats} hub="deals" />
-            <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 p-4">
+            <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Pipeline by Stage</h3>
                 <span className="type-ui text-[var(--ws-text-muted)]">Value distribution</span>
@@ -1349,7 +1349,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                     <span className={`w-24 shrink-0 type-ui font-bold capitalize ${STAGE_COLORS[stage].text}`}>
                       {stage.replace('_', ' ')}
                     </span>
-                    <div className="flex-1 h-2.5 rounded-full bg-[var(--ws-surface-secondary)]/80 overflow-hidden">
+                    <div className="flex-1 h-2.5 rounded-full bg-[var(--ws-surface-secondary)] overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${pct}%` }}
@@ -1374,11 +1374,11 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
       {/* Main View Area */}
       <div ref={listRef} className="flex-1 ac-scroll-full">
         {loading ? (
-          <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-14 bg-[var(--ws-panel)]/40 animate-pulse" />)}</div>
+          <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-14 bg-[var(--ws-panel)] animate-pulse" />)}</div>
         ) : (
           <>
             {selectedDealIds.size > 0 && (
-              <div className="p-3 bg-[var(--ws-canvas)]/60 border-b border-[var(--ws-border)]">
+              <div className="p-3 bg-[var(--ws-canvas)] border-b border-[var(--ws-border)]">
                 <ContextualBulkBar
                   selectedCount={selectedDealIds.size}
                   itemLabel={{ singular: 'deal', plural: 'deals' }}

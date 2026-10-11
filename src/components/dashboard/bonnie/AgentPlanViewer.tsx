@@ -83,7 +83,7 @@ export default function AgentPlanViewer({
   const failCount = steps.filter((s) => s.status === 'failed').length;
 
   return (
-    <div className="mt-2 rounded-xl border border-teal-500/20 bg-[var(--ws-panel)]/60 overflow-hidden">
+    <div className="mt-2 rounded-xl border border-teal-500/20 bg-[var(--ws-panel)] overflow-hidden">
       {/* Header ─── */}
       <button
         type="button"

@@ -246,7 +246,7 @@ function KanbanColumn({
     <div
       className={`flex flex-col w-[min(88vw,300px)] sm:w-72 md:w-[280px] xl:w-auto xl:min-w-[260px] shrink-0 snap-center rounded-2xl ${column.color} border border-[var(--ws-border)]/30 overflow-hidden`}
     >
-      <div className="p-3 bg-[var(--ws-panel)]/50 backdrop-blur-sm border-b border-[var(--ws-border)] flex items-center justify-between sticky top-0 z-10">
+      <div className="p-3 bg-[var(--ws-panel)] border-b border-[var(--ws-border)] flex items-center justify-between sticky top-0 z-10">
         <h3 className="font-bold type-ui text-[var(--ws-text-secondary)] flex items-center gap-2">
             {column.title}
             <span className="type-caption bg-[var(--ws-surface-secondary)] px-2 py-0.5 rounded-full text-[var(--ws-text-muted)] font-medium">
@@ -291,7 +291,7 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
             animate={{ opacity: 0.7 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm md:hidden"
+            className="fixed inset-0 z-50 bg-black/85 md:hidden"
           />
           {/* Drawer container */}
           <motion.div
@@ -302,7 +302,7 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
             className="fixed inset-x-0 bottom-0 z-50 max-h-[92dvh] bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden md:hidden"
           >
             {/* Grab Handle */}
-            <div className="flex justify-center py-3 shrink-0 bg-[var(--ws-panel)]/40 border-b border-[var(--ws-border)]">
+            <div className="flex justify-center py-3 shrink-0 bg-[var(--ws-panel)] border-b border-[var(--ws-border)]">
               <div className="w-12 h-1 bg-white/20 rounded-full" />
             </div>
 
@@ -331,7 +331,7 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
               </div>
 
               {/* Status Dot Selectors */}
-              <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-3xl p-4">
+              <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl p-4">
                 <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] font-mono mb-3 text-center">
                   Stage Pipeline Controller
                 </p>
@@ -396,7 +396,7 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                     <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-secondary)] font-mono">Call</span>
                   </a>
                 ) : (
-                  <div className="flex flex-col items-center gap-2 p-3 bg-[var(--ws-panel)]/30 border border-dashed border-[var(--ws-border)] rounded-2xl opacity-40">
+                  <div className="flex flex-col items-center gap-2 p-3 bg-[var(--ws-panel)] border border-dashed border-[var(--ws-border)] rounded-2xl opacity-40">
                     <Phone className="w-5 h-5 text-slate-600" />
                     <span className="type-caption font-black uppercase tracking-widest text-slate-600 font-mono">No Phone</span>
                   </div>
@@ -414,7 +414,7 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                     <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-secondary)] font-mono">Email</span>
                   </button>
                 ) : (
-                  <div className="flex flex-col items-center gap-2 p-3 bg-[var(--ws-panel)]/30 border border-dashed border-[var(--ws-border)] rounded-2xl opacity-40">
+                  <div className="flex flex-col items-center gap-2 p-3 bg-[var(--ws-panel)] border border-dashed border-[var(--ws-border)] rounded-2xl opacity-40">
                     <Mail className="w-5 h-5 text-slate-600" />
                     <span className="type-caption font-black uppercase tracking-widest text-slate-600 font-mono">No Email</span>
                   </div>
@@ -433,7 +433,7 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                     <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-secondary)] font-mono">Locate</span>
                   </a>
                 ) : (
-                  <div className="flex flex-col items-center gap-2 p-3 bg-[var(--ws-panel)]/30 border border-dashed border-[var(--ws-border)] rounded-2xl opacity-40">
+                  <div className="flex flex-col items-center gap-2 p-3 bg-[var(--ws-panel)] border border-dashed border-[var(--ws-border)] rounded-2xl opacity-40">
                     <MapPin className="w-5 h-5 text-slate-600" />
                     <span className="type-caption font-black uppercase tracking-widest text-slate-600 font-mono">No Map</span>
                   </div>
@@ -442,14 +442,14 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
 
               {/* SDR Insights Section */}
               {lead.sdrInsight && (
-                <div className="bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-3xl p-5 space-y-3">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl p-5 space-y-3">
                   <div className="flex items-center gap-2">
                     <div className="p-1 bg-indigo-500/10 rounded-lg">
                       <Sparkles className="w-4 h-4 text-indigo-400" />
                     </div>
                     <h4 className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-primary)] font-mono">AI Outreach Strategy</h4>
                   </div>
-                  <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed font-sans bg-[var(--ws-canvas)]/40 p-3.5 rounded-2xl border border-[var(--ws-border)]">
+                  <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed font-sans bg-[var(--ws-canvas)] p-3.5 rounded-2xl border border-[var(--ws-border)]">
                     {lead.sdrInsight}
                   </p>
                 </div>

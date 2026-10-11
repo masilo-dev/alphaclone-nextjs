@@ -319,7 +319,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                                             setSelectedLead(lead);
                                             setShowDetailView(true);
                                         }}
-                                        className="p-4 hover:border-teal-500/50 transition-all cursor-pointer group bg-[var(--ws-surface-secondary)]/50 rounded-lg border border-[var(--ws-border)]"
+                                        className="p-4 hover:border-teal-500/50 transition-all cursor-pointer group bg-[var(--ws-surface-secondary)] rounded-lg border border-[var(--ws-border)]"
                                     >
                                         <div className="flex items-start justify-between mb-3">
                                             <div className="flex-1">
@@ -384,7 +384,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
 
                             {/* Empty State */}
                             {leads.filter((lead) => lead.stage === stage.id).length === 0 && (
-                                <div className="p-8 text-center border-2 border-dashed border-[var(--ws-border)] rounded-lg bg-[var(--ws-panel)]/30">
+                                <div className="p-8 text-center border-2 border-dashed border-[var(--ws-border)] rounded-lg bg-[var(--ws-panel)]">
                                     <p className="type-card-description text-[var(--ws-text-muted)]">Drag leads here or click + to add</p>
                                 </div>
                             )}

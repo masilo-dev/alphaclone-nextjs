@@ -444,7 +444,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const selectedClient = clients.find(c => c.id === selectedClientId);
 
     return (
-        <div className="fixed inset-0 ac-layer-modal flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 ac-layer-modal flex items-center justify-center bg-black/90 p-4">
             <div className={`flex max-h-[90dvh] w-full max-w-4xl flex-col overflow-hidden ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} shadow-none`}>
                 {/* Header */}
                 <div className="flex shrink-0 items-center justify-between border-b border-[var(--ws-border)] p-6">
@@ -695,7 +695,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 </div>
                             )}
 
-                            <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed border border-[var(--ws-border)]/60 rounded-lg px-3 py-2 bg-[var(--ws-panel)]/40">
+                            <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed border border-[var(--ws-border)]/60 rounded-lg px-3 py-2 bg-[var(--ws-panel)]">
                                 Save your services and default prices under{' '}
                                 <button
                                     type="button"
@@ -725,7 +725,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
                                 <div className="space-y-4">
                                     {lineItems.map((item, index) => (
-                                        <div key={index} className="relative bg-[var(--ws-panel)]/50 p-4 rounded-xl border border-[var(--ws-border)] hover:border-[var(--ws-border)] transition-all">
+                                        <div key={index} className="relative bg-[var(--ws-panel)] p-4 rounded-xl border border-[var(--ws-border)] hover:border-[var(--ws-border)] transition-all">
                                             {/* Service Quick Select for empty items */}
                                             {item.description === '' && (
                                                 <div className="mb-4">
@@ -1172,7 +1172,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 </div>
 
                 {/* Footer — always visible */}
-                <div className="flex shrink-0 items-center justify-between border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/95 p-4 sm:p-6 backdrop-blur-sm">
+                <div className="flex shrink-0 items-center justify-between border-t border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 sm:p-6">
                     <div className="type-ui text-[var(--ws-text-muted)]">
                         Total: <span className="text-[var(--ws-text-primary)] font-bold">${calculateTotal().toFixed(2)}</span>
                     </div>

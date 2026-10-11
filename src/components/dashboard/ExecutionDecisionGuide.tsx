@@ -97,7 +97,7 @@ export function ExecutionDecisionGuide({
                 key={step.id}
                 type="button"
                 onClick={() => handleNavigate(step.href!)}
-                className={cn('min-h-0 rounded-lg border p-3 text-left transition-all hover:bg-[var(--ws-panel)]/70 cursor-pointer', style.border, style.bg)}
+                className={cn('min-h-0 rounded-lg border p-3 text-left transition-all hover:bg-[var(--ws-panel)] cursor-pointer', style.border, style.bg)}
               >
                 {content}
               </button>

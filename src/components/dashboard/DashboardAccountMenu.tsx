@@ -74,7 +74,7 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
   const menuPanel = open && anchor ? (
     <>
       <div
-        className="fixed inset-0 ac-layer-menu-backdrop bg-[var(--ws-canvas)]/20"
+        className="fixed inset-0 ac-layer-menu-backdrop bg-[var(--ws-canvas)]"
         aria-hidden="true"
         onClick={() => setOpen(false)}
       />

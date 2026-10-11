@@ -200,7 +200,7 @@ export default function InstagramIntegrationTab() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-[var(--ws-border)]/80 bg-[var(--ws-canvas)]/60 px-4 py-3 text-[var(--ws-text-secondary)] type-ui mb-6 space-y-2">
+          <div className="rounded-xl border border-[var(--ws-border)]/80 bg-[var(--ws-canvas)] px-4 py-3 text-[var(--ws-text-secondary)] type-ui mb-6 space-y-2">
             <p className="font-semibold text-[var(--ws-text-primary)]">Before you connect</p>
             <ul className="list-disc pl-5 space-y-1 text-[var(--ws-text-muted)]">
               <li>Your Instagram must be a Business or Creator account.</li>

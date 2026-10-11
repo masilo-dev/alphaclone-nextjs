@@ -216,7 +216,7 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture, isActive: 
 
     return (
         <div className="fixed inset-0 ac-layer-overlay flex items-end justify-center pb-24 px-4 sm:items-center sm:pb-0">
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setIsActive(false)} />
+            <div className="absolute inset-0 bg-black/80 animate-in fade-in duration-300" onClick={() => setIsActive(false)} />
 
             <div className="relative w-full max-w-sm bg-[var(--ws-canvas)] border border-teal-500/30 rounded-[2.5rem] p-8 shadow-[0_0_100px_-20px_rgba(20,184,166,0.5)] overflow-hidden animate-in zoom-in-95 duration-200">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-teal-500 to-transparent animate-shimmer" />
@@ -246,7 +246,7 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture, isActive: 
                                 <span className="type-caption font-bold">{error}</span>
                             </div>
                         ) : summary ? (
-                            <div className="text-left bg-[var(--ws-panel)]/50 p-4 rounded-xl border border-[var(--ws-border)] max-h-60 overflow-y-auto">
+                            <div className="text-left bg-[var(--ws-panel)] p-4 rounded-xl border border-[var(--ws-border)] max-h-60 overflow-y-auto">
                                 <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed font-mono whitespace-pre-wrap">
                                     {summary}
                                 </p>

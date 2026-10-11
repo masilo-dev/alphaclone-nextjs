@@ -116,7 +116,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 4, opacity: 1 }}
               transition={{ delay: 0.2, duration: 1.2, ease: "easeInOut" }}
-              className="absolute inset-0 bg-[var(--ws-hover)] backdrop-blur-sm rounded-full pointer-events-none"
+              className="absolute inset-0 bg-[var(--ws-hover)] rounded-full pointer-events-none"
             />
           )}
         </motion.div>

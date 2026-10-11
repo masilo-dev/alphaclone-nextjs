@@ -195,7 +195,7 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
               </div>
             ))
           ) : (
-            <div className="text-center py-8 bg-[var(--ws-surface-tertiary)]/30 rounded-xl border border-dashed border-slate-600 ml-6">
+            <div className="text-center py-8 bg-[var(--ws-surface-tertiary)] rounded-xl border border-dashed border-slate-600 ml-6">
               <Calendar className="w-10 h-10 text-[var(--ws-text-muted)] mx-auto mb-3" />
               <h5 className="text-lg font-medium text-white mb-2">No Stages Defined</h5>
               <p className="text-[var(--ws-text-muted)] type-card-description">This project doesn't have any stages yet.</p>
@@ -223,7 +223,7 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
         </div>
         
         {project.next_steps.length === 0 ? (
-          <div className="text-center py-8 bg-[var(--ws-surface-tertiary)]/30 rounded-xl border border-dashed border-slate-600">
+          <div className="text-center py-8 bg-[var(--ws-surface-tertiary)] rounded-xl border border-dashed border-slate-600">
             <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
             <h5 className="text-lg font-medium text-white mb-2">All Caught Up!</h5>
             <p className="text-[var(--ws-text-muted)]">No immediate next steps. Great progress!</p>
@@ -239,7 +239,7 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
             {project.next_steps.map((step) => (
               <div 
                 key={step.id} 
-                className="bg-[var(--ws-surface-tertiary)]/50 rounded-lg p-4 border border-slate-600 hover:border-teal-500/50 transition-all duration-200"
+                className="bg-[var(--ws-surface-tertiary)] rounded-lg p-4 border border-slate-600 hover:border-teal-500/50 transition-all duration-200"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">

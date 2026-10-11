@@ -30,7 +30,7 @@ function ChartMount({ height, children }: { height: number; children: React.Reac
   if (!mounted) {
     return (
       <div
-        className="w-full rounded-xl bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] animate-pulse"
+        className="w-full rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] animate-pulse"
         style={{ height }}
       />
     );
@@ -55,7 +55,7 @@ interface CustomTooltipProps {
 const CustomTooltip = ({ active, payload, label, valuePrefix = '', valueSuffix = '' }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     return (
-      <div className="dashboard-chart-tooltip backdrop-blur-md p-3 rounded-lg shadow-[0_10px_25px_-5px_rgba(0,0,0,0.5)]">
+      <div className="dashboard-chart-tooltip p-3 rounded-lg shadow-[0_10px_25px_-5px_rgba(0,0,0,0.5)]">
         <p className="type-caption text-[var(--border-default)] font-black uppercase tracking-wider mb-1">{label}</p>
         {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center gap-2 mt-1">

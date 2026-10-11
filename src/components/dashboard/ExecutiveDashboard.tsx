@@ -184,7 +184,7 @@ export default function ExecutiveDashboard() {
             <button
               key={i}
               onClick={() => router.push(kpi.href)}
-              className="group relative bg-[var(--ws-panel)]/60 backdrop-blur-md border border-[var(--ws-border)] rounded-2xl p-4 text-left hover:border-[var(--ws-border)] transition-all duration-200 hover:bg-[var(--ws-panel)]/80"
+              className="group relative bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 text-left hover:border-[var(--ws-border)] transition-all duration-200 hover:bg-[var(--ws-panel)]"
             >
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>

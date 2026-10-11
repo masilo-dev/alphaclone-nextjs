@@ -52,8 +52,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               ${isOwn
                                 ? 'bg-blue-600 text-[var(--ws-text-primary)] rounded-br-sm border-blue-500'
                                 : isUrgent
-                                    ? 'bg-[var(--error-500)]/10 border-red-500/50 text-red-100 rounded-bl-sm backdrop-blur-md'
-                                    : 'bg-[var(--ws-hover)] border-[var(--ws-border)] text-[var(--ws-text-secondary)] rounded-bl-sm backdrop-blur-md'}
+                                    ? 'bg-[var(--error-500)]/10 border-red-500/50 text-red-100 rounded-bl-sm '
+                                    : 'bg-[var(--ws-hover)] border-[var(--ws-border)] text-[var(--ws-text-secondary)] rounded-bl-sm '}
             `}
                     >
                         {/* Attachments */}

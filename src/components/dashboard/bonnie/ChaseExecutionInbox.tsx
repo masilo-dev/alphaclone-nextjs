@@ -165,7 +165,7 @@ export function ChaseExecutionInbox() {
           ].map(({ label, value, icon: Icon }) => (
             <div
               key={label}
-              className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-4"
+              className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4"
             >
               <div className="flex items-center gap-2 type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">
                 <Icon className="h-3.5 w-3.5" />
@@ -215,7 +215,7 @@ export function ChaseExecutionInbox() {
             return (
               <li
                 key={item.id}
-                className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4 shadow-sm"
+                className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 shadow-sm"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 flex-1">

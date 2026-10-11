@@ -76,7 +76,7 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                 animate={{ opacity: 1 }} 
                 exit={{ opacity: 0 }}
                 onClick={onClose}
-                className="absolute inset-0 bg-gray-950/80 backdrop-blur-sm"
+                className="absolute inset-0 bg-gray-950/80"
             />
             
             <motion.div 
@@ -136,7 +136,7 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                             <button 
                                 key={lead.id}
                                 onClick={() => toggleSelection(lead.email as string)}
-                                className={`w-full text-left bg-[var(--ws-canvas)]/40 border rounded-2xl p-4 transition-all group relative overflow-hidden flex items-center justify-between ${selectedEmails.has(lead.email as string) ? 'border-teal-500 bg-teal-500/5' : 'border-[var(--ws-border)] hover:border-teal-500/30 hover:bg-teal-500/5'}`}
+                                className={`w-full text-left bg-[var(--ws-canvas)] border rounded-2xl p-4 transition-all group relative overflow-hidden flex items-center justify-between ${selectedEmails.has(lead.email as string) ? 'border-teal-500 bg-teal-500/5' : 'border-[var(--ws-border)] hover:border-teal-500/30 hover:bg-teal-500/5'}`}
                             >
                                 <div className="space-y-1">
                                     <h3 className="font-bold text-[var(--ws-text-primary)] text-base group-hover:text-teal-200 transition-colors">{lead.businessName}</h3>
@@ -167,7 +167,7 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-6 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 flex items-center justify-between">
+                <div className="p-6 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)] flex items-center justify-between">
                     <p className="type-card-description font-bold text-gray-500">
                         {selectedEmails.size} recipients selected
                     </p>

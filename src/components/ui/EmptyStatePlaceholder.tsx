@@ -37,7 +37,7 @@ export function EmptyStatePlaceholder({
   if (compact) {
     return (
       <div className={`flex flex-col items-center justify-center py-8 text-center gap-2 ${className}`}>
-        <div className="w-10 h-10 rounded-xl bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)] flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] flex items-center justify-center">
           <Icon className="w-5 h-5 text-[var(--ws-text-muted)]" />
         </div>
         <p className="type-card-description font-semibold text-[var(--ws-text-muted)]">{title}</p>

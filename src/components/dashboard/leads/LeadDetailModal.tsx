@@ -763,7 +763,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
             hideHeader
         >
             <div className="flex min-h-full flex-col bg-[var(--ws-canvas)]">
-                <div className="sticky top-0 z-30 border-b border-[var(--ws-border)] bg-[var(--ws-canvas)]/95 px-4 py-2.5 pr-14 backdrop-blur-xl sm:px-6">
+                <div className="sticky top-0 z-30 border-b border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-2.5 pr-14 sm:px-6">
                     <RecordHeader
                         moduleId="leads"
                         title={lead.businessName}
@@ -975,7 +975,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                 )}
 
                 {/* Tabs */}
-                <div className="sticky top-[74px] z-20 flex gap-4 overflow-x-auto border-b border-[var(--ws-border)] bg-[var(--ws-canvas)]/95 px-4 backdrop-blur-xl scrollbar-hide sm:px-6 sm:gap-6">
+                <div className="sticky top-[74px] z-20 flex gap-4 overflow-x-auto border-b border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 scrollbar-hide sm:px-6 sm:gap-6">
                     {['overview', 'deals', 'history', 'tasks', 'meetings', 'notes'].map((tab) => (
                         <button
                             key={tab}
@@ -1061,7 +1061,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                         <div className="space-y-4">
                             <GhostIntelligence lead={lead} onAction={handleSendProviderEmail} />
 
-                            <Card className="p-3.5 sm:p-4 mb-3 border-[var(--ws-border)] bg-[var(--ws-panel)]/40">
+                            <Card className="p-3.5 sm:p-4 mb-3 border-[var(--ws-border)] bg-[var(--ws-panel)]">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                                     <div>
                                         <p className="type-caption uppercase tracking-wider text-[var(--ws-text-muted)] font-bold mb-1">Lead completeness</p>
@@ -1073,7 +1073,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                     <button
                                         type="button"
                                         onClick={handleNextAction}
-                                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 hover:bg-[var(--ws-surface-secondary)] transition-colors ${nextAction.color}`}
+                                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] hover:bg-[var(--ws-surface-secondary)] transition-colors ${nextAction.color}`}
                                     >
                                         {nextAction.icon}
                                         <div className="text-left">
@@ -1161,7 +1161,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                         </div>
 
                                         <div className="flex flex-col gap-2.5">
-                                            <div className="p-2.5 bg-[var(--ws-panel)]/50 rounded-lg border border-[var(--ws-border)]">
+                                            <div className="p-2.5 bg-[var(--ws-panel)] rounded-lg border border-[var(--ws-border)]">
                                                 <p className="type-card-description text-[var(--ws-text-secondary)] italic leading-relaxed">
                                                     <span className="text-emerald-400 font-bold not-italic font-mono mr-2 uppercase tracking-tighter">Technical Audit:</span>
                                                     {lead.verificationNotes || "Data matches typical patterns for a legitimate business in this region."}
@@ -1236,7 +1236,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                             <Zap className="w-5 h-5 text-purple-400" />
                                             Strategic Hook
                                         </h3>
-                                        <div className="p-4 bg-[var(--ws-panel)]/50 rounded-lg border border-purple-500/20">
+                                        <div className="p-4 bg-[var(--ws-panel)] rounded-lg border border-purple-500/20">
                                             <p className="text-purple-200 type-card-description font-medium italic">
                                                 "{lead.outreachHook}"
                                             </p>
@@ -1252,7 +1252,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                 )}
 
                                 {( (lead.techStack && lead.techStack.length > 0) || (lead.painPoints && lead.painPoints.length > 0) || lead.valueProposition) && (
-                                    <Card className="p-6 bg-[var(--ws-panel)]/40">
+                                    <Card className="p-6 bg-[var(--ws-panel)]">
                                         <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4 flex items-center gap-2">
                                             <Database className="w-5 h-5 text-blue-400" />
                                             Business Intelligence
@@ -1283,7 +1283,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                                     <span className="type-caption text-[var(--ws-text-muted)] uppercase font-bold tracking-widest block mb-2">Pain Points</span>
                                                     <div className="space-y-2">
                                                         {lead.painPoints.map((point, i) => (
-                                                            <div key={i} className="flex items-start gap-2 type-ui text-[var(--ws-text-secondary)] bg-[var(--ws-panel)]/50 p-2 rounded border border-[var(--ws-border)]">
+                                                            <div key={i} className="flex items-start gap-2 type-ui text-[var(--ws-text-secondary)] bg-[var(--ws-panel)] p-2 rounded border border-[var(--ws-border)]">
                                                                 <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                                                                 {point}
                                                             </div>
@@ -1296,7 +1296,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                 )}
 
                                 {lead.outreachMessage && (
-                                    <Card className="p-6 bg-[var(--ws-panel)]/40 border-[var(--ws-border)]">
+                                    <Card className="p-6 bg-[var(--ws-panel)] border-[var(--ws-border)]">
                                         <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4 flex items-center gap-2">
                                             <Send className="w-5 h-5 text-[var(--brand-blue-400)]" />
                                             Outreach Draft
@@ -1403,7 +1403,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                     </div>
                                 ) : (
                                     tasks.map(task => (
-                                        <div key={task.id} className="flex items-center gap-3 p-3 bg-[var(--ws-panel)]/50 hover:bg-[var(--ws-panel)] rounded-lg border border-[var(--ws-border)] group transition-colors">
+                                        <div key={task.id} className="flex items-center gap-3 p-3 bg-[var(--ws-panel)] hover:bg-[var(--ws-panel)] rounded-lg border border-[var(--ws-border)] group transition-colors">
                                             <button
                                                 onClick={() => handleToggleTask(task.id, task.status)}
                                                 className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${task.status === 'completed' ? 'bg-[var(--brand-blue-500)] border-[var(--brand-blue-500)]' : 'border-slate-600 hover:border-[var(--brand-blue-500)]'}`}

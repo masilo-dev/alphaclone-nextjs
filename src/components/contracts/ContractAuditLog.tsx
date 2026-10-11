@@ -93,7 +93,7 @@ export const ContractAuditLog: React.FC<AuditLogProps> = ({ contractId, contract
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-2xl p-6">
+            <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl bg-teal-500/10 flex items-center justify-center">
@@ -133,7 +133,7 @@ export const ContractAuditLog: React.FC<AuditLogProps> = ({ contractId, contract
                                 <p className="text-center py-10 text-[var(--ws-text-muted)] italic">No audit events recorded yet.</p>
                             ) : (
                                 auditTrail.map((event) => (
-                                    <div key={event.id} className="flex gap-4 p-4 bg-[var(--ws-surface-secondary)]/40 rounded-xl border border-[var(--ws-border)]/60 hover:border-[var(--ws-border)] transition-all">
+                                    <div key={event.id} className="flex gap-4 p-4 bg-[var(--ws-surface-secondary)] rounded-xl border border-[var(--ws-border)]/60 hover:border-[var(--ws-border)] transition-all">
                                         <div className={`mt-1 shrink-0 ${getActionColor(event.action)}`}>
                                             {getActionIcon(event.action)}
                                         </div>
@@ -153,7 +153,7 @@ export const ContractAuditLog: React.FC<AuditLogProps> = ({ contractId, contract
                                                 </div>
                                             </div>
                                             {event.details && Object.keys(event.details).length > 0 && (
-                                                <div className="mt-2 p-2 bg-[var(--ws-panel)]/50 rounded-lg type-caption font-mono text-[var(--ws-text-muted)] overflow-x-auto">
+                                                <div className="mt-2 p-2 bg-[var(--ws-panel)] rounded-lg type-caption font-mono text-[var(--ws-text-muted)] overflow-x-auto">
                                                     {JSON.stringify(event.details)}
                                                 </div>
                                             )}

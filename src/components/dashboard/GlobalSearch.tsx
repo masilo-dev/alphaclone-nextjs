@@ -244,7 +244,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                                         onClick={() => handleSelect(result)}
                                         className={`w-full flex items-start gap-3 p-4 text-left transition-colors ${index === selectedIndex
                                             ? 'bg-[var(--ws-surface-secondary)]'
-                                            : 'hover:bg-[var(--ws-surface-secondary)]/50'
+                                            : 'hover:bg-[var(--ws-surface-secondary)]'
                                             }`}
                                     >
                                         <div className={`w-8 h-8 rounded-lg bg-[var(--ws-surface-secondary)] flex items-center justify-center flex-shrink-0 ${getColor(result.type)}`}>

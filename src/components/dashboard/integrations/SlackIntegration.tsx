@@ -177,7 +177,7 @@ export function SlackIntegration() {
   };
 
   return (
-    <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl p-6">
+    <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -236,7 +236,7 @@ export function SlackIntegration() {
 
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-3">
+            <div className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg p-3">
               <h4 className="type-ui font-medium text-[var(--ws-text-primary)] mb-2">Send Custom Message</h4>
               <div className="space-y-2">
                 <AlphaCloneInput
@@ -265,7 +265,7 @@ export function SlackIntegration() {
               </div>
             </div>
 
-            <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-3">
+            <div className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg p-3">
               <h4 className="type-ui font-medium text-[var(--ws-text-primary)] mb-2">Recent Notifications</h4>
               <div className="space-y-2 max-h-24 overflow-y-auto">
                 {notifications.length > 0 ? (

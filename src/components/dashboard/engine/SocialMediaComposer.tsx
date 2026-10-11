@@ -82,12 +82,12 @@ function normalizeScopes(raw: unknown): string[] {
 }
 
 const STATUS_STYLE: Record<string, string> = {
-    draft:       'bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)]',
+    draft:       'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] border-[var(--ws-border)]',
     scheduled:   'bg-blue-500/15 text-blue-400 border-blue-500/30',
     publishing:  'bg-amber-500/15 text-amber-400 border-amber-500/30',
     published:   'bg-green-500/15 text-green-400 border-green-500/30',
     failed:      'bg-[var(--error-500)]/15 text-red-400 border-red-500/30',
-    cancelled:   'bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-muted)] border-slate-600',
+    cancelled:   'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] border-slate-600',
 };
 
 const PLATFORM_ICONS: Record<string, React.ReactNode> = {
@@ -910,7 +910,7 @@ Return only the comment text.`;
             </div>
 
             {/* Tabs */}
-            <div className="flex max-w-full gap-1 overflow-x-auto p-1 bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)] rounded-xl w-fit scrollbar-none">
+            <div className="flex max-w-full gap-1 overflow-x-auto p-1 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl w-fit scrollbar-none">
                 {(['compose', 'posts', 'media'] as const).map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
                         className={`px-4 py-2 rounded-lg type-ui font-semibold capitalize transition-all ${activeTab === tab ? 'bg-teal-500 text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}>
@@ -931,7 +931,7 @@ Return only the comment text.`;
                                 </p>
                                 <div className="space-y-2">
                                     {posts.filter((p) => p.status === 'failed').slice(0, 2).map((post) => (
-                                        <div key={post.id} className="flex items-start justify-between gap-3 rounded-lg bg-[var(--ws-panel)]/40 p-2">
+                                        <div key={post.id} className="flex items-start justify-between gap-3 rounded-lg bg-[var(--ws-panel)] p-2">
                                             <div>
                                                 <p className="type-card-description text-[var(--ws-text-secondary)] line-clamp-2">{post.caption}</p>
                                                 <p className="type-card-description text-[var(--error-text,var(--error-500))] mt-1">{post.error_message || 'Unknown publish error'}</p>
@@ -977,7 +977,7 @@ Return only the comment text.`;
                                         className={`flex items-center gap-1.5 px-2.5 py-1 border rounded-lg type-caption font-semibold transition-all ${
                                             isListening
                                                 ? 'bg-[var(--error-500)]/20 border-red-500/40 text-red-400 animate-pulse'
-                                                : 'bg-[var(--ws-surface-tertiary)]/50 hover:bg-[var(--ws-surface-tertiary)] border-slate-600 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'
+                                                : 'bg-[var(--ws-surface-tertiary)] hover:bg-[var(--ws-surface-tertiary)] border-slate-600 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'
                                         }`}
                                     >
                                         {isListening ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
@@ -1033,7 +1033,7 @@ Return only the comment text.`;
                                         ))}
                                     </div>
                                     {recentPosts.length > 0 && (
-                                        <div className="space-y-2 rounded-lg border border-violet-500/20 bg-[var(--ws-panel)]/40 p-2.5">
+                                        <div className="space-y-2 rounded-lg border border-violet-500/20 bg-[var(--ws-panel)] p-2.5">
                                             <p className="type-card-description text-violet-200">
                                                 Recent posts found in the last {recentTopicWindowDays} days: {recentPosts.length}
                                             </p>
@@ -1188,7 +1188,7 @@ Return only the comment text.`;
                                                 </button>
                                                 <button
                                                     onClick={() => { setAiGeneratedImageUrl(null); setAiImagePrompt(''); }}
-                                                    className="flex items-center gap-1.5 px-3 py-2 bg-[var(--ws-surface-tertiary)]/80 hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-lg type-caption font-semibold transition-colors"
+                                                    className="flex items-center gap-1.5 px-3 py-2 bg-[var(--ws-surface-tertiary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-lg type-caption font-semibold transition-colors"
                                                 >
                                                     <X className="w-3 h-3" /> Discard
                                                 </button>
@@ -1196,7 +1196,7 @@ Return only the comment text.`;
                                                     href={aiGeneratedImageUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="ml-auto flex items-center gap-1.5 px-3 py-2 bg-[var(--ws-surface-tertiary)]/80 hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-lg type-caption transition-colors"
+                                                    className="ml-auto flex items-center gap-1.5 px-3 py-2 bg-[var(--ws-surface-tertiary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-lg type-caption transition-colors"
                                                 >
                                                     <Eye className="w-3 h-3" /> Full Size
                                                 </a>
@@ -1227,7 +1227,7 @@ Return only the comment text.`;
                             )}
 
                             {showMediaPicker && (
-                                <div className="border border-[var(--ws-border)] rounded-xl p-3 bg-[var(--ws-panel)]/50 max-h-60 overflow-y-auto">
+                                <div className="border border-[var(--ws-border)] rounded-xl p-3 bg-[var(--ws-panel)] max-h-60 overflow-y-auto">
                                     {mediaAssets.length === 0 ? (
                                         <p className="text-[var(--ws-text-muted)] type-card-description text-center py-4">No media uploaded yet</p>
                                     ) : (
@@ -1301,7 +1301,7 @@ Return only the comment text.`;
                     {/* Right panel — platforms + schedule */}
                     <div className="space-y-5">
                         {/* Preview */}
-                        <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-4">
+                        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4">
                             <p className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-3">Preview</p>
                             <div className="bg-[var(--ws-surface-secondary)] rounded-xl p-3">
                                 {selectedMedia[0] && (
@@ -1317,7 +1317,7 @@ Return only the comment text.`;
                         </div>
 
                         {/* Platforms */}
-                        <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-4">
+                        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4">
                             <p className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-3">Platforms</p>
                             {[
                                 { id: 'facebook', label: 'Facebook Page', icon: <Facebook className="w-4 h-4 text-blue-400" /> },
@@ -1442,7 +1442,7 @@ Return only the comment text.`;
                         </div>
 
                         {/* Schedule */}
-                        <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-4">
+                        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4">
                             <p className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-3">Schedule</p>
                             <div className="mb-3">
                                 <AIOutputDisclaimer type="social" />
@@ -1486,7 +1486,7 @@ Return only the comment text.`;
             {/* POSTS TAB */}
             {activeTab === 'posts' && (
                 <div className="space-y-3">
-                    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 p-2">
+                    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-2">
                         {(['all', 'scheduled', 'published', 'failed', 'cancelled'] as const).map((filter) => {
                             const count = filter === 'all' ? posts.length : posts.filter((post) => post.status === filter).length;
                             return <button key={filter} type="button" onClick={() => setPostFilter(filter)} className={`rounded-lg px-3 py-2 type-ui font-semibold capitalize ${postFilter === filter ? 'bg-teal-500 text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-secondary)] hover:text-[var(--ws-text-primary)]'}`}>{filter} <span className="ml-1 opacity-70">{count}</span></button>;
@@ -1501,7 +1501,7 @@ Return only the comment text.`;
                     ) : visiblePosts.length === 0 ? (
                         <div className="rounded-2xl border border-dashed border-[var(--ws-border)] py-12 text-center type-ui text-[var(--ws-text-muted)]">No {postFilter} posts yet.</div>
                     ) : visiblePosts.map(post => (
-                        <div key={post.id} className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-4">
+                        <div key={post.id} className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4">
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap mb-2">
@@ -1689,7 +1689,7 @@ Return only the comment text.`;
 
             {/* Video Editor Modal */}
             {editingAsset && (
-                <div className="fixed inset-0 ac-layer-overlay flex items-center justify-center p-4 bg-[var(--ws-canvas)]/90 backdrop-blur-md">
+                <div className="fixed inset-0 ac-layer-overlay flex items-center justify-center p-4 bg-[var(--ws-canvas)]">
                     <div className="w-full max-w-4xl max-h-[90vh]">
                         <VideoEditor 
                             source={editingAsset.public_url}

@@ -72,7 +72,7 @@ const ReferralsPage: React.FC<ReferralsPageProps> = ({ user, tenant }) => {
                 </div>
             </div>
 
-            <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-2xl p-6 space-y-4">
+            <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 space-y-4">
                 <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Your referral link</label>
                 <div className="flex flex-col sm:flex-row gap-2">
                     <AlphaCloneInput
@@ -106,7 +106,7 @@ const ReferralsPage: React.FC<ReferralsPageProps> = ({ user, tenant }) => {
                 </div>
             </div>
 
-            <div className="bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl p-6">
+            <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6">
                 <h3 className="type-ui font-bold text-[var(--ws-text-primary)] mb-3">How it works</h3>
                 <ol className="space-y-2 type-ui text-[var(--ws-text-muted)] list-decimal list-inside">
                     <li>Share your unique link with other business owners.</li>

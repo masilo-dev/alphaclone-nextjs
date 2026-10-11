@@ -45,8 +45,8 @@ function ChartSkeleton() {
   return (
     <div className="ac-workspace-panel ac-chart-enter p-5 min-h-[280px] ac-skeleton-pulse">
       <div className="h-3 w-28 bg-[var(--ws-surface-secondary)] rounded mb-2" />
-      <div className="h-2.5 w-40 bg-[var(--ws-surface-secondary)]/70 rounded mb-6" />
-      <div className="h-[200px] bg-[var(--ws-surface-secondary)]/40 rounded-lg" />
+      <div className="h-2.5 w-40 bg-[var(--ws-surface-secondary)] rounded mb-6" />
+      <div className="h-[200px] bg-[var(--ws-surface-secondary)] rounded-lg" />
     </div>
   );
 }
@@ -258,7 +258,7 @@ function DashboardContent({
                 'ac-workspace-panel rounded-lg p-4 text-left transition-all',
                 featured
                   ? 'border-teal-500/30 bg-teal-500/5 hover:border-teal-500/40'
-                  : 'hover:border-[var(--brand-blue-500)]/20 hover:bg-[var(--ws-panel)]/70'
+                  : 'hover:border-[var(--brand-blue-500)]/20 hover:bg-[var(--ws-panel)]'
               )}
             >
               <div className="mb-3 flex items-center gap-2">
@@ -357,7 +357,7 @@ function DashboardContent({
                 key={`${label}-${href}`}
                 type="button"
                 onClick={() => router.push(href)}
-                className="h-10 rounded-lg bg-[var(--ws-canvas)]/40 border border-[var(--ws-border)] hover:border-[var(--ws-border)] transition-all flex items-center justify-center gap-2 min-w-0 px-2"
+                className="h-10 rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] hover:border-[var(--ws-border)] transition-all flex items-center justify-center gap-2 min-w-0 px-2"
                 style={{ WebkitTapHighlightColor: 'transparent' }}
                 aria-label={label}
               >

@@ -268,7 +268,7 @@ export function ChartOfAccountsPage() {
                 )}
                 <div className="px-2 pb-20">
                     {loading ? (
-                        <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-[var(--ws-panel)]/40 animate-pulse" />)}</div>
+                        <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-[var(--ws-panel)] animate-pulse" />)}</div>
                     ) : (
                         <EnterpriseDataTable
                             columns={accountColumns}

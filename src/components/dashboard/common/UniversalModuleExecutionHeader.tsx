@@ -74,7 +74,7 @@ export function UniversalModuleExecutionHeader({
 
   if (!showGuidance || !showExecutionDetails) {
     return (
-      <div className={`flex min-w-0 items-center gap-3 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/65 px-3 py-2 ${className}`}>
+      <div className={`flex min-w-0 items-center gap-3 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-2 ${className}`}>
         <div className="min-w-0 flex-1">
           <p className="truncate type-caption font-semibold uppercase tracking-wider text-teal-400">
             {moduleName}
@@ -109,7 +109,7 @@ export function UniversalModuleExecutionHeader({
 
   return (
     <div
-      className={`rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/80 p-4 backdrop-blur-md shadow-lg transition-all ${className}`}
+      className={`rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4  shadow-lg transition-all ${className}`}
     >
       {/* Header bar */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -162,13 +162,13 @@ export function UniversalModuleExecutionHeader({
       {/* Operational 7-Field Grid */}
       <div className="mt-4 grid grid-cols-2 gap-2 type-caption sm:grid-cols-4 lg:grid-cols-7 border-t border-[var(--ws-border)] pt-3">
         {/* 1. Current State */}
-        <div className="rounded-lg bg-[var(--ws-canvas)]/60 p-2.5 border border-[var(--ws-border)]/60">
+        <div className="rounded-lg bg-[var(--ws-canvas)] p-2.5 border border-[var(--ws-border)]/60">
           <p className="type-caption font-semibold uppercase text-[var(--ws-text-muted)]">Current State</p>
           <p className="mt-1 font-medium text-[var(--ws-text-secondary)] truncate">{nextActionState.currentState}</p>
         </div>
 
         {/* 2. Owner */}
-        <div className="rounded-lg bg-[var(--ws-canvas)]/60 p-2.5 border border-[var(--ws-border)]/60">
+        <div className="rounded-lg bg-[var(--ws-canvas)] p-2.5 border border-[var(--ws-border)]/60">
           <p className="type-caption font-semibold uppercase text-[var(--ws-text-muted)] flex items-center gap-1">
             <User className="h-3 w-3 text-[var(--ws-text-muted)]" /> Owner
           </p>
@@ -176,13 +176,13 @@ export function UniversalModuleExecutionHeader({
         </div>
 
         {/* 3. Next Action */}
-        <div className="rounded-lg bg-[var(--ws-canvas)]/60 p-2.5 border border-teal-500/30">
+        <div className="rounded-lg bg-[var(--ws-canvas)] p-2.5 border border-teal-500/30">
           <p className="type-caption font-bold uppercase text-teal-400">Next Action</p>
           <p className="mt-1 font-semibold text-[var(--brand-blue-300)] truncate">{nextActionState.nextAction}</p>
         </div>
 
         {/* 4. Deadline */}
-        <div className="rounded-lg bg-[var(--ws-canvas)]/60 p-2.5 border border-[var(--ws-border)]/60">
+        <div className="rounded-lg bg-[var(--ws-canvas)] p-2.5 border border-[var(--ws-border)]/60">
           <p className="type-caption font-semibold uppercase text-[var(--ws-text-muted)] flex items-center gap-1">
             <Clock className="h-3 w-3 text-[var(--ws-text-muted)]" /> Deadline
           </p>
@@ -192,7 +192,7 @@ export function UniversalModuleExecutionHeader({
         </div>
 
         {/* 5. Blocker */}
-        <div className="rounded-lg bg-[var(--ws-canvas)]/60 p-2.5 border border-[var(--ws-border)]/60">
+        <div className="rounded-lg bg-[var(--ws-canvas)] p-2.5 border border-[var(--ws-border)]/60">
           <p className="type-caption font-semibold uppercase text-[var(--ws-text-muted)] flex items-center gap-1">
             <AlertTriangle className="h-3 w-3 text-amber-400" /> Blocker
           </p>
@@ -202,13 +202,13 @@ export function UniversalModuleExecutionHeader({
         </div>
 
         {/* 6. Expected Outcome */}
-        <div className="rounded-lg bg-[var(--ws-canvas)]/60 p-2.5 border border-[var(--ws-border)]/60">
+        <div className="rounded-lg bg-[var(--ws-canvas)] p-2.5 border border-[var(--ws-border)]/60">
           <p className="type-caption font-semibold uppercase text-[var(--ws-text-muted)]">Expected Outcome</p>
           <p className="mt-1 font-medium text-[var(--ws-text-secondary)] truncate">{nextActionState.expectedOutcome}</p>
         </div>
 
         {/* 7. Verified Result */}
-        <div className="rounded-lg bg-[var(--ws-canvas)]/60 p-2.5 border border-[var(--ws-border)]/60">
+        <div className="rounded-lg bg-[var(--ws-canvas)] p-2.5 border border-[var(--ws-border)]/60">
           <p className="type-caption font-semibold uppercase text-[var(--ws-text-muted)] flex items-center gap-1">
             <CheckCircle2 className="h-3 w-3 text-emerald-400" /> Verified Result
           </p>
@@ -232,38 +232,38 @@ export function UniversalModuleExecutionHeader({
           </button>
 
           {show8Questions && (
-            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 rounded-lg bg-[var(--ws-canvas)]/90 p-3 border border-[var(--ws-border)] type-caption">
-              <div className="p-2 rounded bg-[var(--ws-panel)]/60 border border-[var(--ws-border)]/80">
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 rounded-lg bg-[var(--ws-canvas)] p-3 border border-[var(--ws-border)] type-caption">
+              <div className="p-2 rounded bg-[var(--ws-panel)] border border-[var(--ws-border)]/80">
                 <span className="font-bold text-teal-400 type-ui">1. WHAT CAME IN?</span>
                 <p className="mt-1 text-[var(--ws-text-secondary)] leading-relaxed">{questions.whatCameIn}</p>
               </div>
-              <div className="p-2 rounded bg-[var(--ws-panel)]/60 border border-[var(--ws-border)]/80">
+              <div className="p-2 rounded bg-[var(--ws-panel)] border border-[var(--ws-border)]/80">
                 <span className="font-bold text-teal-400 type-ui">2. WHAT DOES IT MEAN?</span>
                 <p className="mt-1 text-[var(--ws-text-secondary)] leading-relaxed">{questions.whatDoesItMean}</p>
               </div>
-              <div className="p-2 rounded bg-[var(--ws-panel)]/60 border border-[var(--ws-border)]/80">
+              <div className="p-2 rounded bg-[var(--ws-panel)] border border-[var(--ws-border)]/80">
                 <span className="font-bold text-teal-400 type-ui">3. WHAT SHOULD HAPPEN?</span>
                 <p className="mt-1 text-[var(--ws-text-secondary)] leading-relaxed">{questions.whatShouldHappen}</p>
               </div>
-              <div className="p-2 rounded bg-[var(--ws-panel)]/60 border border-[var(--ws-border)]/80">
+              <div className="p-2 rounded bg-[var(--ws-panel)] border border-[var(--ws-border)]/80">
                 <span className="font-bold text-teal-400 type-ui">4. WHO OWNS IT?</span>
                 <p className="mt-1 text-[var(--ws-text-secondary)] leading-relaxed">{questions.whoOwnsIt}</p>
               </div>
-              <div className="p-2 rounded bg-[var(--ws-panel)]/60 border border-[var(--ws-border)]/80">
+              <div className="p-2 rounded bg-[var(--ws-panel)] border border-[var(--ws-border)]/80">
                 <span className="font-bold text-teal-400 type-ui">5. CAN ALPHACLONE ACT?</span>
                 <p className="mt-1 text-[var(--ws-text-secondary)] leading-relaxed uppercase font-semibold text-sky-400">{questions.canAlphaCloneAct}</p>
               </div>
-              <div className="p-2 rounded bg-[var(--ws-panel)]/60 border border-[var(--ws-border)]/80">
+              <div className="p-2 rounded bg-[var(--ws-panel)] border border-[var(--ws-border)]/80">
                 <span className="font-bold text-teal-400 type-ui">6. WHAT ACTUALLY HAPPENED?</span>
                 <p className="mt-1 text-[var(--ws-text-secondary)] leading-relaxed">{questions.whatActuallyHappened || 'Pending execution'}</p>
               </div>
-              <div className="p-2 rounded bg-[var(--ws-panel)]/60 border border-[var(--ws-border)]/80">
+              <div className="p-2 rounded bg-[var(--ws-panel)] border border-[var(--ws-border)]/80">
                 <span className="font-bold text-teal-400 type-ui">7. EXPECTED OUTCOME PRODUCED?</span>
                 <p className="mt-1 text-[var(--ws-text-secondary)] leading-relaxed font-semibold text-emerald-400">
                   {questions.didItProduceExpectedOutcome || 'Verification in progress'}
                 </p>
               </div>
-              <div className="p-2 rounded bg-[var(--ws-panel)]/60 border border-[var(--ws-border)]/80">
+              <div className="p-2 rounded bg-[var(--ws-panel)] border border-[var(--ws-border)]/80">
                 <span className="font-bold text-teal-400 type-ui">8. WHAT HAPPENS NEXT?</span>
                 <p className="mt-1 text-[var(--ws-text-secondary)] leading-relaxed">{questions.whatHappensNext || 'Follow up or close'}</p>
               </div>

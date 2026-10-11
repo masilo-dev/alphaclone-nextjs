@@ -501,7 +501,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
       </div>
 
       {(detailLoading || selectedDocument) && (
-        <div className="fixed inset-0 ac-layer-overlay flex justify-end bg-[var(--ws-canvas)]/70 backdrop-blur-sm" role="presentation" onClick={closeDocument}>
+        <div className="fixed inset-0 ac-layer-overlay flex justify-end bg-[var(--ws-canvas)]" role="presentation" onClick={closeDocument}>
           <section
             role="dialog"
             aria-modal="true"

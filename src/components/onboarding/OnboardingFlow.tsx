@@ -184,10 +184,10 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                                 disabled={isSaving}
                                 aria-describedby={`${goal.id}-next-step`}
                                 onClick={() => handleGoalSelect(goal)}
-                                className={`group flex min-h-11 items-start gap-3 rounded-[var(--ws-radius-lg)] border bg-[var(--ws-canvas)]/40 p-4 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400,var(--brand-blue-300))] disabled:cursor-wait disabled:opacity-70 ${
+                                className={`group flex min-h-11 items-start gap-3 rounded-[var(--ws-radius-lg)] border bg-[var(--ws-canvas)] p-4 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400,var(--brand-blue-300))] disabled:cursor-wait disabled:opacity-70 ${
                                     isSelected
                                         ? 'border-[var(--brand-blue-500,var(--brand-blue-500))] bg-[var(--brand-blue-500,var(--brand-blue-500))]/10'
-                                        : 'border-[var(--ws-border)] hover:border-[var(--brand-blue-500,var(--brand-blue-500))]/60 hover:bg-[var(--ws-surface-secondary)]/70'
+                                        : 'border-[var(--ws-border)] hover:border-[var(--brand-blue-500,var(--brand-blue-500))]/60 hover:bg-[var(--ws-surface-secondary)]'
                                 }`}
                             >
                                 <span className="flex-shrink-0 p-2.5 rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] text-[var(--brand-blue-400,var(--brand-blue-300))] group-hover:text-[var(--ws-text-primary)] transition-colors">

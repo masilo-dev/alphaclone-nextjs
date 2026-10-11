@@ -90,7 +90,7 @@ export const ClientImportModal: React.FC<ClientImportModalProps> = ({ isOpen, on
         <Modal isOpen={isOpen} onClose={onClose} title="Import Clients" maxWidth="max-w-xl">
             <div className="space-y-4">
                 <div
-                    className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${dragActive ? 'border-violet-500 bg-violet-500/10' : 'border-[var(--ws-border)] hover:border-slate-600 bg-[var(--ws-panel)]/50'
+                    className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${dragActive ? 'border-violet-500 bg-violet-500/10' : 'border-[var(--ws-border)] hover:border-slate-600 bg-[var(--ws-panel)]'
                         }`}
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
@@ -118,7 +118,7 @@ export const ClientImportModal: React.FC<ClientImportModalProps> = ({ isOpen, on
                             </div>
                         </label>
                     ) : (
-                        <div className="flex items-center justify-between bg-[var(--ws-surface-secondary)]/50 p-4 rounded-lg border border-[var(--ws-border)]">
+                        <div className="flex items-center justify-between bg-[var(--ws-surface-secondary)] p-4 rounded-lg border border-[var(--ws-border)]">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                                     <FileText className="w-5 h-5 text-emerald-500" />

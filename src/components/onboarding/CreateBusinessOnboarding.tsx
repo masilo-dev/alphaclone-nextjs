@@ -132,7 +132,7 @@ export default function CreateBusinessOnboarding() {
         </div>
 
         {/* Content */}
-        <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-2xl p-8 backdrop-blur-sm">
+        <div className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-2xl p-8">
           {step === 1 && (
             <div className="max-w-2xl mx-auto">
               <h2 className="text-2xl font-bold text-white mb-6 uppercase tracking-tighter">Add your business details</h2>
@@ -155,7 +155,7 @@ export default function CreateBusinessOnboarding() {
                     value={businessName}
                     onChange={(e) => handleBusinessNameChange(e.target.value)}
                     placeholder="e.g., Acme Design Studio"
-                    className="w-full px-4 py-3 bg-[var(--ws-panel)]/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
+                    className="w-full px-4 py-3 bg-[var(--ws-panel)] border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
                     autoFocus
                   />
                 </div>
@@ -172,7 +172,7 @@ export default function CreateBusinessOnboarding() {
                       value={businessSlug}
                       onChange={(e) => setBusinessSlug(e.target.value.toLowerCase())}
                       placeholder="acme-design"
-                      className="flex-1 px-4 py-3 bg-[var(--ws-panel)]/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
+                      className="flex-1 px-4 py-3 bg-[var(--ws-panel)] border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
                     />
                     <span className="text-[var(--ws-text-muted)] type-ui">.alphaclone.com</span>
                   </div>
@@ -214,7 +214,7 @@ export default function CreateBusinessOnboarding() {
                     onClick={() => setSelectedPlan(plan.id)}
                     className={`relative p-6 rounded-xl border-2 transition-all text-left ${selectedPlan === plan.id
                       ? 'border-teal-500 bg-teal-500/10 scale-105'
-                      : 'border-[var(--ws-border)] bg-[var(--ws-panel)]/50 hover:border-slate-600'
+                      : 'border-[var(--ws-border)] bg-[var(--ws-panel)] hover:border-slate-600'
                       }`}
                   >
                     {plan.label && (

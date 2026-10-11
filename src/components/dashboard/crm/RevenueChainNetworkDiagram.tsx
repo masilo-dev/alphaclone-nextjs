@@ -156,7 +156,7 @@ export function RevenueChainNetworkDiagram({
             )}
 
             {activeNode ? (
-                <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 px-3 py-2.5">
+                <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-2.5">
                     <div className="flex items-start justify-between gap-3">
                         <div>
                             <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{activeNode.label}</p>

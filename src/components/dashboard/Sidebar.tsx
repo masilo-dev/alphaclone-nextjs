@@ -185,7 +185,7 @@ const Sidebar = React.memo<SidebarProps>(({
             {/* Mobile overlay */}
             {sidebarOpen && (
                 <div
-                    className="ac-mobile-sidebar-overlay fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
+                    className="ac-mobile-sidebar-overlay fixed inset-0 bg-black/50 z-40 md:hidden"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}

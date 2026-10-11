@@ -180,7 +180,7 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
                     <h4 className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest mb-4">Past Meetings</h4>
                     <div className="space-y-2 opacity-60">
                         {past.slice(0, 5).map(m => (
-                            <Card key={m.id} className="flex items-center justify-between p-3 bg-[var(--ws-panel)]/30">
+                            <Card key={m.id} className="flex items-center justify-between p-3 bg-[var(--ws-panel)]">
                                 <div className="flex items-center gap-3">
                                     <div className={`w-2 h-2 rounded-full ${m.status === 'ended' ? 'bg-green-500' : 'bg-[var(--error-500)]'
                                         }`}></div>

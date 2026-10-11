@@ -33,7 +33,7 @@ export function BreakdownBars({
                 >
                   {item.label}
                 </span>
-                <div className="flex-1 h-2.5 bg-[var(--ws-surface-secondary)]/60 rounded-full overflow-hidden">
+                <div className="flex-1 h-2.5 bg-[var(--ws-surface-secondary)] rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all"
                     style={{ width: `${pct}%`, backgroundColor: item.color }}

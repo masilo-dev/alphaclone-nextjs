@@ -72,7 +72,7 @@ export default function PwaInstallPrompt() {
 
   return (
     <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] left-3 right-3 z-[130] pointer-events-none md:bottom-6 md:left-auto md:right-6 md:max-w-md">
-      <div className="ac-v3-floating pointer-events-auto p-4 sm:p-5 border border-[var(--border-default)] bg-[var(--surface-elevated)] backdrop-blur-md rounded-2xl shadow-2xl">
+      <div className="ac-v3-floating pointer-events-auto p-4 sm:p-5 border border-[var(--border-default)] bg-[var(--surface-elevated)] rounded-2xl shadow-2xl">
         <div className="flex items-start gap-3">
           <div className="ac-v3-intelligence flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[var(--interactive-secondary,var(--brand-teal))]/15 text-[var(--interactive-secondary,var(--brand-teal))]">
             {isIOS ? <Share2 className="h-5 w-5" aria-hidden="true" /> : <Download className="h-5 w-5" aria-hidden="true" />}

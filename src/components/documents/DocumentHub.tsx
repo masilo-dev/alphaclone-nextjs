@@ -1036,7 +1036,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                     ]}
                 />
                 {selectedFile ? (
-                    <div className="px-4 py-2 border-b border-white/5 bg-[var(--ws-canvas)]/80">
+                    <div className="px-4 py-2 border-b border-white/5 bg-[var(--ws-canvas)]">
                         <p className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1.5">
                             Related versions
                         </p>
@@ -1094,7 +1094,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                             />
                         </div>
                     ) : viewMode === 'image' && fileUrl ? (
-                        <div className="h-full flex items-center justify-center p-6 sm:p-12 hover:bg-[var(--ws-panel)]/50 transition-colors">
+                        <div className="h-full flex items-center justify-center p-6 sm:p-12 hover:bg-[var(--ws-panel)] transition-colors">
                                 <Image
                                     src={fileUrl}
                                     alt={selectedFile.original_filename}
@@ -1104,7 +1104,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 />
                         </div>
                     ) : viewMode === 'editor' ? (
-                        <div className="h-full overflow-auto flex flex-col items-center bg-[var(--ws-panel)]/50 py-12 px-6">
+                        <div className="h-full overflow-auto flex flex-col items-center bg-[var(--ws-panel)] py-12 px-6">
                             <div className="w-full max-w-4xl bg-white text-slate-900 shadow-2xl rounded-sm min-h-screen mb-12 animate-in slide-in-from-bottom-4 duration-500">
                                 {/* Editor wrapper gets custom quill styling */}
                                 <div className="h-full min-h-[800px] flex flex-col [&_.ql-toolbar]:rounded-t-sm [&_.ql-container]:rounded-b-sm [&_.ql-container]:flex-1 [&_.ql-editor]:min-h-[800px] [&_.ql-editor]:text-base [&_.ql-editor]:bg-white [&_.ql-editor]:text-black [&_.ql-editor]:!text-[var(--color-black)] [&_.ql-editor]:shadow-inner [&_.ql-toolbar]:border-slate-300 [&_.ql-container]:border-slate-300 [&_.ql-toolbar]:bg-slate-50">
@@ -1673,7 +1673,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         
         {/* AI Designer Interface */}
         {viewMode === 'designer' && (
-            <div className="fixed inset-0 ac-layer-overlay flex items-center justify-center bg-[var(--ws-canvas)]/90 backdrop-blur-xl p-4 animate-in fade-in duration-300">
+            <div className="fixed inset-0 ac-layer-overlay flex items-center justify-center bg-[var(--ws-canvas)] p-4 animate-in fade-in duration-300">
                 <div className="w-full max-w-3xl bg-[var(--ws-panel)] border border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
                     <div className="p-8 border-b border-white/5 bg-gradient-to-br from-violet-600/20 to-transparent">
                         <div className="flex items-center justify-between mb-8">
@@ -1733,7 +1733,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                         </div>
                     </div>
                     
-                    <div className="p-6 bg-[var(--ws-canvas)]/50 border-t border-white/5">
+                    <div className="p-6 bg-[var(--ws-canvas)] border-t border-white/5">
                         <div className="flex items-center gap-4">
                             <div className="flex -space-x-2">
                                 {[1, 2, 3].map(i => (

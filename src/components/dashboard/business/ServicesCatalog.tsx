@@ -101,7 +101,7 @@ export const ServicesCatalog: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                     >
-                        <Card className="p-6 bg-[var(--ws-panel)]/60 border-teal-500/20">
+                        <Card className="p-6 bg-[var(--ws-panel)] border-teal-500/20">
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
@@ -182,7 +182,7 @@ export const ServicesCatalog: React.FC = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {filteredServices.map((service) => (
-                                <Card key={service.id} className="group p-5 bg-[var(--ws-panel)]/40 border-[var(--ws-border)] hover:bg-white/[0.03] transition-all relative overflow-hidden">
+                                <Card key={service.id} className="group p-5 bg-[var(--ws-panel)] border-[var(--ws-border)] hover:bg-white/[0.03] transition-all relative overflow-hidden">
                                     <div className="absolute top-0 left-0 w-1 h-full bg-teal-500/20 group-hover:bg-teal-500 transition-all" />
                                     
                                     <div className="flex justify-between items-start mb-2">
@@ -229,7 +229,7 @@ export const ServicesCatalog: React.FC = () => {
                             ))}
 
                             {filteredServices.length === 0 && (
-                                <div className="col-span-full py-12 text-center bg-[var(--ws-panel)]/20 rounded-3xl border border-dashed border-[var(--ws-border)]">
+                                <div className="col-span-full py-12 text-center bg-[var(--ws-panel)] rounded-3xl border border-dashed border-[var(--ws-border)]">
                                     <Package className="w-12 h-12 text-slate-700 mx-auto mb-4" />
                                     <p className="text-[var(--ws-text-muted)] font-bold uppercase tracking-widest type-caption">
                                         {searchTerm ? "No services match your search" : "Your catalog is empty"}

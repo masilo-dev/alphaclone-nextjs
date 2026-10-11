@@ -624,7 +624,7 @@ export default function DocumentVaultTab() {
       </div>
 
       {/* Documents Table */}
-      <div className="bg-[var(--ws-panel)]/20 border border-[var(--ws-border)] rounded-3xl overflow-hidden">
+      <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl overflow-hidden">
         <div className="p-4 border-b border-[var(--ws-border)]">
           <span className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider">
             Vault Files
@@ -647,7 +647,7 @@ export default function DocumentVaultTab() {
           <div className="overflow-x-auto">
             <table className="w-full type-caption text-left">
               <thead>
-                <tr className="border-b border-slate-850 bg-[var(--ws-canvas)]/20 text-[var(--ws-text-muted)]">
+                <tr className="border-b border-slate-850 bg-[var(--ws-canvas)] text-[var(--ws-text-muted)]">
                   <th className="p-4">Name</th>
                   <th className="p-4">Category</th>
                   <th className="p-4">Size</th>
@@ -669,7 +669,7 @@ export default function DocumentVaultTab() {
                         setSelectedDocument(doc);
                       }
                     }}
-                    className="cursor-pointer hover:bg-[var(--ws-panel)]/40 focus-visible:outline-none focus-visible:bg-[var(--ws-panel)]/50 transition-colors"
+                    className="cursor-pointer hover:bg-[var(--ws-panel)] focus-visible:outline-none focus-visible:bg-[var(--ws-panel)] transition-colors"
                     aria-label={`Open ${doc.name}`}
                   >
                     <td className="p-4 font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
@@ -844,7 +844,7 @@ export default function DocumentVaultTab() {
       >
         {selectedDocument ? (
           <div className="flex h-full min-h-[60dvh] flex-col gap-3 pt-2">
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3">
               <div>
                 <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">
                   {selectedDocument.name}
@@ -934,7 +934,7 @@ export default function DocumentVaultTab() {
                   This record has no previewable file URL.
                 </div>
               )}
-              <aside className="min-h-0 overflow-y-auto rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-4">
+              <aside className="min-h-0 overflow-y-auto rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-4">
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-primary)]">
                     Document intelligence

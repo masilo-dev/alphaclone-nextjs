@@ -35,7 +35,7 @@ class FacebookErrorBoundary extends React.Component<{ children: React.ReactNode 
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center p-12 text-center bg-[var(--ws-panel)]/50 rounded-3xl border border-[var(--ws-border)] backdrop-blur-xl">
+        <div className="flex flex-col items-center justify-center p-12 text-center bg-[var(--ws-panel)] rounded-3xl border border-[var(--ws-border)]">
           <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
           <h2 className="text-xl font-bold text-[var(--ws-text-primary)] mb-2">Integration Sync Error</h2>
           <p className="text-[var(--ws-text-muted)] mb-6">Facebook connection expired or blocked.</p>
@@ -796,9 +796,9 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     }
 
     return (
-        <div className={`flex flex-col bg-[var(--ws-canvas)] rounded-2xl md:rounded-3xl border border-[var(--ws-border)] overflow-hidden backdrop-blur-sm relative ${isMobile ? 'h-auto min-h-[calc(100dvh-120px)]' : 'h-[calc(100dvh-140px)]'}`}>
+        <div className={`flex flex-col bg-[var(--ws-canvas)] rounded-2xl md:rounded-3xl border border-[var(--ws-border)] overflow-hidden  relative ${isMobile ? 'h-auto min-h-[calc(100dvh-120px)]' : 'h-[calc(100dvh-140px)]'}`}>
             {!isConnected && (
-                <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-8 text-center">
+                <div className="absolute inset-0 z-50 bg-black/80 flex items-center justify-center p-8 text-center">
                     <div className="max-w-md space-y-8">
                         <div className="w-24 h-24 bg-blue-600/20 rounded-[32px] flex items-center justify-center mx-auto border border-blue-500/30">
                             <Facebook className="w-12 h-12 text-blue-400" />
@@ -1030,7 +1030,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         {imagePreview && (
                                             <div className="relative rounded-2xl overflow-hidden aspect-video group border border-[var(--ws-border)]">
                                                 <img src={imagePreview} alt="" className="w-full h-full object-cover" />
-                                                <button onClick={clearImage} className="absolute top-4 right-4 w-11 h-11 bg-black/60 backdrop-blur-md rounded-full text-[var(--ws-text-primary)] flex items-center justify-center border border-[var(--ws-border-strong)]">
+                                                <button onClick={clearImage} className="absolute top-4 right-4 w-11 h-11 bg-black/60 rounded-full text-[var(--ws-text-primary)] flex items-center justify-center border border-[var(--ws-border-strong)]">
                                                     <X size={24} />
                                                 </button>
                                             </div>
@@ -1420,7 +1420,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
 
             {/* Bottom Status Bar for Mobile - Positioned above BottomNav to avoid collision */}
             {isMobile && isConnected && (
-                <div className="absolute bottom-0 left-0 right-0 bg-[var(--ws-canvas)]/95 border-t border-[var(--ws-border)] px-6 py-4 flex items-center justify-between z-[40] backdrop-blur-xl native-bottom-bar">
+                <div className="absolute bottom-0 left-0 right-0 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] px-6 py-4 flex items-center justify-between z-[40] native-bottom-bar">
                     <div className="flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" />
                         <span className="type-caption font-black text-gray-400 uppercase tracking-widest truncate max-w-[120px]">
@@ -1438,7 +1438,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 ac-layer-overlay bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
+                        className="fixed inset-0 ac-layer-overlay bg-black/80 flex items-center justify-center p-4 sm:p-6"
                     >
                         <motion.div 
                             initial={{ scale: 0.9, opacity: 0, y: 20 }}

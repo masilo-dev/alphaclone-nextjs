@@ -730,7 +730,7 @@ export default function EnhancedInvoiceModal({
   const renderItemsTab = () => (
     <div className="space-y-4">
       {formData.items.map((item, index) => (
-        <div key={index} className="flex items-center space-x-2 p-4 border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 rounded-lg">
+        <div key={index} className="flex items-center space-x-2 p-4 border border-[var(--ws-border)] bg-[var(--ws-panel)] rounded-lg">
           <div className="flex-1">
             <AlphaCloneInput
               type="text"
@@ -815,7 +815,7 @@ export default function EnhancedInvoiceModal({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 ac-layer-modal flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 ac-layer-modal flex items-center justify-center p-4 bg-black/60"
           >
             <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl w-full max-w-lg p-6 shadow-2xl">
               <div className="flex justify-between items-center mb-6">
@@ -859,7 +859,7 @@ export default function EnhancedInvoiceModal({
         )}
       </AnimatePresence>
 
-      <div className="mt-6 p-4 bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg">
+      <div className="mt-6 p-4 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg">
         <div className="flex justify-between items-center mb-2">
           <span className="text-[var(--ws-text-muted)]">Subtotal:</span>
           <span className="font-medium text-[var(--ws-text-primary)]">${formData.subtotal.toFixed(2)}</span>
@@ -882,7 +882,7 @@ export default function EnhancedInvoiceModal({
         <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-3">Payment Methods</label>
         <div className="space-y-2">
           {PAYMENT_METHODS.map(method => (
-            <label key={method.id} className="flex items-center p-3 border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] rounded-lg cursor-pointer hover:bg-[var(--ws-surface-tertiary)]/50">
+            <label key={method.id} className="flex items-center p-3 border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] rounded-lg cursor-pointer hover:bg-[var(--ws-surface-tertiary)]">
               <input
                 type="checkbox"
                 checked={formData.paymentMethods.includes(method.id)}
@@ -966,7 +966,7 @@ export default function EnhancedInvoiceModal({
 
   return (
     <div className="fixed inset-0 ac-layer-modal flex items-center justify-center p-4 pt-safe pb-safe">
-      <div className="absolute inset-0 bg-[var(--ws-canvas)]/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-[var(--ws-canvas)]" onClick={onClose} />
       <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] shadow-2xl rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col relative animate-fade-in overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-6 border-b border-[var(--ws-border)]">
           <div className="space-y-2">
@@ -1018,7 +1018,7 @@ export default function EnhancedInvoiceModal({
                 "flex items-center space-x-2 px-6 py-3 type-ui font-medium border-b-2 transition-colors",
                 activeTab === tab.id
                   ? "border-teal-500 text-teal-400"
-                  : "border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]/50"
+                  : "border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]"
               )}
             >
               <tab.icon className="w-4 h-4" />
@@ -1028,7 +1028,7 @@ export default function EnhancedInvoiceModal({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-[var(--ws-panel)]/50">
+        <div className="flex-1 overflow-y-auto p-6 bg-[var(--ws-panel)]">
           {activeTab === 'details' && renderDetailsTab()}
           {activeTab === 'items' && renderItemsTab()}
           {activeTab === 'payment' && renderPaymentTab()}
@@ -1036,7 +1036,7 @@ export default function EnhancedInvoiceModal({
         </div>
 
         {/* Sticky action bar */}
-        <div className="sticky bottom-0 z-50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 sm:p-6 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/95 backdrop-blur-md shrink-0">
+        <div className="sticky bottom-0 z-50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 sm:p-6 border-t border-[var(--ws-border)] bg-[var(--ws-panel)] shrink-0">
           <div className="flex flex-wrap items-center gap-2">
             {mode !== 'send' && (
               <button

@@ -38,7 +38,7 @@ const MeetingLinkModal: React.FC<MeetingLinkModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
             <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl border-2 border-teal-500/30 max-w-md w-full animate-fade-in overflow-hidden">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-teal-500/20 to-blue-500/20 p-4 sm:p-6 border-b border-gray-700">

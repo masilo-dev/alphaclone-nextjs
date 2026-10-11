@@ -269,7 +269,7 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         onClick={onClose}
-        className="absolute inset-0 bg-black/80 backdrop-blur-md"
+        className="absolute inset-0 bg-black/80"
       />
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 24 }}
@@ -297,7 +297,7 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
         <div className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden flex flex-col lg:flex-row">
 
           {/* ── Left: Config pane ──────────────────────────────────────────── */}
-          <div className="w-full lg:w-80 flex-shrink-0 border-b lg:border-b-0 lg:border-r border-[var(--ws-border)] lg:overflow-y-auto p-4 sm:p-5 space-y-5 sm:space-y-6 bg-[var(--ws-canvas)]/60 lg:max-h-full">
+          <div className="w-full lg:w-80 flex-shrink-0 border-b lg:border-b-0 lg:border-r border-[var(--ws-border)] lg:overflow-y-auto p-4 sm:p-5 space-y-5 sm:space-y-6 bg-[var(--ws-canvas)] lg:max-h-full">
 
             {/* Lead summary */}
             <div className="space-y-2">
@@ -467,7 +467,7 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
                   <div className="mt-4 w-full max-w-sm space-y-2 text-left">
                     <p className="type-caption text-[var(--ws-text-muted)] uppercase tracking-widest font-bold mb-2">Detected pitch angles</p>
                     {[...new Set(leads.map(l => l.qualification.pitchAngle))].map(pa => (
-                      <div key={pa} className="flex items-start gap-2 p-2 bg-[var(--ws-panel)]/50 rounded-lg border border-[var(--ws-border)] type-caption">
+                      <div key={pa} className="flex items-start gap-2 p-2 bg-[var(--ws-panel)] rounded-lg border border-[var(--ws-border)] type-caption">
                         <Zap className="w-3 h-3 text-teal-400 mt-0.5 flex-shrink-0" />
                         <div>
                           <span className="font-bold text-[var(--brand-blue-300)]">{PITCH_ANGLES[pa]?.label || pa}</span>
@@ -506,7 +506,7 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
                   const isEditing = editingIdx === idx;
                   const pa = PITCH_ANGLES[email.pitchAngle];
                   return (
-                    <div key={idx} className="bg-[var(--ws-panel)]/70 border border-[var(--ws-border)] rounded-2xl overflow-hidden">
+                    <div key={idx} className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden">
                       {/* Email header */}
                       <div className="px-4 py-3 border-b border-[var(--ws-border)] flex items-center justify-between gap-2">
                         <div className="flex-1 min-w-0">
@@ -521,7 +521,7 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
                               ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
                               : email.recipientSource === 'inferred'
                                 ? 'bg-amber-500/10 border-amber-500/20 text-[var(--warning-text,var(--warning-500))]'
-                                : 'bg-[var(--ws-surface-tertiary)]/40 border-[var(--ws-border)] text-[var(--ws-text-muted)]'
+                                : 'bg-[var(--ws-surface-tertiary)] border-[var(--ws-border)] text-[var(--ws-text-muted)]'
                           }`}>
                             {email.recipientSource === 'lead' ? 'Verified recipient' : email.recipientSource === 'inferred' ? 'Inferred recipient' : 'No recipient'}
                           </span>

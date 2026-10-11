@@ -103,7 +103,7 @@ export default function LaunchActivationChecklist() {
             <button
               key={item.id}
               onClick={() => router.push(item.href)}
-              className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left hover:bg-[var(--ws-panel)]/40"
+              className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left hover:bg-[var(--ws-panel)]"
             >
               <span className="flex items-center gap-2 type-ui text-[var(--ws-text-secondary)]">
                 {done ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : <Circle className="h-4 w-4 text-[var(--ws-text-muted)]" />}

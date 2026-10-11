@@ -370,7 +370,7 @@ export default function WhatsAppChatHub() {
         <div className={`relative grid h-[680px] grid-cols-1 overflow-hidden lg:grid-cols-12 ${WORKSPACE.panel.base} rounded-lg shadow-none`}>
             
             {/* Sidebar Columns (Left side) */}
-            <div className="lg:col-span-4 flex h-full flex-col border-r border-[var(--ws-border)] bg-[var(--ws-panel)]/10">
+            <div className="lg:col-span-4 flex h-full flex-col border-r border-[var(--ws-border)] bg-[var(--ws-panel)]">
                 
                 {/* Search Bar */}
                 <div className="p-4 border-b border-[var(--ws-border)] space-y-3">
@@ -441,7 +441,7 @@ export default function WhatsAppChatHub() {
                                     key={lead.id || lead.lead_id || idx}
                                     type="button"
                                     onClick={() => startWhatsAppFromLead(lead)}
-                                    className="w-full text-left p-2 rounded-lg bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] hover:border-emerald-500/30"
+                                    className="w-full text-left p-2 rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-emerald-500/30"
                                 >
                                     <p className="type-card-description font-semibold text-[var(--ws-text-primary)] truncate">
                                         {[lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.full_name || lead.company || 'Lead'}
@@ -476,7 +476,7 @@ export default function WhatsAppChatHub() {
                                     className={`relative flex w-full items-center justify-between gap-3 rounded-lg border p-3.5 text-left transition-all ${
                                         isSelected 
                                         ? 'bg-emerald-600/10 border-emerald-500/20' 
-                                        : 'hover:bg-[var(--ws-surface-secondary)]/40 border-transparent'
+                                        : 'hover:bg-[var(--ws-surface-secondary)] border-transparent'
                                     }`}
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
@@ -506,11 +506,11 @@ export default function WhatsAppChatHub() {
             </div>
 
             {/* Chat Body (Right side) */}
-            <div className="lg:col-span-8 flex flex-col bg-[var(--ws-canvas)]/20 h-full relative">
+            <div className="lg:col-span-8 flex flex-col bg-[var(--ws-canvas)] h-full relative">
                 {activeThread ? (
                     <>
                         {/* Header */}
-                        <div className="flex items-center justify-between border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/30 p-4 backdrop-blur-md">
+                        <div className="flex items-center justify-between border-b border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
                             <div className="flex items-center gap-3">
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 font-bold text-emerald-400">
                                     <MessageSquare className="w-5 h-5 text-emerald-400" />
@@ -567,7 +567,7 @@ export default function WhatsAppChatHub() {
                         </div>
 
                         {/* Input Footer */}
-                        <div className="space-y-3 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/30 p-4 backdrop-blur-md">
+                        <div className="space-y-3 border-t border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
                             {!metaConnected && (
                                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 type-ui text-amber-100">
                                     Outbound WhatsApp is not configured for this workspace. Connect Meta Cloud API credentials in Integration Settings before sending messages.

@@ -33,7 +33,7 @@ const AITerminal = () => {
     return (
         <div className="bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl overflow-hidden shadow-2xl font-mono type-ui max-w-xl w-full mx-auto">
             {/* Header */}
-            <div className="bg-[var(--ws-panel)]/80 px-4 py-2 flex items-center justify-between border-b border-[var(--ws-border)]">
+            <div className="bg-[var(--ws-panel)] px-4 py-2 flex items-center justify-between border-b border-[var(--ws-border)]">
                 <div className="flex gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-full bg-[var(--error-500)]/50" />
                     <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />

@@ -69,7 +69,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
 
     if (loading) {
         return (
-            <div className={`bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl p-6 ${className}`}>
+            <div className={`bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-6 ${className}`}>
                 <div className="animate-pulse space-y-4">
                     <div className="h-6 bg-[var(--ws-surface-tertiary)] rounded"></div>
                     <div className="h-4 bg-[var(--ws-surface-tertiary)] rounded"></div>
@@ -85,7 +85,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
     }
 
     return (
-        <div className={`bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl p-6 ${className}`}>
+        <div className={`bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-6 ${className}`}>
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h3 className="text-xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
@@ -118,7 +118,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                     const Icon = meta.icon;
 
                     return (
-                        <div key={key} className="bg-[var(--ws-surface-secondary)]/50 rounded-lg p-4 border border-[var(--ws-border)]">
+                        <div key={key} className="bg-[var(--ws-surface-secondary)] rounded-lg p-4 border border-[var(--ws-border)]">
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
                                     <Icon className={`w-4 h-4 ${meta.color}`} />

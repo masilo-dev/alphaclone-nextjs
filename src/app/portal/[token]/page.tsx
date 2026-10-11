@@ -277,7 +277,7 @@ function Shell({
             {/* MOBILE DRAWER */}
             {mobileMenuOpen && (
                 <div className="md:hidden fixed inset-0 z-50">
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
+                    <div className="absolute inset-0 bg-black/50" onClick={() => setMobileMenuOpen(false)} />
                     <div className="absolute left-0 top-0 bottom-0 w-[82%] max-w-xs bg-[color:var(--ws-panel)] text-[color:var(--ws-text-primary)] shadow-2xl border-r border-[color:var(--ws-border)] overflow-y-auto">
                         <div className="flex h-14 items-center gap-3 px-4 border-b border-white/[0.06]">
                             <div className="grid h-8 w-8 place-items-center rounded-lg bg-[color-mix(in_srgb,var(--brand-teal)_22%,var(--ws-panel))] text-[color:var(--brand-teal)] type-ui font-black">
@@ -461,6 +461,8 @@ export default function ClientPortalPage() {
     const [contractLoading, setContractLoading] = useState(false);
     const [contractDownloading, setContractDownloading] = useState<string | null>(null);
     const [deciding, setDeciding] = useState<string | null>(null);
+    const [changeRequestModal, setChangeRequestModal] = useState<{ approvalId: string; title: string } | null>(null);
+    const [changeComment, setChangeComment] = useState('');
     const [workspaceActivity, setWorkspaceActivity] = useState<Array<{ id: string; event_type: string; summary: string; actor_display_name: string | null; created_at: string; metadata: Record<string, unknown> }>>([]);
 
     useEffect(() => {
@@ -626,13 +628,13 @@ export default function ClientPortalPage() {
         }
     }
 
-    async function decideApproval(approvalId: string, decision: 'approved' | 'changes_requested') {
+    async function decideApproval(approvalId: string, decision: 'approved' | 'changes_requested', comment?: string) {
         setDeciding(approvalId);
         try {
             const r = await fetch('/api/client-finance/approvals', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token, approvalId, decision }),
+                body: JSON.stringify({ token, approvalId, decision, comment: comment?.trim() || undefined }),
             });
             if (r.status === 401) {
                 handle401();
@@ -646,6 +648,8 @@ export default function ClientPortalPage() {
             setToast({ type: 'error', text: 'Decision could not be saved' });
         } finally {
             setDeciding(null);
+            setChangeRequestModal(null);
+            setChangeComment('');
         }
     }
 
@@ -704,7 +708,7 @@ export default function ClientPortalPage() {
             <div className="space-y-6 md:space-y-8">
                 {/* Toast */}
                 {toast ? (
-                    <div className={`sticky top-16 z-20 mx-auto flex max-w-sm items-center gap-2 rounded-xl border px-4 py-3 type-ui shadow-lg backdrop-blur ${
+                    <div className={`sticky top-16 z-20 mx-auto flex max-w-sm items-center gap-2 rounded-xl border px-4 py-3 type-ui shadow-lg  ${
                         toast.type === 'success'
                             ? 'border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_92%,var(--ws-panel))] text-[color:var(--success-text,var(--success))]'
                             : 'border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_92%,var(--ws-panel))] text-[color:var(--error)]'
@@ -872,7 +876,11 @@ export default function ClientPortalPage() {
                                                     </div>
                                                     <div className="flex shrink-0 items-center gap-2">
                                                         <button
-                                                            onClick={() => decideApproval(a.id, 'changes_requested')}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setChangeComment('');
+                                                                setChangeRequestModal({ approvalId: a.id, title: a.title });
+                                                            }}
                                                             disabled={deciding === a.id}
                                                             className="inline-flex items-center justify-center rounded-lg border border-[color:var(--ws-border-strong)] bg-[color:var(--ws-panel)] hover:bg-[color:var(--ws-panel-hover)] px-3.5 py-2 type-caption md:text-sm font-semibold text-[color:var(--ws-text-primary)] disabled:opacity-50"
                                                         >
@@ -1329,13 +1337,191 @@ export default function ClientPortalPage() {
             </div>
 
             {projectPreview ? (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 md:p-6" onClick={() => setProjectPreview(null)}>
-                    <div role="dialog" aria-modal="true" aria-label={projectPreview.name} onClick={(event) => event.stopPropagation()} className="max-h-[90dvh] overflow-y-auto w-full max-w-2xl rounded-2xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] p-6 text-[color:var(--ws-text-primary)] shadow-2xl">
-                        <div className="flex items-start justify-between gap-4"><h2 className="text-xl font-semibold">{projectPreview.name}</h2><button type="button" aria-label={t("Close project")} onClick={() => setProjectPreview(null)}><X className="h-5 w-5" /></button></div>
-                        <p className="mt-3 type-body whitespace-pre-wrap">{projectPreview.description || t('No project description has been added yet.')}</p>
-                        <p className="mt-4 type-caption">{t("Status:")} {t(projectPreview.stage || projectPreview.status)} {t("· Progress:")} {projectPreview.progress}%{projectPreview.dueDate ? ` · Due: ${formatDate(projectPreview.dueDate)}` : ''}</p>
-                        {projectDetailsLoading ? <p role="status" className="mt-4">{t("Loading project details…")}</p> : projectDetailsError ? <div role="alert" className="mt-4"><p>{t(projectDetailsError)}</p><button onClick={()=>setProjectRetry(value=>value+1)} className="min-h-10">{t("Retry project details")}</button></div> : projectDetails ? <div className="mt-4 space-y-4">{(['milestones','tasks','deliverables'] as const).map(section=><section key={t(section)}><h3 className="font-semibold capitalize">{t(section)}</h3>{projectDetails[section].length ? <ul>{projectDetails[section].map(item=><li key={item.id} className="border-b border-[color:var(--ws-border)] py-2">{item.name} · {t(item.status)}{item.dueDate ? ` · Due ${formatDate(item.dueDate)}` : ''}</li>)}</ul> : <p className="type-caption">{t(`No ${section} have been shared.`)}</p>}</section>)}</div> : null}
-                        <button type="button" onClick={() => { setProjectId(projectPreview.id); setProjectPreview(null); setActiveTab('messages'); }} className="mt-5 rounded-lg bg-[color:var(--brand-teal)] px-4 py-2 font-semibold text-white">{t("Open project conversation")}</button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-3 md:p-6" onClick={() => setProjectPreview(null)}>
+                    <div role="dialog" aria-modal="true" aria-label={projectPreview.name} onClick={(event) => event.stopPropagation()} className="max-h-[90dvh] overflow-y-auto w-full max-w-2xl rounded-2xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] p-6 text-[color:var(--ws-text-primary)] shadow-2xl space-y-5">
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h2 className="text-xl font-bold tracking-tight text-[color:var(--ws-text-primary)]">{projectPreview.name}</h2>
+                                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                                    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 type-caption font-medium ${statusBadgeClass(projectPreview.status)}`}>
+                                        {projectPreview.stage || projectPreview.status}
+                                    </span>
+                                    {projectPreview.dueDate ? (
+                                        <span className="inline-flex items-center gap-1 type-caption text-[color:var(--ws-text-tertiary)]">
+                                            <Clock className="h-3 w-3" />
+                                            {t("Due:")} {formatDate(projectPreview.dueDate)}
+                                        </span>
+                                    ) : null}
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                aria-label={t("Close project")}
+                                onClick={() => setProjectPreview(null)}
+                                className="rounded-lg p-1.5 text-[color:var(--ws-text-tertiary)] hover:text-[color:var(--ws-text-primary)] transition-colors"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        {/* Progress */}
+                        <div className="rounded-xl border border-[color:var(--ws-border)] bg-[color:var(--ws-canvas)] p-3.5 space-y-2">
+                            <div className="flex items-center justify-between type-ui font-medium text-[color:var(--ws-text-secondary)]">
+                                <span>{t("Overall Progress")}</span>
+                                <span className="font-semibold text-[color:var(--ws-text-primary)]">{projectPreview.progress}%</span>
+                            </div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-[color:var(--ws-surface-secondary)] border border-[color:var(--ws-border)]">
+                                <div
+                                    className="h-full rounded-full bg-gradient-to-r from-[color:var(--brand-teal)] to-[color:var(--info)] transition-all duration-300"
+                                    style={{ width: `${Math.max(0, Math.min(100, projectPreview.progress))}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        {projectPreview.description ? (
+                            <div className="rounded-xl border border-[color:var(--ws-border)] bg-[color:var(--ws-canvas)] p-3.5">
+                                <h4 className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)] mb-1">{t("Description")}</h4>
+                                <p className="type-body whitespace-pre-wrap text-[color:var(--ws-text-secondary)] leading-relaxed text-sm">{projectPreview.description}</p>
+                            </div>
+                        ) : null}
+
+                        {projectDetailsLoading ? (
+                            <div className="flex items-center justify-center py-8 text-[color:var(--ws-text-tertiary)] gap-2">
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                                <span className="type-caption font-medium">{t("Loading project details…")}</span>
+                            </div>
+                        ) : projectDetailsError ? (
+                            <div role="alert" className="rounded-xl border border-[color:var(--error)]/30 bg-[color:var(--error)]/10 p-4 space-y-2">
+                                <p className="type-caption text-[color:var(--error)]">{t(projectDetailsError)}</p>
+                                <button
+                                    type="button"
+                                    onClick={() => setProjectRetry((value) => value + 1)}
+                                    className="rounded-lg bg-[color:var(--ws-surface-secondary)] border border-[color:var(--ws-border)] px-3 py-1.5 type-caption font-semibold text-[color:var(--ws-text-primary)] hover:bg-[color:var(--ws-panel-hover)]"
+                                >
+                                    {t("Retry project details")}
+                                </button>
+                            </div>
+                        ) : projectDetails ? (
+                            <div className="space-y-4">
+                                {(['milestones', 'deliverables', 'tasks'] as const).map((section) => (
+                                    <div key={section} className="rounded-xl border border-[color:var(--ws-border)] bg-[color:var(--ws-canvas)] p-3.5 space-y-2.5">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="type-caption font-bold uppercase tracking-wider text-[color:var(--ws-text-primary)]">
+                                                {t(section)}
+                                            </h4>
+                                            <span className="type-caption text-[color:var(--ws-text-tertiary)] font-medium">
+                                                {projectDetails[section].length}
+                                            </span>
+                                        </div>
+                                        {projectDetails[section].length > 0 ? (
+                                            <ul className="divide-y divide-[color:var(--ws-border)]">
+                                                {projectDetails[section].map((item: any) => (
+                                                    <li key={item.id} className="py-2.5 flex items-center justify-between gap-3 first:pt-0 last:pb-0">
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="type-caption font-semibold text-[color:var(--ws-text-primary)] truncate">{item.name}</p>
+                                                            {item.dueDate ? (
+                                                                <p className="type-caption text-[color:var(--ws-text-tertiary)] mt-0.5">
+                                                                    {t("Due:")} {formatDate(item.dueDate)}
+                                                                </p>
+                                                            ) : null}
+                                                        </div>
+                                                        <span className={`shrink-0 inline-flex items-center rounded-full border px-2 py-0.5 type-caption font-medium ${statusBadgeClass(item.status)}`}>
+                                                            {item.status}
+                                                        </span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <p className="type-caption text-[color:var(--ws-text-muted)] italic">
+                                                {t(`No ${section} have been shared.`)}
+                                            </p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : null}
+
+                        <div className="flex justify-end gap-3 pt-2 border-t border-[color:var(--ws-border)]">
+                            <button
+                                type="button"
+                                onClick={() => setProjectPreview(null)}
+                                className="rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] px-4 py-2 type-caption font-semibold text-[color:var(--ws-text-secondary)] hover:bg-[color:var(--ws-panel-hover)]"
+                            >
+                                {t("Close")}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setProjectId(projectPreview.id);
+                                    setProjectPreview(null);
+                                    setActiveTab('messages');
+                                }}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--brand-teal)] px-4 py-2 type-caption font-semibold text-white hover:opacity-90 shadow-sm"
+                            >
+                                <MessageSquare className="h-4 w-4" />
+                                {t("Open project conversation")}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
+            {changeRequestModal ? (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4" onClick={() => !deciding && setChangeRequestModal(null)}>
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={t("Request changes")}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full max-w-lg rounded-2xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] p-6 text-[color:var(--ws-text-primary)] shadow-2xl space-y-4"
+                    >
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-[color:var(--ws-text-primary)]">{t("Request changes")}</h3>
+                            <button
+                                type="button"
+                                aria-label={t("Close dialog")}
+                                onClick={() => setChangeRequestModal(null)}
+                                disabled={Boolean(deciding)}
+                                className="rounded-lg p-1.5 text-[color:var(--ws-text-tertiary)] hover:text-[color:var(--ws-text-primary)] transition-colors"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <p className="type-caption text-[color:var(--ws-text-secondary)]">
+                            {t("Please specify what changes are needed for")} <span className="font-semibold text-[color:var(--ws-text-primary)]">{changeRequestModal.title}</span>.
+                        </p>
+                        <div className="space-y-1.5">
+                            <label htmlFor="change-request-comment" className="type-caption font-medium text-[color:var(--ws-text-tertiary)]">
+                                {t("Feedback & required revisions")}
+                            </label>
+                            <AlphaCloneTextarea
+                                id="change-request-comment"
+                                rows={4}
+                                value={changeComment}
+                                onChange={(e) => setChangeComment(e.target.value)}
+                                placeholder={t("Describe the changes or adjustments you'd like to request…")}
+                                className="w-full rounded-xl border border-[color:var(--ws-border-strong)] bg-[color:var(--ws-canvas)] px-3 py-2 text-sm text-[color:var(--ws-text-primary)] placeholder:text-[color:var(--ws-text-muted)] focus:outline-none focus:ring-1 focus:ring-[color:var(--brand-teal)]"
+                            />
+                        </div>
+                        <div className="flex justify-end gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setChangeRequestModal(null)}
+                                disabled={Boolean(deciding)}
+                                className="rounded-lg border border-[color:var(--ws-border-strong)] bg-[color:var(--ws-panel)] px-4 py-2 type-caption font-semibold text-[color:var(--ws-text-secondary)] hover:bg-[color:var(--ws-panel-hover)] disabled:opacity-50"
+                            >
+                                {t("Cancel")}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void decideApproval(changeRequestModal.approvalId, 'changes_requested', changeComment)}
+                                disabled={Boolean(deciding)}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--error)] px-4 py-2 type-caption font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                            >
+                                {deciding === changeRequestModal.approvalId ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                                {t("Submit change request")}
+                            </button>
+                        </div>
                     </div>
                 </div>
             ) : null}
@@ -1361,7 +1547,7 @@ export default function ClientPortalPage() {
                 </div>
             ) : null}
             {documentPreview ? (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/60 backdrop-blur-sm" onClick={closeDocument}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/60" onClick={closeDocument}>
                     <div
                         role="dialog"
                         aria-modal="true"

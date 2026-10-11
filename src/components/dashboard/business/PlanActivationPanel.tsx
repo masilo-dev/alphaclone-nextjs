@@ -33,7 +33,7 @@ export default function PlanActivationPanel() {
     const statusName = currentTenant.subscription_status || 'active';
 
     return (
-        <section className="space-y-4 rounded-3xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/80 p-5">
+        <section className="space-y-4 rounded-3xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-3">
                     <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1 type-caption font-semibold uppercase tracking-caps text-[var(--brand-blue-300)]">
@@ -58,12 +58,12 @@ export default function PlanActivationPanel() {
             </div>
 
             <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-4">
+                <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
                     <div className="mb-2 type-caption font-semibold uppercase tracking-caps text-[var(--ws-text-muted)]">Current Plan</div>
                     <div className="text-lg font-bold text-[var(--ws-text-primary)]">{planName}</div>
                     <div className="mt-1 type-ui text-[var(--ws-text-muted)]">Quotas and support scale with your plan.</div>
                 </div>
-                <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-4">
+                <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
                     <div className="mb-2 type-caption font-semibold uppercase tracking-caps text-[var(--ws-text-muted)]">Subscription Status</div>
                     <div className="text-lg font-bold capitalize text-[var(--ws-text-primary)]">{statusName}</div>
                     <div className="mt-1 type-ui text-[var(--ws-text-muted)]">
@@ -74,7 +74,7 @@ export default function PlanActivationPanel() {
                             : 'Your workspace is currently usable under this subscription state.'}
                     </div>
                 </div>
-                <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-4">
+                <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
                     <div className="mb-2 flex items-center gap-2 type-caption font-semibold uppercase tracking-caps text-[var(--ws-text-muted)]">
                         <Gauge className="h-3.5 w-3.5" />
                         What Counts

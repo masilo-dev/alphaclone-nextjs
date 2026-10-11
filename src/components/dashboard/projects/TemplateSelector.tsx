@@ -81,7 +81,7 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
             </div>
 
             {selectedTemplateId && (
-                <div className="bg-[var(--ws-canvas)]/50 rounded-lg p-4 border border-[var(--ws-border)] animate-fade-in">
+                <div className="bg-[var(--ws-canvas)] rounded-lg p-4 border border-[var(--ws-border)] animate-fade-in">
                     <div className="flex items-center justify-between mb-3">
                         <span className="type-caption font-medium text-[var(--ws-text-muted)]">Template Phases</span>
                         {isLoadingPhases && <Loader2 className="w-3 h-3 animate-spin" />}

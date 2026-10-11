@@ -225,7 +225,7 @@ export function OperationsCommandCenter() {
 
       {/* 8-Tile Executive Status Strip */}
       <section className="grid grid-cols-2 min-[576px]:grid-cols-4 lg:grid-cols-7 gap-3">
-        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] hover:border-cyan-500/40 transition">
+        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-cyan-500/40 transition">
           <div className="flex items-center justify-between type-caption text-gray-400">
             <span>Due Today</span>
             <Clock className="w-4 h-4 text-cyan-400" />
@@ -233,7 +233,7 @@ export function OperationsCommandCenter() {
           <p className="text-2xl font-black text-[var(--ws-text-primary)] mt-1">{stats.tasksDue}</p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] hover:border-red-500/40 transition">
+        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-red-500/40 transition">
           <div className="flex items-center justify-between type-caption text-gray-400">
             <span>Overdue Work</span>
             <AlertTriangle className="w-4 h-4 text-red-400" />
@@ -241,7 +241,7 @@ export function OperationsCommandCenter() {
           <p className="text-2xl font-black text-red-400 mt-1">{stats.overdueTasks}</p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] hover:border-amber-500/40 transition">
+        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-amber-500/40 transition">
           <div className="flex items-center justify-between type-caption text-gray-400">
             <span>Client 24h SLA</span>
             <MessageSquare className="w-4 h-4 text-amber-400" />
@@ -249,7 +249,7 @@ export function OperationsCommandCenter() {
           <p className="text-2xl font-black text-amber-400 mt-1">{stats.pendingSlas}</p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] hover:border-purple-500/40 transition">
+        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-purple-500/40 transition">
           <div className="flex items-center justify-between type-caption text-gray-400">
             <span>Approvals</span>
             <FileCheck className="w-4 h-4 text-purple-400" />
@@ -257,7 +257,7 @@ export function OperationsCommandCenter() {
           <p className="text-2xl font-black text-purple-400 mt-1">{stats.pendingApprovals}</p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] hover:border-orange-500/40 transition">
+        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-orange-500/40 transition">
           <div className="flex items-center justify-between type-caption text-gray-400">
             <span>Blockers</span>
             <Lock className="w-4 h-4 text-orange-400" />
@@ -265,7 +265,7 @@ export function OperationsCommandCenter() {
           <p className="text-2xl font-black text-orange-400 mt-1">{stats.activeBlockers}</p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] hover:border-rose-500/40 transition">
+        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-rose-500/40 transition">
           <div className="flex items-center justify-between type-caption text-gray-400">
             <span>Failures</span>
             <XCircle className="w-4 h-4 text-rose-400" />
@@ -273,7 +273,7 @@ export function OperationsCommandCenter() {
           <p className="text-2xl font-black text-rose-400 mt-1">{stats.recentFailures}</p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] hover:border-emerald-500/40 transition col-span-2 min-[576px]:col-span-1">
+        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-emerald-500/40 transition col-span-2 min-[576px]:col-span-1">
           <div className="flex items-center justify-between type-caption text-gray-400">
             <span>Overdue A/R</span>
             <TrendingUp className="w-4 h-4 text-emerald-400" />
@@ -369,7 +369,7 @@ export function OperationsCommandCenter() {
           {/* Main Action Items Column */}
           <div className="lg:col-span-2 space-y-5">
             {/* Priority Tasks */}
-            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] space-y-4">
+            <div className="p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                   <Clock className="w-4 h-4 text-cyan-400" />
@@ -407,7 +407,7 @@ export function OperationsCommandCenter() {
             </div>
 
             {/* 24-Hour Communication SLAs */}
-            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] space-y-4">
+            <div className="p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-amber-400" />
@@ -447,7 +447,7 @@ export function OperationsCommandCenter() {
           {/* Right Sidebar: Active Blockers & Approvals */}
           <div className="space-y-5">
             {/* Active Blockers */}
-            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] space-y-3">
+            <div className="p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-3">
               <h3 className="text-base font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                 <Lock className="w-4 h-4 text-orange-400" />
                 Active Work Blockers
@@ -469,7 +469,7 @@ export function OperationsCommandCenter() {
             </div>
 
             {/* Approvals */}
-            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] space-y-3">
+            <div className="p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-3">
               <h3 className="text-base font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                 <FileCheck className="w-4 h-4 text-purple-400" />
                 Human Approvals
@@ -510,19 +510,19 @@ export function OperationsCommandCenter() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] space-y-2">
+            <div className="p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-2">
               <p className="type-card-description font-medium text-gray-400">Active Projects</p>
               <p className="text-3xl font-black text-[var(--ws-text-primary)]">{healthData?.activeProjectsCount || 0}</p>
               <p className="type-card-description text-red-400">{healthData?.projectsAtRiskCount || 0} projects at risk</p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] space-y-2">
+            <div className="p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-2">
               <p className="type-card-description font-medium text-gray-400">24h SLA Compliance</p>
               <p className="text-3xl font-black text-cyan-400">{healthData?.slaCompliancePct || 100}%</p>
               <p className="type-card-description text-gray-400">Client response timeliness</p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] space-y-2">
+            <div className="p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-2">
               <p className="type-card-description font-medium text-gray-400">Outstanding Revenue (A/R)</p>
               <p className="text-3xl font-black text-emerald-400">
                 £{(healthData?.outstandingRevenue || 0).toLocaleString()}
@@ -557,7 +557,7 @@ export function OperationsCommandCenter() {
               <p className="type-card-description text-gray-500 italic col-span-2">No decision records logged yet.</p>
             ) : (
               decisions.map((d) => (
-                <div key={d.id} className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] space-y-3">
+                <div key={d.id} className="p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="px-2.5 py-0.5 rounded type-ui font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
                       {d.evidence_label}
@@ -616,7 +616,7 @@ export function OperationsCommandCenter() {
 
       {/* TAB 5: ASK BONNIE OPERATIONS */}
       {activeTab === 'ask_bonnie' && (
-        <div className="p-6 rounded-2xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] space-y-6">
+        <div className="p-6 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-6">
           <div>
             <h3 className="text-lg font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
               <Brain className="w-5 h-5 text-cyan-400" />
@@ -666,7 +666,7 @@ export function OperationsCommandCenter() {
 
       {/* TAB 6: CLIENT 360 VIEW */}
       {activeTab === 'clients_360' && (
-        <div className="p-6 rounded-2xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] space-y-6">
+        <div className="p-6 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
@@ -722,7 +722,7 @@ export function OperationsCommandCenter() {
 
       {/* NEW DECISION MODAL */}
       {showNewDecisionModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
           <div className="w-full max-w-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 space-y-4">
             <h3 className="text-lg font-bold text-[var(--ws-text-primary)]">Log Decision Record</h3>
             <form onSubmit={submitNewDecision} className="space-y-3 type-caption">
@@ -797,7 +797,7 @@ export function OperationsCommandCenter() {
 
       {/* ALAMOS DECISION GATE MODAL */}
       {showAlamosModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
           <div className="w-full max-w-2xl bg-[var(--ws-panel)] border border-cyan-500/30 rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-cyan-400" />

@@ -523,7 +523,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
             ) : null}
 
             {/* Desktop Calendar Grid */}
-            <div className="hidden md:block bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl overflow-hidden">
+            <div className="hidden md:block bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl overflow-hidden">
                 {/* Day Headers */}
                 <div className="grid grid-cols-7 border-b border-[var(--ws-border)]">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
@@ -536,7 +536,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                 {/* Calendar Days */}
                 <div className="grid grid-cols-7">
                     {Array.from({ length: startingDayOfWeek }).map((_, idx) => (
-                        <div key={`empty-${idx}`} className="min-h-[100px] border-r border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/30" />
+                        <div key={`empty-${idx}`} className="min-h-[100px] border-r border-b border-[var(--ws-border)] bg-[var(--ws-panel)]" />
                     ))}
 
                     {Array.from({ length: daysInMonth }).map((_, idx) => {
@@ -548,7 +548,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                         return (
                             <div
                                 key={day}
-                                className="min-h-[100px] border-r border-b border-[var(--ws-border)] p-2 hover:bg-[var(--ws-surface-secondary)]/30 cursor-pointer transition-colors"
+                                className="min-h-[100px] border-r border-b border-[var(--ws-border)] p-2 hover:bg-[var(--ws-surface-secondary)] cursor-pointer transition-colors"
                                 onClick={() => {
                                     setSelectedDate(date);
                                     setShowAddModal(true);
@@ -659,7 +659,7 @@ const UpcomingEvents = ({ events, onSelectEvent }: { events: CalendarEvent[]; on
     if (upcoming.length === 0) return null;
 
     return (
-        <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl p-4">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-4">
             <h3 className="type-ui font-semibold text-[var(--ws-text-secondary)] mb-3 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-[var(--brand-blue-400)]" />
                 Upcoming
@@ -672,7 +672,7 @@ const UpcomingEvents = ({ events, onSelectEvent }: { events: CalendarEvent[]; on
                         <button
                             key={event.id}
                             onClick={() => onSelectEvent(event)}
-                            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--ws-surface-secondary)]/50 transition-colors text-left"
+                            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--ws-surface-secondary)] transition-colors text-left"
                         >
                             <div className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
                             <div className="flex-1 min-w-0">
@@ -803,7 +803,7 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                     )}
 
                     {event.description && (
-                        <div className="mt-3 p-3 bg-[var(--ws-surface-secondary)]/50 rounded-lg type-ui text-[var(--ws-text-muted)]">
+                        <div className="mt-3 p-3 bg-[var(--ws-surface-secondary)] rounded-lg type-ui text-[var(--ws-text-muted)]">
                             {event.description}
                         </div>
                     )}
@@ -908,7 +908,7 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate, onSelectEvent }
                 if (!isToday && dayEvents.length === 0) return null;
 
                 return (
-                    <div key={day} className={`bg-[var(--ws-panel)]/40 border ${isToday ? 'border-[var(--brand-blue-500)]/30' : 'border-[var(--ws-border)]'} rounded-2xl backdrop-blur-sm`}>
+                    <div key={day} className={`bg-[var(--ws-panel)] border ${isToday ? 'border-[var(--brand-blue-500)]/30' : 'border-[var(--ws-border)]'} rounded-2xl `}>
                         <div className={`p-4 flex items-center justify-between ${isToday ? 'bg-[var(--brand-blue-500)]/5' : ''}`}>
                             <div className="flex items-center gap-4">
                                 <div className={`w-12 h-12 flex flex-col items-center justify-center rounded-xl border ${isToday ? 'bg-[var(--brand-blue-500)] text-slate-950 border-[var(--brand-blue-400)]' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border-[var(--ws-border)]'}`}>
@@ -937,7 +937,7 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate, onSelectEvent }
                                         <button
                                             key={event.id}
                                             onClick={() => onSelectEvent(event)}
-                                            className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] p-3 rounded-lg flex items-center justify-between ml-14 text-left hover:bg-[var(--ws-surface-secondary)]/50 transition-colors"
+                                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] p-3 rounded-lg flex items-center justify-between ml-14 text-left hover:bg-[var(--ws-surface-secondary)] transition-colors"
                                         >
                                             <div className="flex-1 min-w-0">
                                                 <h4 className="type-ui font-bold text-[var(--ws-text-primary)] mb-1 truncate">{event.title}</h4>

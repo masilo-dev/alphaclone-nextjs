@@ -225,9 +225,9 @@ export default function CashFlowForecastTab() {
 
       {/* SVG Chart Section */}
       {projections.length > 0 && (
-        <div className="bg-[var(--ws-panel)]/30 border border-[var(--ws-border)] rounded-3xl p-6">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl p-6">
           <h3 className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest mb-4">Liquidity Projection Timeline</h3>
-          <div className="relative w-full h-32 bg-[var(--ws-canvas)]/40 border border-slate-850 rounded-2xl p-2 flex items-end">
+          <div className="relative w-full h-32 bg-[var(--ws-canvas)] border border-slate-850 rounded-2xl p-2 flex items-end">
             <svg className="w-full h-full overflow-visible" viewBox="0 0 500 120" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
@@ -260,7 +260,7 @@ export default function CashFlowForecastTab() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Table list */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-[var(--ws-panel)]/20 border border-[var(--ws-border)] rounded-3xl overflow-hidden">
+          <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl overflow-hidden">
             <div className="p-4 border-b border-[var(--ws-border)] flex justify-between items-center">
               <span className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider">Scheduled cash movements</span>
             </div>
@@ -276,7 +276,7 @@ export default function CashFlowForecastTab() {
                 </div>
               ) : (
                 projections.map(proj => (
-                  <div key={proj.id} className="p-4 hover:bg-[var(--ws-panel)]/10 flex items-center justify-between transition-colors">
+                  <div key={proj.id} className="p-4 hover:bg-[var(--ws-panel)] flex items-center justify-between transition-colors">
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${proj.type === 'inflow' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                         {proj.type === 'inflow' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
@@ -310,7 +310,7 @@ export default function CashFlowForecastTab() {
         </div>
 
         {/* AI Outlook Forecast Sidebar */}
-        <div className="bg-[var(--ws-panel)]/30 border border-[var(--ws-border)] rounded-3xl p-5 space-y-4">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-[var(--ws-border)] pb-3">
             <h4 className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-violet-400 animate-pulse" />
@@ -358,9 +358,9 @@ export default function CashFlowForecastTab() {
 
       {/* Modal Dialog */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
           <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
-            <div className="p-5 border-b border-[var(--ws-border)] flex justify-between items-center bg-[var(--ws-canvas)]/40">
+            <div className="p-5 border-b border-[var(--ws-border)] flex justify-between items-center bg-[var(--ws-canvas)]">
               <h3 className="font-bold text-[var(--ws-text-primary)] type-ui">Add Cash Flow Projection</h3>
               <button onClick={() => setShowModal(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] type-ui">Close</button>
             </div>

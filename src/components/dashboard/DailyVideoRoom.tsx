@@ -198,7 +198,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
 
                     {/* Waiting State Overlay */}
                     {!isJoining && participantCount === 1 && (
-                        <div className="absolute top-4 left-4 z-10 bg-[var(--ws-panel)]/80 backdrop-blur px-4 py-2 rounded-lg border border-teal-500/30 flex items-center gap-2 animate-pulse">
+                        <div className="absolute top-4 left-4 z-10 bg-[var(--ws-panel)] px-4 py-2 rounded-lg border border-teal-500/30 flex items-center gap-2 animate-pulse">
                             <div className="w-2 h-2 bg-teal-500 rounded-full" />
                             <span className="type-ui font-medium text-teal-100">Waiting for others to join...</span>
                         </div>

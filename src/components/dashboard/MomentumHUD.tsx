@@ -39,7 +39,7 @@ export const MomentumHUD: React.FC<MomentumHUDProps> = ({
     if (variant === 'global') {
         return (
             <div className={cn(
-                "flex items-center gap-4 bg-[var(--ws-canvas)]/40 backdrop-blur-md border border-[var(--ws-border)] rounded-full px-4 py-1.5 transition-all hover:border-teal-500/30 group",
+                "flex items-center gap-4 bg-[var(--ws-canvas)]  border border-[var(--ws-border)] rounded-full px-4 py-1.5 transition-all hover:border-teal-500/30 group",
                 className
             )}>
                 {/* Score */}
@@ -80,7 +80,7 @@ export const MomentumHUD: React.FC<MomentumHUDProps> = ({
 
     return (
         <div className={cn(
-            "relative overflow-hidden bg-[var(--ws-canvas)]/40 backdrop-blur-xl border border-[var(--ws-border)] rounded-3xl p-6",
+            "relative overflow-hidden bg-[var(--ws-canvas)]  border border-[var(--ws-border)] rounded-3xl p-6",
             "before:absolute before:inset-0 before:bg-gradient-to-br before:from-teal-500/5 before:to-transparent before:pointer-events-none",
             className
         )}>

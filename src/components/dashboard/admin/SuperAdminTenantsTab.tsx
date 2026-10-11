@@ -202,7 +202,7 @@ const SuperAdminTenantsTab: React.FC = () => {
             >
                 <div className="px-1 pb-20">
                     {loading ? (
-                        <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-[var(--ws-panel)]/40 animate-pulse" />)}</div>
+                        <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-[var(--ws-panel)] animate-pulse" />)}</div>
                     ) : (
                         <EnterpriseDataTable
                             columns={tenantColumns}
@@ -227,7 +227,7 @@ const SuperAdminTenantsTab: React.FC = () => {
                         <p className="type-card-description text-[var(--ws-text-muted)] py-8 text-center">No security logs found for this tenant.</p>
                     ) : (
                         tenantLogs.map((log) => (
-                            <div key={log.id} className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-xl p-4">
+                            <div key={log.id} className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-4">
                                 <div className="flex items-start justify-between mb-2 gap-2">
                                     <StatusBadge variant={log.severity === 'critical' ? 'error' : log.severity === 'warning' ? 'warning' : 'info'}>
                                         {log.eventType}

@@ -92,7 +92,7 @@ export default function LeadFinderLiveProgress({
   const complete = status?.status === 'completed' || progress >= 100;
 
   return (
-    <div className="rounded-xl border border-teal-500/30 bg-[var(--ws-canvas)]/80 overflow-hidden">
+    <div className="rounded-xl border border-teal-500/30 bg-[var(--ws-canvas)] overflow-hidden">
       <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-[var(--ws-border)]">
         <div className="min-w-0">
           <div className="flex items-center gap-2 type-ui font-semibold text-[var(--ws-text-primary)]">

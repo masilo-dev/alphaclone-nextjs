@@ -48,7 +48,7 @@ export default function GamificationTab() {
 
   return (
     <div className="ac-scroll-full space-y-5 p-4 pb-24">
-      <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-5">
+      <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-5">
         <div className="flex items-center gap-2 type-caption font-bold uppercase tracking-caps text-purple-300">
           <Activity className="h-4 w-4" />
           Business outcomes

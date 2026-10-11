@@ -42,7 +42,7 @@ export default function BonnieToolActivityCard({ tools }: Props) {
         return (
           <details
             key={`${tool.tool}-${index}`}
-            className="group overflow-hidden rounded-xl border border-slate-200 bg-slate-50 open:bg-white dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)]/60 dark:open:bg-[var(--ws-panel)]"
+            className="group overflow-hidden rounded-xl border border-slate-200 bg-slate-50 open:bg-white dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)] dark:open:bg-[var(--ws-panel)]"
           >
             <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 type-ui font-medium text-slate-700 dark:text-[var(--ws-text-secondary)]">
               {pending ? (

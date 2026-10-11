@@ -299,7 +299,7 @@ export default function BonnieWorkspaceViews({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)]/60" aria-label="Bonnie workflow stages">
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)]" aria-label="Bonnie workflow stages">
         {['1 Plan', '2 Review', '3 Approve', '4 Execute', '5 Results'].map((stage, index) => (
           <React.Fragment key={stage}>
             <span className={`rounded-full border px-2 py-1 type-ui font-semibold ${

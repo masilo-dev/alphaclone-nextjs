@@ -204,7 +204,7 @@ const TwilioIntegration: React.FC = () => {
                         variant="outline"
                         onClick={handleDisconnect}
                         disabled={disconnecting}
-                        className="bg-rose-500/5 hover:bg-rose-500/20 text-rose-400 border-rose-500/20 backdrop-blur-sm"
+                        className="bg-rose-500/5 hover:bg-rose-500/20 text-rose-400 border-rose-500/20"
                     >
                         {disconnecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <XCircle className="w-4 h-4 mr-2" />}
                         Disconnect Account
@@ -237,7 +237,7 @@ const TwilioIntegration: React.FC = () => {
                                     placeholder="Your secret auth token"
                                     value={authToken}
                                     onChange={e => setAuthToken(e.target.value)}
-                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-4 py-3 pr-12 type-ui text-[var(--ws-text-primary)] font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
+                                    className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-4 py-3 pr-12 type-ui text-[var(--ws-text-primary)] font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
                                 />
                                 <button
                                     type="button"

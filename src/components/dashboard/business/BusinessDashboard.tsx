@@ -1313,7 +1313,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
                 {/* Task Notification Banner (Ephemeral) */}
                 {notification && (
-                    <div className="bg-[var(--brand-blue-500)]/10 border-b border-[var(--brand-blue-500)]/20 px-4 py-2 flex items-center justify-between backdrop-blur-sm sticky top-0 z-20">
+                    <div className="bg-[var(--brand-blue-500)]/10 border-b border-[var(--brand-blue-500)]/20 px-4 py-2 flex items-center justify-between sticky top-0 z-20">
                         <div className="flex items-center gap-2 text-[var(--ws-text-primary)] type-ui font-medium">
                             <CheckSquare className="w-4 h-4 text-[var(--brand-blue-400)]" />
                             <span>{notification}</span>

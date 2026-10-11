@@ -151,7 +151,7 @@ export function BonnieDrawer() {
     >
       <button
         type="button"
-        className="absolute inset-0 bg-[var(--ws-canvas)]/85 backdrop-blur-md"
+        className="absolute inset-0 bg-[var(--ws-canvas)]"
         aria-label="Close Bonnie"
         onClick={() => {
           setStep("compose");

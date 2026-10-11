@@ -52,7 +52,7 @@ export function FocusedTaskShell({
   return (
     <div className={cn('min-h-full flex flex-col bg-[var(--ws-canvas)] text-[var(--ws-text-primary)]', className)}>
       {/* Sticky Task Header */}
-      <header className="sticky top-0 z-30 h-14 min-h-14 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)]/95 backdrop-blur-md px-4 md:px-6 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-30 h-14 min-h-14 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)] px-4 md:px-6 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           {onClose ? (
             <button

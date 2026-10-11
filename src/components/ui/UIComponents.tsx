@@ -298,7 +298,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   return createPortal(
     <div className={`fixed inset-0 ac-layer-modal flex items-end sm:items-center justify-center px-0 sm:px-4 pt-safe pb-safe ${containerClassName}`}>
-      <div className="absolute inset-0 bg-[var(--ws-canvas)]/80 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-black/75" onClick={onClose} aria-hidden="true" />
       <div
         ref={panelRef}
         role="dialog"
@@ -306,8 +306,8 @@ export const Modal: React.FC<ModalProps> = ({
         tabIndex={-1}
         aria-labelledby={title ? titleId : undefined}
         aria-label={title ? undefined : t('Dialog')}
-        style={{ backgroundColor: 'var(--surface-primary, var(--ws-panel))' }}
-        className={`relative ${WORKSPACE.panel.base} rounded-t-2xl sm:rounded-xl w-full ${maxWidth} shadow-none animate-fade-in overflow-hidden max-h-[92dvh] sm:max-h-[85vh] flex flex-col ${className}`}
+        style={{ backgroundColor: 'var(--ws-panel, var(--surface-primary))' }}
+        className={`relative ${WORKSPACE.panel.base} rounded-t-2xl sm:rounded-xl w-full ${maxWidth} shadow-2xl animate-fade-in overflow-hidden max-h-[92dvh] sm:max-h-[85vh] flex flex-col ${className}`}
       >
         <div className="flex items-center justify-between p-3 sm:p-3.5 border-b border-[var(--ws-border)] flex-shrink-0">
           <h3 id={titleId} className="text-sm sm:text-base font-semibold text-[var(--text-primary)]">{renderedTitle}</h3>
@@ -518,22 +518,11 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
         width: menuPosition.width,
         maxHeight: menuPosition.maxHeight,
         zIndex: menuLayer,
-        // The menu is portaled to body; copy inherited workspace tokens from
-        // its trigger so it retains an opaque surface in both color schemes.
-        ...Object.fromEntries(Object.entries({
-          '--ws-panel': 'var(--ws-panel)',
-          '--ws-border': 'var(--ws-surface-tertiary)',
-          '--ws-text-primary': 'var(--marketing-bg-secondary)',
-          '--ws-hover': 'var(--ws-panel-hover)',
-          '--state-danger': 'var(--error-500)',
-        }).map(([token, fallback]) => [
-          token,
-          typeof window !== 'undefined' && dropdownRef.current
-            ? getComputedStyle(dropdownRef.current).getPropertyValue(token).trim() || fallback
-            : fallback,
-        ])),
+        backgroundColor: 'var(--ws-panel)',
+        borderColor: 'var(--ws-border)',
+        color: 'var(--ws-text-primary)',
       } as React.CSSProperties}
-      className={`overflow-y-auto overscroll-contain border border-[var(--ws-border)] bg-[var(--ws-panel,var(--ws-panel))] ${WORKSPACE.panel.radius} shadow-xl animate-in fade-in slide-in-from-top-1 duration-150 custom-scrollbar`}
+      className={`overflow-y-auto overscroll-contain border border-[var(--ws-border)] bg-[var(--ws-panel)] text-[var(--ws-text-primary)] ${WORKSPACE.panel.radius} shadow-2xl animate-in fade-in slide-in-from-top-1 duration-150 custom-scrollbar`}
       data-layer="dropdown"
       data-z-index={menuLayer}
     >
@@ -548,7 +537,7 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
             }}
             className={`w-full flex items-center gap-2 px-2.5 py-1.5 min-h-[30px] sm:min-h-[28px] text-[13px] font-medium rounded-md transition-colors focus:outline-none focus-visible:ring-1.5 focus-visible:ring-[var(--focus-ring)] ${
               item.variant === 'danger'
-                ? 'text-[var(--state-danger,var(--error-500))] hover:bg-[color-mix(in_srgb,var(--state-danger,var(--error-500))_10%,transparent)]'
+                ? 'text-[var(--state-danger)] hover:bg-[color-mix(in_srgb,var(--state-danger)_10%,transparent)]'
                 : 'text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
             }`}
           >

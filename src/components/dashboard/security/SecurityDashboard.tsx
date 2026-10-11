@@ -92,7 +92,7 @@ const SecurityDashboard: React.FC = () => {
             </div>
 
             {/* Scanner Input */}
-            <Card className="p-8 border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/50 backdrop-blur-md">
+            <Card className="p-8 border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]">
                 <form onSubmit={handleScan} className="max-w-3xl mx-auto">
                     <div className="flex flex-col md:flex-row gap-4 items-end">
                         <div className="flex-1 w-full">
@@ -125,7 +125,7 @@ const SecurityDashboard: React.FC = () => {
             {result && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-slide-up">
                     {/* Score Card */}
-                    <Card className="p-8 border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/50 backdrop-blur-md text-center flex flex-col justify-center items-center">
+                    <Card className="p-8 border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] text-center flex flex-col justify-center items-center">
                         <h3 className="text-lg font-medium text-[var(--ws-text-muted)] mb-4">Security Grade</h3>
                         <div className={`text-8xl font-black mb-4 ${getGradeColor(result.grade)}`}>
                             {result.grade}
@@ -184,7 +184,7 @@ const SecurityDashboard: React.FC = () => {
                     )}
 
                     {/* Scan History */}
-                    <Card className="lg:col-span-3 p-6 border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/50">
+                    <Card className="lg:col-span-3 p-6 border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]">
                         <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-4">Scan History</h3>
                         <div className="overflow-x-auto min-w-0">
                             <table className="w-full min-w-[560px] text-left">
@@ -198,7 +198,7 @@ const SecurityDashboard: React.FC = () => {
                                 </thead>
                                 <tbody className="type-ui text-[var(--ws-text-secondary)]">
                                     {scanHistory.map((scan) => (
-                                        <tr key={scan.id} className="border-b border-[var(--ws-border)]/50 hover:bg-[var(--ws-surface-tertiary)]/20 cursor-pointer" onClick={() => {
+                                        <tr key={scan.id} className="border-b border-[var(--ws-border)]/50 hover:bg-[var(--ws-surface-tertiary)] cursor-pointer" onClick={() => {
                                             setResult({
                                                 url: scan.url,
                                                 timestamp: new Date(scan.created_at),

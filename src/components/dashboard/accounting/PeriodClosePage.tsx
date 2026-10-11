@@ -284,7 +284,7 @@ export default function PeriodClosePage() {
       <button
         onClick={resetChecklist}
         disabled={isTerminal}
-        className="w-full h-11 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 hover:bg-[var(--ws-panel)] text-[var(--ws-text-secondary)] disabled:opacity-40 font-bold flex items-center justify-center gap-2"
+        className="w-full h-11 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] hover:bg-[var(--ws-panel)] text-[var(--ws-text-secondary)] disabled:opacity-40 font-bold flex items-center justify-center gap-2"
       >
         <RefreshCcw className="w-4 h-4" /> Reset checklist
       </button>

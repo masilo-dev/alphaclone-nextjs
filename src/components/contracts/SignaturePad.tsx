@@ -162,7 +162,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
     if (isConfirmed && modalSignatureData) {
         return (
             <div className="space-y-4">
-                <div className="border border-green-500/30 bg-[var(--ws-panel)]/40 rounded-2xl p-5 flex flex-col items-center justify-center relative">
+                <div className="border border-green-500/30 bg-[var(--ws-panel)] rounded-2xl p-5 flex flex-col items-center justify-center relative">
                     <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-widest mb-2">{t('Adopted Signature')}</p>
                     <img src={modalSignatureData} alt={t('Signature')} className="h-20 object-contain bg-white p-2 rounded-xl" />
                     <p className="type-card-description font-semibold text-white font-mono mt-3">{fullName}</p>
@@ -182,7 +182,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
         <div className="space-y-4">
             {savedSignature ? (
                 <div
-                    className="border border-teal-500/30 bg-[var(--ws-panel)]/40 rounded-2xl p-5 flex flex-col items-center gap-3"
+                    className="border border-teal-500/30 bg-[var(--ws-panel)] rounded-2xl p-5 flex flex-col items-center gap-3"
                     data-testid="saved-signature-card"
                 >
                     <p className="type-caption text-[var(--brand-blue-300)] font-black uppercase tracking-widest flex items-center gap-1.5">
@@ -217,7 +217,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                 <button
                     type="button"
                     onClick={() => setIsModalOpen(true)}
-                    className="w-full h-36 border-2 border-dashed border-white/10 hover:border-teal-500/40 bg-[var(--ws-panel)]/40 hover:bg-[var(--ws-panel)]/60 rounded-2xl flex flex-col items-center justify-center gap-2 group transition-all"
+                    className="w-full h-36 border-2 border-dashed border-white/10 hover:border-teal-500/40 bg-[var(--ws-panel)] hover:bg-[var(--ws-panel)] rounded-2xl flex flex-col items-center justify-center gap-2 group transition-all"
                 >
                     <div className="p-3 bg-teal-500/10 rounded-xl group-hover:scale-110 transition-transform">
                         <PenTool className="w-5 h-5 text-teal-400" />
@@ -230,9 +230,9 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
             {/* Modal */}
             <AnimatePresence>
                 {isModalOpen && (
-                    <div className="fixed inset-0 ac-layer-modal flex flex-col bg-[var(--ws-canvas)]/95 backdrop-blur-md overflow-hidden">
+                    <div className="fixed inset-0 ac-layer-modal flex flex-col bg-[var(--ws-canvas)] overflow-hidden">
                         {/* Header */}
-                        <div className="px-6 py-4 bg-[var(--ws-panel)]/50 border-b border-white/5 flex items-center justify-between">
+                        <div className="px-6 py-4 bg-[var(--ws-panel)] border-b border-white/5 flex items-center justify-between">
                             <div>
                                 <h3 className="text-white text-base font-black uppercase tracking-wider">{t('Secure E-Signature')}</h3>
                                 <p className="type-caption text-[var(--ws-text-muted)] uppercase tracking-widest font-mono">{t('Sign below to execute the agreement')}</p>
@@ -284,7 +284,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                                         <button
                                             type="button"
                                             onClick={clearCanvasOnly}
-                                            className="absolute top-3 right-3 p-2 bg-[var(--ws-canvas)]/80 hover:bg-[var(--ws-panel)] text-[var(--ws-text-muted)] hover:text-white rounded-xl border border-white/5 transition-all flex items-center gap-1.5 type-caption font-bold"
+                                            className="absolute top-3 right-3 p-2 bg-[var(--ws-canvas)] hover:bg-[var(--ws-panel)] text-[var(--ws-text-muted)] hover:text-white rounded-xl border border-white/5 transition-all flex items-center gap-1.5 type-caption font-bold"
                                         >
                                             <RotateCcw className="w-3.5 h-3.5" /> {t('Clear Canvas')}
                                         </button>
@@ -293,7 +293,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                             </div>
 
                             {onRememberSignature && (
-                                <label className="flex items-start gap-3 rounded-2xl border border-white/5 bg-[var(--ws-panel)]/60 p-4 cursor-pointer">
+                                <label className="flex items-start gap-3 rounded-2xl border border-white/5 bg-[var(--ws-panel)] p-4 cursor-pointer">
                                     <input
                                         type="checkbox"
                                         checked={rememberSignature}

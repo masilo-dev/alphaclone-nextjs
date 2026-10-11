@@ -5,7 +5,7 @@ import { EU_JURISDICTIONS } from '@/config/euJurisdictions';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export const CONTRACT_INPUT_CLASS =
-    'w-full bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)] rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all type-ui';
+    'w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all type-ui';
 export const CONTRACT_LABEL_CLASS = 'block type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1.5';
 
 const CUSTOM = '__custom__';

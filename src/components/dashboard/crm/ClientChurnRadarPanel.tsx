@@ -130,7 +130,7 @@ export function ClientChurnRadarPanel() {
               </div>
 
               {/* Signals */}
-              <div className="grid grid-cols-3 gap-2 mt-3 type-ui text-[var(--ws-text-muted)] bg-[var(--ws-canvas)]/60 p-2 rounded-lg border border-[var(--ws-border)]">
+              <div className="grid grid-cols-3 gap-2 mt-3 type-ui text-[var(--ws-text-muted)] bg-[var(--ws-canvas)] p-2 rounded-lg border border-[var(--ws-border)]">
                 <div>
                   <span className="block font-bold text-[var(--ws-text-primary)]">{r.lastActiveDaysAgo}d ago</span>
                   <span>Last Active</span>

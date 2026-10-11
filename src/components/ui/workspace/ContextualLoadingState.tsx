@@ -64,7 +64,7 @@ export function CardSkeleton({ count = 3, className }: CardSkeletonProps) {
         >
           <div className="h-4 bg-[var(--ws-hover)] rounded w-2/3" />
           <div className="h-3 bg-[var(--ws-hover)] rounded w-1/2" />
-          <div className="h-16 bg-[var(--ws-hover)]/60 rounded" />
+          <div className="h-16 bg-[var(--ws-hover)] rounded" />
           <div className="flex justify-between pt-2">
             <div className="h-3 bg-[var(--ws-hover)] rounded w-1/4" />
             <div className="h-3 bg-[var(--ws-hover)] rounded w-1/4" />

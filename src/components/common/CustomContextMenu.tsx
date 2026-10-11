@@ -77,7 +77,7 @@ export default function CustomContextMenu({ items, children, className = '', as:
                             left: position.x,
                             zIndex: 10000,
                         }}
-                        className="bg-[var(--ws-panel)]/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-1.5 min-w-[200px] overflow-hidden"
+                        className="bg-[var(--ws-panel)] border border-white/10 rounded-xl shadow-2xl py-1.5 min-w-[200px] overflow-hidden"
                     >
                         {items.map((item, idx) => (
                             <button

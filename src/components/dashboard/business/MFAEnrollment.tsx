@@ -174,7 +174,7 @@ export default function MFAEnrollment() {
 
             {qrCodeData && !isEnrolled && (
                 <div className="mt-6 pt-6 border-t border-[var(--ws-border)] animate-fade-in text-[var(--ws-text-muted)]">
-                    <div className="bg-[var(--ws-panel)]/50 p-6 rounded-xl border border-[var(--ws-border)]">
+                    <div className="bg-[var(--ws-panel)] p-6 rounded-xl border border-[var(--ws-border)]">
                         <h5 className="font-bold text-[var(--ws-text-primary)] mb-2 text-lg">Set up Authenticator App</h5>
                         <p className="type-card-description text-[var(--ws-text-muted)] mb-6">
                             1. Open your authenticator app (e.g., Google Authenticator, Authy, or 1Password).<br />

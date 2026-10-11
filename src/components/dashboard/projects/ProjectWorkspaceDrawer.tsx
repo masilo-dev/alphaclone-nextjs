@@ -324,7 +324,7 @@ export function ProjectWorkspaceDrawer({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 bg-[var(--ws-canvas)]/80 backdrop-blur-sm ac-layer-overlay"
+        className="fixed inset-0 bg-[var(--ws-canvas)] ac-layer-overlay"
       />
 
       <motion.div
@@ -336,7 +336,7 @@ export function ProjectWorkspaceDrawer({
       >
         <div className="w-12 h-1 bg-[var(--ws-surface-secondary)] rounded-full mx-auto my-3 md:hidden" />
 
-        <div className="px-4 md:px-6 py-3 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/50 space-y-3">
+        <div className="px-4 md:px-6 py-3 border-b border-[var(--ws-border)] bg-[var(--ws-panel)] space-y-3">
           <div className="flex justify-between items-start gap-4">
             <div className="flex items-center gap-2 min-w-0">
               <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${getHealthColor(project.health)} animate-pulse`} />
@@ -408,7 +408,7 @@ export function ProjectWorkspaceDrawer({
                 <BusinessContextPanel tenantId={tenantId} entityType="project" entityId={project.id} />
               ) : null}
 
-              <div className="bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-lg p-4 flex items-center gap-6">
+              <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg p-4 flex items-center gap-6">
                 <div className="relative w-20 h-20 shrink-0">
                   <svg className="w-full h-full transform -rotate-90">
                     <circle cx="40" cy="40" r={radius} className="stroke-slate-800" strokeWidth="8" fill="transparent" />
@@ -423,7 +423,7 @@ export function ProjectWorkspaceDrawer({
               </div>
 
               {(clientEmail || clientName) && (
-                <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 p-4">
+                <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
                   <p className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)] mb-1">Client</p>
                   <button
                     type="button"
@@ -455,12 +455,12 @@ export function ProjectWorkspaceDrawer({
                 <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Project notes</span>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {commentsLoading ? (
-                    <div className="h-16 bg-[var(--ws-panel)]/60 rounded animate-pulse" />
+                    <div className="h-16 bg-[var(--ws-panel)] rounded animate-pulse" />
                   ) : comments.length === 0 ? (
                     <p className="type-card-description text-[var(--ws-text-muted)]">No notes yet.</p>
                   ) : (
                     comments.map((c) => (
-                      <div key={c.id} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-3 type-ui text-[var(--ws-text-secondary)]">
+                      <div key={c.id} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] p-3 type-ui text-[var(--ws-text-secondary)]">
                         <p className="font-semibold text-[var(--ws-text-primary)] type-card-description mb-1">{c.author_name}</p>
                         {c.content}
                       </div>
@@ -480,7 +480,7 @@ export function ProjectWorkspaceDrawer({
                 </form>
               </div>
 
-              <a href={`/dashboard/business/documents?projectId=${encodeURIComponent(project.id)}${project.clientId ? `&clientId=${encodeURIComponent(project.clientId)}` : ""}`} className="flex items-center gap-2 p-3 bg-[var(--ws-canvas)]/40 border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-secondary)]">
+              <a href={`/dashboard/business/documents?projectId=${encodeURIComponent(project.id)}${project.clientId ? `&clientId=${encodeURIComponent(project.clientId)}` : ""}`} className="flex items-center gap-2 p-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-secondary)]">
                 <FileText className="w-4 h-4 text-[var(--brand-blue-400)]" />
                 Open Document Hub
               </a>
@@ -515,9 +515,9 @@ export function ProjectWorkspaceDrawer({
                   </span>
                 )}
               </div>
-              <div className="space-y-2 bg-[var(--ws-canvas)]/20 rounded-lg p-3 border border-[var(--ws-border)]">
+              <div className="space-y-2 bg-[var(--ws-canvas)] rounded-lg p-3 border border-[var(--ws-border)]">
                 {milestonesLoading ? (
-                  [...Array(4)].map((_, i) => <div key={i} className="h-6 bg-[var(--ws-panel)]/60 rounded animate-pulse" />)
+                  [...Array(4)].map((_, i) => <div key={i} className="h-6 bg-[var(--ws-panel)] rounded animate-pulse" />)
                 ) : milestones.length === 0 ? (
                   <p className="type-card-description text-[var(--ws-text-muted)] py-4 text-center">
                     No milestones yet. Add them when you want checkpoints — opening a project no longer plants unfinished ones.
@@ -573,7 +573,7 @@ export function ProjectWorkspaceDrawer({
                 )}
               </div>
 
-              <div className="space-y-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 p-4">
+              <div className="space-y-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
                 <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Lifecycle stage</span>
                 <p className="type-card-description text-[var(--ws-text-primary)] font-semibold">{normalizedStage}</p>
                 <AlphaCloneSelect
@@ -608,7 +608,7 @@ export function ProjectWorkspaceDrawer({
           )}
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 bg-[var(--ws-canvas)]/95 px-4 md:px-6 py-3 border-t border-[var(--ws-border)] flex gap-3 justify-end">
+        <div className="absolute bottom-0 left-0 right-0 bg-[var(--ws-canvas)] px-4 md:px-6 py-3 border-t border-[var(--ws-border)] flex gap-3 justify-end">
           <button
             type="button"
             onClick={() => setShareDialogOpen(true)}

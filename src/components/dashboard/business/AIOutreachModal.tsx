@@ -297,7 +297,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={onClose}
-                className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                className="absolute inset-0 bg-black/80"
             />
 
             <motion.div
@@ -306,7 +306,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                 className="relative w-full max-w-6xl h-[min(92dvh,900px)] bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col"
             >
                 {/* Header */}
-                <div className="p-6 border-b border-[var(--ws-border)] flex items-center justify-between bg-[var(--ws-canvas)]/50">
+                <div className="p-6 border-b border-[var(--ws-border)] flex items-center justify-between bg-[var(--ws-canvas)]">
                     <div className="flex items-center gap-4">
                         <div className="w-14 h-14 bg-teal-500/10 rounded-2xl flex items-center justify-center border border-teal-500/20">
                             <Sparkles className="w-7 h-7 text-teal-400" />
@@ -326,7 +326,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
 
                 <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-y-auto md:overflow-hidden">
                     {/* Left Side: Lead Selection */}
-                    <div className="w-full md:w-1/2 min-h-[350px] border-r border-[var(--ws-border)] flex flex-col p-6 bg-[var(--ws-canvas)]/30">
+                    <div className="w-full md:w-1/2 min-h-[350px] border-r border-[var(--ws-border)] flex flex-col p-6 bg-[var(--ws-canvas)]">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-[var(--ws-text-primary)] type-caption font-bold flex items-center gap-2 uppercase tracking-widest opacity-70">
                                 <Users className="w-3.5 h-3.5 text-teal-400" />
@@ -363,7 +363,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                         <div className="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
                             {loading && leads.length === 0 ? (
                                 Array.from({ length: 6 }).map((_, i) => (
-                                    <div key={i} className="h-20 bg-[var(--ws-panel)]/40 rounded-2xl animate-pulse" />
+                                    <div key={i} className="h-20 bg-[var(--ws-panel)] rounded-2xl animate-pulse" />
                                 ))
                             ) : loadError && leads.length === 0 ? (
                                 <div role="alert" className="p-4 text-amber-200">
@@ -381,7 +381,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                         onClick={() => toggleLead(lead.id)}
                                         className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center gap-4 ${selectedLeads.includes(lead.id)
                                             ? 'bg-teal-500/10 border-teal-500/40 translate-x-1'
-                                            : 'bg-[var(--ws-panel)]/20 border-[var(--ws-border)] hover:bg-[var(--ws-panel)]/50'
+                                            : 'bg-[var(--ws-panel)] border-[var(--ws-border)] hover:bg-[var(--ws-panel)]'
                                             }`}
                                     >
                                         <div className={`w-6 h-6 rounded-lg flex items-center justify-center border ${selectedLeads.includes(lead.id)
@@ -458,7 +458,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                                     className={`p-4 rounded-2xl border transition-all flex items-center justify-between group ${
                                                         selectedIntegrationId === integration.id
                                                             ? 'bg-teal-500/10 border-teal-500/40'
-                                                            : 'bg-[var(--ws-panel)]/50 border-[var(--ws-border)] hover:border-[var(--ws-border)]'
+                                                            : 'bg-[var(--ws-panel)] border-[var(--ws-border)] hover:border-[var(--ws-border)]'
                                                     }`}
                                                 >
                                                     <div className="flex items-center gap-3">
@@ -485,7 +485,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="bg-[var(--ws-panel)]/50 border border-dashed border-[var(--ws-border)] rounded-3xl p-6 text-center">
+                                        <div className="bg-[var(--ws-panel)] border border-dashed border-[var(--ws-border)] rounded-3xl p-6 text-center">
                                             <AlertCircle className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />
                                             <p className="type-card-description text-[var(--ws-text-muted)] mb-4">No email providers connected</p>
                                             <Button 
@@ -513,7 +513,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                                 onClick={() => setSelectedTone(tone.id)}
                                                 className={`p-4 rounded-3xl border transition-all text-left ${selectedTone === tone.id
                                                     ? 'bg-teal-500/10 border-teal-500/40 ring-1 ring-teal-500/20'
-                                                    : 'bg-[var(--ws-panel)]/50 border-[var(--ws-border)] hover:border-[var(--ws-border)]'
+                                                    : 'bg-[var(--ws-panel)] border-[var(--ws-border)] hover:border-[var(--ws-border)]'
                                                     }`}
                                             >
                                                 <p className={`type-caption font-black uppercase tracking-widest ${selectedTone === tone.id ? 'text-teal-400' : 'text-[var(--ws-text-muted)]'}`}>
@@ -530,7 +530,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                         <Zap className="w-3.5 h-3.5" />
                                         Step 3: Custom Instructions
                                     </h3>
-                                    <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-[2rem] p-4 focus-within:border-teal-500/40 transition-all">
+                                    <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-[2rem] p-4 focus-within:border-teal-500/40 transition-all">
                                         <AlphaCloneTextarea
                                             value={customPrompt}
                                             onChange={e => setCustomPrompt(e.target.value)}

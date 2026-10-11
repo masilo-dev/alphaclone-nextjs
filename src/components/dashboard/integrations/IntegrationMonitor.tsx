@@ -188,7 +188,7 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
       {/* Integration List */}
       <div className="space-y-4">
         {integrations.map((integration) => (
-          <div key={integration.type} className="bg-[var(--ws-surface-tertiary)]/50 rounded-lg p-4 border border-slate-600">
+          <div key={integration.type} className="bg-[var(--ws-surface-tertiary)] rounded-lg p-4 border border-slate-600">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{getIntegrationIcon(integration.type)}</span>

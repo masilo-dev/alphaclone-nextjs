@@ -181,19 +181,19 @@ export default function TaxEstimatorTab() {
           <span className="type-ui text-[var(--ws-text-muted)] mt-1 block">YTD estimated due</span>
         </div>
 
-        <div className="bg-[var(--ws-panel)]/40 border border-[var(--ws-border)]/80 rounded-3xl p-5">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)]/80 rounded-3xl p-5">
           <span className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Gross Income YTD</span>
           <div className="text-2xl font-black text-[var(--ws-text-primary)] font-mono mt-1">${totalIncome.toLocaleString()}</div>
           <span className="type-ui text-[var(--ws-text-muted)] mt-1 block">Reportable revenues</span>
         </div>
 
-        <div className="bg-[var(--ws-panel)]/40 border border-[var(--ws-border)]/80 rounded-3xl p-5">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)]/80 rounded-3xl p-5">
           <span className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Total Write-Offs</span>
           <div className="text-2xl font-black text-emerald-400 font-mono mt-1">${(totalExpenses + totalDeductions).toLocaleString()}</div>
           <span className="type-ui text-[var(--ws-text-muted)] mt-1 block">Expenses + deductions</span>
         </div>
 
-        <div className="bg-[var(--ws-panel)]/40 border border-[var(--ws-border)]/80 rounded-3xl p-5">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)]/80 rounded-3xl p-5">
           <span className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Net Taxable Profit</span>
           <div className="text-2xl font-black text-[var(--ws-text-primary)] font-mono mt-1">${Math.max(0, totalIncome - totalExpenses - totalDeductions).toLocaleString()}</div>
           <span className="type-ui text-[var(--ws-text-muted)] mt-1 block">User-entered effective rate basis</span>
@@ -204,7 +204,7 @@ export default function TaxEstimatorTab() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Table list */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-[var(--ws-panel)]/20 border border-[var(--ws-border)] rounded-3xl overflow-hidden">
+          <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl overflow-hidden">
             <div className="p-4 border-b border-[var(--ws-border)]">
               <span className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider">Quarterly Filings Timeline</span>
             </div>
@@ -220,7 +220,7 @@ export default function TaxEstimatorTab() {
                 </div>
               ) : (
                 records.map(rec => (
-                  <div key={rec.id} className="p-4 hover:bg-[var(--ws-panel)]/10 flex items-center justify-between transition-colors">
+                  <div key={rec.id} className="p-4 hover:bg-[var(--ws-panel)] flex items-center justify-between transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-slate-850 flex flex-col items-center justify-center border border-[var(--ws-border)]">
                         <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase">Q{rec.quarter}</span>
@@ -261,7 +261,7 @@ export default function TaxEstimatorTab() {
         </div>
 
         {/* AI Deductions Tips */}
-        <div className="bg-[var(--ws-panel)]/30 border border-[var(--ws-border)] rounded-3xl p-5 space-y-4">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-[var(--ws-border)] pb-3">
             <h4 className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-violet-400 animate-pulse" />
@@ -300,9 +300,9 @@ export default function TaxEstimatorTab() {
 
       {/* Modal Dialog */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
           <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
-            <div className="p-5 border-b border-[var(--ws-border)] flex justify-between items-center bg-[var(--ws-canvas)]/40">
+            <div className="p-5 border-b border-[var(--ws-border)] flex justify-between items-center bg-[var(--ws-canvas)]">
               <h3 className="font-bold text-[var(--ws-text-primary)] type-ui">Log Quarterly Tax Metrics</h3>
               <button onClick={() => setShowModal(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] type-ui">Close</button>
             </div>

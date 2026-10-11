@@ -19,7 +19,7 @@ export function NativeScreenHeader({
   right?: React.ReactNode;
 }) {
   return (
-    <header className="native-screen-header sticky top-0 z-20 flex items-center gap-3 px-4 pt-[max(env(safe-area-inset-top),12px)] pb-3 bg-[var(--ws-canvas)]/95 backdrop-blur-xl border-b border-white/5">
+    <header className="native-screen-header sticky top-0 z-20 flex items-center gap-3 px-4 pt-[max(env(safe-area-inset-top),12px)] pb-3 bg-[var(--ws-canvas)] border-b border-white/5">
       {onBack ? (
         <button type="button" onClick={onBack} className="native-tap native-back-btn" aria-label="Back">
           <ChevronRight className="w-5 h-5 rotate-180" />

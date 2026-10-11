@@ -104,13 +104,13 @@ export default function OperationsConsoleTab() {
         </button>
       </div>
 
-      <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-6">
+      <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-6">
         <h2 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-3">Executive brief</h2>
         <pre className="whitespace-pre-wrap type-ui text-[var(--ws-text-secondary)] font-sans leading-relaxed">{brief || (loading ? 'Loading…' : 'No data.')}</pre>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-6 space-y-4">
+        <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-6 space-y-4">
           <h2 className="text-lg font-semibold text-[var(--ws-text-primary)]">Log incident</h2>
           <div>
             <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1">Title</label>
@@ -166,14 +166,14 @@ export default function OperationsConsoleTab() {
           </button>
         </div>
 
-        <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-6">
+        <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-6">
           <h2 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-3">Recent telemetry</h2>
           <div className="space-y-3 max-h-[480px] overflow-y-auto custom-scrollbar type-ui">
             {recent.length === 0 ? (
               <p className="text-[var(--ws-text-muted)]">No rows returned.</p>
             ) : (
               recent.map((row, idx) => (
-                <div key={row.id || idx} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-3">
+                <div key={row.id || idx} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3">
                   <p className="text-[var(--ws-text-secondary)] whitespace-pre-wrap">{row.message}</p>
                   <div className="mt-2 flex flex-wrap gap-2 type-ui text-[var(--ws-text-muted)]">
                     {row.severity && <span className="uppercase">{row.severity}</span>}

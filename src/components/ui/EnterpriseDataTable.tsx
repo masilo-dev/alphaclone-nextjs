@@ -72,7 +72,7 @@ export function EnterpriseDataTable<T>({
 
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-[var(--ws-border)] bg-[var(--ws-panel)]/40 px-4 py-12 text-center">
+      <div className="rounded-xl border border-dashed border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-12 text-center">
         <p className="type-card-description text-[var(--ws-text-muted)]">{emptyMessage}</p>
       </div>
     );
@@ -139,7 +139,7 @@ export function EnterpriseDataTable<T>({
                   </tr>
                   {renderExpanded && isExpanded ? (
                     <tr>
-                      <td colSpan={columns.length + 1} className="bg-[var(--ws-panel)]/50">
+                      <td colSpan={columns.length + 1} className="bg-[var(--ws-panel)]">
                         <div className="p-4">{renderExpanded(row)}</div>
                       </td>
                     </tr>

@@ -395,7 +395,7 @@ export default function WorkflowDashboard() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)] rounded-xl w-fit">
+            <div className="flex gap-1 p-1 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl w-fit">
                 {(['workflows', 'log'] as const).map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
                         className={`px-4 py-2 rounded-lg type-ui font-semibold capitalize transition-all ${activeTab === tab ? 'bg-teal-500 text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}>
@@ -406,7 +406,7 @@ export default function WorkflowDashboard() {
 
             {/* Create Form */}
             {showForm && (
-                <div className="bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-2xl p-6 space-y-5">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 space-y-5">
                     <div className="flex items-center justify-between">
                         <h3 className="font-bold text-[var(--ws-text-primary)]">New Workflow</h3>
                         <button onClick={() => setShowForm(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"><X className="w-4 h-4" /></button>
@@ -506,7 +506,7 @@ export default function WorkflowDashboard() {
                             </button>
                         </div>
                     ) : workflows.map(wf => (
-                        <div key={wf.id} className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl overflow-hidden">
+                        <div key={wf.id} className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden">
                             <div className="flex items-center gap-3 p-4">
                                 <button onClick={() => handleToggle(wf)} className="flex-shrink-0">
                                     {wf.is_active
@@ -516,7 +516,7 @@ export default function WorkflowDashboard() {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
                                         <p className="font-semibold text-[var(--ws-text-primary)] type-card-description">{wf.name}</p>
-                                        <span className={`type-caption px-2 py-0.5 rounded-full border ${wf.is_active ? 'bg-teal-500/15 text-teal-400 border-teal-500/30' : 'bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)]'}`}>
+                                        <span className={`type-caption px-2 py-0.5 rounded-full border ${wf.is_active ? 'bg-teal-500/15 text-teal-400 border-teal-500/30' : 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] border-[var(--ws-border)]'}`}>
                                             {wf.is_active ? 'Active' : 'Paused'}
                                         </span>
                                     </div>
@@ -542,7 +542,7 @@ export default function WorkflowDashboard() {
                                 </div>
                             </div>
                             {expandedId === wf.id && (
-                                <div className="border-t border-[var(--ws-border)] p-4 bg-[var(--ws-canvas)]/40 space-y-3">
+                                <div className="border-t border-[var(--ws-border)] p-4 bg-[var(--ws-canvas)] space-y-3">
                                     {wf.description && <p className="type-card-description text-[var(--ws-text-muted)]">{wf.description}</p>}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
@@ -550,7 +550,7 @@ export default function WorkflowDashboard() {
                                             {wf.conditions.length === 0
                                                 ? <p className="type-card-description text-slate-600 italic">Always runs</p>
                                                 : wf.conditions.map((c, i) => (
-                                                    <div key={i} className="type-caption text-[var(--ws-text-secondary)] font-mono bg-[var(--ws-surface-secondary)]/50 px-3 py-1.5 rounded-lg mb-1">
+                                                    <div key={i} className="type-caption text-[var(--ws-text-secondary)] font-mono bg-[var(--ws-surface-secondary)] px-3 py-1.5 rounded-lg mb-1">
                                                         {c.field} <span className="text-[var(--ws-text-muted)]">{c.operator}</span> <span className="text-teal-400">"{String(c.value)}"</span>
                                                     </div>
                                                 ))}
@@ -558,7 +558,7 @@ export default function WorkflowDashboard() {
                                         <div>
                                             <p className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-2">Actions</p>
                                             {wf.actions.map((a, i) => (
-                                                <div key={i} className="type-caption bg-[var(--ws-surface-secondary)]/50 px-3 py-1.5 rounded-lg mb-1">
+                                                <div key={i} className="type-caption bg-[var(--ws-surface-secondary)] px-3 py-1.5 rounded-lg mb-1">
                                                     <span className="text-amber-400 font-semibold">{ACTION_LABELS[a.type] || a.type}</span>
                                                     <span className="text-[var(--ws-text-muted)] ml-2">{JSON.stringify(a.config).slice(0, 80)}</span>
                                                 </div>
@@ -589,7 +589,7 @@ export default function WorkflowDashboard() {
                         <div className="overflow-x-auto rounded-2xl border border-[var(--ws-border)] min-w-0">
                             <table className="w-full min-w-[560px] type-ui">
                                 <thead>
-                                    <tr className="border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/50">
+                                    <tr className="border-b border-[var(--ws-border)] bg-[var(--ws-panel)]">
                                         {['Workflow', 'Status', 'Actions', 'Duration', 'Time'].map(h => (
                                             <th key={h} className="text-left px-4 py-3 type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">{h}</th>
                                         ))}
@@ -597,13 +597,13 @@ export default function WorkflowDashboard() {
                                 </thead>
                                 <tbody className="divide-y divide-slate-800">
                                     {executions.map(ex => (
-                                        <tr key={ex.id} className="hover:bg-[var(--ws-surface-secondary)]/30">
+                                        <tr key={ex.id} className="hover:bg-[var(--ws-surface-secondary)]">
                                             <td className="px-4 py-3 text-[var(--ws-text-secondary)] type-table-cell font-medium">{ex.workflow_definitions?.name || '—'}</td>
                                             <td className="px-4 py-3">
                                                 <span className={`type-caption px-2 py-0.5 rounded-full border ${
                                                     ex.status === 'success' ? 'bg-green-500/15 text-green-400 border-green-500/30'
                                                     : ex.status === 'failed' ? 'bg-[var(--error-500)]/15 text-red-400 border-red-500/30'
-                                                    : ex.status === 'skipped' ? 'bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)]'
+                                                    : ex.status === 'skipped' ? 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] border-[var(--ws-border)]'
                                                     : 'bg-amber-500/15 text-amber-400 border-amber-500/30'}`}>
                                                     {ex.status}
                                                 </span>

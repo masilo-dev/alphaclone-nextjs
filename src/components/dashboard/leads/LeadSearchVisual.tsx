@@ -57,11 +57,11 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
 
             {/* Top Status Bar */}
             <div className="absolute top-8 left-0 w-full px-8 flex justify-between items-center z-10">
-                <div className="flex items-center gap-3 bg-[var(--ws-panel)]/80 backdrop-blur-md px-4 py-2 border border-[var(--ws-border)]/50 rounded-full">
+                <div className="flex items-center gap-3 bg-[var(--ws-panel)] px-4 py-2 border border-[var(--ws-border)]/50 rounded-full">
                     <Zap className="w-5 h-5 text-teal-400 animate-pulse" />
                     <span className="text-[var(--ws-text-primary)] font-mono type-ui">ACTIVE SEARCH</span>
                 </div>
-                <div className="flex items-center gap-3 bg-[var(--ws-panel)]/80 backdrop-blur-md px-4 py-2 border border-[var(--ws-border)]/50 rounded-full font-mono type-ui text-[var(--ws-text-secondary)]">
+                <div className="flex items-center gap-3 bg-[var(--ws-panel)] px-4 py-2 border border-[var(--ws-border)]/50 rounded-full font-mono type-ui text-[var(--ws-text-secondary)]">
                     Target: <span className="text-teal-400 font-bold">{industry}</span> in <span className="text-blue-400 font-bold">{location}</span>
                 </div>
             </div>
@@ -86,7 +86,7 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
                                         initial={{ height: 0 }}
                                         animate={{ height: item.buildingHeight }}
                                         transition={{ duration: 2, delay: item.delay }}
-                                        className="absolute bottom-0 left-0 w-full bg-[var(--ws-surface-secondary)]/80 border border-teal-500/50 transform-style-3d translate-z-[1px]"
+                                        className="absolute bottom-0 left-0 w-full bg-[var(--ws-surface-secondary)] border border-teal-500/50 transform-style-3d translate-z-[1px]"
                                         style={{ transformOrigin: 'bottom' }}
                                     >
                                         <div className="absolute -top-4 left-1/2 -translate-x-1/2 opacity-50">
@@ -179,7 +179,7 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
 
             {/* Bottom Progress Bar & Status */}
             <div className="absolute bottom-12 w-full max-w-2xl px-8 z-10">
-                <div className="bg-[var(--ws-panel)]/80 backdrop-blur-md border border-[var(--ws-border)]/50 rounded-2xl p-6 shadow-2xl">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)]/50 rounded-2xl p-6 shadow-2xl">
                     <div className="flex justify-between items-end mb-4">
                         <div>
                             <h3 className="text-[var(--ws-text-primary)] font-bold text-lg flex items-center gap-2">
@@ -204,15 +204,15 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 mt-4 text-center">
-                        <div className="bg-[var(--ws-surface-secondary)]/50 rounded-lg py-2 border border-[var(--ws-border)]/50">
+                        <div className="bg-[var(--ws-surface-secondary)] rounded-lg py-2 border border-[var(--ws-border)]/50">
                             <div className="type-caption text-[var(--ws-text-muted)] mb-1">Signals Analyzed</div>
                             <div className="text-[var(--ws-text-primary)] font-mono font-bold">{Math.floor(progress * 1342).toLocaleString()}</div>
                         </div>
-                        <div className="bg-[var(--ws-surface-secondary)]/50 rounded-lg py-2 border border-[var(--ws-border)]/50">
+                        <div className="bg-[var(--ws-surface-secondary)] rounded-lg py-2 border border-[var(--ws-border)]/50">
                             <div className="type-caption text-[var(--ws-text-muted)] mb-1">Company Matches</div>
                             <div className="text-[var(--ws-text-primary)] font-mono font-bold animate-pulse">{Math.floor(progress * 1.5)}</div>
                         </div>
-                        <div className="bg-[var(--ws-surface-secondary)]/50 rounded-lg py-2 border border-[var(--ws-border)]/50">
+                        <div className="bg-[var(--ws-surface-secondary)] rounded-lg py-2 border border-[var(--ws-border)]/50">
                             <div className="type-caption text-[var(--ws-text-muted)] mb-1">Data Quality</div>
                             <div className="text-emerald-400 font-mono font-bold">Quality check</div>
                         </div>

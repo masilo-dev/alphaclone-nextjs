@@ -908,7 +908,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
 
             {/* Drag Overlay */}
             {isDragging && (
-              <div className="absolute inset-0 z-50 bg-teal-500/20 backdrop-blur-sm border-2 border-teal-500 border-dashed m-4 rounded-xl flex items-center justify-center pointer-events-none">
+              <div className="absolute inset-0 z-50 bg-teal-500/20 border-2 border-teal-500 border-dashed m-4 rounded-xl flex items-center justify-center pointer-events-none">
                 <div className="text-[var(--ws-text-primary)] font-bold text-xl flex flex-col items-center gap-4 animate-bounce">
                   <Paperclip className="w-12 h-12" />
                   Drop files to attach
@@ -921,7 +921,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
               <div
                 className={`${
                   isMobile ? "w-full" : desktopSidebarOpen ? "w-80" : "w-0"
-                } border-r border-[var(--ws-border)] bg-[var(--ws-panel)]/50 flex flex-col z-30 relative h-full transition-all duration-300`}
+                } border-r border-[var(--ws-border)] bg-[var(--ws-panel)] flex flex-col z-30 relative h-full transition-all duration-300`}
               >
                 <div className="p-4 border-b border-[var(--ws-border)]">
                   <div className="flex items-center justify-between mb-4">
@@ -940,7 +940,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                       <X className="w-5 h-5" />
                     </button>
                   </div>
-                  <div className="mt-4 flex bg-[var(--ws-surface-secondary)]/50 p-1 rounded-xl border border-[var(--ws-border)]">
+                  <div className="mt-4 flex bg-[var(--ws-surface-secondary)] p-1 rounded-xl border border-[var(--ws-border)]">
                     <button
                       onClick={() => setSidebarTab("chats")}
                       className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg type-caption font-medium transition-all ${sidebarTab === "chats" ? "bg-teal-500 text-[var(--text-inverse)] shadow-lg" : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"}`}
@@ -977,7 +977,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                           setSelectedClient(client);
                           setConversationSummary(null);
                         }}
-                        className={`p-3 md:p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-[var(--ws-border)] hover:bg-[var(--ws-surface-secondary)]/50 ${selectedClient?.id === client.id ? "bg-teal-500/10 border-l-2 border-l-teal-500" : "border-l-2 border-l-transparent"}`}
+                        className={`p-3 md:p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-[var(--ws-border)] hover:bg-[var(--ws-surface-secondary)] ${selectedClient?.id === client.id ? "bg-teal-500/10 border-l-2 border-l-teal-500" : "border-l-2 border-l-transparent"}`}
                       >
                         <div className="relative">
                           <div className="relative w-10 h-10 shrink-0">
@@ -1053,7 +1053,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                 setConversationSummary(null);
                                 setActiveChannel("all");
                               }}
-                              className={`p-3 md:p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-[var(--ws-border)] hover:bg-[var(--ws-surface-secondary)]/50 ${selectedCRMContact?.id === contact.id ? "bg-teal-500/10 border-l-2 border-l-teal-500" : "border-l-2 border-l-transparent"}`}
+                              className={`p-3 md:p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-[var(--ws-border)] hover:bg-[var(--ws-surface-secondary)] ${selectedCRMContact?.id === contact.id ? "bg-teal-500/10 border-l-2 border-l-teal-500" : "border-l-2 border-l-transparent"}`}
                             >
                               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-600 to-violet-600 flex items-center justify-center text-[var(--text-inverse)] font-bold type-ui">
                                 {(contact.name || "?").charAt(0)}
@@ -1082,10 +1082,10 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
 
             {/* --- CHAT AREA --- */}
             {showChat && (
-              <div className="flex-1 flex flex-col z-10 bg-[var(--ws-panel)]/20 min-w-0 overflow-hidden h-full">
+              <div className="flex-1 flex flex-col z-10 bg-[var(--ws-panel)] min-w-0 overflow-hidden h-full">
                 {/* CRM Omnichannel Header */}
                 {isAdmin && selectedCRMContact && (
-                  <div className="px-4 pt-3 pb-0 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/60 flex-shrink-0">
+                  <div className="px-4 pt-3 pb-0 border-b border-[var(--ws-border)] bg-[var(--ws-panel)] flex-shrink-0">
                     <div className="flex items-center gap-3 mb-3">
                       {isMobile && (
                         <button
@@ -1135,7 +1135,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                 )}
                 {/* Chat Header */}
                 <div
-                  className={`p-3 md:p-5 border-b border-[var(--ws-border)] flex justify-between items-center bg-[var(--ws-panel)]/50 backdrop-blur-md flex-shrink-0 ${isAdmin && selectedCRMContact ? "hidden" : "h-[60px] md:h-auto"}`}
+                  className={`p-3 md:p-5 border-b border-[var(--ws-border)] flex justify-between items-center bg-[var(--ws-panel)]  flex-shrink-0 ${isAdmin && selectedCRMContact ? "hidden" : "h-[60px] md:h-auto"}`}
                 >
                   <div className="flex items-center gap-3">
                     {/* Mobile Back Button */}
@@ -1390,7 +1390,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
 
                 {/* Input Area */}
                 {(!isAdmin || selectedClient || selectedCRMContact) && (
-                  <div className="p-3 md:p-5 border-t border-[var(--ws-border)] relative bg-[var(--ws-panel)]/40 backdrop-blur-md flex-shrink-0">
+                  <div className="p-3 md:p-5 border-t border-[var(--ws-border)] relative bg-[var(--ws-panel)] flex-shrink-0">
                     {/* Pending Attachments Preview */}
                     {pendingAttachments.length > 0 && (
                       <div className="flex gap-2 mb-3 overflow-x-auto pb-2">

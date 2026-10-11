@@ -419,7 +419,7 @@ export function showActionNextSteps(
                             className={
                                 isPrimary
                                     ? 'type-ui font-semibold px-2.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white transition-colors'
-                                    : 'type-ui font-semibold px-2.5 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-secondary)] hover:bg-[var(--surface-hover)] text-[var(--text-primary)] dark:border-white/10 dark:bg-[var(--ws-surface-secondary)]/80 dark:hover:bg-[var(--ws-surface-secondary)] dark:text-[var(--ws-text-secondary)] transition-colors'
+                                    : 'type-ui font-semibold px-2.5 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-secondary)] hover:bg-[var(--surface-hover)] text-[var(--text-primary)] dark:border-white/10 dark:bg-[var(--ws-surface-secondary)] dark:hover:bg-[var(--ws-surface-secondary)] dark:text-[var(--ws-text-secondary)] transition-colors'
                             }
                         >
                             {l.label}

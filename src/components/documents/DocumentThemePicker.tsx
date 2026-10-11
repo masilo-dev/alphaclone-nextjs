@@ -31,7 +31,7 @@ export function DocumentThemePicker({ value, onChange, className }: DocumentThem
               'rounded-xl border p-2.5 text-left transition-all',
               value === theme.id
                 ? 'border-teal-500/50 bg-teal-500/10 ring-1 ring-teal-500/30'
-                : 'border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 hover:border-slate-600'
+                : 'border-[var(--ws-border)] bg-[var(--ws-canvas)] hover:border-slate-600'
             )}
           >
             <div

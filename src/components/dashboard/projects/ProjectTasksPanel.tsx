@@ -104,9 +104,9 @@ export function ProjectTasksPanel({ projectId, userId, onProgressChange }: Proje
         </button>
       </form>
 
-      <div className="space-y-2 bg-[var(--ws-canvas)]/20 rounded-lg p-3 border border-[var(--ws-border)] max-h-56 overflow-y-auto custom-scrollbar">
+      <div className="space-y-2 bg-[var(--ws-canvas)] rounded-lg p-3 border border-[var(--ws-border)] max-h-56 overflow-y-auto custom-scrollbar">
         {loading ? (
-          [...Array(3)].map((_, i) => <div key={i} className="h-8 bg-[var(--ws-panel)]/60 rounded animate-pulse" />)
+          [...Array(3)].map((_, i) => <div key={i} className="h-8 bg-[var(--ws-panel)] rounded animate-pulse" />)
         ) : tasks.length === 0 ? (
           <p className="type-card-description text-[var(--ws-text-muted)] py-2 text-center">No tasks yet — add work items to track delivery.</p>
         ) : (

@@ -40,7 +40,7 @@ export function CrmNextStepsPanel({
                             ? 'border-amber-500/30 bg-amber-950/20'
                             : item.tone === 'success'
                               ? 'border-emerald-500/25 bg-emerald-950/15'
-                              : 'border-[var(--ws-border)]/80 bg-[var(--ws-panel)]/40';
+                              : 'border-[var(--ws-border)]/80 bg-[var(--ws-panel)]';
                     return (
                         <li
                             key={item.id}

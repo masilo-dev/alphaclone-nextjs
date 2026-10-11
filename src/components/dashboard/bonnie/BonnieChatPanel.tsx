@@ -697,7 +697,7 @@ export default function BonnieChatPanel({
                   ? 'bg-teal-600 text-[var(--text-inverse)]'
                   : msg.error
                     ? 'border border-rose-500/30 bg-rose-500/10 text-rose-200'
-                    : 'border border-[var(--ws-border)]/60 bg-[var(--ws-surface-secondary)]/80 text-[var(--ws-text-primary)]'
+                    : 'border border-[var(--ws-border)]/60 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)]'
               }`}
             >
               {msg.role === 'assistant' && msg.id !== 'intro' && (

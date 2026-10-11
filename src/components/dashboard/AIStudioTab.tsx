@@ -289,7 +289,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                         className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition-all whitespace-nowrap ${
                             activeTab === tab.id
                                 ? 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border-b-2 border-teal-500'
-                                : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)]/50'
+                                : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)]'
                         }`}
                     >
                         <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? tab.color : ''}`} />
@@ -300,7 +300,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
 
             {/* Conversation Memory */}
             {conversationHistory.length > 0 && (
-                <div className="bg-[var(--ws-panel)]/60 backdrop-blur border border-[var(--ws-border)] rounded-2xl p-4">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4">
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                             <Sparkles className="w-4 h-4 text-purple-400" />
@@ -343,7 +343,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
             <Card className="p-6">
                 <div className="space-y-6">
                     {/* Rate Limit Display */}
-                    <div className="flex items-center justify-between p-4 bg-[var(--ws-surface-secondary)]/50 rounded-lg border border-[var(--ws-border)]">
+                    <div className="flex items-center justify-between p-4 bg-[var(--ws-surface-secondary)] rounded-lg border border-[var(--ws-border)]">
                         <div className="flex items-center gap-2">
                             <AlertCircle className="w-5 h-5 text-teal-400" />
                             <span className="text-[var(--ws-text-secondary)]">Daily Usage</span>
@@ -457,14 +457,14 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
 
                     {/* Result Display */}
                     {generatedResult && (
-                        <div className="p-6 bg-[var(--ws-surface-secondary)]/50 rounded-lg border border-teal-500/30">
+                        <div className="p-6 bg-[var(--ws-surface-secondary)] rounded-lg border border-teal-500/30">
                             <div className="type-ui font-semibold text-teal-400 mb-4">Generated Result</div>
                             {activeTab === 'content' ? (
                                 <div className="prose prose-invert max-w-none">
                                     <div className="mb-3">
                                         <AIOutputDisclaimer type={contentType === 'email' ? 'email' : contentType === 'social' ? 'social' : 'generic'} />
                                     </div>
-                                    <pre className="whitespace-pre-wrap text-[var(--ws-text-secondary)] type-ui leading-relaxed bg-[var(--ws-panel)]/50 p-4 rounded-lg">
+                                    <pre className="whitespace-pre-wrap text-[var(--ws-text-secondary)] type-ui leading-relaxed bg-[var(--ws-panel)] p-4 rounded-lg">
                                         {generatedResult}
                                     </pre>
                                 </div>
@@ -513,7 +513,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                 {/* Asset Preview */}
                                 <div className="relative mb-3">
                                     {asset.asset_type === 'content' ? (
-                                        <div className="bg-[var(--ws-surface-secondary)]/50 p-6 rounded-lg border border-[var(--ws-border)] h-40 flex items-center justify-center">
+                                        <div className="bg-[var(--ws-surface-secondary)] p-6 rounded-lg border border-[var(--ws-border)] h-40 flex items-center justify-center">
                                             <FileText className="w-12 h-12 text-slate-600" />
                                         </div>
                                     ) : (
@@ -596,7 +596,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                         </div>
                     ) : (
                         <div className="prose prose-invert max-w-none">
-                            <pre className="whitespace-pre-wrap text-[var(--ws-text-secondary)] type-ui leading-relaxed bg-[var(--ws-panel)]/50 p-4 rounded-lg max-h-[60vh] overflow-y-auto">
+                            <pre className="whitespace-pre-wrap text-[var(--ws-text-secondary)] type-ui leading-relaxed bg-[var(--ws-panel)] p-4 rounded-lg max-h-[60vh] overflow-y-auto">
                                 {previewModal.content}
                             </pre>
                         </div>

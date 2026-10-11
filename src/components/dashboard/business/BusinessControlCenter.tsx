@@ -27,7 +27,7 @@ export function BusinessControlCenter() {
   if (!data) return null;
 
   return (
-    <section className="rounded-2xl border border-cyan-900/30 bg-[var(--ws-canvas)]/80 p-5 space-y-5">
+    <section className="rounded-2xl border border-cyan-900/30 bg-[var(--ws-canvas)] p-5 space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="type-caption uppercase tracking-wide text-cyan-400 font-semibold">Business Control</p>
@@ -41,7 +41,7 @@ export function BusinessControlCenter() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 type-ui">
         {Object.entries(data.today).map(([key, val]) => (
-          <div key={key} className="rounded-xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] p-3">
+          <div key={key} className="rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] p-3">
             <p className="text-2xl font-bold text-[var(--ws-text-primary)]">{val}</p>
             <p className="type-card-description text-[var(--ws-text-muted)] capitalize">{key.replace(/_/g, ' ')}</p>
           </div>

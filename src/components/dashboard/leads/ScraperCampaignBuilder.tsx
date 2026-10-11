@@ -81,7 +81,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-6 space-y-4">
+    <form onSubmit={handleSubmit} className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-6 space-y-4">
       <div className="flex items-center gap-2 text-[var(--ws-text-primary)] font-semibold">
         <Target className="w-5 h-5 text-emerald-400" />
         Campaign Builder

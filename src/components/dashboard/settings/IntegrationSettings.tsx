@@ -164,15 +164,15 @@ export function IntegrationSettings() {
             </p>
           </div>
           <div className="grid grid-cols-3 gap-2 md:min-w-[320px]">
-            <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/45 px-3 py-2">
+            <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 py-2">
               <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Connected</div>
               <div className="text-lg font-bold text-[var(--ws-text-primary)]">{connectedCount}</div>
             </div>
-            <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/45 px-3 py-2">
+            <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 py-2">
               <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Providers</div>
               <div className="text-lg font-bold text-[var(--ws-text-primary)]">{providerCount}</div>
             </div>
-            <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/45 px-3 py-2">
+            <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 py-2">
               <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Errors</div>
               <div className="text-lg font-bold text-[var(--ws-text-primary)]">{errorCount}</div>
             </div>
@@ -233,7 +233,7 @@ export function IntegrationSettings() {
                 {INTEGRATION_OVERVIEW.map(({ label, status, detail, Icon }) => {
                   const comingSoon = status === 'Coming soon';
                   return (
-                    <div key={label} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/45 p-3">
+                    <div key={label} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3">
                       <div className="flex items-start gap-3">
                         <div className="rounded-md border border-[var(--ws-border)] bg-[var(--ws-hover)] p-2 text-[var(--ws-text-secondary)]">
                           <Icon className="h-4 w-4" />
@@ -361,7 +361,7 @@ export function IntegrationSettings() {
                       : 'Not recorded';
                     
                     return (
-                      <div key={int.id} className="flex items-center justify-between p-3 bg-[var(--ws-canvas)]/45 rounded-lg border border-[var(--ws-border)]">
+                      <div key={int.id} className="flex items-center justify-between p-3 bg-[var(--ws-canvas)] rounded-lg border border-[var(--ws-border)]">
                         <div className="flex items-center gap-3">
                           <div className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-green-500' : 'bg-[var(--error-500)]'}`} />
                           <span className="type-ui text-[var(--text-inverse)]">{int.name}</span>

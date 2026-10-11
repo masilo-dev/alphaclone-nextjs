@@ -328,7 +328,7 @@ const TaskSection: React.FC<{
   if (tasks.length === 0) return null;
   return (
     <div>
-      <button onClick={() => setCollapsed(c => !c)} className="w-full flex items-center justify-between px-4 py-2.5 bg-[var(--ws-panel)]/60 border-b border-[var(--ws-border)]">
+      <button onClick={() => setCollapsed(c => !c)} className="w-full flex items-center justify-between px-4 py-2.5 bg-[var(--ws-panel)] border-b border-[var(--ws-border)]">
         <div className="flex items-center gap-2">
           <span className="type-ui font-black uppercase tracking-wider text-[var(--ws-text-muted)]">{label}</span>
           <span className="type-ui font-bold px-1.5 py-0.5 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] rounded-full">{tasks.length}</span>
@@ -979,14 +979,14 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
       </div>
         )}
         stats={!loading ? (
-          <div className="p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/20">
+          <div className="p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]">
             <ModuleStatCards stats={taskStats} hub="tasks" />
           </div>
         ) : null}
       >
       <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-20" data-testid="tasks-scroll-list">
         {!loading && tasks.length > 0 ? (
-          <div className="p-4 space-y-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/20">
+          <div className="p-4 space-y-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]">
             {(taskDecision.overdueHigh > 0 || taskDecision.overdue > 0 && taskDecision.highPriority > 0) ? (
               <div className={cn(
                 'rounded-lg border p-3 md:p-4',
@@ -1024,7 +1024,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
           </div>
         ) : null}
         {microsoftConnected && (
-          <div className="p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/40">
+          <div className="p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h3 className="type-ui font-bold text-[var(--ws-text-primary)]">Microsoft To Do</h3>
@@ -1033,7 +1033,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
               <button
                 type="button"
                 onClick={() => refreshMicrosoftTasks()}
-                className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-2 text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]"
+                className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
@@ -1043,12 +1043,12 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
             ) : (
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {microsoftLists.map((list) => (
-                  <div key={list.id} className="rounded-xl border border-blue-500/10 bg-[var(--ws-canvas)]/50 p-3">
+                  <div key={list.id} className="rounded-xl border border-blue-500/10 bg-[var(--ws-canvas)] p-3">
                     <p className="type-card-description font-semibold text-[var(--ws-text-primary)] truncate">{list.displayName}</p>
                     <p className="type-card-description text-blue-300 mt-1">{list.tasks.length} Microsoft tasks</p>
                     <div className="mt-3 space-y-2">
                       {list.tasks.slice(0, 3).map((task: any) => (
-                        <div key={task.id} className="rounded-lg bg-[var(--ws-panel)]/70 px-2.5 py-2">
+                        <div key={task.id} className="rounded-lg bg-[var(--ws-panel)] px-2.5 py-2">
                           <p className="type-card-description font-medium text-[var(--ws-text-secondary)] truncate">{task.title}</p>
                           <p className="type-card-description text-[var(--ws-text-muted)]">
                             {task.status === 'completed' ? 'Completed' : 'Open in Microsoft To Do'}
@@ -1067,7 +1067,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
           </div>
         )}
         {loading ? (
-          <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-11 bg-[var(--ws-panel)]/40 animate-pulse" />)}</div>
+          <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-11 bg-[var(--ws-panel)] animate-pulse" />)}</div>
         ) : tasks.length === 0 ? (
           <div className="p-6">
             <EmptyStateFromPreset moduleId="tasks" />
@@ -1086,7 +1086,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
         ) : (
           <div>
             {isTruncated && (
-              <div className="px-4 py-3 type-ui text-[var(--ws-text-muted)] bg-[var(--ws-panel)]/60 border-b border-[var(--ws-border)]">
+              <div className="px-4 py-3 type-ui text-[var(--ws-text-muted)] bg-[var(--ws-panel)] border-b border-[var(--ws-border)]">
                 Showing {tasks.length.toLocaleString()} of {totalCount?.toLocaleString()} tasks
               </div>
             )}

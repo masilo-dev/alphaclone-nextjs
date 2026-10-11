@@ -211,7 +211,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
   if (!baseConnected) {
     return (
       <ModulePageLayout>
-        <div className="max-w-2xl mx-auto rounded-3xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-6 md:p-8 overflow-hidden relative">
+        <div className="max-w-2xl mx-auto rounded-3xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-6 md:p-8 overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.18),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.14),transparent_36%)] pointer-events-none" />
           <div className="relative grid gap-6 md:grid-cols-[1.15fr_0.85fr] items-center">
             <div className="space-y-4">
@@ -232,7 +232,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
                 ].map((chip) => {
                   const ChipIcon = chip.icon;
                   return (
-                    <span key={chip.label} className="inline-flex items-center gap-1.5 rounded-full border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 px-3 py-1 type-ui font-bold text-[var(--ws-text-secondary)]">
+                    <span key={chip.label} className="inline-flex items-center gap-1.5 rounded-full border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 py-1 type-ui font-bold text-[var(--ws-text-secondary)]">
                       <ChipIcon className="w-3.5 h-3.5 text-teal-400" />
                       {chip.label}
                     </span>
@@ -249,7 +249,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
               </button>
             </div>
 
-            <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 p-4 space-y-3">
+            <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)]">Campaign flow</span>
                 <span className="type-ui font-bold text-teal-400">Ready in 2 steps</span>
@@ -361,7 +361,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
             campaigns.map((c) => {
               const report = c.campaignKey ? reports[c.campaignKey] : undefined;
               return (
-                <div key={c.campaignKey || c.name} className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div key={c.campaignKey || c.name} className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-semibold text-[var(--ws-text-primary)] truncate">{c.name || 'Untitled'}</p>
                     <p className="type-caption text-[var(--ws-text-muted)] capitalize">{c.status || 'unknown'} · {c.createdAt || '—'}</p>
@@ -389,7 +389,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
         <div className="space-y-4">
           <div className="grid gap-3">
             {lists.map((list) => (
-              <div key={list.listKey} className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4 flex justify-between items-center gap-3">
+              <div key={list.listKey} className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 flex justify-between items-center gap-3">
                 <div>
                   <p className="font-semibold text-[var(--ws-text-primary)]">{list.name}</p>
                   <p className="type-card-description text-[var(--ws-text-muted)]">{list.contactCount} subscribers · {list.unsubscribeCount} unsubscribed</p>
@@ -398,7 +398,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
               </div>
             ))}
           </div>
-          <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-4 space-y-3">
+          <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-4 space-y-3">
             <p className="type-caption font-bold uppercase text-[var(--ws-text-muted)]">Add CRM contact to list</p>
             <AlphaCloneSelect
               value={subscribeListKey}

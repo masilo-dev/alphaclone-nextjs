@@ -90,7 +90,7 @@ function normalizeScopes(raw: unknown): string[] {
 }
 
 const STATUS_BADGE: Record<string, string> = {
-  draft: 'bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-secondary)] border-[var(--ws-border)]',
+  draft: 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] border-[var(--ws-border)]',
   scheduled: 'bg-teal-500/15 text-[var(--brand-blue-300)] border-teal-500/30',
   queued: 'bg-slate-500/15 text-[var(--ws-text-secondary)] border-slate-500/30',
   publishing: 'bg-teal-600/15 text-teal-400 border-teal-600/30',
@@ -921,7 +921,7 @@ ${parentContext}Return only the comment text.`;
   };
 
   const ComposePanel = ({ isSheet = false }) => (
-    <div className={`space-y-5 ${isSheet ? 'p-6' : 'p-5 rounded-2xl bg-[var(--ws-panel)]/40 border border-[var(--ws-border)]/60'}`}>
+    <div className={`space-y-5 ${isSheet ? 'p-6' : 'p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)]/60'}`}>
       {/* AI Controls */}
       <div className="space-y-4">
         <div className="space-y-2">
@@ -1006,7 +1006,7 @@ ${parentContext}Return only the comment text.`;
         </div>
 
         {composeCaption.trim() && (
-          <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 p-4">
+          <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-4">
             <div className="flex items-start gap-3">
               <div className="h-10 w-10 rounded-xl bg-teal-600/20 border border-teal-500/30 flex items-center justify-center shrink-0">
                 <Linkedin className="h-5 w-5 text-[var(--brand-blue-300)]" />
@@ -1184,7 +1184,7 @@ ${parentContext}Return only the comment text.`;
       )}
 
       {selectedIntegration?.is_active && companyPages.length === 0 && (
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)] text-[var(--ws-text-secondary)] type-ui">
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-secondary)] type-ui">
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" />
           <div className="flex-1 space-y-2">
             <p className="font-semibold text-[var(--ws-text-primary)]">Company page not listed</p>
@@ -1223,7 +1223,7 @@ ${parentContext}Return only the comment text.`;
           <div className="flex-1 space-y-1.5">
             <p className="font-semibold text-[var(--ws-text-primary)]">Lead Sync: Permission Required</p>
             <p className="type-card-description leading-relaxed text-amber-200/80">
-              Your connected LinkedIn account is missing <code className="bg-[var(--ws-panel)]/60 px-1 py-0.5 rounded text-[var(--warning-text,var(--warning-500))]">r_ads_leadgen_automation</code> / <code className="bg-[var(--ws-panel)]/60 px-1 py-0.5 rounded text-[var(--warning-text,var(--warning-500))]">r_marketing_leadgen_automation</code>.
+              Your connected LinkedIn account is missing <code className="bg-[var(--ws-panel)] px-1 py-0.5 rounded text-[var(--warning-text,var(--warning-500))]">r_ads_leadgen_automation</code> / <code className="bg-[var(--ws-panel)] px-1 py-0.5 rounded text-[var(--warning-text,var(--warning-500))]">r_marketing_leadgen_automation</code>.
               LinkedIn cannot automatically push Lead Gen form responses to AlphaClone until reconnected.
             </p>
             <button
@@ -1239,13 +1239,13 @@ ${parentContext}Return only the comment text.`;
 
       {/* ── Integration Capability Matrix ───────────────────────────────────── */}
       {selectedIntegration?.is_active && (
-        <div className="p-4 rounded-xl bg-[var(--ws-panel)]/40 border border-[var(--ws-border)]/60 backdrop-blur-sm space-y-3">
+        <div className="p-4 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)]/60 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">LinkedIn Capability Matrix</h3>
             <span className="type-ui text-[var(--ws-text-muted)]">Live OAuth Token Permissions</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
-            <div className="p-2.5 rounded-lg bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]/50 flex flex-col justify-between">
+            <div className="p-2.5 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/50 flex flex-col justify-between">
               <span className="type-ui text-[var(--ws-text-muted)] font-medium">Personal Post</span>
               <div className="mt-1.5">
                 <StandardStatusBadge variant={hasPersonalPublishingFlag ? 'success' : 'warning'}>
@@ -1253,7 +1253,7 @@ ${parentContext}Return only the comment text.`;
                 </StandardStatusBadge>
               </div>
             </div>
-            <div className="p-2.5 rounded-lg bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]/50 flex flex-col justify-between">
+            <div className="p-2.5 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/50 flex flex-col justify-between">
               <span className="type-ui text-[var(--ws-text-muted)] font-medium">Company Post</span>
               <div className="mt-1.5">
                 <StandardStatusBadge variant={hasOrgPublishingFlag ? 'success' : 'warning'}>
@@ -1261,7 +1261,7 @@ ${parentContext}Return only the comment text.`;
                 </StandardStatusBadge>
               </div>
             </div>
-            <div className="p-2.5 rounded-lg bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]/50 flex flex-col justify-between">
+            <div className="p-2.5 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/50 flex flex-col justify-between">
               <span className="type-ui text-[var(--ws-text-muted)] font-medium">Engagement</span>
               <div className="mt-1.5">
                 <StandardStatusBadge variant={hasPersonalPublishingFlag || hasOrganizationReadScope ? 'success' : 'warning'}>
@@ -1269,7 +1269,7 @@ ${parentContext}Return only the comment text.`;
                 </StandardStatusBadge>
               </div>
             </div>
-            <div className="p-2.5 rounded-lg bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]/50 flex flex-col justify-between">
+            <div className="p-2.5 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/50 flex flex-col justify-between">
               <span className="type-ui text-[var(--ws-text-muted)] font-medium">Lead Gen Sync</span>
               <div className="mt-1.5">
                 <StandardStatusBadge variant={hasLeadGenScopeFlag ? 'success' : 'warning'}>
@@ -1277,7 +1277,7 @@ ${parentContext}Return only the comment text.`;
                 </StandardStatusBadge>
               </div>
             </div>
-            <div className="p-2.5 rounded-lg bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]/50 flex flex-col justify-between col-span-2 sm:col-span-1">
+            <div className="p-2.5 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/50 flex flex-col justify-between col-span-2 sm:col-span-1">
               <span className="type-ui text-[var(--ws-text-muted)] font-medium">Ads Reporting</span>
               <div className="mt-1.5">
                 <StandardStatusBadge variant={hasAdsReportingScopeFlag ? 'success' : 'warning'}>
@@ -1290,7 +1290,7 @@ ${parentContext}Return only the comment text.`;
       )}
 
       {/* ── LinkedIn Revenue Acquisition Pipeline Metrics ───────────────────── */}
-      <div className="p-4 rounded-xl bg-[var(--ws-panel)]/60 border border-teal-500/20 backdrop-blur-sm space-y-3">
+      <div className="p-4 rounded-xl bg-[var(--ws-panel)] border border-teal-500/20 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-teal-400" />
@@ -1302,7 +1302,7 @@ ${parentContext}Return only the comment text.`;
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 pt-1">
-          <div className="p-3 rounded-lg bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)]/60">
+          <div className="p-3 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/60">
             <p className="type-card-description font-semibold text-[var(--ws-text-muted)]">Synced Leads</p>
             <p className="text-lg font-extrabold text-[var(--ws-text-primary)] mt-1">
               {pipelineMetrics?.totalLeads ?? 0}
@@ -1310,7 +1310,7 @@ ${parentContext}Return only the comment text.`;
             <span className="type-ui text-teal-400">Strict Idempotency</span>
           </div>
 
-          <div className="p-3 rounded-lg bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)]/60">
+          <div className="p-3 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/60">
             <p className="type-card-description font-semibold text-[var(--ws-text-muted)]">Ad Spend</p>
             <p className="text-lg font-extrabold text-[var(--ws-text-primary)] mt-1">
               {pipelineMetrics?.formatted?.adSpend || '$0'}
@@ -1318,14 +1318,14 @@ ${parentContext}Return only the comment text.`;
             <span className="type-ui text-[var(--ws-text-muted)]">Read-Only Analytics</span>
           </div>
 
-          <div className="p-3 rounded-lg bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)]/60">
+          <div className="p-3 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/60">
             <p className="type-card-description font-semibold text-[var(--ws-text-muted)]">Cost Per Lead (CPL)</p>
             <p className="text-lg font-extrabold text-[var(--brand-blue-300)] mt-1">
               {pipelineMetrics?.formatted?.costPerLead || 'Insufficient data'}
             </p>
           </div>
 
-          <div className="p-3 rounded-lg bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)]/60">
+          <div className="p-3 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/60">
             <p className="type-card-description font-semibold text-[var(--ws-text-muted)]">Customers Won</p>
             <p className="text-lg font-extrabold text-[var(--ws-text-primary)] mt-1">
               {pipelineMetrics?.totalCustomers ?? 0}
@@ -1335,14 +1335,14 @@ ${parentContext}Return only the comment text.`;
             </span>
           </div>
 
-          <div className="p-3 rounded-lg bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)]/60">
+          <div className="p-3 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/60">
             <p className="type-card-description font-semibold text-[var(--ws-text-muted)]">Attributed Revenue</p>
             <p className="text-lg font-extrabold text-teal-400 mt-1">
               {pipelineMetrics?.formatted?.totalRevenue || '$0'}
             </p>
           </div>
 
-          <div className="p-3 rounded-lg bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)]/60 col-span-2 sm:col-span-1">
+          <div className="p-3 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/60 col-span-2 sm:col-span-1">
             <p className="type-card-description font-semibold text-[var(--ws-text-muted)]">ROAS / CAC</p>
             <p className="text-lg font-extrabold text-[var(--brand-blue-300)] mt-1">
               {pipelineMetrics?.formatted?.roas !== 'Insufficient data' ? pipelineMetrics?.formatted?.roas : pipelineMetrics?.formatted?.cac}
@@ -1353,7 +1353,7 @@ ${parentContext}Return only the comment text.`;
       </div>
 
       {/* ── Topbar ────────────────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-[var(--ws-panel)]/40 border border-[var(--ws-border)]/60 backdrop-blur-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)]/60">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-lg bg-teal-600/20 flex items-center justify-center border border-teal-500/30">
             <Linkedin className="w-6 h-6 text-teal-400" />
@@ -1497,7 +1497,7 @@ ${parentContext}Return only the comment text.`;
             ))}
           </div>
 
-          <div className="space-y-1 bg-[var(--ws-panel)]/40 rounded-2xl border border-[var(--ws-border)]/60 overflow-hidden divide-y divide-slate-800/60">
+          <div className="space-y-1 bg-[var(--ws-panel)] rounded-2xl border border-[var(--ws-border)]/60 overflow-hidden divide-y divide-slate-800/60">
             {filteredPosts.length === 0 ? (
               <div className="py-20 text-center">
                 <Linkedin className="w-12 h-12 text-slate-700 mx-auto mb-4 opacity-20" />
@@ -1552,14 +1552,14 @@ ${parentContext}Return only the comment text.`;
                       <div className="flex items-center gap-2 sm:opacity-0 group-hover:opacity-100 transition-opacity w-full sm:w-auto justify-end">
                         <button 
                           onClick={() => loadComments(post)}
-                          className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-all bg-[var(--ws-surface-secondary)]/50 sm:bg-transparent"
+                          className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-all bg-[var(--ws-surface-secondary)] sm:bg-transparent"
                           title="View comments"
                         >
                           <MessageCircle className="w-5 h-5" />
                         </button>
                         <button 
                           onClick={() => loadEngagement(post)}
-                          className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-all bg-[var(--ws-surface-secondary)]/50 sm:bg-transparent"
+                          className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-all bg-[var(--ws-surface-secondary)] sm:bg-transparent"
                           title="Refresh stats"
                         >
                           <ThumbsUp className="w-5 h-5" />
@@ -1674,7 +1674,7 @@ ${parentContext}Return only the comment text.`;
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowComposeSheet(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm ac-layer-overlay"
+              className="fixed inset-0 bg-black/60 ac-layer-overlay"
             />
             <motion.div
               initial={{ y: '100%' }}

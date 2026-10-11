@@ -443,7 +443,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             <div className={`space-y-5 pb-24 ${isMobile ? 'p-2' : 'p-6'}`}>
                 <div className="grid grid-cols-2 min-[960px]:grid-cols-4 gap-3">
                     {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="h-24 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 animate-pulse" />
+                        <div key={i} className="h-24 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] animate-pulse" />
                     ))}
                 </div>
                 <TableSkeleton rows={7} columns={6} />
@@ -473,7 +473,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                       />
                     </div>
                   </HelpDisclosure>
-                  <div className="flex max-w-full gap-1 overflow-x-auto ios-scroll rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-1 shadow-inner">
+                  <div className="flex max-w-full gap-1 overflow-x-auto ios-scroll rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-1 shadow-inner">
                     <button
                       onClick={() => setActiveTab('invoices')}
                       className={`flex-none h-8 px-3 rounded-lg font-semibold type-ui border transition-all ${activeTab === 'invoices' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
@@ -734,7 +734,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             currentViewId={filter}
                             onSelectView={(viewId) => setFilter(viewId as any)}
                         />
-                        <div className="flex gap-1.5 overflow-x-auto no-scrollbar rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-1 shadow-inner">
+                        <div className="flex gap-1.5 overflow-x-auto no-scrollbar rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-1 shadow-inner">
                             {(['all', 'draft', 'sent', 'paid', 'overdue'] as const).map(s => (
                                 <button key={s} onClick={() => setFilter(s)} className={`h-7 px-3 rounded-lg type-caption font-bold uppercase tracking-wider border transition-all ${filter === s ? 'bg-[var(--brand-blue-600)] border-[var(--brand-blue-500)] text-[var(--text-inverse)] shadow-sm' : 'bg-transparent border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}>{s}</button>
                             ))}
@@ -915,7 +915,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                         <Card
                             key={inv.id}
                             onClick={() => { setSelectedInvoiceForOptions(inv); setIsOptionsOpen(true); }}
-                            className={`p-4 sm:p-5 bg-[var(--ws-panel)]/40 border-[var(--ws-border)] hover:bg-white/[0.03] transition-all cursor-pointer ${
+                            className={`p-4 sm:p-5 bg-[var(--ws-panel)] border-[var(--ws-border)] hover:bg-white/[0.03] transition-all cursor-pointer ${
                                 selectedInvoiceIds.has(inv.id) ? 'ring-1 ring-[var(--brand-blue-500)]/40' : ''
                             }`}
                         >
@@ -986,7 +986,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setIsOptionsOpen(false)}
-                            className="fixed inset-0 ac-layer-overlay bg-[var(--ws-overlay-backdrop)] backdrop-blur-sm"
+                            className="fixed inset-0 ac-layer-overlay bg-[var(--ws-overlay-backdrop)]"
                         />
                         <motion.div
                             initial={{ y: '100%' }}
@@ -1309,7 +1309,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             {/* PDF Preview Modal */}
             <AnimatePresence>
                 {showPDFPreview && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-md ac-layer-modal flex flex-col p-4">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 ac-layer-modal flex flex-col p-4">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-[var(--ws-text-primary)] font-black uppercase tracking-widest type-caption">Invoice Preview</h3>
                             <div className="flex items-center gap-2">

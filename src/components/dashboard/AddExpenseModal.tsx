@@ -273,7 +273,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={handleClose}
-                        className="absolute inset-0 bg-[var(--ws-canvas)]/80 backdrop-blur-md"
+                        className="absolute inset-0 bg-[var(--ws-canvas)]"
                     />
 
                     <motion.div
@@ -365,7 +365,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                             className={`p-3 rounded-2xl border transition-all flex flex-col items-center justify-center gap-1.5 ${
                                                                 isSelected 
                                                                     ? 'bg-teal-600/20 border-teal-500 text-teal-400 font-bold' 
-                                                                    : 'bg-[var(--ws-canvas)]/40 border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-canvas)]/60'
+                                                                    : 'bg-[var(--ws-canvas)] border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-canvas)]'
                                                             }`}
                                                         >
                                                             <Icon className="w-4 h-4" />
@@ -442,7 +442,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                             key={client.id}
                                                             type="button"
                                                             onClick={() => handleVendorSelect(client.name)}
-                                                            className="px-3 py-1.5 rounded-full bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] type-caption font-bold text-[var(--ws-text-muted)] hover:bg-teal-500/10 hover:border-teal-500/30 hover:text-teal-400 transition-all flex items-center gap-1.5"
+                                                            className="px-3 py-1.5 rounded-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] type-caption font-bold text-[var(--ws-text-muted)] hover:bg-teal-500/10 hover:border-teal-500/30 hover:text-teal-400 transition-all flex items-center gap-1.5"
                                                         >
                                                             <Plus className="w-3 h-3" /> {client.name}
                                                         </button>
@@ -456,7 +456,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                         initial={{ opacity: 0, y: -10, scale: 0.98 }}
                                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                                         exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                                                        className="absolute left-0 right-0 top-full mt-3 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)] z-[130] max-h-60 overflow-y-auto p-2 backdrop-blur-2xl"
+                                                        className="absolute left-0 right-0 top-full mt-3 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)] z-[130] max-h-60 overflow-y-auto p-2"
                                                     >
                                                         {clients.filter(c => c.name?.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
                                                             clients.filter(c => c.name?.toLowerCase().includes(searchQuery.toLowerCase())).map(client => (
@@ -502,7 +502,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                             <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black tracking-caps block mb-4 px-1">Proof of Transaction (Optional)</label>
                                             
                                             {receiptPreview ? (
-                                                <div className="relative border border-[var(--ws-border)] rounded-3xl p-4 bg-[var(--ws-canvas)]/40 flex items-center gap-4">
+                                                <div className="relative border border-[var(--ws-border)] rounded-3xl p-4 bg-[var(--ws-canvas)] flex items-center gap-4">
                                                     <img src={receiptPreview} alt="Receipt Preview" className="w-16 h-16 object-cover rounded-xl border border-[var(--ws-border)] bg-white" />
                                                     <div className="flex-1 min-w-0">
                                                         <p className="type-card-description font-bold text-[var(--ws-text-primary)] truncate">{receiptFile?.name || 'Captured Image'}</p>

@@ -15,7 +15,7 @@ export function BusinessOsMindsetBar({ activeTab, setActiveTab }: Props) {
     return (
         <aside
             aria-label="Business operating guidance"
-            className={`rounded-xl border border-[var(--ws-border)]/80 bg-[var(--ws-panel)]/70 shrink-0 ${
+            className={`rounded-xl border border-[var(--ws-border)]/80 bg-[var(--ws-panel)] shrink-0 ${
                 compact ? 'px-3 py-2.5 mb-3' : 'px-4 py-3 mb-4 md:mb-6'
             }`}
         >
@@ -46,7 +46,7 @@ export function BusinessOsMindsetBar({ activeTab, setActiveTab }: Props) {
                                 key={a.tab + a.label}
                                 type="button"
                                 onClick={() => setActiveTab(a.tab)}
-                                className="type-ui font-semibold px-2.5 py-1 rounded-lg bg-[var(--ws-surface-secondary)]/80 border border-[var(--ws-border)]/80 text-teal-400 hover:text-[var(--brand-blue-300)] hover:border-teal-500/40 transition-colors"
+                                className="type-ui font-semibold px-2.5 py-1 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/80 text-teal-400 hover:text-[var(--brand-blue-300)] hover:border-teal-500/40 transition-colors"
                             >
                                 {a.label}
                             </button>

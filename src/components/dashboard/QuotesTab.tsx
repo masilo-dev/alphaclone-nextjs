@@ -134,7 +134,7 @@ const QuoteDetail: React.FC<{
   const amountDisplay = quote.amount && quote.amount > 0 ? `$${quote.amount.toLocaleString()}` : '$0.00 (Draft)';
 
   const actions = (
-    <div className={`grid grid-cols-2 gap-2 ${inDrawer ? 'pt-2 border-t border-[var(--ws-border)]' : 'absolute bottom-0 left-0 right-0 bg-[var(--ws-canvas)]/95 border-t border-[var(--ws-border)] native-bottom-bar pb-safe grid-cols-4 divide-x divide-white/5'}`}>
+    <div className={`grid grid-cols-2 gap-2 ${inDrawer ? 'pt-2 border-t border-[var(--ws-border)]' : 'absolute bottom-0 left-0 right-0 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] native-bottom-bar pb-safe grid-cols-4 divide-x divide-white/5'}`}>
       <button onClick={() => onEdit(quote)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-[var(--ws-border)] hover:bg-[var(--ws-hover)] text-[var(--ws-text-muted)]">
         <Edit3 className="w-4 h-4 text-violet-400" />
         <span className="type-ui font-bold">Edit</span>
@@ -592,7 +592,7 @@ const QuoteEditModal: React.FC<{
               </div>
               <div className="space-y-3">
                 {items.map((item, index) => (
-                  <div key={item.id || index} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-4 space-y-3">
+                  <div key={item.id || index} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 space-y-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Item {index + 1}</div>
                       <button type="button" onClick={() => removeItem(index)} className="inline-flex items-center gap-1 rounded-lg border border-[var(--ws-border)] px-2 py-1 type-ui font-bold text-[var(--ws-text-muted)] hover:text-red-400">
@@ -625,7 +625,7 @@ const QuoteEditModal: React.FC<{
               <AlphaCloneTextarea value={terms} onChange={(e) => setTerms(e.target.value)} rows={8} className="w-full px-4 py-3 resize-none" />
             </div>
 
-            <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-4 space-y-2">
+            <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 space-y-2">
               <div className="flex items-center justify-between type-ui text-[var(--ws-text-muted)]">
                 <span>Estimated total</span>
                 <span className="font-mono text-[var(--ws-text-primary)]">{Number(total).toFixed(2)} {currency || 'USD'}</span>
@@ -915,7 +915,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
       >
       <div ref={listRef} className="flex-1 ac-scroll-full pb-20 px-2">
         {loading ? (
-          <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-[var(--ws-panel)]/40 animate-pulse" />)}</div>
+          <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-[var(--ws-panel)] animate-pulse" />)}</div>
         ) : quotes.length === 0 && filter === 'all' ? (
           <div className="p-6">
             <EmptyStateFromPreset moduleId="quotes" onAction={() => setShowCreate(true)} />

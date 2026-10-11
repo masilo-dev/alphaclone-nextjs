@@ -122,7 +122,7 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                                 <div
                                     key={call.id}
                                     className={`p-4 rounded-lg border transition-all ${call.seen_at
-                                        ? 'bg-[var(--ws-surface-secondary)]/30 border-[var(--ws-border)]/30'
+                                        ? 'bg-[var(--ws-surface-secondary)] border-[var(--ws-border)]/30'
                                         : 'bg-[var(--error-500)]/10 border-red-500/20'
                                         }`}
                                 >

@@ -74,7 +74,7 @@ function WelcomeGateContent() {
                     <p className="text-[var(--ws-text-muted)] type-caption mt-2 uppercase tracking-widest font-semibold">AlphaClone Infrastructure Gate</p>
                 </div>
 
-                <div className="bg-[var(--ws-panel)]/50 backdrop-blur-2xl border border-[var(--ws-border)] rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl p-8 shadow-2xl relative overflow-hidden">
                     <AnimatePresence mode="wait">
                         {status === 'verifying' && (
                             <motion.div 

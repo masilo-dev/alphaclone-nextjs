@@ -151,7 +151,7 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
                         <div
                             key={milestone.id}
                             className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${milestone.status === 'completed'
-                                ? 'bg-[var(--ws-panel)]/50 border-[var(--ws-border)] opacity-75'
+                                ? 'bg-[var(--ws-panel)] border-[var(--ws-border)] opacity-75'
                                 : 'bg-[var(--ws-panel)] border-[var(--ws-border)]'
                                 }`}
                         >

@@ -799,7 +799,7 @@ export default function UnifiedInboxTab({
         aria-label="All channels inbox"
       >
         {/* 1. Channel & Folder Navigation Sidebar */}
-        <div className="hidden xl:flex w-48 border-r border-[var(--ws-border)] flex-col bg-[var(--ws-panel)]/40 p-3 shrink-0 select-none overflow-y-auto">
+        <div className="hidden xl:flex w-48 border-r border-[var(--ws-border)] flex-col bg-[var(--ws-panel)] p-3 shrink-0 select-none overflow-y-auto">
           <div className="flex items-center justify-between mb-3 px-2 pt-1">
             <span className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">
               Inboxes
@@ -818,7 +818,7 @@ export default function UnifiedInboxTab({
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
                 filterSource === "all" && filterPriority === "all"
                   ? "bg-teal-500/15 text-[var(--brand-blue-300)] font-semibold border border-teal-500/20"
-                  : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]/40"
+                  : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]"
               }`}
             >
               <span className="flex items-center gap-2">
@@ -869,7 +869,7 @@ export default function UnifiedInboxTab({
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
                     filterSource === ch.id
                       ? "bg-teal-500/15 text-[var(--brand-blue-300)] font-semibold border border-teal-500/20"
-                      : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]/40"
+                      : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]"
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -896,7 +896,7 @@ export default function UnifiedInboxTab({
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
                 filterNeedsReply
                   ? "bg-amber-500/15 text-[var(--warning-text,var(--warning-500))] font-semibold border border-amber-500/20"
-                  : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]/40"
+                  : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]"
               }`}
             >
               <span className="flex items-center gap-2">
@@ -917,7 +917,7 @@ export default function UnifiedInboxTab({
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
                 filterUnreadOnly
                   ? "bg-blue-500/15 text-blue-300 font-semibold border border-blue-500/20"
-                  : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]/40"
+                  : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]"
               }`}
             >
               <span className="flex items-center gap-2">
@@ -941,7 +941,7 @@ export default function UnifiedInboxTab({
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
                 filterPriority === "urgent"
                   ? "bg-rose-500/15 text-[var(--error-text,var(--error-500))] font-semibold border border-rose-500/20"
-                  : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]/40"
+                  : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]"
               }`}
             >
               <span className="flex items-center gap-2">
@@ -966,7 +966,7 @@ export default function UnifiedInboxTab({
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
                 filterStarredOnly
                   ? "bg-amber-500/15 text-[var(--warning-text,var(--warning-500))] font-semibold border border-amber-500/20"
-                  : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]/40"
+                  : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]"
               }`}
             >
               <span className="flex items-center gap-2">
@@ -984,10 +984,10 @@ export default function UnifiedInboxTab({
 
         {/* 2. Middle Message List Section */}
         <div
-          className={`${selectedMessage ? "hidden md:flex" : "flex"} w-full md:w-80 xl:w-[22rem] border-r border-[var(--ws-border)] flex-col bg-[var(--ws-panel)]/20 shrink-0 min-h-0`}
+          className={`${selectedMessage ? "hidden md:flex" : "flex"} w-full md:w-80 xl:w-[22rem] border-r border-[var(--ws-border)] flex-col bg-[var(--ws-panel)] shrink-0 min-h-0`}
         >
           {/* Header & Filter Controls & Search */}
-          <div className="p-3 border-b border-[var(--ws-border)] space-y-2 bg-[var(--ws-panel)]/40">
+          <div className="p-3 border-b border-[var(--ws-border)] space-y-2 bg-[var(--ws-panel)]">
             <div className="flex items-center justify-between">
               <span className="type-caption font-semibold text-[var(--ws-text-secondary)] capitalize">
                 {filterStarredOnly
@@ -1087,9 +1087,9 @@ export default function UnifiedInboxTab({
                   onClick={() => handleSelectMessage(msg)}
                   className={`p-3.5 cursor-pointer transition-all flex flex-col gap-2 relative ${
                     selectedMessage?.id === msg.id
-                      ? "bg-[var(--ws-surface-secondary)]/40 border-l-4 border-teal-500"
-                      : "hover:bg-[var(--ws-panel)]/30"
-                  } ${!msg.read ? "bg-[var(--ws-panel)]/10" : ""}`}
+                      ? "bg-[var(--ws-surface-secondary)] border-l-4 border-teal-500"
+                      : "hover:bg-[var(--ws-panel)]"
+                  } ${!msg.read ? "bg-[var(--ws-panel)]" : ""}`}
                 >
                   {/* Meta details */}
                   <div className="flex items-center justify-between">
@@ -1182,12 +1182,12 @@ export default function UnifiedInboxTab({
 
         {/* 3. Right Detail & Intelligence Panel */}
         <div
-          className={`${selectedMessage || composing ? "flex" : "hidden md:flex"} flex-1 flex-col bg-[var(--ws-panel)]/10 min-w-0 min-h-0 overflow-hidden`}
+          className={`${selectedMessage || composing ? "flex" : "hidden md:flex"} flex-1 flex-col bg-[var(--ws-panel)] min-w-0 min-h-0 overflow-hidden`}
         >
           {/* ── Compose New Email Panel ── */}
           {composing && !selectedMessage && (
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-              <div className="p-4 border-b border-[var(--ws-border)] flex items-center justify-between bg-[var(--ws-panel)]/20 shrink-0">
+              <div className="p-4 border-b border-[var(--ws-border)] flex items-center justify-between bg-[var(--ws-panel)] shrink-0">
                 <h3 className="type-ui font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                   <PenSquare className="w-4 h-4 text-teal-400" />
                   New Email
@@ -1288,7 +1288,7 @@ export default function UnifiedInboxTab({
           {selectedMessage ? (
             <div className="flex-1 flex flex-col overflow-hidden min-h-0">
               {/* Thread Header */}
-              <div className="p-4 border-b border-[var(--ws-border)] flex items-start justify-between gap-3 bg-[var(--ws-panel)]/20 shrink-0">
+              <div className="p-4 border-b border-[var(--ws-border)] flex items-start justify-between gap-3 bg-[var(--ws-panel)] shrink-0">
                 <div className="min-w-0">
                   <button
                     type="button"
@@ -1393,7 +1393,7 @@ export default function UnifiedInboxTab({
                           threadMsg.from_address?.[0] ||
                           "C"}
                       </div>
-                      <div className="flex-1 min-w-0 bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-lg p-4 space-y-3">
+                      <div className="flex-1 min-w-0 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg p-4 space-y-3">
                         <div className="flex items-center justify-between border-b border-[var(--ws-border)] pb-2">
                           <div className="flex items-center gap-2">
                             <span className="font-semibold type-ui text-[var(--ws-text-primary)]">
@@ -1526,7 +1526,7 @@ export default function UnifiedInboxTab({
                 </div>
 
                 {/* Sidebar AI Intelligence Panel */}
-                <div className="hidden 2xl:block w-80 border-l border-[var(--ws-border)] bg-[var(--ws-panel)]/30 p-4 space-y-6 overflow-y-auto custom-scrollbar">
+                <div className="hidden 2xl:block w-80 border-l border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 space-y-6 overflow-y-auto custom-scrollbar">
                   <div className="flex items-center justify-between">
                     <h4 className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest flex items-center gap-1.5">
                       <Brain className="w-4 h-4 text-violet-400 animate-pulse" />
@@ -1551,7 +1551,7 @@ export default function UnifiedInboxTab({
                     <span className="type-caption font-black uppercase text-[var(--ws-text-muted)]">
                       Extracted Intent
                     </span>
-                    <div className="p-3 bg-[var(--ws-canvas)]/60 rounded-xl border border-slate-850 type-caption text-[var(--ws-text-secondary)] leading-relaxed font-semibold">
+                    <div className="p-3 bg-[var(--ws-canvas)] rounded-xl border border-slate-850 type-caption text-[var(--ws-text-secondary)] leading-relaxed font-semibold">
                       {selectedMessage.intent ||
                         "Classification pending. Click refresh above to analyze."}
                     </div>

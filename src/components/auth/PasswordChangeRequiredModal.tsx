@@ -49,7 +49,7 @@ export const PasswordChangeRequiredModal: React.FC<PasswordChangeRequiredModalPr
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 animate-fade-in">
       <div className="bg-[var(--ws-panel)] border border-teal-500/30 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl shadow-teal-500/10 space-y-6">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-teal-500/10 border border-teal-500/30 rounded-xl text-teal-400">

@@ -636,7 +636,7 @@ export function OutreachInbox() {
 
   return (
     <ModuleOverviewChrome moduleId="outreach" activeHref="/dashboard/outreach/inbox">
-      <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 overflow-hidden shadow-[0_8px_40px_-24px_rgba(0,0,0,0.5)]">
+      <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] overflow-hidden shadow-[0_8px_40px_-24px_rgba(0,0,0,0.5)]">
         <div className="flex flex-col gap-2 px-3 py-3 border-b border-[var(--ws-border)] sm:flex-row sm:items-center sm:justify-between sm:px-4">
           <div className="flex items-center gap-2 min-w-0">
             <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500/30 to-sky-500/30 border border-[var(--ws-border)] flex items-center justify-center">
@@ -656,7 +656,7 @@ export function OutreachInbox() {
                 value={search}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
                 placeholder="Search by name or email…"
-                className="pl-8 h-8 type-caption bg-[var(--ws-canvas)]/70 border-[var(--ws-border)] focus:border-violet-400/40 placeholder:text-[var(--ws-text-muted)]"
+                className="pl-8 h-8 type-caption bg-[var(--ws-canvas)] border-[var(--ws-border)] focus:border-violet-400/40 placeholder:text-[var(--ws-text-muted)]"
               />
             </div>
             <Button
@@ -682,7 +682,7 @@ export function OutreachInbox() {
 
         <div className="grid min-h-[34rem] grid-cols-12 divide-white/5 lg:h-[min(70vh,46rem)] lg:divide-x">
           {/* PANEL 1: Lists */}
-          <aside className="col-span-12 flex gap-1 overflow-x-auto border-b border-[var(--ws-border)] bg-[var(--ws-canvas)]/30 p-2 lg:col-span-2 lg:block lg:space-y-1 lg:overflow-visible lg:border-b-0 lg:border-r lg:py-3">
+          <aside className="col-span-12 flex gap-1 overflow-x-auto border-b border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 lg:col-span-2 lg:block lg:space-y-1 lg:overflow-visible lg:border-b-0 lg:border-r lg:py-3">
             <p className="hidden px-2 pb-1 type-caption uppercase tracking-wider text-[var(--ws-text-muted)] lg:block">Lists</p>
             {OUTREACH_LISTS.map(({ id, label, Icon, tone, description }) => {
               const active = activeList === id;
@@ -718,7 +718,7 @@ export function OutreachInbox() {
           </aside>
 
           {/* PANEL 2: Threads list */}
-          <section className={`${mobilePane === 'detail' ? 'hidden lg:flex' : 'flex'} col-span-12 bg-[var(--ws-canvas)]/10 flex-col border-r border-[var(--ws-border)] lg:col-span-4`}>
+          <section className={`${mobilePane === 'detail' ? 'hidden lg:flex' : 'flex'} col-span-12 bg-[var(--ws-canvas)] flex-col border-r border-[var(--ws-border)] lg:col-span-4`}>
             <div className="px-3 py-2 type-caption uppercase tracking-wider text-[var(--ws-text-muted)] border-b border-[var(--ws-border)] flex items-center justify-between">
               <span>
                 {OUTREACH_LISTS.find(l => l.id === activeList)?.label}
@@ -733,7 +733,7 @@ export function OutreachInbox() {
               {loading ? (
                 <div className="p-4 space-y-2">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="h-16 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 animate-[pulse_1.6s_ease-in-out_infinite] backdrop-blur-sm saturate-50 opacity-60" />
+                    <div key={i} className="h-16 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] animate-[pulse_1.6s_ease-in-out_infinite] saturate-50 opacity-60" />
                   ))}
                 </div>
               ) : filteredThreads.length === 0 ? (
@@ -792,7 +792,7 @@ export function OutreachInbox() {
                               </p>
                             </div>
                             <div className="flex shrink-0 items-center gap-1 type-ui text-[var(--ws-text-muted)]">
-                              {t.sentCount > 0 && <span className="px-1.5 py-0.5 rounded bg-[var(--ws-surface-secondary)]/70">{t.sentCount}× sent</span>}
+                              {t.sentCount > 0 && <span className="px-1.5 py-0.5 rounded bg-[var(--ws-surface-secondary)]">{t.sentCount}× sent</span>}
                               {t.repliedCount > 0 && <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-[var(--success-text,var(--success-500))]">{t.repliedCount} reply</span>}
                             </div>
                           </div>
@@ -806,7 +806,7 @@ export function OutreachInbox() {
           </section>
 
           {/* PANEL 3: Message / thread reader */}
-          <section className={`${mobilePane === 'threads' ? 'hidden lg:flex' : 'flex'} col-span-12 min-h-0 flex-col bg-[var(--ws-canvas)]/20 lg:col-span-6`}>
+          <section className={`${mobilePane === 'threads' ? 'hidden lg:flex' : 'flex'} col-span-12 min-h-0 flex-col bg-[var(--ws-canvas)] lg:col-span-6`}>
             {!activeThread ? (
               <div className="flex-1 flex items-center justify-center p-8">
                 <div className="max-w-md text-center space-y-3">
@@ -903,19 +903,19 @@ export function OutreachInbox() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 type-ui">
-                    <div className="rounded-lg bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] px-2.5 py-1.5">
+                    <div className="rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-2.5 py-1.5">
                       <p className="text-[var(--ws-text-muted)]">Sent</p>
                       <p className="text-[var(--ws-text-primary)] font-bold">{activeThread.sentCount}</p>
                     </div>
-                    <div className="rounded-lg bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] px-2.5 py-1.5">
+                    <div className="rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-2.5 py-1.5">
                       <p className="text-[var(--ws-text-muted)]">Opened</p>
                       <p className="text-[var(--info-text,var(--info-500))] font-bold">{activeThread.openedCount}</p>
                     </div>
-                    <div className="rounded-lg bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] px-2.5 py-1.5">
+                    <div className="rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-2.5 py-1.5">
                       <p className="text-[var(--ws-text-muted)]">Replied</p>
                       <p className="text-[var(--success-text,var(--success-500))] font-bold">{activeThread.repliedCount}</p>
                     </div>
-                    <div className="rounded-lg bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] px-2.5 py-1.5">
+                    <div className="rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-2.5 py-1.5">
                       <p className="text-[var(--ws-text-muted)]">Last activity</p>
                       <p className="text-[var(--ws-text-secondary)] font-bold" title={formatTimestamp(activeThread.lastActivityAt).absolute}>
                         {formatTimestamp(activeThread.lastActivityAt).relative}
@@ -965,7 +965,7 @@ export function OutreachInbox() {
                             'rounded-xl border px-3 py-2.5',
                             isReply
                               ? 'bg-emerald-500/[0.04] border-emerald-500/20 ml-auto max-w-[92%]'
-                              : 'bg-[var(--ws-canvas)]/50 border-[var(--ws-border)] max-w-[92%]',
+                              : 'bg-[var(--ws-canvas)] border-[var(--ws-border)] max-w-[92%]',
                           ].join(' ')}
                         >
                           <div className="flex items-center justify-between gap-3 mb-1.5">
@@ -992,12 +992,12 @@ export function OutreachInbox() {
                             </span>
                           </div>
                           {replyText ? (
-                            <p className="type-card-description text-[var(--ws-text-secondary)] whitespace-pre-wrap leading-relaxed rounded-lg bg-[var(--ws-canvas)]/70 border border-[var(--ws-border)] p-2.5">
+                            <p className="type-card-description text-[var(--ws-text-secondary)] whitespace-pre-wrap leading-relaxed rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] p-2.5">
                               {replyText.length > 2000 ? `${replyText.slice(0, 2000)}…` : replyText}
                             </p>
                           ) : null}
                           {!replyText && SENT_TYPES.has(et) && sentBody ? (
-                            <p className="type-card-description text-[var(--ws-text-secondary)] whitespace-pre-wrap leading-relaxed rounded-lg bg-[var(--ws-canvas)]/70 border border-[var(--ws-border)] p-2.5">
+                            <p className="type-card-description text-[var(--ws-text-secondary)] whitespace-pre-wrap leading-relaxed rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] p-2.5">
                               {sentBody.length > 4000 ? `${sentBody.slice(0, 4000)}…` : sentBody}
                             </p>
                           ) : null}
@@ -1014,7 +1014,7 @@ export function OutreachInbox() {
 
       {/* Composer modal */}
       {composerOpen ? (
-        <div className="fixed inset-0 ac-layer-modal bg-[var(--ws-canvas)]/70 backdrop-blur-[2px] flex items-center justify-center p-4">
+        <div className="fixed inset-0 ac-layer-modal bg-[var(--ws-canvas)] flex items-center justify-center p-4">
           <div className="w-full max-w-3xl rounded-2xl border border-[var(--ws-border)] bg-gradient-to-b from-slate-900/95 to-slate-950/95 shadow-2xl shadow-black/60 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--ws-border)]">
               <div className="flex items-center gap-2">

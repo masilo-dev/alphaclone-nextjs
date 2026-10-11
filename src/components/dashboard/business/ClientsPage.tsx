@@ -957,7 +957,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     };
 
     const crmSectionFallback = (
-        <div className="flex items-center justify-center min-h-[320px] rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50">
+        <div className="flex items-center justify-center min-h-[320px] rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]">
             <div className="text-[var(--ws-text-muted)] type-ui font-medium">Loading...</div>
         </div>
     );
@@ -1276,7 +1276,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             return (
                                 <div
                                     key={client.id}
-                                    className={`group relative flex flex-col items-center gap-1.5 p-2 rounded-xl bg-[var(--ws-panel)]/70 border transition-all text-center ${isSelected ? 'border-[var(--brand-blue-500)]/60 bg-[var(--brand-blue-500)]/10' : 'border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]/50 hover:bg-[var(--ws-surface-secondary)]/80'}`}
+                                    className={`group relative flex flex-col items-center gap-1.5 p-2 rounded-xl bg-[var(--ws-panel)] border transition-all text-center ${isSelected ? 'border-[var(--brand-blue-500)]/60 bg-[var(--brand-blue-500)]/10' : 'border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]/50 hover:bg-[var(--ws-surface-secondary)]'}`}
                                 >
                                     <button
                                         type="button"
@@ -2759,7 +2759,7 @@ const ImportClientsModal = ({ onClose, onImport }: any) => {
                         </p>
                         <div className="max-h-96 overflow-y-auto space-y-2 mb-6">
                             {importedClients.map((client, index) => (
-                                <div key={index} className="bg-[var(--ws-surface-secondary)]/50 p-3 rounded-lg">
+                                <div key={index} className="bg-[var(--ws-surface-secondary)] p-3 rounded-lg">
                                     <p className="font-medium">{client.name || 'No name'}</p>
                                     <p className="type-card-description text-[var(--ws-text-muted)]">{client.email || 'No email'}</p>
                                     {client.phone && <p className="type-card-description text-[var(--ws-text-muted)]">{client.phone}</p>}

@@ -271,7 +271,7 @@ export default function MessengerInbox() {
             {isMobileMenuOpen && (
                 <button
                     type="button"
-                    className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+                    className="lg:hidden fixed inset-0 z-40 bg-black/60"
                     aria-label="Close conversations menu"
                     onClick={() => setIsMobileMenuOpen(false)}
                 />
@@ -280,7 +280,7 @@ export default function MessengerInbox() {
                 {/* Conversation Sidebar */}
                 <div className={`
                     ${isMobileMenuOpen ? 'fixed inset-y-0 left-0 z-50 w-72 border-r border-[var(--ws-border)] bg-gray-950' : 'hidden lg:flex'} 
-                    w-80 flex-col bg-gray-900/20 backdrop-blur-3xl shrink-0 transition-all duration-300 border-r border-[var(--ws-border)]
+                    w-80 flex-col bg-gray-900/20  shrink-0 transition-all duration-300 border-r border-[var(--ws-border)]
                 `}>
                     <div className="p-6 border-b border-[var(--ws-border)] flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -371,7 +371,7 @@ export default function MessengerInbox() {
                 <div className="flex-1 flex flex-col bg-gray-950/40 relative">
                     {selectedConversation ? (
                         <>
-                            <div className="p-4 border-b border-[var(--ws-border)] flex items-center justify-between sticky top-0 bg-gray-950/60 backdrop-blur-3xl z-20">
+                            <div className="p-4 border-b border-[var(--ws-border)] flex items-center justify-between sticky top-0 bg-gray-950/60 z-20">
                                 <div className="flex items-center gap-2">
                                     <button
                                         type="button"
@@ -449,7 +449,7 @@ export default function MessengerInbox() {
                                 )}
                             </div>
 
-                            <div className="p-4 border-t border-[var(--ws-border)] bg-gray-950/60 backdrop-blur-3xl">
+                            <div className="p-4 border-t border-[var(--ws-border)] bg-gray-950/60">
                                 <div className="max-w-4xl mx-auto space-y-4">
                                     <div className="flex items-center gap-2">
                                         <button 

@@ -198,7 +198,7 @@ export default function EmailDiscoveryTool() {
       </div>
 
       {/* Input Form */}
-      <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
+      <div className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
@@ -411,7 +411,7 @@ export default function EmailDiscoveryTool() {
       )}
 
       {/* Transparency Section */}
-      <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl p-6">
+      <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-6">
         <button
           onClick={() => setShowTransparency(!showTransparency)}
           className="flex items-center justify-between w-full text-left"

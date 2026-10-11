@@ -370,9 +370,28 @@ html.dark {
   --interactive-secondary: var(--accent);
   --interactive-secondary-hover: #6BA0FF;
   --info: var(--accent);
-  --focus-ring: rgba(77, 141, 255, 0.42);
   --brand-violet-950: var(--app-bg);
   --marketing-bg-secondary: var(--background-app);
+
+  /* Global Charcoal Workspace Tokens (available across entire document & all portals) */
+  --ws-sidebar: var(--sidebar-bg, #151517);
+  --ws-canvas: var(--app-bg, #111113);
+  --ws-toolbar: var(--header-bg, #151517);
+  --ws-panel: var(--surface-1, #19191C);
+  --ws-panel-hover: var(--surface-2, #202024);
+  --ws-overlay-backdrop: rgba(0, 0, 0, 0.75);
+  --ws-surface-primary: var(--surface-1, #19191C);
+  --ws-surface-secondary: var(--surface-2, #202024);
+  --ws-surface-tertiary: var(--surface-3, #29292E);
+  --ws-border: var(--border-subtle, #2C2C31);
+  --ws-border-strong: var(--border-strong, #3A3A40);
+  --ws-hover: var(--surface-2, #202024);
+  --ws-active: var(--surface-3, #29292E);
+  --ws-text-primary: var(--text-primary, #F2F2F3);
+  --ws-text-secondary: var(--text-secondary, #B0B0B8);
+  --ws-text-tertiary: var(--text-muted, #85858F);
+  --ws-text-muted: var(--text-muted, #85858F);
+  --ws-text-disabled: #5C5C66;
 }
 
 /* Marketing Theme Definitions — same brand tokens as product shell */
@@ -485,12 +504,52 @@ html.dark .page-network-bg {
   --background: #111113;
   --foreground: #F2F2F3;
   color-scheme: dark;
+
+  /* Global Charcoal Workspace Tokens (available across entire document & all portals) */
+  --ws-sidebar: #151517;
+  --ws-canvas: #111113;
+  --ws-toolbar: #151517;
+  --ws-panel: #19191C;
+  --ws-panel-hover: #202024;
+  --ws-overlay-backdrop: rgba(0, 0, 0, 0.75);
+  --ws-surface-primary: #19191C;
+  --ws-surface-secondary: #202024;
+  --ws-surface-tertiary: #29292E;
+  --ws-border: #2C2C31;
+  --ws-border-strong: #3A3A40;
+  --ws-hover: #202024;
+  --ws-active: #29292E;
+  --ws-text-primary: #F2F2F3;
+  --ws-text-secondary: #B0B0B8;
+  --ws-text-tertiary: #85858F;
+  --ws-text-muted: #85858F;
+  --ws-text-disabled: #5C5C66;
 }
 
 html.light {
   --background: #F6F7F9;
   --foreground: #0F172A;
   color-scheme: light;
+
+  /* Global Light Mode Workspace Tokens */
+  --ws-sidebar: #212446;
+  --ws-canvas: #F6F7F9;
+  --ws-toolbar: #FFFFFF;
+  --ws-panel: #FFFFFF;
+  --ws-panel-hover: #F1F3F5;
+  --ws-overlay-backdrop: rgba(2, 6, 23, 0.74);
+  --ws-surface-primary: #FFFFFF;
+  --ws-surface-secondary: #F8F9FA;
+  --ws-surface-tertiary: #E9ECEF;
+  --ws-border: #E2E8F0;
+  --ws-border-strong: #CBD5E1;
+  --ws-hover: #F1F3F5;
+  --ws-active: #EAF3F4;
+  --ws-text-primary: #0F172A;
+  --ws-text-secondary: #475569;
+  --ws-text-tertiary: #64748B;
+  --ws-text-muted: #64748B;
+  --ws-text-disabled: #94A3B8;
 }
 
 :root[data-theme="dark"],
@@ -498,6 +557,92 @@ html.dark {
   --background: var(--app-bg, #111113);
   --foreground: var(--text-primary, #F2F2F3);
   color-scheme: dark;
+
+  /* Re-affirm Global Charcoal Tokens on html.dark */
+  --ws-sidebar: #151517;
+  --ws-canvas: #111113;
+  --ws-toolbar: #151517;
+  --ws-panel: #19191C;
+  --ws-panel-hover: #202024;
+  --ws-overlay-backdrop: rgba(0, 0, 0, 0.75);
+  --ws-surface-primary: #19191C;
+  --ws-surface-secondary: #202024;
+  --ws-surface-tertiary: #29292E;
+  --ws-border: #2C2C31;
+  --ws-border-strong: #3A3A40;
+  --ws-hover: #202024;
+  --ws-active: #29292E;
+  --ws-text-primary: #F2F2F3;
+  --ws-text-secondary: #B0B0B8;
+  --ws-text-tertiary: #85858F;
+  --ws-text-muted: #85858F;
+  --ws-text-disabled: #5C5C66;
+}
+
+/* Ensure all portaled popups, menus, modals, and dropdowns have solid opaque charcoal surfaces */
+[data-layer="dropdown"],
+[data-radix-popper-content-wrapper] > div,
+.ac-layer-modal > .relative,
+.ac-layer-panel {
+  background-color: var(--ws-panel, #19191C);
+  border-color: var(--ws-border, #2C2C31);
+  color: var(--ws-text-primary, #F2F2F3);
+}
+
+/* Global NO-GLASS rule. Glassmorphism (backdrop blur over translucent fills)
+   made modal/menu/editor text unreadable because underlying content bled
+   through. Every product surface, client portal page, dialog, sheet, menu and
+   portaled layer is solid. New components inherit this automatically — use
+   solid --ws-* tokens instead of `/50`-style alpha fills or backdrop-blur. */
+.ac-business-root [class*="backdrop-blur"],
+.ac-dashboard-root [class*="backdrop-blur"],
+.ac-client-portal-root [class*="backdrop-blur"],
+[role="dialog"],
+[role="dialog"] [class*="backdrop-blur"],
+[role="menu"],
+[data-layer="dropdown"],
+[data-radix-portal] [class*="backdrop-blur"],
+[data-radix-popper-content-wrapper] [class*="backdrop-blur"],
+.ac-layer-modal,
+.ac-layer-modal [class*="backdrop-blur"],
+.ac-layer-panel,
+body > div.fixed[class*="backdrop-blur"] {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Global Quill Snow Editor Dark Theme - Solid Charcoal Surfaces */
+html.dark .ql-toolbar.ql-snow,
+:root:not(.light) .ql-toolbar.ql-snow {
+  background-color: var(--ws-surface-secondary, #202024) !important;
+  border-color: var(--ws-border, #2C2C31) !important;
+}
+html.dark .ql-container.ql-snow,
+:root:not(.light) .ql-container.ql-snow {
+  background-color: var(--ws-surface-primary, #19191C) !important;
+  border-color: var(--ws-border, #2C2C31) !important;
+}
+html.dark .ql-editor,
+html.dark .ql-editor *,
+:root:not(.light) .ql-editor,
+:root:not(.light) .ql-editor * {
+  color: var(--ws-text-primary, #F2F2F3) !important;
+}
+html.dark .ql-editor.ql-blank::before,
+:root:not(.light) .ql-editor.ql-blank::before {
+  color: var(--ws-text-muted, #85858F) !important;
+}
+html.dark .ql-snow .ql-stroke,
+:root:not(.light) .ql-snow .ql-stroke {
+  stroke: var(--ws-text-secondary, #B0B0B8) !important;
+}
+html.dark .ql-snow .ql-fill,
+:root:not(.light) .ql-snow .ql-fill {
+  fill: var(--ws-text-secondary, #B0B0B8) !important;
+}
+html.dark .ql-snow .ql-picker,
+:root:not(.light) .ql-snow .ql-picker {
+  color: var(--ws-text-secondary, #B0B0B8) !important;
 }
 
 html {

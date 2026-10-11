@@ -78,7 +78,7 @@ const ContractDraftingVisual: React.FC<ContractDraftingVisualProps> = ({
 
             {/* Top Status */}
             <div className="absolute top-8 left-0 w-full px-8 flex justify-center items-center z-10">
-                <div className="flex items-center gap-3 bg-[var(--ws-panel)]/80 backdrop-blur-md px-5 py-2 border border-indigo-500/30 rounded-full">
+                <div className="flex items-center gap-3 bg-[var(--ws-panel)] px-5 py-2 border border-indigo-500/30 rounded-full">
                     <Scale className="w-5 h-5 text-indigo-400" />
                     <span className="text-white font-marketing-heading tracking-widest type-caption uppercase">Legal AI Core Active</span>
                 </div>
@@ -95,7 +95,7 @@ const ContractDraftingVisual: React.FC<ContractDraftingVisualProps> = ({
                     className="relative w-[400px] h-[400px] transform-style-3d mb-12"
                 >
                     {/* The "Desk" Base */}
-                    <div className="absolute inset-0 bg-[var(--ws-surface-secondary)]/40 border-2 border-indigo-500/20 rounded-xl shadow-[0_0_60px_rgba(99,102,241,0.2)]">
+                    <div className="absolute inset-0 bg-[var(--ws-surface-secondary)] border-2 border-indigo-500/20 rounded-xl shadow-[0_0_60px_rgba(99,102,241,0.2)]">
                         {/* Grid lines */}
                         <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.1)_1px,transparent_1px)] bg-[size:40px_40px]" />
                     </div>
