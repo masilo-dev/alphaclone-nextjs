@@ -43,6 +43,15 @@ export function assertDealStageTransition(
         return { ok: true };
     }
 
+    const { CRM_DEALS_BOARD_DEFINITION } = require('./kanban/boardDefinitions');
+    const col = CRM_DEALS_BOARD_DEFINITION.columns.find((c: any) => c.id === current);
+    if (col && col.allowedTransitions && !col.allowedTransitions.includes(next)) {
+        return {
+            ok: false,
+            message: `Cannot move deal from '${col.title}' directly to '${next}'. Allowed: ${col.allowedTransitions.join(', ')}`,
+        };
+    }
+
     return { ok: true };
 }
 

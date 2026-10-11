@@ -8,8 +8,8 @@ import { readFileSync } from 'node:fs';
 test('PWA manifest colors match dark canvas (zero blue flash)', () => {
     const fn = typeof manifestModule.default === 'function' ? manifestModule.default : manifestModule.default.default;
     const config = fn();
-    assert.ok(config.background_color === '#0D0F18' || config.background_color === '#020D1A', 'manifest background_color must match dark canvas');
-    assert.ok(config.theme_color === '#0D0F18' || config.theme_color === '#020D1A', 'manifest theme_color must match dark canvas');
+    assert.ok(config.background_color === '#111113' || config.background_color === '#0D0F18' || config.background_color === '#020D1A', 'manifest background_color must match dark canvas');
+    assert.ok(config.theme_color === '#111113' || config.theme_color === '#0D0F18' || config.theme_color === '#020D1A', 'manifest theme_color must match dark canvas');
     assert.equal(config.display, 'standalone');
     assert.equal(config.scope, '/');
 });

@@ -13,6 +13,7 @@ import {
   Users, Layers, Download, CheckSquare, Square, Eye, X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { WorkspaceSplitter, useMultiPanelWorkspace } from '@/components/ui/workspace';
 import type { LeadResearchResult, ResearchJob, QualificationRules, ReviewStatus } from '@/lib/research/types';
 
 export default function ResearchEngineWorkspace() {
@@ -46,8 +47,20 @@ export default function ResearchEngineWorkspace() {
   const [resultsFilter, setResultsFilter] = useState<'all' | 'qualified' | 'contactable' | 'staged' | 'imported'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Detail Modal
+  // Detail Modal / Inspector Panel
   const [inspectingLead, setInspectingLead] = useState<LeadResearchResult | null>(null);
+
+  // Multi-panel workspace manager for results table and lead inspector
+  const {
+    panel3Width,
+    activeResizingPanel,
+    isMobile,
+    getSplitterProps,
+  } = useMultiPanelWorkspace({
+    namespace: 'lead-research-engine',
+    panel3Constraints: { defaultWidth: 420, minWidth: 320, maxWidth: 640 },
+    defaultPanel3Collapsed: false,
+  });
 
   // Load research jobs
   const loadJobs = useCallback(async () => {
@@ -310,6 +323,141 @@ export default function ResearchEngineWorkspace() {
   }, [activeJob]);
 
   const isJobRunning = activeJob && ['queued', 'discovering', 'crawling', 'extracting', 'validating', 'qualifying'].includes(activeJob.status);
+
+  const renderInspectorContent = (lead: LeadResearchResult, onClose: () => void) => (
+    <div className="space-y-4 text-xs">
+      <div className="flex items-center justify-between border-b border-[var(--ws-border)] pb-3">
+        <div className="min-w-0 flex-1 pr-2">
+          <h3 className="text-base font-bold text-[var(--ws-text-primary)] truncate">{lead.business_name}</h3>
+          {lead.website && (
+            <a
+              href={lead.website}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-[var(--brand-teal)] hover:underline truncate max-w-full"
+            >
+              {lead.website}
+              <ExternalLink className="h-3 w-3 shrink-0" />
+            </a>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="p-1.5 rounded-lg text-[var(--ws-text-muted)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)] transition-colors shrink-0"
+          aria-label="Close lead inspector"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Overview & Contact Provenance */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+        <div className="p-2.5 rounded-xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] space-y-1">
+          <span className="text-[var(--ws-text-muted)] font-medium">Public Email:</span>
+          <p className="font-mono font-semibold text-[var(--ws-text-primary)] break-all">
+            {lead.public_email || 'Not publicly published'}
+          </p>
+          {lead.contact_page && (
+            <p className="text-[10px] text-[var(--ws-text-muted)] truncate">Found on: {lead.contact_page}</p>
+          )}
+        </div>
+
+        <div className="p-2.5 rounded-xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] space-y-1">
+          <span className="text-[var(--ws-text-muted)] font-medium">Public Phone:</span>
+          <p className="font-mono font-semibold text-[var(--ws-text-primary)]">
+            {lead.public_phone || 'Not found'}
+          </p>
+        </div>
+      </div>
+
+      {/* Description */}
+      {lead.description && (
+        <div className="p-2.5 rounded-xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-xs">
+          <span className="text-[var(--ws-text-muted)] font-medium block mb-1">Company Description:</span>
+          <p className="text-[var(--ws-text-secondary)] leading-relaxed">{lead.description}</p>
+        </div>
+      )}
+
+      {/* Qualification Signals & Score Breakdown */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-bold text-[var(--ws-text-primary)] uppercase tracking-wider">
+            Qualification Signals ({lead.qualification_score}/100)
+          </h4>
+          {lead.is_qualified ? (
+            <span className="text-xs font-semibold text-[var(--success)] bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+              Qualified
+            </span>
+          ) : (
+            <span className="text-xs font-semibold text-[var(--ws-text-muted)] bg-[var(--ws-surface-secondary)] px-2 py-0.5 rounded border border-[var(--ws-border)]">
+              Unqualified
+            </span>
+          )}
+        </div>
+
+        <div className="divide-y divide-[var(--ws-border)] border border-[var(--ws-border)] rounded-xl overflow-hidden text-xs">
+          {lead.qualification_signals.map((sig, idx) => (
+            <div key={idx} className="p-2.5 flex items-center justify-between bg-[var(--ws-panel)]">
+              <span className="text-[var(--ws-text-secondary)]">{sig.reason}</span>
+              <span className="font-bold text-[var(--brand-teal)]">+{sig.score}</span>
+            </div>
+          ))}
+        </div>
+
+        {lead.disqualification_reasons.length > 0 && (
+          <div className="p-2.5 rounded-xl bg-[var(--danger)]/10 border border-[var(--danger)]/30 text-xs text-[var(--danger)] space-y-1">
+            <span className="font-semibold block">Disqualification Factors:</span>
+            <ul className="list-disc pl-4 space-y-0.5">
+              {lead.disqualification_reasons.map((reason, i) => (
+                <li key={i}>{reason}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {/* Source URLs & Crawl Provenance */}
+      <div className="space-y-1.5 text-xs">
+        <span className="text-[var(--ws-text-muted)] font-medium block">Source URLs & Evidence:</span>
+        <div className="p-2.5 rounded-xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] font-mono text-[11px] text-[var(--ws-text-secondary)] break-all space-y-1">
+          {lead.source_urls.map((url, i) => (
+            <div key={i} className="flex items-center gap-1.5">
+              <ArrowRight className="h-3 w-3 text-[var(--ws-text-muted)] shrink-0" />
+              <span className="truncate">{url}</span>
+            </div>
+          ))}
+          <div className="text-[10px] text-[var(--ws-text-muted)] pt-1 border-t border-[var(--ws-border)]">
+            Crawled at: {new Date(lead.crawl_timestamp).toLocaleString()}
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center justify-end gap-2 border-t border-[var(--ws-border)] pt-3">
+        <button
+          type="button"
+          onClick={() => handleUpdateStatus(lead.id, 'rejected')}
+          className="h-8 rounded-lg border border-[var(--danger)]/30 bg-[var(--danger)]/10 px-3 text-xs font-semibold text-[var(--danger)] hover:bg-[var(--danger)]/20 transition"
+        >
+          Reject Lead
+        </button>
+
+        {lead.review_status !== 'imported' && (
+          <button
+            type="button"
+            onClick={async () => {
+              await handleImportToCrm([lead.id]);
+              onClose();
+            }}
+            className="h-8 rounded-lg bg-[var(--brand-blue-600)] px-4 text-xs font-semibold text-[var(--text-inverse)] hover:bg-[var(--brand-blue-500)] transition"
+          >
+            Add to CRM
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6 pb-12">
@@ -693,293 +841,195 @@ export default function ResearchEngineWorkspace() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-50 border-b border-slate-200 text-[var(--ws-text-muted)] font-semibold uppercase tracking-wider text-[10px]">
-                <tr>
-                  <th className="p-3 w-10 text-center">
-                    <input
-                      type="checkbox"
-                      aria-label="Select all leads"
-                      checked={selectedIds.size > 0 && selectedIds.size === filteredResults.length}
-                      onChange={selectAllFiltered}
-                      className="rounded border-slate-300 text-blue-600"
-                    />
-                  </th>
-                  <th className="p-3">Business</th>
-                  <th className="p-3">Location</th>
-                  <th className="p-3">Public Email</th>
-                  <th className="p-3">Phone</th>
-                  <th className="p-3">Score</th>
-                  <th className="p-3">Qualification</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredResults.map((lead) => {
-                  const isSelected = selectedIds.has(lead.id);
-                  return (
-                    <tr
-                      key={lead.id}
-                      className={`hover:bg-slate-50/80 transition ${isSelected ? 'bg-blue-50/30' : ''}`}
-                    >
-                      <td className="p-3 text-center">
-                        <input
-                          type="checkbox"
-                          aria-label={`Select ${lead.business_name}`}
-                          checked={isSelected}
-                          onChange={() => toggleSelect(lead.id)}
-                          className="rounded border-slate-300 text-blue-600"
-                        />
-                      </td>
+          <div className="flex flex-col lg:flex-row items-stretch gap-0 overflow-hidden rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]">
+            <div className="flex-1 min-w-0 overflow-x-auto">
+              <table className="w-full text-left text-xs text-[var(--ws-text-secondary)]">
+                <thead className="bg-[var(--ws-surface-secondary)] border-b border-[var(--ws-border)] text-[var(--ws-text-muted)] font-semibold uppercase tracking-wider text-[10px]">
+                  <tr>
+                    <th className="p-3 w-10 text-center">
+                      <input
+                        type="checkbox"
+                        aria-label="Select all leads"
+                        checked={selectedIds.size > 0 && selectedIds.size === filteredResults.length}
+                        onChange={selectAllFiltered}
+                        className="rounded border-[var(--ws-border)] text-blue-600 bg-[var(--ws-surface-secondary)]"
+                      />
+                    </th>
+                    <th className="p-3">Business</th>
+                    <th className="p-3">Location</th>
+                    <th className="p-3">Public Email</th>
+                    <th className="p-3">Phone</th>
+                    <th className="p-3">Score</th>
+                    <th className="p-3">Qualification</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--ws-border)]">
+                  {filteredResults.map((lead) => {
+                    const isSelected = selectedIds.has(lead.id);
+                    const isInspecting = inspectingLead?.id === lead.id;
+                    return (
+                      <tr
+                        key={lead.id}
+                        onClick={() => setInspectingLead(lead)}
+                        className={`hover:bg-[var(--ws-hover)] transition cursor-pointer ${
+                          isInspecting
+                            ? 'bg-[var(--brand-teal)]/10 ring-1 ring-inset ring-[var(--brand-teal)]/30'
+                            : isSelected
+                            ? 'bg-[var(--brand-blue-500)]/10'
+                            : ''
+                        }`}
+                      >
+                        <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            aria-label={`Select ${lead.business_name}`}
+                            checked={isSelected}
+                            onChange={() => toggleSelect(lead.id)}
+                            className="rounded border-[var(--ws-border)] text-blue-600 bg-[var(--ws-surface-secondary)]"
+                          />
+                        </td>
 
-                      <td className="p-3 font-medium text-slate-900">
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-slate-900">{lead.business_name}</span>
-                          {lead.website ? (
-                            <a
-                              href={lead.website}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:underline"
-                            >
-                              {lead.domain || lead.website}
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
+                        <td className="p-3 font-medium text-[var(--ws-text-primary)]">
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-[var(--ws-text-primary)]">{lead.business_name}</span>
+                            {lead.website ? (
+                              <a
+                                href={lead.website}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 text-[11px] text-[var(--brand-teal)] hover:underline"
+                              >
+                                {lead.domain || lead.website}
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            ) : (
+                              <span className="text-[11px] text-[var(--ws-text-muted)]">No public website</span>
+                            )}
+                          </div>
+                        </td>
+
+                        <td className="p-3 text-[var(--ws-text-secondary)]">{lead.location || '—'}</td>
+
+                        <td className="p-3">
+                          {lead.public_email ? (
+                            <span className="inline-flex items-center gap-1 text-[var(--ws-text-primary)] font-mono text-[11px]">
+                              <Mail className="h-3 w-3 text-emerald-400" />
+                              {lead.public_email}
+                            </span>
                           ) : (
-                            <span className="text-[11px] text-[var(--ws-text-muted)]">No public website</span>
+                            <span className="text-[11px] text-[var(--ws-text-muted)] italic">not published</span>
                           )}
-                        </div>
-                      </td>
+                        </td>
 
-                      <td className="p-3 text-slate-600">{lead.location || '—'}</td>
+                        <td className="p-3 text-[var(--ws-text-secondary)]">
+                          {lead.public_phone ? (
+                            <span className="inline-flex items-center gap-1 font-mono text-[11px]">
+                              <Phone className="h-3 w-3 text-[var(--ws-text-muted)]" />
+                              {lead.public_phone}
+                            </span>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
 
-                      <td className="p-3">
-                        {lead.public_email ? (
-                          <span className="inline-flex items-center gap-1 text-slate-800 font-mono text-[11px]">
-                            <Mail className="h-3 w-3 text-emerald-600" />
-                            {lead.public_email}
-                          </span>
-                        ) : (
-                          <span className="text-[11px] text-[var(--ws-text-muted)] italic">not published</span>
-                        )}
-                      </td>
+                        <td className="p-3">
+                          <span className="font-bold text-[var(--ws-text-primary)]">{lead.qualification_score}</span>
+                          <span className="text-[10px] text-[var(--ws-text-muted)]">/100</span>
+                        </td>
 
-                      <td className="p-3 text-slate-600">
-                        {lead.public_phone ? (
-                          <span className="inline-flex items-center gap-1 font-mono text-[11px]">
-                            <Phone className="h-3 w-3 text-[var(--ws-text-muted)]" />
-                            {lead.public_phone}
-                          </span>
-                        ) : (
-                          '—'
-                        )}
-                      </td>
+                        <td className="p-3">
+                          {lead.is_qualified ? (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-[var(--success)] border border-emerald-500/30">
+                              <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                              Qualified
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-[var(--ws-surface-secondary)] px-2 py-0.5 text-[11px] font-medium text-[var(--ws-text-muted)] border border-[var(--ws-border)]">
+                              <XCircle className="h-3 w-3 text-[var(--ws-text-muted)]" />
+                              Unqualified
+                            </span>
+                          )}
+                        </td>
 
-                      <td className="p-3">
-                        <span className="font-bold text-slate-800">{lead.qualification_score}</span>
-                        <span className="text-[10px] text-[var(--ws-text-muted)]">/100</span>
-                      </td>
-
-                      <td className="p-3">
-                        {lead.is_qualified ? (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-200">
-                            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                            Qualified
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
-                            <XCircle className="h-3 w-3 text-[var(--ws-text-muted)]" />
-                            Unqualified
-                          </span>
-                        )}
-                      </td>
-
-                      <td className="p-3">
-                        <span
-                          className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-semibold ${
-                            lead.review_status === 'imported'
-                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                              : lead.review_status === 'approved'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : lead.review_status === 'rejected'
-                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                              : 'bg-slate-100 text-slate-600'
-                          }`}
-                        >
-                          {lead.review_status.replace('_', ' ').toUpperCase()}
-                        </span>
-                      </td>
-
-                      <td className="p-3 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setInspectingLead(lead)}
-                            className="p-1 rounded-md hover:bg-slate-100 text-[var(--ws-text-muted)] hover:text-slate-800 transition"
-                            title="Inspect Evidence & Signals"
+                        <td className="p-3">
+                          <span
+                            className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-semibold ${
+                              lead.review_status === 'imported'
+                                ? 'bg-blue-500/10 text-[var(--brand-blue-300)] border border-blue-500/30'
+                                : lead.review_status === 'approved'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                                : lead.review_status === 'rejected'
+                                ? 'bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/30'
+                                : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'
+                            }`}
                           >
-                            <Eye className="h-4 w-4" />
-                          </button>
+                            {lead.review_status.replace('_', ' ').toUpperCase()}
+                          </span>
+                        </td>
 
-                          {lead.review_status !== 'imported' ? (
+                        <td className="p-3 text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end gap-1.5">
                             <button
                               type="button"
-                              onClick={() => handleImportToCrm([lead.id])}
-                              className="h-7 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2 text-[11px] font-semibold text-[var(--text-inverse)] hover:bg-emerald-700 transition"
-                              title="Add to CRM"
+                              onClick={() => setInspectingLead(lead)}
+                              className="p-1 rounded-md hover:bg-[var(--ws-hover)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition"
+                              title="Inspect Evidence & Signals"
                             >
-                              <Plus className="h-3 w-3" />
-                              CRM
+                              <Eye className="h-4 w-4" />
                             </button>
-                          ) : (
-                            <span className="text-[11px] text-blue-600 font-semibold px-2">In CRM</span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+
+                            {lead.review_status !== 'imported' ? (
+                              <button
+                                type="button"
+                                onClick={() => handleImportToCrm([lead.id])}
+                                className="h-7 inline-flex items-center gap-1 rounded-lg bg-[var(--brand-blue-600)] px-2 text-[11px] font-semibold text-[var(--text-inverse)] hover:bg-[var(--brand-blue-500)] transition"
+                                title="Add to CRM"
+                              >
+                                <Plus className="h-3 w-3" />
+                                CRM
+                              </button>
+                            ) : (
+                              <span className="text-[11px] text-[var(--brand-blue-300)] font-semibold px-2">In CRM</span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Desktop Inspection Side Panel */}
+            {inspectingLead && !isMobile && (
+              <>
+                <WorkspaceSplitter
+                  panelIndex={3}
+                  isResizing={activeResizingPanel === 3}
+                  className="hidden lg:flex"
+                  {...getSplitterProps(3)}
+                />
+                <aside
+                  style={{ width: `${panel3Width}px` }}
+                  className="hidden lg:flex flex-col shrink-0 border-l border-[var(--ws-border)] bg-[var(--ws-surface-primary)] p-4 max-h-[750px] overflow-y-auto custom-scrollbar"
+                  aria-label="Lead qualification & evidence inspector"
+                >
+                  {renderInspectorContent(inspectingLead, () => setInspectingLead(null))}
+                </aside>
+              </>
+            )}
           </div>
         )}
       </div>
 
-      {/* Lead Detail & Evidence Inspection Modal */}
-      {inspectingLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--ws-panel)]/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">{inspectingLead.business_name}</h3>
-                {inspectingLead.website && (
-                  <a
-                    href={inspectingLead.website}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
-                  >
-                    {inspectingLead.website}
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => setInspectingLead(null)}
-                className="p-1.5 rounded-lg text-[var(--ws-text-muted)] hover:bg-slate-100 hover:text-slate-700"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Overview & Contact Provenance */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-slate-50 space-y-1">
-                <span className="text-[var(--ws-text-muted)] font-medium">Public Email:</span>
-                <p className="font-mono font-semibold text-slate-900">
-                  {inspectingLead.public_email || 'Not publicly published'}
-                </p>
-                {inspectingLead.contact_page && (
-                  <p className="text-[10px] text-[var(--ws-text-muted)]">Found on: {inspectingLead.contact_page}</p>
-                )}
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-50 space-y-1">
-                <span className="text-[var(--ws-text-muted)] font-medium">Public Phone:</span>
-                <p className="font-mono font-semibold text-slate-900">
-                  {inspectingLead.public_phone || 'Not found'}
-                </p>
-              </div>
-            </div>
-
-            {/* Description */}
-            {inspectingLead.description && (
-              <div className="p-3 rounded-xl bg-slate-50 text-xs">
-                <span className="text-[var(--ws-text-muted)] font-medium block mb-1">Company Description:</span>
-                <p className="text-slate-800 leading-relaxed">{inspectingLead.description}</p>
-              </div>
-            )}
-
-            {/* Qualification Signals & Score Breakdown */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Qualification Signals ({inspectingLead.qualification_score}/100)
-                </h4>
-                {inspectingLead.is_qualified ? (
-                  <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                    Qualified
-                  </span>
-                ) : (
-                  <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
-                    Unqualified
-                  </span>
-                )}
-              </div>
-
-              <div className="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden text-xs">
-                {inspectingLead.qualification_signals.map((sig, idx) => (
-                  <div key={idx} className="p-2.5 flex items-center justify-between bg-white">
-                    <span className="text-slate-700">{sig.reason}</span>
-                    <span className="font-bold text-blue-600">+{sig.score}</span>
-                  </div>
-                ))}
-              </div>
-
-              {inspectingLead.disqualification_reasons.length > 0 && (
-                <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 text-xs text-rose-700 space-y-1">
-                  <span className="font-semibold block">Disqualification Factors:</span>
-                  <ul className="list-disc pl-4 space-y-0.5">
-                    {inspectingLead.disqualification_reasons.map((reason, i) => (
-                      <li key={i}>{reason}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {/* Source URLs & Crawl Provenance */}
-            <div className="space-y-1.5 text-xs">
-              <span className="text-[var(--ws-text-muted)] font-medium block">Source URLs & Evidence:</span>
-              <div className="p-3 rounded-xl bg-slate-50 font-mono text-[11px] text-slate-700 break-all space-y-1">
-                {inspectingLead.source_urls.map((url, i) => (
-                  <div key={i} className="flex items-center gap-1.5">
-                    <ArrowRight className="h-3 w-3 text-[var(--ws-text-muted)] shrink-0" />
-                    <span>{url}</span>
-                  </div>
-                ))}
-                <div className="text-[10px] text-[var(--ws-text-muted)] pt-1 border-t border-slate-200">
-                  Crawled at: {new Date(inspectingLead.crawl_timestamp).toLocaleString()}
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
-              <button
-                type="button"
-                onClick={() => handleUpdateStatus(inspectingLead.id, 'rejected')}
-                className="h-9 rounded-xl border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition"
-              >
-                Reject Lead
-              </button>
-
-              {inspectingLead.review_status !== 'imported' && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await handleImportToCrm([inspectingLead.id]);
-                    setInspectingLead(null);
-                  }}
-                  className="h-9 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-[var(--text-inverse)] hover:bg-emerald-700 transition"
-                >
-                  Add to CRM
-                </button>
-              )}
-            </div>
+      {/* Mobile Lead Detail & Evidence Inspection Modal */}
+      {inspectingLead && isMobile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--ws-panel)]/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] p-5 shadow-2xl">
+            {renderInspectorContent(inspectingLead, () => setInspectingLead(null))}
           </div>
         </div>
       )}

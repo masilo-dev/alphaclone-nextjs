@@ -434,20 +434,34 @@ export const taskService = {
             if (updates.status) {
                 const { data: existingTask } = await supabase
                     .from('tasks')
-                    .select('status')
+                    .select('status, entered_column_at, created_at, updated_at')
                     .eq('id', taskId)
                     .eq('tenant_id', tenantId)
                     .single();
 
                 if (existingTask) {
-                    const statusOrder = ['ideas', 'todo', 'in_progress', 'review', 'blocked', 'completed'];
-                    const currentIdx = statusOrder.indexOf(existingTask.status);
-                    const newIdx = statusOrder.indexOf(updates.status);
-
-                    // Allow moving to 'cancelled' from anywhere, but otherwise enforce forward progression
-                    if (newIdx < currentIdx && updates.status !== 'cancelled') {
-                        return { task: null, error: 'Cannot move task back to a previous status' };
+                    const { canTransitionTask } = await import('@/lib/projects/projectTaskDomain');
+                    if (!canTransitionTask(existingTask.status, updates.status)) {
+                        return { task: null, error: `Invalid transition: Task cannot move from '${existingTask.status}' to '${updates.status}'` };
                     }
+
+                    // Append-only transition log
+                    const nowIso = new Date().toISOString();
+                    const prevEnteredAt = (existingTask as any).entered_column_at || existingTask.updated_at || existingTask.created_at || nowIso;
+                    const durationMs = Math.max(0, new Date(nowIso).getTime() - new Date(prevEnteredAt).getTime());
+                    const { data: { user } } = await supabase.auth.getUser();
+                    void (supabase.from('board_transition_logs') as any).insert({
+                        tenant_id: tenantId,
+                        board_type: 'workspace_tasks',
+                        card_id: taskId,
+                        from_state: existingTask.status,
+                        to_state: updates.status,
+                        actor_id: user?.id || null,
+                        reason: 'Task status updated',
+                        duration_in_previous_state_ms: durationMs,
+                        is_override: false,
+                        metadata: { previous_entered_at: prevEnteredAt },
+                    });
                 }
             }
 
@@ -639,18 +653,37 @@ export const taskService = {
                 .select('related_to_project')
                 .eq('id', taskId)
                 .eq('tenant_id', tenantId)
-                .single();
+            const nowIso = new Date().toISOString();
+            const { data: { user } } = await supabase.auth.getUser();
 
             const { error } = await supabase
                 .from('tasks')
-                .delete()
+                .update({
+                    deleted_at: nowIso,
+                    archived: true,
+                    archived_at: nowIso,
+                    archived_by: user?.id || null,
+                    updated_at: nowIso,
+                })
                 .eq('id', taskId)
                 .eq('tenant_id', tenantId);
 
             if (error) throw error;
 
+            // Log append-only transition
+            void (supabase.from('board_transition_logs') as any).insert({
+                tenant_id: tenantId,
+                board_type: 'workspace_tasks',
+                card_id: taskId,
+                from_state: 'task',
+                to_state: 'archived',
+                actor_id: user?.id || null,
+                reason: 'Task archived',
+                is_override: false,
+                metadata: { archived_at: nowIso },
+            });
+
             // Log activity
-            const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 await activityService.logActivity(user.id, 'Task Deleted', {
                     taskId: taskId,

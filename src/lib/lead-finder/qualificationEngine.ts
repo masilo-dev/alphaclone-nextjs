@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { normalizeEmail, normalizePhone, resolveBusinessEntity } from './core';
+import { COMPETITOR_KEYWORDS_FOR_WEBSITE_OFFERS } from './qualificationContract';
 
 export type QualificationSignal = {
   signal_type: string; signal_category: string; signal_value: string; source_type: string;
@@ -78,8 +79,14 @@ export function buildLeadQualification(candidate: Candidate, relationship: Relat
     alphaOpportunity * .15 + freshness * .05 + confidence * .10 + relationshipModifier(relationshipState)
   );
   const hasSourceEvidence = Boolean(sourceUrl || candidate.source_type);
+  const isCompetitor = (COMPETITOR_KEYWORDS_FOR_WEBSITE_OFFERS || []).some((kw) => {
+    const name = String(candidate.business_name || '').toLowerCase();
+    const ind = String(candidate.industry || '').toLowerCase();
+    return name.includes(kw) || ind.includes(kw);
+  });
   const hardGateResults = [
     { gate: 'real_business_entity', passed: entity.isRealBusiness, reason: entity.reason },
+    { gate: 'not_competitor', passed: !isCompetitor, reason: isCompetitor ? 'COMPETITOR_EXCLUDED' : 'not a competitor' },
     { gate: 'public_contact_method', passed: hasEmail || hasPhone, reason: hasEmail || hasPhone ? 'public contact validated' : 'LEAD_EMAIL_REQUIRED' },
     { gate: 'source_evidence', passed: hasSourceEvidence, reason: hasSourceEvidence ? 'traceable source present' : 'LEAD_EVIDENCE_INSUFFICIENT' },
   ];

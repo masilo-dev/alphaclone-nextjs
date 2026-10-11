@@ -40,11 +40,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
   };
 
   const sizes: Record<string, string> = {
-    sm: "h-7.5 px-2.5 type-caption rounded-[6px] max-sm:min-h-10 max-sm:min-w-10",
-    md: "h-8.5 px-3 py-1 type-ui rounded-[7px] max-sm:min-h-10 max-sm:min-w-10",
-    lg: "h-9.5 px-4 text-sm font-semibold rounded-[8px] max-sm:min-h-11 max-sm:min-w-11",
-    default: "h-8.5 px-3 py-1 type-ui rounded-[7px] max-sm:min-h-10 max-sm:min-w-10",
-    icon: "h-8 w-8 p-0 rounded-[7px] max-sm:min-h-10 max-sm:min-w-10",
+    sm: "h-7 px-2.5 type-caption rounded-[6px] max-sm:min-h-10 max-sm:min-w-10",
+    md: "h-7.5 md:h-8 px-3 py-1 type-ui rounded-[6px] max-sm:min-h-10 max-sm:min-w-10",
+    lg: "h-8.5 md:h-9 px-3.5 text-xs sm:text-[13px] font-semibold rounded-[7px] max-sm:min-h-11 max-sm:min-w-11",
+    default: "h-7.5 md:h-8 px-3 py-1 type-ui rounded-[6px] max-sm:min-h-10 max-sm:min-w-10",
+    icon: "h-7.5 w-7.5 md:h-8 md:w-8 p-0 rounded-[6px] max-sm:min-h-10 max-sm:min-w-10",
   };
 
   const visualVariant = variant === 'default' ? 'outline' : variant;

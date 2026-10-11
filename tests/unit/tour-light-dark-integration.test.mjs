@@ -30,7 +30,7 @@ describe('Light Mode / Dark Mode Systems & Tour Branding Integrity', () => {
   it('globals.css defines explicit html.light and html.dark color-scheme and backgrounds', () => {
     assert.match(globalsCss, /html\.light\s*\{[^}]*--background:\s*#F6F7F9/);
     assert.match(globalsCss, /html\.light\s*\{[^}]*color-scheme:\s*light/);
-    assert.match(globalsCss, /html\.dark\s*\{[^}]*--background:\s*#020D1A/);
+    assert.match(globalsCss, /html\.dark\s*\{[^}]*--background:\s*(?:#020D1A|var\(--app-bg[^\)]*\)|#111113)/);
     assert.match(globalsCss, /html\.dark\s*\{[^}]*color-scheme:\s*dark/);
   });
 

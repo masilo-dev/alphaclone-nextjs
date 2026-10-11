@@ -20,6 +20,7 @@ defineConnectorTool({
     location: z.string().optional(),
     country: z.string().optional(),
     query: z.string().optional(),
+    prompt: z.string().optional(),
     min_score: z.number().optional().default(50),
     no_website_only: z.boolean().optional().default(false),
     require_email: z.boolean().optional().default(false),
@@ -33,6 +34,7 @@ defineConnectorTool({
       location: { type: 'string' },
       country: { type: 'string' },
       query: { type: 'string' },
+      prompt: { type: 'string' },
       min_score: { type: 'number' },
       no_website_only: { type: 'boolean' },
       require_email: { type: 'boolean' },
@@ -43,10 +45,12 @@ defineConnectorTool({
   },
   handler: async (args, ctx) => {
     const { bonnieFindAndQualifyLeads } = await import('@/lib/bonnie/bonnieLeadOps');
+    const intentPrompt = String(args.query || args.prompt || args.industry || '').trim();
     const result = await bonnieFindAndQualifyLeads(ctx.tenantId, {
-      niche: String(args.industry || args.query || '').trim() || 'local businesses',
+      niche: String(args.industry || args.query || args.prompt || '').trim() || 'local businesses',
       location: String(args.location || '').trim() || 'United States',
       country: args.country ? String(args.country).trim() : undefined,
+      intent_prompt: intentPrompt || undefined,
       min_score: args.min_score != null ? Number(args.min_score) : 50,
       max_results: args.limit != null ? Number(args.limit) : 25,
       save_to_crm: Boolean(args.save_to_crm),
@@ -62,11 +66,13 @@ defineConnectorTool({
       leads_imported: result.saved_to_crm,
       apify_run_id: result.apify_run_id,
       cost_usd: result.cost_usd,
+      qualification_profile: result.qualification_profile,
+      summary: result.summary,
       execution_truth: result.execution_truth,
       may_claim_completed: result.execution_truth.may_claim_completed,
       leads: result.leads,
       candidate_previews: result.candidate_previews,
-      note: 'Only real business directory/source results with validated phone or email. No fabricated contacts.',
+      note: 'Evidence-based qualification. Competitors and unverified signals excluded. Zero qualified leads returned when mandatory rules fail.',
     });
   },
 });

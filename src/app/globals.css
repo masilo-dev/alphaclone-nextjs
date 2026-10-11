@@ -56,11 +56,11 @@
   --color-ac-accent: #4199A4;
   --color-ac-accent-hover: #65ABB4;
   --color-ac-accent-deep: #306F78;
-  --color-ac-dashboard-bg: #0D0F18;
-  --color-ac-dashboard-surface: #171A26;
-  --color-ac-dashboard-surface-2: #1B1E2B;
-  --color-ac-dashboard-text: #F7F8FB;
-  --color-ac-dashboard-text-muted: #9095A5;
+  --color-ac-dashboard-bg: #111113;
+  --color-ac-dashboard-surface: #19191C;
+  --color-ac-dashboard-surface-2: #202024;
+  --color-ac-dashboard-text: #F2F2F3;
+  --color-ac-dashboard-text-muted: #85858F;
   --color-ac-dashboard-mint: #6FE0AD;
   --color-ac-dashboard-mint-strong: #16A36A;
   --color-ac-dashboard-electric: #65ABB4;
@@ -211,6 +211,7 @@
   --brand-coral: #FB7268;
   --background-app: #F6F7F9;
   --background-subtle: #EFF1F4;
+  --marketing-bg-secondary: #F6F7F9;
   --surface-primary: #FFFFFF;
   --surface-secondary: #F9FAFB;
   --surface-elevated: #FFFFFF;
@@ -332,34 +333,46 @@
   --dashboard-info: #3196E8;
 }
 
-.dark,
-.ac-business-root {
-  --surface-1: rgba(30, 41, 59, 0.65);
-}
-
+:root[data-theme="dark"],
 html.dark {
-  --background-app: #0D0F18;
-  --background-subtle: #121520;
-  --surface-primary: #171A26;
-  --surface-secondary: #1B1E2B;
-  --surface-elevated: #202432;
-  --surface-hover: #252936;
-  --text-primary: #ffffff;
-  --text-secondary: #d8dde8;
-  --text-muted: #a8b0c2;
-  --text-inverse: #171923;
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-default: rgba(255, 255, 255, 0.10);
-  --border-strong: rgba(255, 255, 255, 0.18);
-  --interactive-primary: #FB7268;
-  --interactive-primary-hover: #FF837A;
-  --interactive-secondary: #5AAAB3;
-  --interactive-secondary-hover: #71BBC3;
-  --success: #4DB48D;
-  --warning: #E5A84A;
-  --danger: #ED7070;
-  --info: #62B0B9;
-  --focus-ring: rgba(90, 170, 179, 0.42);
+  color-scheme: dark;
+
+  --app-bg: #111113;
+  --sidebar-bg: #151517;
+  --header-bg: #151517;
+
+  --surface-1: #19191C;
+  --surface-2: #202024;
+  --surface-3: #29292E;
+
+  --border-subtle: #2C2C31;
+  --border-strong: #3A3A40;
+
+  --text-primary: #F2F2F3;
+  --text-secondary: #B0B0B8;
+  --text-muted: #85858F;
+
+  --accent: #4D8DFF;
+  --success: #36B98A;
+  --warning: #E5AC55;
+  --danger: #E36B72;
+
+  --background-app: var(--app-bg);
+  --background-subtle: var(--sidebar-bg);
+  --surface-primary: var(--surface-1);
+  --surface-secondary: var(--surface-2);
+  --surface-elevated: var(--surface-3);
+  --surface-hover: var(--surface-2);
+  --text-inverse: #111113;
+  --border-default: var(--border-subtle);
+  --interactive-primary: var(--accent);
+  --interactive-primary-hover: #6BA0FF;
+  --interactive-secondary: var(--accent);
+  --interactive-secondary-hover: #6BA0FF;
+  --info: var(--accent);
+  --focus-ring: rgba(77, 141, 255, 0.42);
+  --brand-violet-950: var(--app-bg);
+  --marketing-bg-secondary: var(--background-app);
 }
 
 /* Marketing Theme Definitions — same brand tokens as product shell */
@@ -450,13 +463,9 @@ html.dark {
   position: relative;
 }
 
+:root[data-theme="dark"] .page-network-bg,
 html.dark .page-network-bg {
-  background: linear-gradient(
-    160deg,
-    var(--brand-violet-950, #0A0C16) 0%,
-    var(--brand-navy, #212446) 48%,
-    var(--brand-violet-950, #0A0C16) 100%
-  );
+  background: var(--app-bg, #111113);
 }
 
 .marketing-glow-hero {
@@ -473,8 +482,8 @@ html.dark .page-network-bg {
 }
 
 :root {
-  --background: #020D1A;
-  --foreground: #f8fafc;
+  --background: #111113;
+  --foreground: #F2F2F3;
   color-scheme: dark;
 }
 
@@ -484,9 +493,10 @@ html.light {
   color-scheme: light;
 }
 
+:root[data-theme="dark"],
 html.dark {
-  --background: #020D1A;
-  --foreground: #f8fafc;
+  --background: var(--app-bg, #111113);
+  --foreground: var(--text-primary, #F2F2F3);
   color-scheme: dark;
 }
 
@@ -495,13 +505,7 @@ html {
 }
 
 body {
-  background-color: var(--background-app, #020D1A);
-  background-image:
-    radial-gradient(ellipse 70% 40% at 50% 0%, rgba(125, 211, 252, 0.1), transparent 72%),
-    linear-gradient(180deg, rgba(2, 6, 23, 0.82) 0%, rgba(2, 6, 23, 0.92) 100%);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background-color: var(--app-bg, #111113);
   color: var(--foreground);
   scroll-behavior: smooth;
   @apply text-base antialiased;
@@ -510,6 +514,13 @@ body {
   font-size: var(--type-body-size);
   font-weight: var(--type-body-weight);
   line-height: var(--type-body-leading);
+}
+
+:root[data-theme="dark"] body,
+html.dark body {
+  background-color: var(--app-bg, #111113);
+  background-image: none;
+  color: var(--text-primary, #F2F2F3);
 }
 
 html.light body,
@@ -847,12 +858,9 @@ html.light .ac-business-root [class*="bg-indigo-"] .text-white {
 ──────────────────────────────────────────────────────────────────────────── */
 .ac-dashboard-root,
 .ac-business-root {
-  color: var(--dashboard-text);
+  color: var(--text-primary, #F2F2F3);
   color-scheme: dark;
-  background:
-    radial-gradient(circle at 18% 0%, rgba(65, 153, 164, 0.08) 0%, rgba(65, 153, 164, 0) 30%),
-    radial-gradient(circle at 82% 0%, rgba(33, 36, 70, 0.18) 0%, rgba(33, 36, 70, 0) 26%),
-    linear-gradient(180deg, var(--background-app) 0%, var(--background-app) 58%, var(--background-app) 100%);
+  background: var(--app-bg, #111113);
 }
 
 html.light .ac-dashboard-root,
@@ -2225,26 +2233,34 @@ html.pwa-standalone .pwa-page-title {
 }
 
 .ac-data-table th {
-  padding: 10px 16px;
-  font-size: var(--type-caption-size);
+  padding: 7px 12px;
+  font-size: var(--type-table-header-size, 11px);
   font-weight: var(--weight-semibold);
   text-align: left;
   text-transform: uppercase;
   letter-spacing: var(--tracking-label);
-  color: var(--ws-text-muted, #a8b0c2);
-  background: var(--ws-toolbar, #171A26);
-  border-bottom: 1px solid var(--ws-border, rgba(255, 255, 255, 0.1));
+  color: var(--ws-text-muted, #85858F);
+  background: var(--ws-toolbar, #151517);
+  border-bottom: 1px solid var(--ws-border, #2C2C31);
 }
 
 .ac-data-table td {
+  padding: 8px 12px;
+  font-size: var(--type-table-cell-size, 12px);
+  color: var(--ws-text-primary, #F2F2F3);
+  border-bottom: 1px solid var(--ws-border, #2C2C31);
+}
+
+:root[data-density="comfortable"] .ac-data-table th {
   padding: 12px 16px;
-  font-size: var(--type-ui-size);
-  color: var(--ws-text-primary, #ffffff);
-  border-bottom: 1px solid var(--ws-border, rgba(255, 255, 255, 0.08));
+}
+
+:root[data-density="comfortable"] .ac-data-table td {
+  padding: 14px 16px;
 }
 
 .ac-data-table tbody tr:nth-child(even) {
-  background: color-mix(in srgb, var(--ws-surface-secondary, #1B1E2B) 40%, transparent);
+  background: color-mix(in srgb, var(--ws-surface-secondary, #202024) 40%, transparent);
 }
 
 .ac-data-table tbody tr:hover {
@@ -2288,43 +2304,43 @@ html.pwa-standalone .pwa-page-title {
 /* ── Alphaclone OS workspace (dashboard shells) ── */
 .ac-dashboard-root,
 .ac-business-root {
-  --ws-sidebar: #15182A;
-  --ws-canvas: var(--background-app);
+  --ws-sidebar: var(--sidebar-bg, #151517);
+  --ws-canvas: var(--app-bg, #111113);
   /* Sticky workspace headers must be opaque: form text must never show through. */
-  --ws-toolbar: #171A26;
+  --ws-toolbar: var(--header-bg, #151517);
   /* Panels can carry forms, menus and controls. Keep their reading surface
      solid so workspace content never competes with text above it. */
-  --ws-panel: #171A26;
-  --ws-panel-hover: #252936;
-  --ws-overlay-backdrop: rgba(2, 6, 23, 0.74);
-  --ws-surface-primary: var(--surface-primary);
-  --ws-surface-secondary: var(--surface-secondary);
-  --ws-surface-tertiary: var(--surface-elevated);
-  --ws-border: var(--border-default);
-  --ws-border-strong: var(--border-strong);
-  --ws-hover: var(--surface-hover);
-  --ws-active: color-mix(in srgb, var(--brand-teal) 16%, var(--surface-primary));
-  --ws-text-primary: var(--text-primary);
-  --ws-text-secondary: var(--text-secondary);
-  --ws-text-tertiary: var(--text-muted);
-  --ws-text-muted: var(--text-muted);
-  --ws-text-disabled: #656A78;
-  --ws-radius: 10px;
-  --ws-radius-lg: 16px;
+  --ws-panel: var(--surface-1, #19191C);
+  --ws-panel-hover: var(--surface-2, #202024);
+  --ws-overlay-backdrop: rgba(0, 0, 0, 0.74);
+  --ws-surface-primary: var(--surface-1, #19191C);
+  --ws-surface-secondary: var(--surface-2, #202024);
+  --ws-surface-tertiary: var(--surface-3, #29292E);
+  --ws-border: var(--border-subtle, #2C2C31);
+  --ws-border-strong: var(--border-strong, #3A3A40);
+  --ws-hover: var(--surface-2, #202024);
+  --ws-active: var(--surface-3, #29292E);
+  --ws-text-primary: var(--text-primary, #F2F2F3);
+  --ws-text-secondary: var(--text-secondary, #B0B0B8);
+  --ws-text-tertiary: var(--text-muted, #85858F);
+  --ws-text-muted: var(--text-muted, #85858F);
+  --ws-text-disabled: #5C5C66;
+  --ws-radius: 6px;
+  --ws-radius-lg: 10px;
   --ws-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
-  --ws-card-shadow-hover: 0 8px 22px rgba(0, 0, 0, 0.28);
-  --success-surface: #102A22;
-  --success-border: #1B5543;
-  --success-text: #6FE0AD;
-  --warning-surface: #302413;
-  --warning-border: #61451B;
-  --warning-text: #F5C46F;
-  --error-surface: #32191D;
-  --error-border: #6A2C32;
-  --error-text: #FF9097;
-  --info-surface: #11283C;
-  --info-border: #235579;
-  --info-text: #77C4FF;
+  --ws-card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.28);
+  --success-surface: #12281E;
+  --success-border: #1E4634;
+  --success-text: #36B98A;
+  --warning-surface: #2E2313;
+  --warning-border: #523E1E;
+  --warning-text: #E5AC55;
+  --error-surface: #2E1618;
+  --error-border: #542428;
+  --error-text: #E36B72;
+  --info-surface: #142238;
+  --info-border: #233C64;
+  --info-text: #4D8DFF;
   font-family: var(--font-brand);
   font-feature-settings: "tnum" 1;
   color: var(--ws-text-primary);
@@ -2375,10 +2391,7 @@ html.light .ac-business-root {
 .ac-workspace-canvas,
 .ac-dashboard-main.ac-workspace-canvas,
 .ac-business-scroll.ac-workspace-canvas {
-  background:
-    radial-gradient(ellipse 62% 42% at 86% 3%, rgba(65, 153, 164, 0.10), transparent 74%),
-    radial-gradient(ellipse 38% 32% at 8% 88%, rgba(251, 114, 104, 0.035), transparent 76%),
-    linear-gradient(180deg, #0D0F18 0%, #10131E 52%, #0D0F18 100%);
+  background: var(--app-bg, #111113);
 }
 
 html.light .ac-workspace-canvas,
@@ -2546,12 +2559,12 @@ html.light .ac-kpi-card--interactive:hover {
 
 .ac-workspace-nav-item:hover {
   background-color: var(--ws-hover);
-  color: #F4F7FC;
+  color: var(--ws-text-primary, #F2F2F3);
 }
 
 .ac-workspace-nav-item--active {
   background-color: var(--ws-active);
-  color: #F4F7FC;
+  color: var(--ws-text-primary, #F2F2F3);
 }
 
 .ac-workspace-nav-item--active::before {
@@ -2562,7 +2575,7 @@ html.light .ac-kpi-card--interactive:hover {
   bottom: 6px;
   width: 2px;
   border-radius: 2px;
-  background: var(--brand-teal);
+  background: var(--accent, var(--brand-teal));
 }
 
 .ac-workspace-nav-subitem {

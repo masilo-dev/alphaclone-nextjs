@@ -62,20 +62,25 @@ export const LIGHT_NEUTRALS = {
 } as const;
 
 export const DARK_NEUTRALS = {
-  appBackground: '#0D0F18',
-  sidebarBackground: '#15182A',
-  surfacePrimary: '#171A26',
-  surfaceSecondary: '#1B1E2B',
-  surfaceTertiary: '#202432',
-  borderSubtle: 'rgba(255, 255, 255, 0.06)',
-  borderStrong: 'rgba(255, 255, 255, 0.18)',
-  textPrimary: '#F7F8FB',
-  textSecondary: '#B9BDCA',
-  textMuted: '#9095A5',
-  textDisabled: '#656A78',
-  hover: '#252936',
-  selected: '#23363B',
-  overlay: 'rgba(0, 0, 0, 0.68)',
+  appBackground: '#111113',
+  sidebarBackground: '#151517',
+  headerBackground: '#151517',
+  surfacePrimary: '#19191C',
+  surfaceSecondary: '#202024',
+  surfaceTertiary: '#29292E',
+  borderSubtle: '#2C2C31',
+  borderStrong: '#3A3A40',
+  textPrimary: '#F2F2F3',
+  textSecondary: '#B0B0B8',
+  textMuted: '#85858F',
+  textDisabled: '#5C5C66',
+  hover: '#202024',
+  selected: '#29292E',
+  accent: '#4D8DFF',
+  success: '#36B98A',
+  warning: '#E5AC55',
+  danger: '#E36B72',
+  overlay: 'rgba(0, 0, 0, 0.72)',
 } as const;
 
 export const SEMANTIC = {
@@ -226,15 +231,15 @@ export const CHART_COLORS = {
 } as const;
 
 export const OS_TYPOGRAPHY = {
-  pageTitle: { size: '22px', lineHeight: '28px', weight: 700 },
-  sectionTitle: { size: '16px', lineHeight: '22px', weight: 650 },
-  cardTitle: { size: '14px', lineHeight: '20px', weight: 600 },
-  body: { size: '13.5px', lineHeight: '20px', weight: 400 },
-  bodyStrong: { size: '13.5px', lineHeight: '20px', weight: 600 },
-  caption: { size: '11.5px', lineHeight: '16px', weight: 500 },
-  kpiLarge: { size: '24px', lineHeight: '30px', weight: 700 },
-  kpiMedium: { size: '18px', lineHeight: '24px', weight: 700 },
-  table: { size: '12.5px', lineHeight: '18px', weight: 400 },
+  pageTitle: { size: '18px', lineHeight: '24px', weight: 650 },
+  sectionTitle: { size: '14px', lineHeight: '20px', weight: 600 },
+  cardTitle: { size: '13px', lineHeight: '18px', weight: 600 },
+  body: { size: '12.5px', lineHeight: '18px', weight: 400 },
+  bodyStrong: { size: '12.5px', lineHeight: '18px', weight: 600 },
+  caption: { size: '11px', lineHeight: '15px', weight: 500 },
+  kpiLarge: { size: '20px', lineHeight: '26px', weight: 700 },
+  kpiMedium: { size: '16px', lineHeight: '22px', weight: 700 },
+  table: { size: '12px', lineHeight: '16px', weight: 400 },
 } as const;
 
 export const OS_SPACE = {
@@ -250,10 +255,10 @@ export const OS_SPACE = {
 } as const;
 
 export const OS_RADIUS = {
-  control: '8px',
-  card: '14px',
-  panel: '16px',
-  modal: '18px',
+  control: '6px',
+  card: '10px',
+  panel: '12px',
+  modal: '14px',
   pill: '999px',
 } as const;
 

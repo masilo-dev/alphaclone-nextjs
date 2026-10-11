@@ -41,6 +41,7 @@ import BonnieWorkspaceViews, {
 } from './workspace/BonnieWorkspaceViews';
 import { BC } from './bonnieChakra';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { WorkspaceSplitter, useMultiPanelWorkspace } from '@/components/ui/workspace';
 
 type BonnieFullViewProps = {
   variant?: 'default' | 'popout';
@@ -60,6 +61,17 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
   const tenantId = currentTenant?.id;
   const conversationParam = searchParams?.get('conversation') ?? null;
   const queuedPrompt = searchParams?.get('q')?.trim() || null;
+
+  const {
+    panel1Width,
+    panel3Width,
+    activeResizingPanel,
+    getSplitterProps,
+  } = useMultiPanelWorkspace({
+    namespace: 'bonnie-fullview',
+    panel1Constraints: { defaultWidth: 280, minWidth: 220, maxWidth: 440 },
+    panel3Constraints: { defaultWidth: 320, minWidth: 260, maxWidth: 500 },
+  });
 
   const { pendingCount, handleApproval, refresh: refreshApprovals } = useBonnieApprovals(tenantId);
   const {
@@ -389,6 +401,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
       className="ac-enterprise-module"
     >
       <BonnieSidebar
+        width={panel1Width}
         collapsed={sidebarCollapsed}
         onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
         mobileOpen={mobileSidebarOpen}
@@ -422,6 +435,13 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
         }
         onSearch={(q) => void refresh({ q, includeArchived: true })}
         onOpenApprovals={() => router.push('/dashboard/bonnie/approvals')}
+      />
+
+      <WorkspaceSplitter
+        panelIndex={1}
+        isResizing={activeResizingPanel === 1}
+        className="hidden md:flex"
+        {...getSplitterProps(1)}
       />
 
       <Flex direction="column" minW={0} flex={1}>
@@ -659,24 +679,33 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
 
       {contextOpen ? (
         isDesktopContext ? (
-          <Flex h="full" flexShrink={0}>
-            <BonnieContextPanel
-              open={contextOpen}
-              onClose={() => setContextOpen(false)}
-              items={contextItems}
-              onRemove={(id) => setContextItems((prev) => prev.filter((item) => item.id !== id))}
-              pendingApprovals={pendingCount}
-              connectionStatus="connected"
-              goals={goals}
-              goalsLoading={goalsLoading}
-              goalsChasing={goalsChasing}
-              onChaseGoals={runChase}
-              onCancelGoal={(id) => void patchGoal(id, { cancel: true })}
-              onResumeGoal={(id) => void patchGoal(id, { resume: true })}
-              tenantId={tenantId}
-              onSelectGoal={handleSelectGoal}
+          <>
+            <WorkspaceSplitter
+              panelIndex={3}
+              isResizing={activeResizingPanel === 3}
+              className="hidden md:flex"
+              {...getSplitterProps(3)}
             />
-          </Flex>
+            <Flex h="full" flexShrink={0}>
+              <BonnieContextPanel
+                width={panel3Width}
+                open={contextOpen}
+                onClose={() => setContextOpen(false)}
+                items={contextItems}
+                onRemove={(id) => setContextItems((prev) => prev.filter((item) => item.id !== id))}
+                pendingApprovals={pendingCount}
+                connectionStatus="connected"
+                goals={goals}
+                goalsLoading={goalsLoading}
+                goalsChasing={goalsChasing}
+                onChaseGoals={runChase}
+                onCancelGoal={(id) => void patchGoal(id, { cancel: true })}
+                onResumeGoal={(id) => void patchGoal(id, { resume: true })}
+                tenantId={tenantId}
+                onSelectGoal={handleSelectGoal}
+              />
+            </Flex>
+          </>
         ) : (
           <Box
             position="fixed"

@@ -56,7 +56,7 @@ const SheetContent = React.forwardRef<
         // Transition
         'transition-transform duration-300 ease-out data-[state=closed]:duration-200',
         sheetSideClasses[side],
-        side === 'bottom' || side === 'top' ? 'p-3.5 pt-5 pb-safe' : 'p-4 sm:p-5',
+        side === 'bottom' || side === 'top' ? 'p-3 pt-4 pb-safe' : 'p-3 sm:p-4',
         className
       )}
       {...props}

@@ -133,11 +133,31 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ tenan
     if (value.wonDetails !== undefined) updates.won_details = value.wonDetails || null;
     if (stageChanged) {
       updates.metadata = { ...(existing.metadata || {}), previous_stage: existing.stage, last_stage_change_at: changedAt, stage_change_reason: value.stageReason || null, stage_history: [...history.slice(-19), { from: existing.stage, to: value.stage, reason: value.stageReason || undefined, changed_at: changedAt }] };
+      updates.entered_column_at = changedAt;
       if (value.stage === 'closed_won') updates.actual_close_date = changedAt.slice(0, 10);
     }
     const { data, error } = await admin.from('deals').update(updates).eq('id', value.id).eq('tenant_id', tenantId).select('*').single();
     if (error) throw error;
-    if (stageChanged) await admin.from('deal_stage_history').insert({ deal_id: value.id, tenant_id: tenantId, from_stage: existing.stage, to_stage: value.stage, changed_by: user.id });
+    if (stageChanged) {
+      const prevEnteredAt = existing.entered_column_at || existing.updated_at || existing.created_at;
+      const durationMs = Math.max(0, new Date(changedAt).getTime() - new Date(prevEnteredAt).getTime());
+      await admin.from('deal_stage_history').insert({ deal_id: value.id, tenant_id: tenantId, from_stage: existing.stage, to_stage: value.stage, changed_by: user.id });
+      await admin.from('board_transition_logs').insert({
+        tenant_id: tenantId,
+        board_type: 'crm_deals',
+        card_id: value.id,
+        from_state: existing.stage,
+        to_state: value.stage,
+        actor_id: user.id,
+        reason: value.stageReason || value.lostReason || null,
+        duration_in_previous_state_ms: durationMs,
+        is_override: false,
+        metadata: {
+          previous_entered_at: prevEnteredAt,
+          value: value.value !== undefined ? value.value : existing.value,
+        },
+      });
+    }
     await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: stageChanged ? 'deal_stage_changed' : 'deal_updated', payload: { dealId: value.id, actorUserId: user.id, oldStage: existing.stage, newStage: value.stage || existing.stage } });
     return NextResponse.json({ deal: data });
   } catch (error) {
@@ -156,8 +176,16 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ tena
     if (lookupError) throw lookupError;
     const foundIds = (existing || []).map((row: any) => row.id);
     if (foundIds.length) {
-      const { error } = await admin.from('deals').delete().eq('tenant_id', tenantId).in('id', foundIds);
-      if (error) throw error;
+      const { BoardArchiveService } = await import('@/lib/kanban/boardArchiveService');
+      for (const id of foundIds) {
+        await BoardArchiveService.archiveCard({
+          tenantId,
+          boardType: 'crm_deals',
+          cardId: id,
+          actorId: user.id,
+          reason: 'Deleted by user (Archived)',
+        });
+      }
     }
     await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: 'deals_deleted', payload: { dealIds: foundIds, actorUserId: user.id } });
     return NextResponse.json({ success: true, count: foundIds.length });

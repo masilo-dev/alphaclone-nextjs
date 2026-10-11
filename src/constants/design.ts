@@ -203,11 +203,11 @@ export const ENTERPRISE = {
       'sticky top-0 z-20 bg-[var(--ws-toolbar)] backdrop-blur-none border-b border-[var(--ws-border)]',
   },
   dataTable: {
-    cellPadding: 'px-3 py-2',
+    cellPadding: 'px-2 py-1',
     stickyHeader: 'sticky top-0 z-[1] bg-[var(--ws-panel)]',
     rowHover: 'hover:bg-[var(--ws-hover)]',
     rowAlt: 'even:bg-[var(--ws-surface-secondary)]',
-    rowHeight: 'h-[40px]',
+    rowHeight: 'h-[32px]',
   },
   touchTarget: 'min-h-11 min-w-11',
   drawer: {
@@ -225,24 +225,35 @@ export const ENTERPRISE = {
  * Alphaclone Systems workspace chrome — navy structure, coral primary, teal intelligence.
  */
 export const WORKSPACE = {
+  multiPanel: {
+    navDefaultWidth: 280,
+    navMinWidth: 200,
+    navMaxWidth: 440,
+    contextDefaultWidth: 340,
+    contextMinWidth: 260,
+    contextMaxWidth: 540,
+    primaryMinWidth: 360,
+    splitterWidth: 5,
+    headerHeight: 'h-9',
+  },
   sidebar: {
-    widthExpanded: 'w-56 md:w-52',
+    widthExpanded: 'w-52 md:w-48',
     widthCollapsed: 'md:w-14',
-    logoHeight: 'h-12',
+    logoHeight: 'h-10',
   },
   toolbar: {
-    height: 'h-11 md:h-12',
-    padding: 'px-3 sm:px-4 md:px-5',
+    height: 'h-10 md:h-11',
+    padding: 'px-2.5 sm:px-3 md:px-4',
   },
   canvas: {
     maxWidth: 'max-w-[1440px]',
-    padding: 'p-2.5 sm:p-3.5 md:p-4',
-    gap: 'gap-2.5 md:gap-3.5',
+    padding: 'p-2 sm:p-2.5 md:p-3',
+    gap: 'gap-2 md:gap-2.5',
   },
   panel: {
     base: 'ac-workspace-panel',
-    radius: 'rounded-[10px] md:rounded-[12px]',
-    padding: 'p-2.5 sm:p-3.5 md:p-4',
+    radius: 'rounded-[8px] md:rounded-[10px]',
+    padding: 'p-2 sm:p-2.5 md:p-3',
   },
   action: {
     primary: 'ac-workspace-action-btn ac-workspace-action-btn--primary',
@@ -260,11 +271,11 @@ export const WORKSPACE = {
     active: 'ac-workspace-tab--active',
   },
   typography: {
-    pageTitle: 'text-lg sm:text-xl leading-6 font-bold text-[var(--ws-text-primary)] tracking-tight',
+    pageTitle: 'text-base sm:text-lg leading-6 font-semibold text-[var(--ws-text-primary)] tracking-tight',
     sectionLabel: 'type-caption font-semibold uppercase tracking-label text-[var(--ws-text-muted)]',
-    panelTitle: 'text-sm sm:text-base font-semibold text-[var(--ws-text-primary)]',
+    panelTitle: 'text-xs sm:text-sm font-semibold text-[var(--ws-text-primary)]',
     panelSubtitle: 'type-caption text-[var(--ws-text-muted)]',
-    sectionTitle: 'text-sm sm:text-base font-semibold text-[var(--ws-text-primary)]',
+    sectionTitle: 'text-xs sm:text-sm font-semibold text-[var(--ws-text-primary)]',
   },
 } as const;
 

@@ -175,11 +175,15 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
         const oldStage = draggedLead.stage;
         const newStage = stageId as Lead['stage'];
 
-        const stageOrder = ['lead', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
-        if (stageOrder.indexOf(newStage) < stageOrder.indexOf(oldStage)) {
-            toast.error('Cannot move lead back to a previous stage');
-            setDraggedLead(null);
-            return;
+        let reason: string | undefined;
+        if (newStage === 'abandoned' || (newStage as string) === 'lost') {
+            const reasonInput = window.prompt('Enter mandatory reason for marking this onboarding journey as Stalled / Abandoned:');
+            if (!reasonInput || !reasonInput.trim()) {
+                toast.error('A reason is mandatory.');
+                setDraggedLead(null);
+                return;
+            }
+            reason = reasonInput.trim();
         }
 
         // Optimistic update
@@ -188,14 +192,14 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
         ));
 
         try {
-            await leadService.updateLead(draggedLead.id, { stage: newStage });
-            toast.success(`Moved to ${stageId}`);
-        } catch (err) {
+            await leadService.updateLead(draggedLead.id, { stage: newStage, stageReason: reason });
+            toast.success(`Moved to ${stageId.replace('_', ' ')}`);
+        } catch (err: any) {
             // Rollback on error
             setLeads(prev => prev.map(l =>
                 l.id === draggedLead.id ? { ...l, stage: oldStage } : l
             ));
-            toast.error('Failed to move lead');
+            toast.error(err.message || 'Failed to move');
         } finally {
             setDraggedLead(null);
         }
@@ -211,12 +215,13 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
     }
 
     const stages = [
-        { id: 'lead', label: 'Lead', color: 'bg-slate-600', count: leads.filter(l => l.stage === 'lead').length },
-        { id: 'qualified', label: 'Qualified', color: 'bg-blue-600', count: leads.filter(l => l.stage === 'qualified').length },
-        { id: 'proposal', label: 'Proposal', color: 'bg-purple-600', count: leads.filter(l => l.stage === 'proposal').length },
-        { id: 'negotiation', label: 'Negotiation', color: 'bg-orange-600', count: leads.filter(l => l.stage === 'negotiation').length },
-        { id: 'won', label: 'Won', color: 'bg-green-600', count: leads.filter(l => l.stage === 'won').length },
-        { id: 'lost', label: 'Lost', color: 'bg-red-600', count: leads.filter(l => l.stage === 'lost').length },
+        { id: 'kickoff', label: 'Kickoff', color: 'bg-blue-600', wipLimit: 10, count: leads.filter(l => l.stage === 'kickoff').length },
+        { id: 'data_collection', label: 'Data Collection', color: 'bg-indigo-600', wipLimit: 8, count: leads.filter(l => l.stage === 'data_collection').length },
+        { id: 'technical_setup', label: 'System Setup', color: 'bg-purple-600', wipLimit: 6, count: leads.filter(l => l.stage === 'technical_setup').length },
+        { id: 'training', label: 'User Training', color: 'bg-orange-600', wipLimit: 5, count: leads.filter(l => l.stage === 'training').length },
+        { id: 'live_review', label: 'Live Review', color: 'bg-teal-600', wipLimit: 5, count: leads.filter(l => l.stage === 'live_review').length },
+        { id: 'completed', label: 'Live & Graduated', color: 'bg-emerald-600', wipLimit: null, count: leads.filter(l => l.stage === 'completed').length },
+        { id: 'abandoned', label: 'Stalled / Abandoned', color: 'bg-rose-600', wipLimit: null, count: leads.filter(l => l.stage === 'abandoned' || l.stage === 'lost').length },
     ];
 
     const totalValue = leads

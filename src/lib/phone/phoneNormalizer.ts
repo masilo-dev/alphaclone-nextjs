@@ -271,7 +271,7 @@ export function normalizePhoneNumber(
     // Incomplete local subscriber numbers without area codes (e.g. 6 digits like '305 810')
     // cannot be dialed internationally or out-of-area, and must not pass as valid reachable contacts.
     const natDigits = parsed.nationalNumber.replace(/\D/g, '');
-    if (natDigits.length < 7 || (inferred === 'ZW' && natDigits.length < 8)) {
+    if (natDigits.length < 7) {
       return {
         phone: raw,
         e164: null,

@@ -34,8 +34,10 @@ import {
   Clock,
   Eye,
   Keyboard,
+  X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { WorkspaceSplitter, useMultiPanelWorkspace } from '@/components/ui/workspace';
 import { classifyEmailFromAddress, type EmailClassification } from '@/lib/email/classifyEmail';
 import { buildSafeEmailBodyHtml } from '@/lib/email/sanitizeEmailHtml';
 
@@ -287,6 +289,24 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
       }
     },
     showToast: false,
+  });
+
+  const {
+    panel1Width,
+    panel3Width,
+    panel3Collapsed,
+    activeResizingPanel,
+    isMobile,
+    isTablet,
+    togglePanel3,
+    getSplitterProps,
+    containerRef,
+  } = useMultiPanelWorkspace({
+    namespace: 'unified-inbox',
+    panel1Constraints: { defaultWidth: 340, minWidth: 260, maxWidth: 500 },
+    panel3Constraints: { defaultWidth: 320, minWidth: 260, maxWidth: 480 },
+    defaultPanel1Collapsed: false,
+    defaultPanel3Collapsed: true,
   });
 
   useEffect(() => {
@@ -859,7 +879,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
   }
 
   return (
-    <div className="relative h-full min-h-0">
+    <div className="relative h-full min-h-0" ref={containerRef}>
       <div
         className="flex h-full min-h-0 ac-workspace-panel overflow-hidden"
         role="region"
@@ -938,7 +958,8 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
 
         {/* Message list */}
         <div
-          className={`${selectedId ? 'hidden md:flex' : 'flex'} w-full md:w-[min(340px,45%)] 2xl:w-[380px] flex-col h-full min-h-0 border-r border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 shrink-0`}
+          style={{ width: !isMobile ? `${panel1Width}px` : undefined }}
+          className={`${selectedId ? 'hidden md:flex' : 'flex'} w-full md:w-auto flex-col h-full min-h-0 border-r border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 shrink-0`}
         >
           <div className="max-h-[45%] overflow-y-auto p-2.5 border-b border-white/8 shrink-0 space-y-2">
             {/* AI draft banner */}
@@ -1163,7 +1184,15 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
           </div>
         </div>
 
-        {/* Read & reply — 70% width, flex-1 */}
+        {/* Workspace Splitter between message list and reading pane */}
+        <WorkspaceSplitter
+          panelIndex={1}
+          isResizing={activeResizingPanel === 1}
+          className="hidden md:flex"
+          {...getSplitterProps(1)}
+        />
+
+        {/* Read & reply — flex-1 */}
         <div data-testid="email-detail" className={`${selectedId ? 'flex' : 'hidden md:flex'} email-detail email-detail-view flex-1 flex-col min-w-0 h-full min-h-0`}>
           {selectedEmail && folder !== 'drafts' ? (
             <>
@@ -1323,15 +1352,32 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                       Open in Outlook ↗
                     </a>
                   )}
+                  <button
+                    type="button"
+                    onClick={togglePanel3}
+                    title={panel3Collapsed ? t('Open lead insight panel') : t('Hide lead insight panel')}
+                    className={`hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg type-ui font-semibold border transition-colors ${
+                      !selectedEmail.webLink ? 'ml-auto ' : ''
+                    }${
+                      !panel3Collapsed
+                        ? 'border-[var(--brand-teal)]/40 bg-[var(--brand-teal)]/10 text-[var(--brand-teal)]'
+                        : 'border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+                    <span>{panel3Collapsed ? t('Insights') : t('Hide Insights')}</span>
+                  </button>
                 </div>
               </div>
 
-              {/* ── Lead insight: collapsed/dismissible, not inline above body ── */}
+              {/* ── Lead insight: collapsed/dismissible, shown inline when Panel 3 is collapsed ── */}
               <div
                 className="ac-email-reader-scroll flex-1 ac-scroll-pane p-4 md:p-5 space-y-6"
                 data-testid="email-reading-pane"
               >
-                <EmailLeadInsightPanel from={selectedEmail.from} subject={selectedEmail.subject} collapsible />
+                {(panel3Collapsed || isTablet || isMobile) && (
+                  <EmailLeadInsightPanel from={selectedEmail.from} subject={selectedEmail.subject} collapsible />
+                )}
 
                 {/* ── Attachment Card Grid (if email has attachments) ── */}
                 {selectedEmail?.hasAttachments && (
@@ -1514,6 +1560,39 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
             </div>
           )}
         </div>
+
+        {/* Panel 3: Lead & Context Insight Panel */}
+        {!panel3Collapsed && selectedEmail && !isMobile && !isTablet && (
+          <>
+            <WorkspaceSplitter
+              panelIndex={3}
+              isResizing={activeResizingPanel === 3}
+              className="hidden xl:flex"
+              {...getSplitterProps(3)}
+            />
+            <aside
+              style={{ width: `${panel3Width}px` }}
+              className="hidden xl:flex flex-col h-full min-h-0 border-l border-[var(--ws-border)] bg-[var(--ws-panel)] shrink-0 overflow-y-auto p-4 custom-scrollbar"
+              aria-label="Lead and context details"
+            >
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-[var(--ws-border)] shrink-0">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-teal-400" />
+                  <h3 className="type-card-title font-semibold text-[var(--ws-text-primary)]">{t('Lead & Context')}</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={togglePanel3}
+                  className="rounded-lg p-1 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]"
+                  aria-label="Close insight panel"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <EmailLeadInsightPanel from={selectedEmail.from} subject={selectedEmail.subject} compact />
+            </aside>
+          </>
+        )}
       </div>
 
       {composeOpen && user && (

@@ -10,6 +10,7 @@ import { enrichBusinessWithDecisionMakers } from '@/lib/scraper/decisionMakerScr
 import { hasPhoneOrEmail } from '@/lib/scraper/contactGate';
 import { canUseBrowserScraper } from '@/lib/scraper/browserSerpLeads';
 import { resolveBusinessEntity, normalizeEmail, normalizePhone, normalizeDomain } from '@/lib/lead-finder/core';
+import { COMPETITOR_KEYWORDS_FOR_WEBSITE_OFFERS } from '@/lib/lead-finder/qualificationContract';
 
 export function formatSearchNiche(intent: ParsedLeadIntent): string {
   return (
@@ -358,6 +359,15 @@ function scoreFromLeadResult(
   });
   if (!entity.isRealBusiness) {
     return { score: 0, grade: 'Reject' };
+  }
+
+  const isCompetitor = (COMPETITOR_KEYWORDS_FOR_WEBSITE_OFFERS || []).some((kw) => {
+    const name = String(lead.business_name || '').toLowerCase();
+    const ind = String(lead.category || '').toLowerCase();
+    return name.includes(kw) || ind.includes(kw);
+  });
+  if (isCompetitor) {
+    return { score: 10, grade: 'Reject' };
   }
 
   const validEmail = normalizeEmail(lead.email);

@@ -18,6 +18,8 @@ import { useTenant } from '@/contexts/TenantContext';
 import { toast } from 'react-hot-toast';
 import { Button, Input, Modal } from '../../ui/UIComponents';
 
+import { CRM_DEALS_BOARD_DEFINITION } from '@/lib/kanban/boardDefinitions';
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 export interface Deal {
   id: string;
@@ -32,6 +34,12 @@ export interface Deal {
   contact_id?: string;
   notes?: string;
   score?: number;
+  next_action?: string;
+  next_action_date?: string;
+  is_blocked?: boolean;
+  blocked_reason?: string;
+  class_of_service?: 'expedite' | 'fixed_date' | 'standard' | 'intangible';
+  entered_column_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -70,8 +78,10 @@ const DealCard: React.FC<{
   onMove: (id: string, newStage: Deal['stage']) => void;
 }> = ({ deal, onEdit, onDelete, onMove }) => {
   const currentIndex = STAGE_ORDER.indexOf(deal.stage);
-  const canMoveForward = currentIndex < STAGE_ORDER.length - 1;
-  const canMoveBack = currentIndex > 0;
+  const canMoveForward = currentIndex < STAGE_ORDER.length - 1 && deal.stage !== 'closed_won' && deal.stage !== 'closed_lost';
+  const canMoveBack = currentIndex > 0 && deal.stage !== 'closed_won' && deal.stage !== 'closed_lost';
+  const isOpenDeal = deal.stage !== 'closed_won' && deal.stage !== 'closed_lost';
+  const hasNextAction = Boolean(deal.next_action && deal.next_action.trim());
 
   return (
     <motion.div
@@ -79,10 +89,26 @@ const DealCard: React.FC<{
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="dashboard-panel-soft p-4 space-y-3 hover:border-teal-500/30 transition-colors group"
+      className={`dashboard-panel-soft p-4 space-y-3 transition-colors group ${
+        deal.is_blocked ? 'border-rose-500/50 bg-rose-500/5' : 'hover:border-teal-500/30'
+      }`}
     >
       <div className="flex items-start justify-between gap-2">
-        <h4 className="type-ui font-bold text-[var(--ws-text-primary)] truncate flex-1">{deal.name}</h4>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <h4 className="type-ui font-bold text-[var(--ws-text-primary)] truncate">{deal.name}</h4>
+            {deal.class_of_service === 'expedite' && (
+              <span className="px-1.5 py-0.5 text-[10px] font-bold bg-rose-500/20 text-rose-300 rounded border border-rose-500/30">
+                EXPEDITE
+              </span>
+            )}
+            {deal.is_blocked && (
+              <span className="px-1.5 py-0.5 text-[10px] font-bold bg-rose-500 text-white rounded">
+                BLOCKED
+              </span>
+            )}
+          </div>
+        </div>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => onEdit(deal)}
@@ -106,6 +132,33 @@ const DealCard: React.FC<{
         <Target className="w-3.5 h-3.5 text-purple-400" />
         <span>{deal.probability}%</span>
       </div>
+
+      {deal.is_blocked && deal.blocked_reason && (
+        <div className="p-2 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-300 text-xs">
+          <strong>Blocker:</strong> {deal.blocked_reason}
+        </div>
+      )}
+
+      {isOpenDeal && (
+        <div className="text-xs pt-0.5 border-t border-[var(--ws-border)]/50">
+          {hasNextAction ? (
+            <div className="flex items-center gap-1.5 text-teal-400/90 truncate">
+              <Clock className="w-3 h-3 shrink-0" />
+              <span className="truncate">{deal.next_action}</span>
+              {deal.next_action_date && (
+                <span className="text-[var(--ws-text-muted)] shrink-0">
+                  ({new Date(deal.next_action_date).toLocaleDateString()})
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 text-amber-400 font-medium">
+              <AlertCircle className="w-3 h-3 shrink-0" />
+              <span>Needs scheduled touch</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {deal.expected_close_date && (
         <div className="flex items-center gap-1.5 type-caption text-[var(--ws-text-muted)]">
@@ -411,6 +464,19 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
   };
 
   const handleMoveDeal = async (id: string, newStage: Deal['stage']) => {
+    let lossReason: string | undefined;
+    if (newStage === 'closed_lost') {
+      const reasonInput = window.prompt('Enter mandatory reason for marking this deal as Closed Lost:');
+      if (!reasonInput || !reasonInput.trim()) {
+        toast.error('A reason is mandatory for marking a deal as Lost.');
+        return;
+      }
+      lossReason = reasonInput.trim();
+    }
+
+    const currentDeal = deals.find(d => d.id === id);
+    if (!currentDeal) return;
+
     const newProbability = DEFAULT_STAGE_PROBABILITIES[newStage] ?? 50;
     // Optimistic update
     setDeals(prev =>
@@ -420,18 +486,26 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
     );
 
     try {
-      const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/deals`, {
-        method: 'PATCH',
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/kanban/transitions`, {
+        method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, stage: newStage, probability: newProbability })
+        body: JSON.stringify({
+          boardType: 'crm_deals',
+          cardId: id,
+          targetState: newStage,
+          reason: lossReason,
+        })
       });
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || 'Failed to move deal');
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to move deal');
+      }
+      toast.success(`Moved to ${newStage.replace('_', ' ')}`);
     } catch (err: any) {
       // Revert on failure
       loadDeals();
-      toast.error('Failed to move deal');
+      toast.error(err.message || 'Failed to move deal');
     }
   };
 
@@ -499,20 +573,26 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
         </div>
       ) : (
         <div className="flex xl:grid xl:grid-cols-6 gap-3 overflow-x-auto pb-20 [scrollbar-width:thin]">
-          {groupedDeals.map(stage => (
-            <div key={stage.key} className="w-[240px] xl:w-auto xl:min-w-0 shrink-0 space-y-2">
-              {/* Stage Header */}
-              <div className={`px-3 py-2 rounded-lg type-caption font-bold ${stage.color}`}>
-                <div className="flex items-center justify-between">
-                  <span>{stage.label}</span>
-                  <span className="text-[var(--ws-text-muted)]">{stage.deals.length}</span>
-                </div>
-                {stage.deals.length > 0 && (
-                  <div className="type-ui text-[var(--ws-text-muted)] mt-1">
-                    ${stage.totalValue.toLocaleString()}
+          {groupedDeals.map(stage => {
+            const columnDef = CRM_DEALS_BOARD_DEFINITION.columns.find(c => c.id === stage.key);
+            const wipLimit = columnDef?.wipLimit;
+            const isOverWip = wipLimit ? stage.deals.length >= wipLimit : false;
+            return (
+              <div key={stage.key} className="w-[240px] xl:w-auto xl:min-w-0 shrink-0 space-y-2">
+                {/* Stage Header */}
+                <div className={`px-3 py-2 rounded-lg type-caption font-bold ${stage.color} ${isOverWip ? 'ring-2 ring-amber-500/50' : ''}`}>
+                  <div className="flex items-center justify-between">
+                    <span>{stage.label}</span>
+                    <span className={`text-[var(--ws-text-muted)] ${isOverWip ? 'text-amber-400 font-extrabold' : ''}`}>
+                      {stage.deals.length}{wipLimit ? ` / ${wipLimit}` : ''}
+                    </span>
                   </div>
-                )}
-              </div>
+                  {stage.deals.length > 0 && (
+                    <div className="type-ui text-[var(--ws-text-muted)] mt-1">
+                      ${stage.totalValue.toLocaleString()}
+                    </div>
+                  )}
+                </div>
 
               {/* Deal Cards */}
               <AnimatePresence>
@@ -536,7 +616,8 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

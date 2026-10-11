@@ -30,6 +30,7 @@ export interface ApifyDiscoveryParams {
   location?: string;
   country?: string;
   city?: string;
+  searchStringsArray?: string[];
   radiusKm?: number;
   resultLimit?: number;
   filterNoWebsite?: boolean;
@@ -387,16 +388,20 @@ export function normalizeApifyPlaceItem(
 
 /** Formats Google Places crawler input according to official Apify actor schema. */
 export function buildGooglePlacesActorInput(params: ApifyDiscoveryParams): Record<string, unknown> {
-  const searchTerms: string[] = [];
-  const keyword = [params.industry, params.query].filter(Boolean).join(' ').trim();
+  let searchTerms: string[] = [];
   const location = [params.city, params.location, params.country].filter(Boolean).join(', ').trim();
 
-  if (keyword) {
-    searchTerms.push(location ? `${keyword} in ${location}` : keyword);
-  } else if (location) {
-    searchTerms.push(`businesses in ${location}`);
+  if (params.searchStringsArray && params.searchStringsArray.length > 0) {
+    searchTerms = params.searchStringsArray.slice(0, 5);
   } else {
-    searchTerms.push('local businesses');
+    const keyword = [params.industry, params.query].filter(Boolean).join(' ').trim();
+    if (keyword) {
+      searchTerms.push(location ? `${keyword} in ${location}` : keyword);
+    } else if (location) {
+      searchTerms.push(`businesses in ${location}`);
+    } else {
+      searchTerms.push('local businesses');
+    }
   }
 
   const maxPlaces = Math.max(5, Math.min(params.resultLimit || 50, 250));

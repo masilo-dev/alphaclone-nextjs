@@ -19,8 +19,9 @@ import { BulkTeamMessageModal } from '@/components/dashboard/crm/BulkTeamMessage
 import { buildBulkTeamMessageBody, normalizeRecipientEmails } from '@/lib/email/bulkTeamMessage';
 import { LeadScoreBadge } from './LeadScoreBadge';
 import { ContactActivityTimeline } from './ContactActivityTimeline';
-import { Activity } from 'lucide-react';
+import { Activity, Columns3, Table as TableIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
+import CrmMultiPanelWorkspace from './CrmMultiPanelWorkspace';
 
 type ContactStatus = 'active' | 'inactive' | 'unsubscribed' | 'bounced';
 
@@ -28,6 +29,7 @@ interface ContactsListProps {
     onEditContact?: (contact: ContactWithCompany) => void;
     onCreateContact?: () => void;
     highlightContactId?: string | null;
+    initialViewMode?: 'workspace' | 'table';
 }
 
 const STATUS_CONFIG: Record<ContactStatus, { label: string; color: string; bgColor: string }> = {
@@ -37,9 +39,10 @@ const STATUS_CONFIG: Record<ContactStatus, { label: string; color: string; bgCol
     bounced: { label: 'Bounced', color: 'text-red-400', bgColor: 'bg-[var(--error-500)]/20' },
 };
 
-export default function ContactsList({ onEditContact, onCreateContact, highlightContactId }: ContactsListProps) {
+export default function ContactsList({ onEditContact, onCreateContact, highlightContactId, initialViewMode = 'workspace' }: ContactsListProps) {
     const { user } = useAuth();
     const searchParams = useSearchParams();
+    const [viewMode, setViewMode] = useState<'workspace' | 'table'>(initialViewMode);
     const [contacts, setContacts] = useState<ContactWithCompany[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -226,6 +229,46 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
         );
     }
 
+    if (viewMode === 'workspace') {
+        return (
+            <div className="w-full h-full min-h-0 flex flex-col space-y-2">
+                <div className="flex items-center justify-between pb-1">
+                    <div>
+                        <h2 className="text-base font-bold text-[var(--ws-text-primary)]">Contacts Workspace</h2>
+                        <p className="type-card-description text-[var(--ws-text-muted)]">Multi-panel continuous workspace for contacts, profiles, and activity.</p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <div className="flex items-center rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] p-0.5">
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('workspace')}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-[var(--surface-2)] text-[var(--accent)]"
+                            >
+                                <Columns3 className="w-3.5 h-3.5" />
+                                <span>Multi-Panel</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('table')}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                            >
+                                <TableIcon className="w-3.5 h-3.5" />
+                                <span>Table</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex-1 min-h-[620px] h-[calc(100vh-200px)] rounded-xl border border-[var(--border-subtle)] overflow-hidden">
+                    <CrmMultiPanelWorkspace
+                        initialContactId={requestedContactId}
+                        onEditContact={onEditContact}
+                        onCreateContact={onCreateContact}
+                    />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -235,6 +278,24 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                     <p className="type-card-description text-[var(--ws-text-secondary)]">Manage your contacts and leads</p>
                 </div>
                 <div className="flex items-center gap-2">
+                    <div className="flex items-center rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] p-0.5 mr-1">
+                        <button
+                            type="button"
+                            onClick={() => setViewMode('workspace')}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                        >
+                            <Columns3 className="w-3.5 h-3.5" />
+                            <span>Multi-Panel</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setViewMode('table')}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-[var(--surface-2)] text-[var(--accent)]"
+                        >
+                            <TableIcon className="w-3.5 h-3.5" />
+                            <span>Table</span>
+                        </button>
+                    </div>
                     {selectedIds.length > 0 && (
                         <>
                             <button

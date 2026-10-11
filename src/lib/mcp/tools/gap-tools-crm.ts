@@ -264,12 +264,40 @@ registerTool('gap-crm', {
   description: 'Update a task status, priority, due date, or assignment.',
   inputSchema: z.object({ tenant_id: tid, task_id: z.string(), status: z.string().optional(), priority: z.string().optional(), due_date: z.string().optional(), assigned_to: z.string().optional(), title: z.string().optional() }),
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, task_id: { type: 'string' }, status: { type: 'string' }, priority: { type: 'string' }, due_date: { type: 'string' }, assigned_to: { type: 'string' }, title: { type: 'string' } }, required: ['task_id'] },
-  handler: async (args) => {
+  handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
-    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    const nowIso = new Date().toISOString();
+    let oldStatus: string | null = null;
+    let prevEnteredAt = nowIso;
+    if (args.status) {
+      const { data: existing } = await supabase.from('tasks').select('status, entered_column_at, created_at, updated_at').eq('id', args.task_id).eq('tenant_id', args.tenant_id).maybeSingle();
+      if (existing) {
+        oldStatus = existing.status;
+        prevEnteredAt = (existing as any).entered_column_at || existing.updated_at || existing.created_at || nowIso;
+      }
+    }
+    const updates: Record<string, unknown> = { updated_at: nowIso };
     for (const k of ['status', 'priority', 'due_date', 'assigned_to', 'title'] as const) if (args[k] !== undefined) updates[k] = args[k];
+    if (args.status) updates.entered_column_at = nowIso;
     const { data, error } = await supabase.from('tasks').update(updates).eq('id', args.task_id).eq('tenant_id', args.tenant_id).select().single();
     if (error) return { content: [{ type: 'text', text: JSON.stringify({ error: error.message }) }] };
+
+    if (args.status && oldStatus && oldStatus !== args.status) {
+      const durationMs = Math.max(0, new Date(nowIso).getTime() - new Date(prevEnteredAt).getTime());
+      await supabase.from('board_transition_logs').insert({
+        tenant_id: args.tenant_id,
+        board_type: 'workspace_tasks',
+        card_id: args.task_id,
+        from_state: oldStatus,
+        to_state: args.status,
+        actor_id: ctx?.userId || null,
+        reason: 'Updated via MCP gap-crm tool',
+        duration_in_previous_state_ms: durationMs,
+        is_override: false,
+        metadata: { previous_entered_at: prevEnteredAt },
+      }).catch(() => {});
+    }
+
     return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
   },
 });

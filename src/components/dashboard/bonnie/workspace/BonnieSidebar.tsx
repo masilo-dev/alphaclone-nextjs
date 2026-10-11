@@ -51,6 +51,7 @@ type Props = {
   onDelete: (id: string) => void;
   onSearch: (q: string) => void;
   onOpenApprovals?: () => void;
+  width?: number;
 };
 
 const navButton = 'flex min-h-11 w-full items-center gap-2 rounded-[var(--ws-radius-control,8px)] px-2 text-left type-caption text-[var(--ws-text-secondary)] transition-colors hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]';
@@ -74,6 +75,7 @@ export default function BonnieSidebar({
   onDelete,
   onSearch,
   onOpenApprovals,
+  width,
 }: Props) {
   const [menuId, setMenuId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -87,7 +89,8 @@ export default function BonnieSidebar({
 
   const panel = (
     <aside
-      className={`flex h-full flex-col border-r border-[var(--ws-border)] bg-[var(--ws-panel)] text-[var(--ws-text-primary)] ${collapsed ? 'w-[72px]' : 'w-[280px]'}`}
+      style={!collapsed && width ? { width: `${width}px` } : undefined}
+      className={`flex h-full flex-col border-r border-[var(--ws-border)] bg-[var(--ws-panel)] text-[var(--ws-text-primary)] shrink-0 ${collapsed ? 'w-[72px]' : width ? '' : 'w-[280px]'}`}
       aria-label="Bonnie conversations"
     >
       <div className="flex items-center gap-2 border-b border-[var(--ws-border)] px-3 py-3">

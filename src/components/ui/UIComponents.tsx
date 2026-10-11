@@ -70,7 +70,7 @@ export const Card: React.FC<CardProps> = ({
       tabIndex={tabIndex ?? (isClickable ? 0 : undefined)}
       onClick={onClick}
       onKeyDown={handleKeyDown}
-      className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-3.5 sm:p-4 md:p-4.5 ${
+      className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-2.5 sm:p-3 md:p-3.5 ${
         hoverEffect || isClickable
           ? 'hover:bg-[var(--ws-hover)] transition-all duration-200 hover:border-[var(--ws-border-strong)]'
           : ''
@@ -175,7 +175,7 @@ export const Input: React.FC<InputProps> = ({
 
   const baseInputClass = `w-full bg-[var(--ws-surface-primary,var(--surface-primary))] border ${
     error ? 'border-[var(--danger)]' : 'border-[var(--ws-border,var(--border-default))]'
-  } rounded-[8px] px-3 py-1.5 sm:py-1.5 type-ui leading-normal text-[var(--ws-text-primary,var(--text-primary))] placeholder:text-[var(--ws-text-tertiary,var(--text-muted))] focus:outline-none focus:ring-1.5 focus:ring-[var(--focus-ring)] focus:border-[var(--ac-accent)] transition-colors ${
+  } rounded-[6px] px-2.5 py-1 sm:py-1 type-ui leading-normal text-[var(--ws-text-primary,var(--text-primary))] placeholder:text-[var(--ws-text-tertiary,var(--text-muted))] focus:outline-none focus:ring-1.5 focus:ring-[var(--focus-ring)] focus:border-[var(--ac-accent)] transition-colors ${
     icon ? 'pl-9' : ''
   } ${className}`;
 
@@ -205,7 +205,7 @@ export const Input: React.FC<InputProps> = ({
             id={fieldId}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy}
-            className={`${baseInputClass} min-h-[34px] sm:min-h-[32px] md:min-h-[34px] max-sm:min-h-10`}
+            className={`${baseInputClass} min-h-[30px] sm:min-h-[32px] md:min-h-[32px] max-sm:min-h-10`}
             {...(validate || isControlled
               ? { ...props, ...fieldProps }
               : fieldProps as React.InputHTMLAttributes<HTMLInputElement>)}
@@ -331,7 +331,7 @@ export const Modal: React.FC<ModalProps> = ({
 
 // --- Card Subcomponents ---
 export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className = '', ...props }) => (
-  <div className={`p-3.5 pb-1.5 sm:p-4 sm:pb-2 ${className}`} {...props} />
+  <div className={`p-2.5 pb-1 sm:p-3 sm:pb-1.5 ${className}`} {...props} />
 );
 
 export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({ className = '', ...props }) => (

@@ -264,17 +264,19 @@ registerTool('deals', {
     if (!tenantId) throw new Error('tenant_id is required');
     const { data: existing } = await supabase
       .from('deals')
-      .select('stage')
+      .select('stage, entered_column_at, created_at, updated_at')
       .eq('id', args.deal_id)
       .eq('tenant_id', tenantId)
       .maybeSingle();
 
+    const nowIso = new Date().toISOString();
     const updates: Record<string, unknown> = {
       ...args.fields,
-      updated_at: new Date().toISOString(),
+      updated_at: nowIso,
     };
     if (args.fields.stage) {
       updates.probability = getProbabilityForStage(args.fields.stage);
+      updates.entered_column_at = nowIso;
     }
 
     const { data, error } = await supabase
@@ -288,6 +290,31 @@ registerTool('deals', {
     if (error) throw error;
 
     const stageChanged = Boolean(args.fields.stage && existing?.stage && existing.stage !== args.fields.stage);
+    if (stageChanged && existing) {
+      const prevEnteredAt = existing.entered_column_at || existing.updated_at || existing.created_at || nowIso;
+      const durationMs = Math.max(0, new Date(nowIso).getTime() - new Date(prevEnteredAt).getTime());
+      await (supabase.from('deal_stage_history') as any).insert({
+        deal_id: args.deal_id,
+        tenant_id: tenantId,
+        from_stage: existing.stage,
+        to_stage: args.fields.stage,
+        changed_by: ctx.userId || null,
+      });
+      const { error: transErr } = await (supabase.from('board_transition_logs') as any).insert({
+        tenant_id: tenantId,
+        board_type: 'crm_deals',
+        card_id: args.deal_id,
+        from_state: existing.stage,
+        to_state: args.fields.stage,
+        actor_id: ctx.userId || null,
+        reason: 'Updated via MCP tool',
+        duration_in_previous_state_ms: durationMs,
+        is_override: false,
+        metadata: { previous_entered_at: prevEnteredAt },
+      });
+      if (transErr) console.error('[MCP deals] Failed to log transition:', transErr);
+    }
+
     await afterDealWrite(supabase, tenantId, args.deal_id, {
       stageChanged,
       oldStage: existing?.stage,
@@ -321,13 +348,14 @@ registerTool('deals', {
     if (!tenantId) throw new Error('tenant_id is required');
     const { data: currentDeal, error: fetchError } = await supabase
       .from('deals')
-      .select('stage')
+      .select('stage, entered_column_at, created_at, updated_at')
       .eq('id', args.deal_id)
       .eq('tenant_id', tenantId)
       .single();
 
     if (fetchError) throw fetchError;
     const oldStage = currentDeal.stage;
+    const nowIso = new Date().toISOString();
 
     // 2. Update stage and probability invariant
     const newProbability = getProbabilityForStage(args.new_stage);
@@ -336,7 +364,8 @@ registerTool('deals', {
       .update({
         stage: args.new_stage,
         probability: newProbability,
-        updated_at: new Date().toISOString(),
+        entered_column_at: nowIso,
+        updated_at: nowIso,
       })
       .eq('id', args.deal_id)
       .eq('tenant_id', tenantId)
@@ -345,7 +374,10 @@ registerTool('deals', {
 
     if (updateError) throw updateError;
 
-    const { error: historyError } = await supabase
+    const prevEnteredAt = currentDeal.entered_column_at || currentDeal.updated_at || currentDeal.created_at || nowIso;
+    const durationMs = Math.max(0, new Date(nowIso).getTime() - new Date(prevEnteredAt).getTime());
+
+    await supabase
       .from('deal_stage_history')
       .insert({
         deal_id: args.deal_id,
@@ -355,9 +387,20 @@ registerTool('deals', {
         changed_by: ctx.userId || null,
       });
 
-    if (historyError) {
-      console.error('Failed to log deal stage history:', historyError);
-    }
+    await (supabase
+      .from('board_transition_logs') as any)
+      .insert({
+        tenant_id: tenantId,
+        board_type: 'crm_deals',
+        card_id: args.deal_id,
+        from_state: oldStage,
+        to_state: args.new_stage,
+        actor_id: ctx.userId || null,
+        reason: 'Moved via MCP tool',
+        duration_in_previous_state_ms: durationMs,
+        is_override: false,
+        metadata: { previous_entered_at: prevEnteredAt },
+      });
 
     await afterDealWrite(supabase, tenantId, args.deal_id, {
       stageChanged: true,

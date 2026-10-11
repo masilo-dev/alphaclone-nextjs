@@ -528,13 +528,10 @@ export const leadService = {
 
         if (updates.stage) {
             const normalizedStage = normalizeLeadPipelineStage(updates.stage);
-            if (isTerminalLeadStage(normalizedStage) && normalizedStage === 'lost') {
-                return this.deleteLead(id);
-            }
 
             const { data: existingLead } = await supabase
                 .from('leads')
-                .select('stage, metadata')
+                .select('stage, metadata, entered_column_at, created_at, updated_at')
                 .eq('id', id)
                 .eq('tenant_id', tenantId)
                 .single();
@@ -554,6 +551,22 @@ export const leadService = {
                     ...updates,
                     metadata: appendLeadStageMetadata(existingMetadata, fromStage, normalizedStage, stageChangeReason),
                 };
+
+                // Append-only transition log
+                const nowIso = new Date().toISOString();
+                const prevEnteredAt = (existingLead as any).entered_column_at || existingLead.updated_at || existingLead.created_at || nowIso;
+                const durationMs = Math.max(0, new Date(nowIso).getTime() - new Date(prevEnteredAt).getTime());
+                void (supabase.from('board_transition_logs') as any).insert({
+                    tenant_id: tenantId,
+                    board_type: 'crm_leads',
+                    card_id: id,
+                    from_state: fromStage,
+                    to_state: normalizedStage,
+                    reason: stageChangeReason || null,
+                    duration_in_previous_state_ms: durationMs,
+                    is_override: false,
+                    metadata: { previous_entered_at: prevEnteredAt },
+                });
             }
 
             updates = { ...updates, stage: normalizedStage };
@@ -569,7 +582,10 @@ export const leadService = {
         if (updates.email !== undefined) dbPayload.email = updates.email;
         if (updates.website !== undefined) dbPayload.website = updates.website;
         if (updates.source !== undefined) dbPayload.source = updates.source;
-        if (updates.stage !== undefined) dbPayload.stage = updates.stage;
+        if (updates.stage !== undefined) {
+            dbPayload.stage = updates.stage;
+            dbPayload.entered_column_at = new Date().toISOString();
+        }
         if (updates.value !== undefined) dbPayload.value = updates.value;
         if (updates.notes !== undefined) dbPayload.notes = updates.notes;
         if (updates.client_id !== undefined) dbPayload.client_id = updates.client_id;
@@ -662,34 +678,34 @@ export const leadService = {
      */
     async deleteLead(id: string): Promise<{ error: string | null }> {
         const tenantId = this.getTenantId();
-        await fileUploadService.deleteFileByEntity('lead', id);
+        const nowIso = new Date().toISOString();
 
-        const { data, error } = await supabase.rpc('delete_tenant_lead', { p_lead_id: id });
-        if (!error && data && (data as { ok?: boolean }).ok) {
-            invalidateLeadsCache(tenantId);
-            return { error: null };
+        // Soft-archive lead instead of destructive hard delete
+        const { error: archiveError } = await supabase
+            .from('leads')
+            .update({
+                archived: true,
+                archived_at: nowIso,
+                updated_at: nowIso,
+            })
+            .eq('id', id)
+            .eq('tenant_id', tenantId);
+
+        if (archiveError) {
+            return { error: archiveError.message };
         }
 
-        if (error) {
-            const { error: directError } = await supabase
-                .from('leads')
-                .delete()
-                .eq('id', id)
-                .eq('tenant_id', tenantId);
-            if (!directError) invalidateLeadsCache(tenantId);
-            return { error: directError ? directError.message : error.message };
-        }
-
-        const rpcError = (data as { error?: string } | null)?.error;
-        if (rpcError) {
-            const { error: directError } = await supabase
-                .from('leads')
-                .delete()
-                .eq('id', id)
-                .eq('tenant_id', tenantId);
-            if (!directError) invalidateLeadsCache(tenantId);
-            return { error: directError ? directError.message : rpcError };
-        }
+        // Write append-only transition log
+        void (supabase.from('board_transition_logs') as any).insert({
+            tenant_id: tenantId,
+            board_type: 'crm_leads',
+            card_id: id,
+            from_state: 'lead',
+            to_state: 'archived',
+            reason: 'Lead archived',
+            is_override: false,
+            metadata: { archived_at: nowIso },
+        });
 
         invalidateLeadsCache(tenantId);
         return { error: null };
@@ -699,35 +715,35 @@ export const leadService = {
         if (!ids.length) return { error: null, count: 0 };
         const tenantId = this.getTenantId();
         const uniqueIds = [...new Set(ids.filter(Boolean))];
+        const nowIso = new Date().toISOString();
 
         try {
-            // Attachments are best-effort cleanup and must not turn a database bulk action
-            // into thousands of serial requests.
-            const attachmentConcurrency = 8;
-            for (let i = 0; i < uniqueIds.length; i += attachmentConcurrency) {
-                await Promise.allSettled(
-                    uniqueIds.slice(i, i + attachmentConcurrency)
-                        .map((id) => fileUploadService.deleteFileByEntity('lead', id))
-                );
-            }
+            const chunk = uniqueIds.slice(0, 500);
+            const { data, error } = await supabase
+                .from('leads')
+                .update({
+                    archived: true,
+                    archived_at: nowIso,
+                    updated_at: nowIso,
+                })
+                .eq('tenant_id', tenantId)
+                .in('id', chunk)
+                .select('id');
 
-            // PostgREST supports set-based deletes. Chunk IDs to keep request URLs bounded,
-            // while deleting hundreds of leads per database statement rather than one RPC
-            // and one fallback query per lead.
-            const deleteChunkSize = 500;
-            let count = 0;
-            for (let i = 0; i < uniqueIds.length; i += deleteChunkSize) {
-                const chunk = uniqueIds.slice(i, i + deleteChunkSize);
-                const { data, error } = await supabase
-                    .from('leads')
-                    .delete()
-                    .eq('tenant_id', tenantId)
-                    .in('id', chunk)
-                    .select('id');
+            if (error) throw error;
+            const count = data?.length || 0;
 
-                if (error) throw error;
-                count += data?.length || 0;
-            }
+            const logRows = (data || []).map((row: any) => ({
+                tenant_id: tenantId,
+                board_type: 'crm_leads',
+                card_id: row.id,
+                from_state: 'lead',
+                to_state: 'archived',
+                reason: 'Bulk lead archive',
+                is_override: false,
+                metadata: { archived_at: nowIso },
+            }));
+            await (supabase.from('board_transition_logs') as any).insert(logRows);
 
             invalidateLeadsCache(tenantId);
             return { error: null, count };

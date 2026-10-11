@@ -130,19 +130,28 @@ interface KanbanColumnProps {
   onEditTask: (task: Task) => void;
 }
 
+import { WORKSPACE_TASKS_BOARD_DEFINITION } from '@/lib/kanban/boardDefinitions';
+
 const KanbanColumn: React.FC<KanbanColumnProps> = ({ status, tasks, onEditTask }) => {
   const { id, label, icon: Icon, color, tint } = status;
+  const columnDef = WORKSPACE_TASKS_BOARD_DEFINITION.columns.find((c) => c.id === id);
+  const wipLimit = columnDef?.wipLimit;
+  const isOverWip = wipLimit ? tasks.length >= wipLimit : false;
 
   return (
-    <section className="flex h-full w-[min(88vw,280px)] sm:w-72 shrink-0 2xl:w-auto 2xl:shrink flex-col space-y-4 rounded-[var(--ws-radius-lg,14px)] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-4 overscroll-contain">
+    <section className={`flex h-full w-[min(88vw,280px)] sm:w-72 shrink-0 2xl:w-auto 2xl:shrink flex-col space-y-4 rounded-[var(--ws-radius-lg,14px)] border bg-[var(--ws-surface-secondary)] p-4 overscroll-contain transition-colors ${
+      isOverWip ? 'border-amber-500/50 ring-1 ring-amber-500/30' : 'border-[var(--ws-border)]'
+    }`}>
       <div className="flex shrink-0 items-center justify-between px-1">
         <div className="flex min-w-0 items-center gap-2">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--ws-radius-control,8px)]" style={{ background: tint }}>
             <Icon className={`h-4 w-4 ${color}`} aria-hidden="true" />
           </span>
           <h3 className="truncate type-card-title font-semibold text-[var(--ws-text-primary)]">{label}</h3>
-          <span className="rounded-full border border-[var(--ws-border)] bg-[var(--ws-panel)] px-2 py-0.5 type-ui font-semibold tabular-nums text-[var(--ws-text-tertiary)]">
-            {tasks.length}
+          <span className={`rounded-full border px-2 py-0.5 type-ui font-semibold tabular-nums ${
+            isOverWip ? 'border-amber-500/40 bg-amber-500/10 text-amber-400 font-extrabold' : 'border-[var(--ws-border)] bg-[var(--ws-panel)] text-[var(--ws-text-tertiary)]'
+          }`}>
+            {tasks.length}{wipLimit ? ` / ${wipLimit}` : ''}
           </span>
         </div>
         <button

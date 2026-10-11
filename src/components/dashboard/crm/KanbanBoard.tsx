@@ -791,28 +791,35 @@ export default function KanbanBoard() {
         }
 
         if (newStage && originStage != null) {
+            let stageReason: string | undefined;
+            if (newStage === 'lost') {
+                const reasonInput = window.prompt('Enter mandatory reason for marking this lead as Lost:');
+                if (!reasonInput || !reasonInput.trim()) {
+                    toast.error('A reason is mandatory for marking a lead as Lost.');
+                    await loadLeads();
+                    return;
+                }
+                stageReason = reasonInput.trim();
+            }
+
             const check = assertLeadStageTransition(originStage, newStage);
             if (!check.ok) {
                 toast.error(check.message);
                 await loadLeads();
                 return;
             }
-            const removesFromBoard = newStage === 'lost' || newStage === 'won';
             try {
                 await toast.promise(
                     (async () => {
-                        const { error } = await leadService.updateLead(lead.id, { stage: newStage });
+                        const { error } = await leadService.updateLead(lead.id, { stage: newStage, stageReason });
                         if (error) throw new Error(error);
                     })(),
                     {
                         loading: 'Syncing pipeline...',
-                        success: removesFromBoard ? 'Removed from active pipeline' : 'Pipeline updated',
+                        success: 'Pipeline updated',
                         error: (err) => (err instanceof Error ? err.message : 'Failed to update pipeline'),
                     }
                 );
-                if (removesFromBoard) {
-                    setLeads((prev) => prev.filter((l) => l.id !== lead.id));
-                }
                 if (currentTenant?.id) {
                     void invalidateTenantLeads(queryClient, currentTenant.id);
                 }

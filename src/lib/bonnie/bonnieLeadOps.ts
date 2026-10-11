@@ -6,6 +6,9 @@ import { getMemory, upsertMemory } from '@/services/nexusMemoryService';
 import { getBonnieWorkspaceSnapshot } from '@/lib/bonnie/bonnieWorkspaceSnapshot';
 import { isApifyConfigured, discoverBusinessesWithApify } from '@/services/apifyLeadService';
 import { buildCanonicalBusinessKey, resolveBusinessEntity } from '@/lib/lead-finder/core';
+import { resolveQualificationProfile, QUALIFICATION_RULES_VERSION, type QualificationProfile } from '@/lib/lead-finder/qualificationContract';
+import { buildDiscoveryQueries } from '@/lib/lead-finder/queryGenerator';
+import { qualifyCandidateBatch, type RawCandidateInput, type CandidateEvidenceRecord } from '@/lib/lead-finder/qualificationService';
 
 export type LeadSearchCriteria = {
   niche: string;
@@ -18,6 +21,7 @@ export type LeadSearchCriteria = {
   save_to_crm?: boolean;
   filter_no_website?: boolean;
   require_email?: boolean;
+  intent_prompt?: string;
 };
 
 function mapPlaceToLead(place: {
@@ -121,11 +125,34 @@ export async function bonnieFindAndQualifyLeads(
 
   const rawDiscovered: RawCandidate[] = [];
 
+  const profile = resolveQualificationProfile({
+    intentPrompt: criteria.intent_prompt || criteria.niche,
+    niche,
+    location,
+    country: criteria.country,
+    requireEmail: criteria.require_email,
+    filterNoWebsite: criteria.filter_no_website,
+  });
+
+  if (excludeKeywords.length > 0) {
+    profile.excludedIndustries.push(...excludeKeywords);
+    profile.explicitExclusions.push(...excludeKeywords);
+  }
+
+  const discoveryPlan = buildDiscoveryQueries(profile, criteria.intent_prompt || criteria.niche, {
+    maxQueries: 3,
+    resultsPerQuery: maxResults,
+    discoveryOnly: !criteria.save_to_crm,
+  });
+
   // Primary: Use Apify Google Places if configured
   if (isApifyConfigured()) {
     try {
+      const primaryQuery = discoveryPlan.generatedQueries[0]?.queryTerm || niche;
+      const searchStrings = discoveryPlan.generatedQueries.map((q) => q.fullSearchString);
       const receipt = await discoverBusinessesWithApify({
-        query: niche,
+        query: primaryQuery,
+        searchStringsArray: searchStrings,
         location,
         country: criteria.country,
         resultLimit: maxResults,
@@ -160,7 +187,8 @@ export async function bonnieFindAndQualifyLeads(
 
   // Fallback: Use free places ONLY if Apify unconfigured or returned 0 items
   if (rawDiscovered.length === 0) {
-    const search = await freePlacesService.searchPlacesForLeads(niche, location, undefined, {
+    const searchTerm = discoveryPlan.generatedQueries[0]?.queryTerm || niche;
+    const search = await freePlacesService.searchPlacesForLeads(searchTerm, location, undefined, {
       maxResults,
     });
     rawCount = search.places.length;
@@ -171,92 +199,86 @@ export async function bonnieFindAndQualifyLeads(
   }
 
   // Evaluate all discovered candidates using unified qualification engine
-  const evaluatedCandidates = rawDiscovered.map((lead) => {
-    const qualification = qualifyLead(lead, niche, {
-      filter_no_website: criteria.filter_no_website,
-      require_email: criteria.require_email,
-      country: targetCountry,
-    });
-    const passes = passesCriteria({ business_name: lead.business_name, qualification }, minScore, tiers, excludeKeywords) &&
-      Boolean(qualification.normalizedPhone || qualification.normalizedEmail || lead.phone || lead.email);
+  const rawCandidateInputs: RawCandidateInput[] = rawDiscovered.map((lead) => ({
+    business_name: lead.business_name,
+    name: lead.business_name,
+    company: lead.business_name,
+    website: lead.website || null,
+    phone: lead.phone || null,
+    email: lead.email || null,
+    address: lead.address || null,
+    rating: lead.rating ?? null,
+    category: lead.category || niche,
+    industry: lead.category || niche,
+    source: lead.source,
+    source_id: lead.source_id,
+    source_url: lead.source_url,
+    country: targetCountry,
+  }));
 
-    let rejectionReason: string | undefined;
-    if (!passes) {
-      if (qualification.disqualificationReason) {
-        rejectionReason = qualification.disqualificationReason;
-      } else if (qualification.score < minScore) {
-        rejectionReason = `Score ${qualification.score} below min_score ${minScore} (${qualification.insights.slice(0, 2).join('; ')})`;
-      } else if (!qualification.normalizedPhone && !qualification.normalizedEmail && !lead.phone && !lead.email) {
-        rejectionReason = 'No validated phone or email contact found';
-      } else {
-        rejectionReason = 'Did not meet criteria threshold';
-      }
+  const batchSummary = qualifyCandidateBatch(rawCandidateInputs, profile, searchId);
+
+  const qualifiedRecords = batchSummary.records.filter((r) => {
+    if (r.decision !== 'QUALIFIED') return false;
+    if (tiers?.length) {
+      const tier = r.numericRankScore >= 70 ? 'hot' : r.numericRankScore >= 50 ? 'warm' : 'cold';
+      if (!tiers.includes(tier)) return false;
     }
-
-    const decision: 'qualified' | 'review' | 'disqualified' = passes
-      ? 'qualified'
-      : qualification.tier === 'skip'
-      ? 'disqualified'
-      : 'review';
-
-    return {
-      ...lead,
-      qualification,
-      passes,
-      decision,
-      rejection_reason: rejectionReason,
-      evidence_urls: [lead.source_url, lead.website].filter(Boolean),
-    };
+    return r.numericRankScore >= minScore;
   });
 
-  const qualified = evaluatedCandidates.filter((c) => c.passes);
-  const contactable = evaluatedCandidates.filter((c) => Boolean(c.phone || c.email || c.qualification.normalizedPhone || c.qualification.normalizedEmail));
-
   // Traceable cache: persist evaluated candidates in scraper_leads for run retrieval
-  if (evaluatedCandidates.length > 0) {
+  if (batchSummary.records.length > 0) {
     try {
       const admin = createSupabaseAdminClient();
-      const scraperRows = evaluatedCandidates.map((c) => ({
-        tenant_id: tenantId,
-        campaign_id: searchId,
-        company: c.business_name,
-        name: c.business_name,
-        phone: c.qualification.normalizedPhone || c.phone || null,
-        email: c.qualification.normalizedEmail || c.email || null,
-        company_website: c.website || null,
-        address: c.address || null,
-        score: c.qualification.score,
-        grade: c.qualification.tier === 'hot' ? 'A' : c.qualification.tier === 'warm' ? 'B' : c.qualification.tier === 'cold' ? 'C' : 'D',
-        status: c.passes ? 'qualified' : 'discovered',
-        source: c.source,
-        source_id: c.source_id,
-        source_url: c.source_url || null,
-        metadata: {
-          search_id: searchId,
-          apify_run_id: apifyRunId,
-          qualification: c.qualification,
-          decision: c.decision,
-          rejection_reason: c.rejection_reason,
-        },
-      }));
+      const scraperRows = batchSummary.records.map((r) => {
+        const tier = r.numericRankScore >= 70 ? 'hot' : r.numericRankScore >= 50 ? 'warm' : r.numericRankScore >= 35 ? 'cold' : 'skip';
+        const grade = r.numericRankScore >= 80 ? 'A' : r.numericRankScore >= 65 ? 'B' : r.numericRankScore >= 50 ? 'C' : 'D';
+        return {
+          tenant_id: tenantId,
+          campaign_id: searchId,
+          company: r.businessName,
+          name: r.businessName,
+          phone: r.normalizedData.phone,
+          email: r.normalizedData.email,
+          company_website: r.officialWebsite.url,
+          address: r.normalizedData.address,
+          score: r.numericRankScore,
+          grade,
+          status: r.decision === 'QUALIFIED' ? 'qualified' : r.decision === 'REVIEW_NEEDED' ? 'review' : 'discovered',
+          source: r.sourceEvidence.sourceType,
+          source_id: r.originalData.name || r.businessName,
+          source_url: r.sourceEvidence.sourceUrl,
+          metadata: {
+            search_id: searchId,
+            apify_run_id: apifyRunId,
+            decision: r.decision,
+            decision_reasons: r.decisionReasons,
+            requirements: r.requirements,
+            assessments: r.assessments,
+            missing_evidence: r.missingEvidence,
+            qualification_rules_version: r.rulesVersion,
+          },
+        };
+      });
       await admin.from('scraper_leads').insert(scraperRows);
     } catch {
       // non-fatal cache write
     }
   }
 
-  // CRM Import (only when save_to_crm: true)
+  // CRM Import (only when save_to_crm: true AND candidates are qualified)
   let savedToCrm = 0;
-  if (criteria.save_to_crm && qualified.length > 0) {
+  if (criteria.save_to_crm && qualifiedRecords.length > 0) {
     const admin = createSupabaseAdminClient();
-    for (const lead of qualified.slice(0, 25)) {
+    for (const r of qualifiedRecords.slice(0, 25)) {
       const canonicalKey = buildCanonicalBusinessKey({
-        businessName: lead.business_name,
-        email: lead.qualification.normalizedEmail || lead.email,
-        phone: lead.qualification.normalizedPhone || lead.phone,
-        website: lead.website,
+        businessName: r.businessName,
+        email: r.normalizedData.email,
+        phone: r.normalizedData.phone,
+        website: r.officialWebsite.url,
         country: targetCountry,
-        sourceExternalId: lead.source_id,
+        sourceExternalId: r.originalData.name || r.businessName,
       });
 
       const { data: existing } = await admin
@@ -273,9 +295,10 @@ export async function bonnieFindAndQualifyLeads(
           .update({
             updated_at: new Date().toISOString(),
             metadata: {
-              qualification: lead.qualification,
-              source_id: lead.source_id,
-              source_url: lead.source_url,
+              qualification_decision: r.decision,
+              decision_reasons: r.decisionReasons,
+              assessments: r.assessments,
+              rank_score: r.numericRankScore,
               search_id: searchId,
               apify_run_id: apifyRunId,
               cost_usd: costUsd,
@@ -284,22 +307,24 @@ export async function bonnieFindAndQualifyLeads(
           .eq('id', existing.id);
         savedToCrm += 1;
       } else {
+        const tier = r.numericRankScore >= 70 ? 'hot' : 'warm';
         const { error } = await admin.from('leads').insert({
           tenant_id: tenantId,
-          business_name: lead.business_name,
-          phone: lead.qualification.normalizedPhone || lead.phone || null,
-          email: lead.qualification.normalizedEmail || lead.email || null,
-          website: lead.website || null,
-          address: lead.address || null,
-          rating: lead.rating ?? null,
+          business_name: r.businessName,
+          phone: r.normalizedData.phone,
+          email: r.normalizedData.email,
+          website: r.officialWebsite.url,
+          address: r.normalizedData.address,
+          rating: r.originalData.rating ?? null,
           industry: niche,
           source: apifyRunId ? 'apify_google_places' : 'bonnie_find_leads',
-          stage: lead.qualification.tier === 'hot' ? 'qualified' : 'lead',
+          stage: tier === 'hot' ? 'qualified' : 'lead',
           canonical_business_key: canonicalKey,
           metadata: {
-            qualification: lead.qualification,
-            source_id: lead.source_id,
-            source_url: lead.source_url,
+            qualification_decision: r.decision,
+            decision_reasons: r.decisionReasons,
+            assessments: r.assessments,
+            rank_score: r.numericRankScore,
             search_id: searchId,
             apify_run_id: apifyRunId,
             cost_usd: costUsd,
@@ -316,17 +341,20 @@ export async function bonnieFindAndQualifyLeads(
     search_id: searchId,
     niche,
     location,
-    country: criteria.country,
+    country: profile.targetGeography.country || criteria.country,
     min_score: minScore,
     raw_count: rawCount,
-    parsed_count: evaluatedCandidates.length,
-    contactable_count: contactable.length,
-    qualified_count: qualified.length,
+    parsed_count: batchSummary.totalAssessed,
+    contactable_count: batchSummary.channelCounts.emailReady + batchSummary.channelCounts.phoneReady,
+    qualified_count: qualifiedRecords.length,
     saved_to_crm: savedToCrm,
     location_validated: locationValidated,
     apify_run_id: apifyRunId,
     cost_usd: costUsd,
     duration_ms: durationMs,
+    qualification_profile: profile,
+    discovery_plan: discoveryPlan,
+    summary: batchSummary,
     execution_truth: {
       status: executionStatus,
       may_claim_completed: true,
@@ -335,35 +363,42 @@ export async function bonnieFindAndQualifyLeads(
       cost_usd: costUsd,
       duration_ms: durationMs,
     },
-    leads: qualified.slice(0, 15).map((l) => ({
-      business_name: l.business_name,
-      phone: l.qualification.normalizedPhone || l.phone,
-      email: l.qualification.normalizedEmail || l.email,
-      website: l.website,
-      address: l.address,
-      score: l.qualification.score,
-      data_quality_score: l.qualification.dataQualityScore,
-      fit_score: l.qualification.fitScore,
-      tier: l.qualification.tier,
-      pitch_angle: l.qualification.pitchAngle,
-      insights: l.qualification.insights.slice(0, 3),
-      can_auto_send: l.qualification.canAutoSend,
-      evidence_urls: l.evidence_urls,
+    leads: qualifiedRecords.slice(0, 15).map((l) => ({
+      business_name: l.businessName,
+      phone: l.normalizedData.phone,
+      email: l.normalizedData.email,
+      website: l.officialWebsite.url,
+      address: l.normalizedData.address,
+      score: l.numericRankScore,
+      data_quality_score: l.assessments.data_quality.score,
+      fit_score: l.assessments.target_fit.score,
+      tier: l.numericRankScore >= 70 ? 'hot' : l.numericRankScore >= 50 ? 'warm' : 'cold',
+      pitch_angle: l.recommendedNextStep,
+      insights: l.decisionReasons.slice(0, 3),
+      can_auto_send: l.assessments.contact_readiness.channelReadiness === 'email_ready',
+      evidence_urls: [l.sourceEvidence.sourceUrl, l.officialWebsite.url].filter(Boolean) as string[],
       decision: l.decision,
+      channel_readiness: l.assessments.contact_readiness.channelReadiness,
+      decision_reasons: l.decisionReasons,
     })),
-    candidate_previews: evaluatedCandidates.slice(0, 15).map((c) => ({
-      business_name: c.business_name,
-      phone: c.qualification.normalizedPhone || c.phone,
-      email: c.qualification.normalizedEmail || c.email,
-      website: c.website,
-      address: c.address,
-      score: c.qualification.score,
-      data_quality_score: c.qualification.dataQualityScore,
-      fit_score: c.qualification.fitScore,
-      tier: c.qualification.tier,
+    candidate_previews: batchSummary.records.slice(0, 15).map((c) => ({
+      business_name: c.businessName,
+      phone: c.normalizedData.phone,
+      email: c.normalizedData.email,
+      website: c.officialWebsite.url,
+      address: c.normalizedData.address,
+      score: c.numericRankScore,
+      data_quality_score: c.assessments.data_quality.score,
+      fit_score: c.assessments.target_fit.score,
+      tier: c.numericRankScore >= 70 ? 'hot' : c.numericRankScore >= 50 ? 'warm' : 'cold',
       decision: c.decision,
-      disqualification_reason: c.rejection_reason,
-      evidence_urls: c.evidence_urls,
+      rejection_reason: c.decision !== 'QUALIFIED' ? c.decisionReasons.join('; ') : undefined,
+      channel_readiness: c.assessments.contact_readiness.channelReadiness,
+      rank: c.numericRankScore,
+      decision_reasons: c.decisionReasons,
+      is_competitor: c.assessments.target_fit.isCompetitor,
+      assessments: c.assessments,
+      evidence_urls: [c.sourceEvidence.sourceUrl, c.officialWebsite.url].filter(Boolean) as string[],
     })),
   };
 }

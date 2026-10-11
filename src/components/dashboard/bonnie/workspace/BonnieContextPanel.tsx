@@ -39,6 +39,7 @@ type Props = {
   onResumeGoal?: (id: string) => void;
   onSelectGoal?: (id: string) => void;
   tenantId?: string;
+  width?: number;
 };
 
 export default function BonnieContextPanel({
@@ -56,12 +57,14 @@ export default function BonnieContextPanel({
   onResumeGoal,
   onSelectGoal,
   tenantId,
+  width,
 }: Props) {
   if (!open) return null;
 
   return (
     <aside
-      className="flex h-full w-full flex-col border-l border-slate-200 bg-white dark:border-[var(--ws-border)] dark:bg-[var(--ws-canvas)] md:w-[300px]"
+      style={width ? { width: `${width}px` } : undefined}
+      className={`flex h-full w-full flex-col border-l border-slate-200 bg-white dark:border-[var(--ws-border)] dark:bg-[var(--ws-canvas)] shrink-0 ${width ? '' : 'md:w-[300px]'}`}
       aria-label="Bonnie context"
     >
       <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-[var(--ws-border)]">

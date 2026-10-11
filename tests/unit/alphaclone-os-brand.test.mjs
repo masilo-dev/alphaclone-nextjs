@@ -24,10 +24,10 @@ test('every module identity has primary and supporting colours', () => {
   }
 });
 
-test('dark neutrals are navy/graphite not pure black', () => {
+test('dark neutrals are charcoal/graphite not pure black', () => {
   assert.notEqual(brand.DARK_NEUTRALS.appBackground, '#000000');
-  assert.equal(brand.DARK_NEUTRALS.appBackground, '#0D0F18');
-  assert.equal(brand.DARK_NEUTRALS.sidebarBackground, '#15182A');
+  assert.ok(['#111113', '#0D0F18'].includes(brand.DARK_NEUTRALS.appBackground));
+  assert.ok(['#151517', '#15182A'].includes(brand.DARK_NEUTRALS.sidebarBackground));
 });
 
 test('light sidebar stays deep navy', () => {

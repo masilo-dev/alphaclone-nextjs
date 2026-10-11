@@ -19,6 +19,7 @@ export function applyAcThemeClass(t: AcThemeMode): void {
     const isDark = resolveIsDark(t);
     root.classList.toggle('dark', isDark);
     root.classList.toggle('light', !isDark);
+    root.setAttribute('data-theme', isDark ? 'dark' : 'light');
     root.style.colorScheme = isDark ? 'dark' : 'light';
     root.style.backgroundColor = isDark ? 'var(--brand-violet-950)' : 'var(--marketing-bg-secondary)';
     try {

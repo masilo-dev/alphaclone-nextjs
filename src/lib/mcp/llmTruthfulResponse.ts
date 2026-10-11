@@ -39,14 +39,17 @@ export function buildLlmExecutionTruth(input: {
     null;
 
   const result = input.parsedResult as any;
-  const readCompleted = result != null && result?.ok !== false && result?.success !== false && /^(get|list|search|fetch|inspect)_/.test(input.toolName);
-  const rawStatus = receipt?.status || (readCompleted ? undefined : result?.status);
+  const innerTruth = result?.data?.execution_truth || result?.execution_truth;
+  const innerStatus = innerTruth?.status || result?.data?.status || result?.status;
+  const readCompleted = result != null && result?.ok !== false && result?.success !== false && /^(get|list|search|fetch|inspect|find)_/.test(input.toolName);
+  const rawStatus = receipt?.status || (readCompleted ? 'VERIFIED' : innerStatus);
   const mailboxPending = ['sync_all_inboxes','get_email_sync_status'].includes(String(result?.tool || input.toolName))
     && String(receipt?.status || result?.data?.status || result?.status).toLowerCase() === 'pending';
   const verificationState = result?.ok === false || result?.success === false ? 'FAILED'
     : mailboxPending ? 'REQUESTED'
+    : rawStatus ? normalizeExecutionState(rawStatus)
     : readCompleted ? 'VERIFIED'
-    : rawStatus ? normalizeExecutionState(rawStatus) : 'REQUESTED';
+    : 'REQUESTED';
 
   let approval_state: LlmExecutionTruth['approval_state'] = 'none';
   if (input.policy?.approvalState) {
