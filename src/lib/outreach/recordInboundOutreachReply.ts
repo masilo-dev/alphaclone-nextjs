@@ -6,7 +6,7 @@ export async function recordInboundOutreachReply(options: { admin: any; tenantId
   const normalized = normalizeOutreachRecipient(options.channel, sender);
   const { data: enrollment, error } = await options.admin.from('outreach_sequence_enrollments').select('*').eq('tenant_id', options.tenantId).eq('normalized_recipient', normalized).in('status', ['active','waiting']).order('enrolled_at', { ascending: false }).limit(1).maybeSingle();
   if (error) throw error;
-  if (!enrollment) return { matched: false };
+  if (!enrollment) return { matched: false as const, sourceType: null, sourceId: null };
   const classification = classifyOutreachReply(options.text || '');
   const eventType = classification === 'positive' ? 'positive_reply' : classification === 'unsubscribe' ? 'unsubscribed' : classification === 'neutral' ? 'replied' : classification;
   const providerEventId = options.providerEventId || `${options.provider}:${enrollment.id}:${Date.now()}`;
@@ -65,5 +65,5 @@ export async function recordInboundOutreachReply(options: { admin: any; tenantId
     }
   }
 
-  return { matched: true, classification, eventType, dealId };
+  return { matched: true as const, classification, eventType, dealId, sourceType, sourceId };
 }
