@@ -126,7 +126,7 @@ function parseVaultDocument(row: Record<string, unknown>): VaultDocument {
     is_encrypted: tags.includes("encrypted") || Boolean(metadata.encrypted),
     created_at: String(row.created_at || new Date().toISOString()),
     proxiedUrl: storagePath
-      ? fileUploadService.getProxiedUrl(bucket, storagePath)
+      ? fileUploadService.getProxiedUrl(bucket, storagePath, String(row.tenant_id || ""))
       : undefined,
   };
 }

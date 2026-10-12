@@ -44,21 +44,25 @@ class FileUploadService {
     /**
      * Get a proxied URL for a file in Supabase storage
      */
-    getProxiedUrl(bucket: string, path: string): string {
+    getProxiedUrl(bucket: string, path: string, tenantId?: string): string {
         // Construct URL for the storage proxy API
-        return `/api/storage/${bucket}/${path}`;
+        const base = `/api/storage/${bucket}/${path}`;
+        if (tenantId) {
+            return `${base}?tenantId=${encodeURIComponent(tenantId)}`;
+        }
+        return base;
     }
 
     /**
      * Convert a direct Supabase URL to a proxied URL if applicable
      */
-    convertToProxiedUrl(url: string, bucket: string = 'uploads'): string {
+    convertToProxiedUrl(url: string, bucket: string = 'uploads', tenantId?: string): string {
         if (!url || !url.includes('supabase.co')) return url;
 
         // Extract the path after the bucket name
         const parts = url.split(`/${bucket}/`);
         if (parts.length > 1) {
-            return this.getProxiedUrl(bucket, parts[1]);
+            return this.getProxiedUrl(bucket, parts[1], tenantId);
         }
 
         return url;

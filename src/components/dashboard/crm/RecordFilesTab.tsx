@@ -40,7 +40,7 @@ export default function RecordFilesTab({ clientId, dealId, companyId }: RecordFi
         results.push({
           id: row.id,
           name: row.original_filename || 'File',
-          url: row.storage_path ? fileUploadService.getProxiedUrl('uploads', row.storage_path) : undefined,
+          url: row.storage_path ? fileUploadService.getProxiedUrl('uploads', row.storage_path, currentTenant.id) : undefined,
           created_at: row.created_at,
           source: 'upload',
         });

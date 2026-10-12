@@ -192,7 +192,12 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [savedContracts, setSavedContracts] = useState<any[]>(() => cachedContracts || []);
     const [loadingContracts, setLoadingContracts] = useState<boolean>(() => !cachedContracts || cachedContracts.length === 0);
     const [isSaving, setIsSaving] = useState(false);
-    const [activeView, setActiveView] = useState<'new' | 'list' | 'lawyer' | 'templates' | 'alerts'>('new');
+    const [activeView, setActiveView] = useState<'new' | 'list' | 'lawyer' | 'templates' | 'alerts'>(() => {
+        if (initialTab === 'list' || initialTab === 'lawyer' || initialTab === 'templates' || initialTab === 'alerts') {
+            return initialTab;
+        }
+        return 'new';
+    });
     const [selectedContractIds, setSelectedContractIds] = useState<Set<string>>(new Set());
     const [bulkDeletingContracts, setBulkDeletingContracts] = useState(false);
     const [listQuery, setListQuery] = useState('');
@@ -638,6 +643,67 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         }
     };
 
+    const handleSaveDraftWithoutAI = async () => {
+        if (!currentTenant?.id) return;
+        const clientOrProject = form.clientName.trim() || form.projectName.trim();
+        if (!clientOrProject) {
+            toast.error('Please enter a client name or project title to save a draft.');
+            return;
+        }
+
+        setIsSaving(true);
+        const toastId = toast.loading('Saving draft contract…');
+        try {
+            rememberSignerDetails(form);
+            const title = form.projectName.trim() && form.clientName.trim()
+                ? `${form.projectName.trim()} — ${form.clientName.trim()}`
+                : form.projectName.trim() || `${form.clientName.trim()} Contract Agreement`;
+
+            const rawText = generatedContract || buildTemplateContract(form, form.contractLength);
+            const htmlContent = editedHtml || contractToHTML(rawText);
+
+            const legal = resolveContractGoverningLaw({
+                provided: { governingLaw: form.governingLaw, jurisdiction: form.jurisdiction },
+                content: htmlContent,
+            });
+
+            const { contract, error } = await contractService.createContract({
+                title,
+                content: htmlContent,
+                client_id: form.clientId || undefined,
+                status: 'draft',
+                payment_amount: parseFloat(form.totalAmount) || 0,
+                governing_law: legal.governingLaw || undefined,
+                jurisdiction: legal.jurisdiction || undefined,
+                metadata: {
+                    document_theme: documentTheme,
+                    client_name: form.clientName,
+                    client_email: form.clientEmail,
+                    client_address: form.clientAddress,
+                    project_name: form.projectName,
+                    provider_name: form.providerName,
+                    supplier_legal_name: form.providerName,
+                    source: 'quick_draft',
+                },
+            });
+
+            if (error || !contract) throw new Error(error?.message || 'Could not save draft');
+
+            setContractId(contract.id);
+            setSavedContracts((prev) => [contract, ...prev]);
+            if (currentTenant?.id) {
+                void invalidateTenantContracts(queryClient, currentTenant.id);
+            }
+
+            toast.success('Draft contract saved successfully!', { id: toastId });
+            setActiveView('list');
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to save draft contract', { id: toastId });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const generateContract = async () => {
         if (!form.clientName.trim()) { toast.error('Client name is required'); return; }
         if (!form.projectName.trim()) { toast.error('Project name is required'); return; }
@@ -747,8 +813,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 setSavedContracts((prev) => prev.map((c) => (c.id === contractId ? { ...c, ...saved } : c)));
                 toast.success('Contract updated');
             } else {
+                const title = form.projectName.trim() && form.clientName.trim()
+                    ? `${form.projectName.trim()} — ${form.clientName.trim()}`
+                    : form.projectName.trim() || (form.clientName.trim() ? `${form.clientName.trim()} Contract` : 'Contract Agreement');
                 const { contract, error } = await contractService.createContract({
-                    title: `${form.projectName} — ${form.clientName}`,
+                    title,
                     content,
                     client_id: form.clientId || undefined,
                     status: isSigned ? 'sent' : 'draft',
@@ -1793,23 +1862,37 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 </div>
                             </div>
 
-                            {/* Generate Button */}
-                            <button
-                                onClick={generateContract}
-                                disabled={isGenerating}
-                                className="w-full py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white font-bold text-base rounded-2xl transition-all shadow-lg shadow-teal-900/30 flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                                {isGenerating ? (
-                                    <><Loader2 className="w-5 h-5 animate-spin" /> Generating contract...</>
-                                ) : (
-                                    <>
-                                        <Bot className="w-5 h-5" />
-                                        Generate contract
-                                        ({CONTRACT_LENGTH_OPTIONS.find(o => o.id === form.contractLength)?.label ?? 'Custom'}
-                                        {form.outputLanguage !== 'en' ? ` · ${OUTPUT_LANGUAGES.find(l => l.code === form.outputLanguage)?.label ?? form.outputLanguage}` : ''})
-                                    </>
-                                )}
-                            </button>
+                            {/* Action Buttons: Generate & Quick Save Draft */}
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <button
+                                    onClick={generateContract}
+                                    disabled={isGenerating || isSaving}
+                                    className="flex-1 py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white font-bold text-base rounded-2xl transition-all shadow-lg shadow-teal-900/30 flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    {isGenerating ? (
+                                        <><Loader2 className="w-5 h-5 animate-spin" /> Generating contract...</>
+                                    ) : (
+                                        <>
+                                            <Bot className="w-5 h-5" />
+                                            Generate contract
+                                            ({CONTRACT_LENGTH_OPTIONS.find(o => o.id === form.contractLength)?.label ?? 'Custom'}
+                                            {form.outputLanguage !== 'en' ? ` · ${OUTPUT_LANGUAGES.find(l => l.code === form.outputLanguage)?.label ?? form.outputLanguage}` : ''})
+                                        </>
+                                    )}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleSaveDraftWithoutAI}
+                                    disabled={isGenerating || isSaving}
+                                    className="py-4 px-6 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] border border-[var(--ws-border)] text-white font-bold text-base rounded-2xl transition-all flex items-center justify-center gap-2.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    {isSaving ? (
+                                        <><Loader2 className="w-5 h-5 animate-spin" /> Saving…</>
+                                    ) : (
+                                        <><Save className="w-5 h-5 text-teal-400" /> Save as draft</>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     )}
 

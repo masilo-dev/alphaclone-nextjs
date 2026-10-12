@@ -433,7 +433,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         const toastId = toast.loading('Saving to Google Drive...');
         try {
             // Use proxied URL to hide Supabase origin
-            const downloadUrl = fileUploadService.getProxiedUrl('uploads', file.storage_path);
+            const downloadUrl = fileUploadService.getProxiedUrl('uploads', file.storage_path, currentTenant?.id);
 
             if (!downloadUrl) {
                 throw new Error('Could not generate download URL');
@@ -461,7 +461,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 
         try {
             // Use proxied URL instead of direct Supabase download
-            const proxiedUrl = fileUploadService.getProxiedUrl('uploads', file.storage_path);
+            const proxiedUrl = fileUploadService.getProxiedUrl('uploads', file.storage_path, currentTenant?.id);
             const response = await fetch(proxiedUrl);
 
             if (!response.ok) {
@@ -607,7 +607,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 
         try {
             // Use proxied URL instead of direct Supabase download
-            const proxiedUrl = fileUploadService.getProxiedUrl('uploads', file.storage_path);
+            const proxiedUrl = fileUploadService.getProxiedUrl('uploads', file.storage_path, currentTenant?.id);
             const response = await fetch(proxiedUrl);
 
             if (!response.ok) {
@@ -971,7 +971,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     // ── VIEWER / EDITOR MODE ──────────────────────────────────────────────────
     if (viewMode !== 'list' && selectedFile) {
         const isPdf = selectedFile.file_type === 'application/pdf';
-        const printTarget = fileUrl || (selectedFile.storage_path ? fileUploadService.getProxiedUrl('uploads', selectedFile.storage_path) : '');
+        const printTarget = fileUrl || (selectedFile.storage_path ? fileUploadService.getProxiedUrl('uploads', selectedFile.storage_path, currentTenant?.id) : '');
         const viewerDescription = `${getFileLabel(selectedFile.file_type)} · ${formatBytes(selectedFile.file_size)} · ${format(new Date(selectedFile.created_at), 'MMM d, yyyy')}`;
         return (
             <div className="fixed inset-0 ac-layer-overlay flex flex-col bg-[var(--ws-canvas)] animate-in fade-in duration-200">
@@ -1474,7 +1474,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                     : [
                                         { label: 'Open', icon: <Edit3 className="w-4 h-4" aria-hidden="true" />, onClick: () => handleOpenFile(file) },
                                         { label: 'Download', icon: <Download className="w-4 h-4" aria-hidden="true" />, onClick: () => handleDownload(file) },
-                                        { label: 'Print', icon: <Printer className="w-4 h-4" aria-hidden="true" />, onClick: () => handlePrint(fileUploadService.getProxiedUrl('uploads', file.storage_path)) },
+                                        { label: 'Print', icon: <Printer className="w-4 h-4" aria-hidden="true" />, onClick: () => handlePrint(fileUploadService.getProxiedUrl('uploads', file.storage_path, currentTenant?.id)) },
                                         { label: 'Email', icon: <Mail className="w-4 h-4" aria-hidden="true" />, onClick: () => openEmailModal(file) },
                                         { label: 'Save to Drive', icon: <Share2 className="w-4 h-4" aria-hidden="true" />, onClick: () => handleSaveToDrive(file) },
                                         { label: 'Move to trash', icon: <Trash2 className="w-4 h-4" aria-hidden="true" />, onClick: () => handleSoftDelete(file.id), destructive: true },
@@ -1569,7 +1569,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                                             </button>
                                                             <button
                                                                 type="button"
-                                                                onClick={() => handlePrint(fileUploadService.getProxiedUrl('uploads', file.storage_path))}
+                                                                onClick={() => handlePrint(fileUploadService.getProxiedUrl('uploads', file.storage_path, currentTenant?.id))}
                                                                 className={cn(
                                                                     WORKSPACE.action.secondary,
                                                                     ENTERPRISE.touchTarget,

@@ -41,16 +41,70 @@ export async function GET(
                 new URL(request.url).searchParams.get('tenantId') ||
                 '';
             try {
-                const { resolveActiveTenantForUser, assertTenantStoragePath } = await import(
+                const { resolveActiveTenantForUser, assertTenantStoragePath, assertTenantMembership } = await import(
                     '@/lib/tenant/platformTenant'
                 );
-                const resolved = await resolveActiveTenantForUser({
-                    userId: user.id,
-                    hintedTenantId: hinted || null,
-                });
+
+                let targetTenantId: string | null = null;
+                if (hinted) {
+                    const resolved = await resolveActiveTenantForUser({
+                        userId: user.id,
+                        hintedTenantId: hinted,
+                    });
+                    targetTenantId = resolved.tenantId;
+                } else if (filePath.startsWith('tenant/')) {
+                    // Extract tenantId from tenant/{tenantId}/... path
+                    const parts = filePath.split('/');
+                    const pathTenantId = parts[1];
+                    if (pathTenantId) {
+                        await assertTenantMembership(pathTenantId, user.id);
+                        targetTenantId = pathTenantId;
+                    }
+                }
+
+                if (!targetTenantId) {
+                    try {
+                        const resolved = await resolveActiveTenantForUser({
+                            userId: user.id,
+                            hintedTenantId: null,
+                        });
+                        targetTenantId = resolved.tenantId;
+                    } catch (resolveErr: any) {
+                        if (resolveErr?.code === 'TENANT_REQUIRED') {
+                            // User belongs to multiple workspaces; look up the file in database to find owning tenant
+                            const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+                            const admin = createSupabaseAdminClient();
+                            const { data: uploadRow } = await admin
+                                .from('file_uploads')
+                                .select('tenant_id')
+                                .eq('storage_path', filePath)
+                                .maybeSingle();
+
+                            let fileTenantId = uploadRow?.tenant_id;
+                            if (!fileTenantId) {
+                                const { data: docRow } = await admin
+                                    .from('documents')
+                                    .select('tenant_id')
+                                    .eq('storage_path', filePath)
+                                    .maybeSingle();
+                                fileTenantId = docRow?.tenant_id;
+                            }
+
+                            if (fileTenantId) {
+                                await assertTenantMembership(fileTenantId, user.id);
+                                targetTenantId = fileTenantId;
+                            } else {
+                                throw resolveErr;
+                            }
+                        } else {
+                            throw resolveErr;
+                        }
+                    }
+                }
+
                 assertTenantStoragePath({
                     filePath,
-                    tenantId: resolved.tenantId,
+                    tenantId: targetTenantId,
                     allowLegacyUserPaths: true,
                     userId: user.id,
                 });

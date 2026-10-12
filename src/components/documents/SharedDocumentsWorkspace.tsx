@@ -5,7 +5,7 @@ import { Input as AlphaCloneInput } from '@/components/ui/input';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FileText, Grid2X2, List, Plus, Search, Upload, X } from 'lucide-react';
+import { FileText, Grid2X2, List, Plus, Search, Upload, X, Download, ExternalLink } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -510,20 +510,41 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
             className="h-full w-full max-w-2xl overflow-y-auto border-l border-[var(--ws-border)] bg-[var(--ws-canvas)] p-5 shadow-2xl"
           >
             <div className="flex items-start justify-between gap-4">
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="type-caption font-black uppercase tracking-wider text-[var(--brand-blue-300)]">Document details</p>
-                <h2 className="mt-1 text-xl font-semibold text-white">
+                <h2 className="mt-1 text-xl font-semibold text-white truncate">
                   {selectedDocument?.document?.title || selectedDocument?.document?.name || 'Loading document…'}
                 </h2>
               </div>
-              <button type="button" onClick={closeDocument} className="min-h-11 min-w-11 rounded-lg border border-[var(--ws-border)] p-3 text-[var(--ws-text-secondary)]" aria-label="Close document details">
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                {selectedDocument?.document?.storage_path ? (
+                  <a
+                    href={fileUploadService.getProxiedUrl('uploads', selectedDocument.document.storage_path, currentTenant?.id)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 type-caption font-bold text-white hover:bg-teal-500"
+                  >
+                    <Download className="h-4 w-4" /> Download
+                  </a>
+                ) : null}
+                <button type="button" onClick={closeDocument} className="min-h-11 min-w-11 rounded-lg border border-[var(--ws-border)] p-3 text-[var(--ws-text-secondary)]" aria-label="Close document details">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
             {detailLoading ? (
               <div className="mt-8 space-y-3">{[1,2,3].map((i) => <div key={i} className="h-20 animate-pulse rounded-xl bg-white/5" />)}</div>
             ) : selectedDocument ? (
               <div className="mt-6 space-y-5">
+                {selectedDocument.document?.storage_path ? (
+                  <div className="h-96 w-full overflow-hidden rounded-xl border border-[var(--ws-border)] bg-white">
+                    <iframe
+                      src={fileUploadService.getProxiedUrl('uploads', selectedDocument.document.storage_path, currentTenant?.id)}
+                      title={`Preview ${selectedDocument.document.title || selectedDocument.document.name}`}
+                      className="h-full w-full"
+                    />
+                  </div>
+                ) : null}
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-[var(--ws-text-muted)]">Status</p><p className="mt-1 font-semibold text-white">{selectedDocument.document?.status || '—'}</p></div>
                   <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-[var(--ws-text-muted)]">Approval</p><p className="mt-1 font-semibold text-white">{selectedDocument.document?.approval_status || 'Not requested'}</p></div>
