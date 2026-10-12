@@ -32,8 +32,9 @@ const schema = z.object({
   isPublic: z.boolean().default(false),
   senderName: z.string().max(300).nullable().optional(),
   bankDetails: z.string().max(10_000).nullable().optional(),
-  mobilePaymentDetails: z.string().max(10_000).nullable().optional(),
   signature: z.union([z.string().max(2_000_000), z.object({ type: z.enum(['draw', 'type']), data: z.string().max(2_000_000) }), z.null()]).optional(),
+  currency: z.string().trim().max(10).default('USD'),
+  currencyCode: z.string().trim().max(10).optional(),
 });
 
 function emptyToNull(value: unknown): unknown {
@@ -107,11 +108,13 @@ export async function POST(req: NextRequest) {
     let invoice: any = null;
     for (let attempt = 0; attempt < 6; attempt += 1) {
       const number = value.invoiceNumber || `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+      const currencyCode = (value.currencyCode || value.currency || 'USD').toUpperCase();
       const { data, error } = await admin.from('business_invoices').insert({
         tenant_id: value.tenantId, client_id: value.clientId || null, project_id: value.projectId || null,
         contract_id: value.contractId || null, invoice_number: number,
         issue_date: issueDate, due_date: dueDate, status: value.status, subtotal, tax_rate: value.taxRate, tax,
         discount_amount: value.discountAmount, total, line_items: value.lineItems, notes: value.notes || null,
+        currency: currencyCode, currency_code: currencyCode,
         is_public: value.isPublic, sender_name: value.senderName || null, bank_details: value.bankDetails || null,
         mobile_payment_details: value.mobilePaymentDetails || null, signature: value.signature || null,
       }).select('*').single();
