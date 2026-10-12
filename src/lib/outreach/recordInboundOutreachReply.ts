@@ -65,21 +65,5 @@ export async function recordInboundOutreachReply(options: { admin: any; tenantId
     }
   }
 
-  // Cross-module synchronization: resolve any active Universal Chasers targeting this lead or contact
-  if (sourceType && sourceId) {
-    try {
-      const { resolveChasesForDomainEvent } = await import('@/lib/chaser/chaseEventBridge');
-      await resolveChasesForDomainEvent({
-        tenantId: options.tenantId,
-        eventType: 'communication.reply_received',
-        entityType: sourceType,
-        entityId: sourceId,
-        outcome: 'replied',
-      });
-    } catch (chaseErr) {
-      console.warn('[recordInboundOutreachReply] Universal Chaser auto-resolve skipped:', chaseErr);
-    }
-  }
-
   return { matched: true, classification, eventType, dealId };
 }
