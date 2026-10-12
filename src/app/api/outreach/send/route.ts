@@ -380,7 +380,6 @@ async function executeOutreach(request: Request, access: Awaited<ReturnType<type
       .maybeSingle();
     const profileConfig = (profileIntegration?.config || {}) as Record<string, unknown>;
     const profileFromName = String(profileConfig.fromName || profileConfig.from_name || '').trim();
-    const profileFromEmail = String(profileConfig.fromEmail || profileConfig.from_email || '').trim();
 
     const integrationRows = Array.isArray(integrations) ? integrations : [];
 
@@ -392,7 +391,7 @@ async function executeOutreach(request: Request, access: Awaited<ReturnType<type
         return {
           provider,
           apiKey: String(cfg.apiKey || cfg.api_key || '').trim(),
-          fromEmail: resolveSenderEmail(cfg, [fromAddress || '', profileFromEmail, tenantCtx.user.email || '']),
+          fromEmail: String(fromAddress || '').trim() || resolveSenderEmail(cfg, []),
           fromName: resolveSenderName(cfg, [profileFromName, tenantCtx.user.user_metadata?.full_name as string || '']),
           dailyLimit: Number(cfg.dailyLimit || cfg.daily_limit || DEFAULT_PROVIDER_LIMITS[provider]) || DEFAULT_PROVIDER_LIMITS[provider],
         };
@@ -406,7 +405,7 @@ async function executeOutreach(request: Request, access: Awaited<ReturnType<type
 
     const microsoftConnection = await microsoftServerService.getConnection(tenantCtx.user.id).catch(() => null);
     if (microsoftConnection) {
-      if (fromAddress && fromAddress.toLowerCase() !== microsoftConnection.microsoft_email?.toLowerCase()) {
+      if ((preferred === 'microsoft' || selectedProviders.includes('microsoft')) && fromAddress && fromAddress.toLowerCase() !== microsoftConnection.microsoft_email?.toLowerCase()) {
         return NextResponse.json({ success: false, error: 'The requested sender does not match the connected Microsoft account.' }, { status: 409 });
       }
       providerConfigs.unshift({
@@ -415,7 +414,6 @@ async function executeOutreach(request: Request, access: Awaited<ReturnType<type
         fromEmail:
           String(fromAddress || '').trim() ||
           microsoftConnection.microsoft_email ||
-          tenantCtx.user.email ||
           '',
         fromName:
           microsoftConnection.display_name ||
@@ -534,6 +532,17 @@ async function executeOutreach(request: Request, access: Awaited<ReturnType<type
     // Approval covers one selected sending identity. No automatic provider switching.
     const approvedProvider = preferred ? providerQueue.find((p) => p.provider === preferred) : providerQueue[0];
     if (!approvedProvider) return NextResponse.json({ success: false, error: 'The approved provider is unavailable. Review the sender and approve again.' }, { status: 409 });
+    // Login/profile addresses do not establish ownership of a provider mailbox.
+    const zohoConfig = approvedProvider.provider === 'zoho' ? approvedProvider : undefined;
+    if (zohoConfig) {
+      const addresses = await new ZohoMailService(tenantCtx.user.id, tenantId).getSenderAddresses();
+      const requested = String(fromAddress || '').trim();
+      if (requested && !addresses.some((address) => address.toLowerCase() === requested.toLowerCase())) {
+        return NextResponse.json({ success: false, status: 'failed', code: 'EMAIL_SENDER_NOT_VERIFIED', error: 'Select a sender available on the connected Zoho account. No email was sent.' }, { status: 422 });
+      }
+      zohoConfig.fromEmail = requested || addresses.find((address) => address.toLowerCase() === zohoConfig.fromEmail.toLowerCase()) || addresses[0] || '';
+    }
+
     for (const selectedProvider of [approvedProvider]) {
       try {
         if (selectedProvider.provider === 'microsoft') {

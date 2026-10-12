@@ -141,6 +141,7 @@ const ZohoCampaignsHub = React.lazy(() => import('../zoho/ZohoCampaignsHub'));
 const ExecutiveDashboard = React.lazy(() => import('../ExecutiveDashboard'));
 import { renderSharedDashboardRoute } from '@/lib/dashboard/sharedDashboardRoutes';
 import { isHubRoute, wrapRouteInHub } from '@/lib/dashboard/hubRoutes';
+import { rememberVisitedRoute } from '@/lib/dashboard/persistentRoutes';
 import { scheduleIdlePrefetch } from '@/lib/cache/tenantPrefetcher';
 
 /**
@@ -172,6 +173,13 @@ const PRIMARY_PERSISTENT_ROUTES = new Set([
   '/dashboard/contracts',
   '/dashboard/business/contracts',
   '/dashboard/business/social',
+  '/dashboard/tasks',
+  '/dashboard/outbound',
+  '/dashboard/outreach',
+  '/dashboard/marketing',
+  '/dashboard/business/calendar',
+  '/dashboard/business/documents',
+  '/dashboard/accounting',
 ]);
 
 import { TrialBanner } from '../TrialBanner';
@@ -249,29 +257,26 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const [activeSection, setActiveSection] = useState('profile');
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    // Keep primary persistent routes mounted once visited for instant 0ms restoration
-    const [visitedPersistentRoutes, setVisitedPersistentRoutes] = useState<string[]>(() =>
-        PRIMARY_PERSISTENT_ROUTES.has(route) ? [route] : []
-    );
-
+    const screenScope = `${currentTenant?.id || ''}:${user.id}`;
+    const [retainedScreens, setRetainedScreens] = useState(() => ({ scope: screenScope, routes: PRIMARY_PERSISTENT_ROUTES.has(route) ? [route] : [] as string[] }));
+    const visitedPersistentRoutes = retainedScreens.scope === screenScope
+        ? retainedScreens.routes
+        : [];
     useEffect(() => {
-        if (PRIMARY_PERSISTENT_ROUTES.has(route)) {
-            setVisitedPersistentRoutes((prev) => (prev.includes(route) ? prev : [...prev, route]));
-        }
-    }, [route]);
-
-    // Reset visited cache on tenant switch or user logout to enforce strict isolation
-    const currentTenantId = currentTenant?.id;
-    useEffect(() => {
-        setVisitedPersistentRoutes(PRIMARY_PERSISTENT_ROUTES.has(route) ? [route] : []);
-    }, [currentTenantId, user.id, route]);
+        setRetainedScreens(previous => ({
+            scope: screenScope,
+            routes: PRIMARY_PERSISTENT_ROUTES.has(route)
+                ? rememberVisitedRoute(previous.scope === screenScope ? previous.routes : [], route)
+                : previous.scope === screenScope ? previous.routes : [],
+        }));
+    }, [screenScope, route]);
 
     // Schedule background idle prefetching for likely next modules
     useEffect(() => {
         if (currentTenant?.id) {
             return scheduleIdlePrefetch(queryClient, currentTenant.id, user);
         }
-    }, [currentTenant?.id, queryClient, user]);
+    }, [currentTenant?.id, queryClient, user.id, user.role]);
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
     const [quickCreateOpen, setQuickCreateOpen] = useState(false);
     const [mailToolsOpen, setMailToolsOpen] = useState(false);
@@ -513,7 +518,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         enabled: !!currentTenant?.id && !!user.id,
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
-        placeholderData: (previousData) => previousData,
     });
 
     const projects = projectData?.projects || [];
@@ -1531,7 +1535,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                             }`}
                         >
                         <EnterpriseTabWrapper fullBleed={isEnterpriseFullBleedTab(route)}>
-                            {visitedPersistentRoutes.map((vRoute) => {
+                            {(PRIMARY_PERSISTENT_ROUTES.has(route) && !visitedPersistentRoutes.includes(route) ? [...visitedPersistentRoutes, route] : visitedPersistentRoutes).map((vRoute) => {
                                 const isCurrent = vRoute === route;
                                 return (
                                     <div

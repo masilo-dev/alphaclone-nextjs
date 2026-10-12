@@ -245,11 +245,12 @@ test('real tenant authorization validates bearer identity, denies foreign tenant
   }
 });
 test('dashboard availability errors never fan out and successful period metrics remain authorized', async () => {
-  for (const mode of ['healthy', 'outage', 'forbidden']) {
+  for (const mode of ['healthy', 'message-count-outage', 'outage', 'forbidden']) {
     let databaseCalls = 0;
     const db = { rpc: async () => { databaseCalls++; return mode === 'outage' ? { error: { code: 'PGRST002', message: 'schema cache unavailable' } } : { data: { totalLeads: 7 }, error: null }; },
-      ...queryFixture(() => { databaseCalls++; return { count: 2, error: null }; }) };
+      ...queryFixture(() => { databaseCalls++; return mode === 'message-count-outage' ? { count: null, error: { code: '57014' } } : { count: 2, error: null }; }) };
     const stats = load('src/app/api/dashboard/stats/route.ts', {
+      '@/lib/dashboard/statsCache': { getOrLoadStatsCache: (_key, loader) => loader() },
       'next/server': fakeResponse,
       '@/lib/apiAuth': { requireTenantAccess: async () => { if (mode === 'forbidden') throw new AuthError(403, 'Forbidden'); return { supabase: db, user: { id: userId } }; } },
       '@/lib/api/clientErrorResponse': { clientErrorResponse: err => Response.json({ error: 'blocked' }, { status: err.status || 503 }) },
@@ -259,9 +260,14 @@ test('dashboard availability errors never fan out and successful period metrics 
     });
     const req = { nextUrl: new URL(`https://app.example/api/dashboard/stats?tenantId=${tenantId}`), headers: new Headers() };
     const response = await stats.GET(req);
-    assert.equal(response.status, mode === 'healthy' ? 200 : mode === 'outage' ? 503 : 403);
-    assert.equal(databaseCalls, mode === 'healthy' ? 2 : mode === 'outage' ? 1 : 0);
-    if (mode === 'healthy') assert.equal((await response.json()).stats.totalLeads, 7);
+    assert.equal(response.status, ['healthy', 'message-count-outage'].includes(mode) ? 200 : mode === 'outage' ? 503 : 403);
+    assert.equal(databaseCalls, ['healthy', 'message-count-outage'].includes(mode) ? 2 : mode === 'outage' ? 1 : 0);
+    if (['healthy', 'message-count-outage'].includes(mode)) {
+      const result = await response.json();
+      assert.equal(result.stats.totalLeads, 7);
+      assert.equal(result.partial, mode === 'message-count-outage');
+      if (result.partial) { assert.equal(result.stats.totalMessages, null); assert.deepEqual(result.unavailableMetrics, ['totalMessages']); }
+    }
   }
 });
 test('presence consumers share one heartbeat; cleanup removes listeners and hidden tabs do no RPC', async () => {

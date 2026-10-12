@@ -97,13 +97,13 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         ? queryClient.getQueryData<BusinessProject[]>(tenantQueryKeys.projects(currentTenant.id, user.id, user.role))
         : null;
     const cachedClients = currentTenant
-        ? queryClient.getQueryData<any[]>(tenantQueryKeys.clients(currentTenant.id))
+        ? queryClient.getQueryData<any[]>(tenantQueryKeys.clients(currentTenant.id, 'project-options'))
         : null;
 
     const [projects, setProjects] = useState<BusinessProject[]>(() => cachedProjects || []);
     const [clients, setClients] = useState<any[]>(() => cachedClients || []);
     const [showAddModal, setShowAddModal] = useState(false);
-    const [loading, setLoading] = useState<boolean>(() => !cachedProjects || cachedProjects.length === 0);
+    const [loading, setLoading] = useState<boolean>(() => !cachedProjects);
     const [viewMode, setViewMode] = useState<ViewMode>(() => {
         if (typeof window !== 'undefined') {
             try {
@@ -149,23 +149,39 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         }
     }, [nextSearch, router, projects, pathname, relationship]);
 
-    const loadData = useCallback(async () => {
+    const loadData = useCallback(async (force = false) => {
         if (!currentTenant) return;
 
         // Use cached projects for the same tenant before showing a full loader.
         const cached = queryClient.getQueryData<BusinessProject[]>(tenantQueryKeys.projects(currentTenant.id, user.id, user.role));
-        if (!cached || cached.length === 0) {
+        if (!cached) {
             setLoading(true);
         }
 
         try {
             const [projectRes, clientRes] = await Promise.all([
-                projectService.getProjects(user.id, user.role),
-                businessClientService.getClients(currentTenant.id),
+                queryClient.fetchQuery({
+                    queryKey: tenantQueryKeys.projects(currentTenant.id, user.id, user.role),
+                    staleTime: force ? 0 : 60_000,
+                    queryFn: async () => {
+                        const result = await projectService.getProjects(user.id, user.role);
+                        if (result.error) throw new Error(result.error);
+                        return (result.projects as unknown as BusinessProject[]) || [];
+                    },
+                }),
+                queryClient.fetchQuery({
+                    queryKey: tenantQueryKeys.clients(currentTenant.id, 'project-options'),
+                    staleTime: force ? 0 : 60_000,
+                    queryFn: async () => {
+                        const result = await businessClientService.getClients(currentTenant.id);
+                        if (result.error) throw new Error(result.error);
+                        return result.clients || [];
+                    },
+                }),
             ]);
 
-            const freshProjects = (projectRes.projects as unknown as BusinessProject[]) || [];
-            const freshClients = clientRes.clients || [];
+            const freshProjects = projectRes;
+            const freshClients = clientRes;
 
             setProjects(freshProjects);
             setClients(freshClients);
@@ -173,7 +189,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
             // Cache data in TanStack Query for instant subsequent loads
             queryClient.setQueryData(tenantQueryKeys.projects(currentTenant.id, user.id, user.role), freshProjects);
-            queryClient.setQueryData(tenantQueryKeys.clients(currentTenant.id), freshClients);
+            queryClient.setQueryData(tenantQueryKeys.clients(currentTenant.id, 'project-options'), freshClients);
         } catch (e) {
             console.error('Failed to load mission control data', e);
         } finally {
@@ -567,7 +583,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 onClose={() => setShowInvoiceModal(false)}
                 onInvoiceCreated={() => {
                     setShowInvoiceModal(false);
-                    loadData();
+                    loadData(true);
                 }}
                 projects={projects}
                 preselectProjectId={invoicePreselectProjectId}

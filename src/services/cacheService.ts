@@ -18,6 +18,7 @@ function resolveCacheMaxSize(): number {
 
 export class CacheService {
     private memoryCache: Map<string, CacheEntry<any>> = new Map();
+    private pending = new Map<string, Promise<any>>();
     private maxSize: number = resolveCacheMaxSize();
     private defaultTTL: number = 5 * 60 * 1000; // 5 minutes
     private defaultStaleTime: number = 10 * 60 * 1000; // 10 minutes
@@ -34,8 +35,8 @@ export class CacheService {
     ): Promise<T> {
         const entry = this.memoryCache.get(key);
         const now = Date.now();
-        const ttl = options?.ttl || this.defaultTTL;
-        const staleTime = options?.staleTime || this.defaultStaleTime;
+        const ttl = options?.ttl ?? entry?.ttl ?? this.defaultTTL;
+        const staleTime = options?.staleTime ?? entry?.staleTime ?? this.defaultStaleTime;
 
         // Cache hit and fresh
         if (entry && (now - entry.timestamp) < ttl) {
@@ -47,9 +48,7 @@ export class CacheService {
         if (entry && (now - entry.timestamp) < staleTime) {
             this.hits++;
             // Revalidate in background
-            fetcher().then((freshData) => {
-                this.set(key, freshData, { ttl, staleTime });
-            }).catch(() => {
+            this.load(key, fetcher, { ttl, staleTime }).catch(() => {
                 // Silently fail revalidation
             });
 
@@ -58,9 +57,18 @@ export class CacheService {
 
         // Cache miss or expired - fetch fresh data
         this.misses++;
-        const data = await fetcher();
-        this.set(key, data, { ttl, staleTime });
-        return data;
+        return this.load(key, fetcher, { ttl, staleTime });
+    }
+
+    private load<T>(key: string, fetcher: () => Promise<T>, options: { ttl: number; staleTime: number }): Promise<T> {
+        const existing = this.pending.get(key);
+        if (existing) return existing;
+        const request = Promise.resolve().then(fetcher).then(data => {
+            if (this.pending.get(key) === request) this.set(key, data, options);
+            return data;
+        }).finally(() => { if (this.pending.get(key) === request) this.pending.delete(key); });
+        this.pending.set(key, request);
+        return request;
     }
 
     /**
@@ -88,16 +96,16 @@ export class CacheService {
      */
     invalidate(key: string): void {
         this.memoryCache.delete(key);
+        this.pending.delete(key);
     }
 
     /**
      * Invalidate cache by pattern
      */
     invalidatePattern(pattern: RegExp): void {
-        for (const key of this.memoryCache.keys()) {
-            if (pattern.test(key)) {
-                this.memoryCache.delete(key);
-            }
+        for (const key of new Set([...this.memoryCache.keys(), ...this.pending.keys()])) {
+            pattern.lastIndex = 0;
+            if (pattern.test(key)) this.invalidate(key);
         }
     }
 
@@ -106,6 +114,7 @@ export class CacheService {
      */
     clear(): void {
         this.memoryCache.clear();
+        this.pending.clear();
     }
 
     /**

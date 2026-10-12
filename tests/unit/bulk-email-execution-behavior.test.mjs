@@ -41,6 +41,19 @@ test('unknown outcome blocks repeat and reconciles before any further execution'
   store.setEvidence({ success: true, emailId: 'original', deliveryStatus: 'delivered', deliveredAt: '2026-10-06T19:32:00Z' });
   const reconciled = await runEmailOperation(params); assert.equal(sends, 1); assert.equal(reconciled.deliveryStatus, 'delivered');
 });
+test('old uncertain claims remain blocked without provider evidence', async () => {
+  let sends = 0;
+  const store = {
+    async claim() { return false; },
+    async read() { return { action_id: 'original', final_status: 'unknown_execution_state', created_at: '2020-01-01T00:00:00Z' }; },
+    async reconcile() { return null; },
+    async save() { throw new Error('No new execution may occur'); },
+  };
+  const result = await runEmailOperation({ store, execute: async () => { sends++; return { success: true }; } });
+  assert.equal(result.code, 'OUTCOME_UNKNOWN');
+  assert.equal(result.action_id, 'original');
+  assert.equal(sends, 0);
+});
 test('concurrent replay does not run a second external write', async () => {
   const store = memoryStore(); let sends = 0, release;
   const barrier = new Promise((resolve) => { release = resolve; });

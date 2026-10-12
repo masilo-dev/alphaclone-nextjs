@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
   .then(async (reply) => {
                 if (!reply.matched || !reply.sourceType || !reply.sourceId) return;
                 const { resolveChasesForDomainEvent } = await import('@/lib/chaser/chaseEventBridge');
-                await resolveChasesForDomainEvent({ tenantId: integration.tenant_id, eventType: 'communication.reply_received', entityType: reply.sourceType, entityId: reply.sourceId, outcome: 'replied' });
+                await resolveChasesForDomainEvent({ tenantId, eventType: 'communication.reply_received', entityType: reply.sourceType, entityId: reply.sourceId, outcome: 'replied' });
             }).catch((replyError) => console.error('[whatsapp-inbound] outreach reply capture failed', replyError));
 
         // 3. Reuse the canonical open ticket for this client/channel or create it once.

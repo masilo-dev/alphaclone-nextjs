@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { dashboardStatsService } from '@/services/dashboardStatsService';
 import { extendedHubStats } from '@/lib/dashboard/extendedHubStats';
 import { type HubKpiId, type SlimHubStats } from '@/lib/dashboard/hubKpi';
-import { getStatsCache, setStatsCache } from '@/lib/dashboard/statsCache';
+import { getOrLoadStatsCache } from '@/lib/dashboard/statsCache';
 import type { MetricPeriodPreset } from '@/lib/metrics/dateRange';
 
 type HubLoader = (
@@ -49,11 +49,5 @@ export async function getHubKpiStats(
   period: MetricPeriodPreset = 'last_30_days',
 ): Promise<SlimHubStats> {
   const cacheKey = `hub-kpi:${hub}:${tenantId}:${period}`;
-  const cached = getStatsCache<SlimHubStats>(cacheKey);
-  if (cached) return cached;
-
-  const loader = HUB_SERVICE[hub];
-  const stats = await loader(supabase, tenantId, period);
-  setStatsCache(cacheKey, stats);
-  return stats;
+  return getOrLoadStatsCache(cacheKey, () => HUB_SERVICE[hub](supabase, tenantId, period));
 }

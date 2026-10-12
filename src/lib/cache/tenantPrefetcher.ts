@@ -23,12 +23,13 @@ export async function prefetchRouteData(
   const normalized = href.toLowerCase().split('?')[0];
 
   try {
-    if (normalized.includes('client') || normalized.includes('contact')) {
+    if ((normalized.includes('client') || normalized.includes('contact')) && user?.id) {
       await queryClient.prefetchQuery({
-        queryKey: tenantQueryKeys.clients(tenantId, 'default'),
+        queryKey: ['crm', 'clients', tenantId, user.id, false, 'all', ''],
         queryFn: async () => {
-          const res = await businessClientService.getClientsCursorPage(tenantId, { limit: 25 });
-          return res;
+          const res = await businessClientService.getClientsCursorPage(tenantId, { limit: 50 });
+          if (res.error) throw new Error(res.error);
+          return { clients: res.clients, total: res.pageInfo.total, cursor: res.pageInfo.nextCursor, hasMore: res.pageInfo.hasMore, page: 1 };
         },
         staleTime: PREFETCH_STALE_MS,
       });
@@ -37,6 +38,7 @@ export async function prefetchRouteData(
         queryKey: tenantQueryKeys.leads(tenantId, 50),
         queryFn: async () => {
           const res = await leadService.getLeadsPage({ limit: 50 });
+          if (res.error) throw new Error(res.error);
           return res;
         },
         staleTime: PREFETCH_STALE_MS,
@@ -45,11 +47,12 @@ export async function prefetchRouteData(
       await queryClient.prefetchQuery({
         queryKey: tenantQueryKeys.deals(tenantId),
         queryFn: async () => {
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from('deals')
             .select('*')
             .eq('tenant_id', tenantId)
             .order('created_at', { ascending: false });
+          if (error) throw new Error(error.message);
           return data || [];
         },
         staleTime: PREFETCH_STALE_MS,
@@ -58,7 +61,8 @@ export async function prefetchRouteData(
       await queryClient.prefetchQuery({
         queryKey: tenantQueryKeys.invoices(tenantId),
         queryFn: async () => {
-          const { invoices } = await businessInvoiceService.getInvoices(tenantId);
+          const { invoices, error } = await businessInvoiceService.getInvoices(tenantId);
+          if (error) throw new Error(error);
           return invoices || [];
         },
         staleTime: PREFETCH_STALE_MS,
@@ -67,7 +71,8 @@ export async function prefetchRouteData(
       await queryClient.prefetchQuery({
         queryKey: tenantQueryKeys.projects(tenantId, user.id, user.role),
         queryFn: async () => {
-          const { projects } = await projectService.getProjects(user.id, user.role as UserRole);
+          const { projects, error } = await projectService.getProjects(user.id, user.role as UserRole);
+          if (error) throw new Error(error);
           return projects || [];
         },
         staleTime: PREFETCH_STALE_MS,
@@ -76,11 +81,12 @@ export async function prefetchRouteData(
       await queryClient.prefetchQuery({
         queryKey: tenantQueryKeys.contracts(tenantId),
         queryFn: async () => {
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from('contracts')
             .select('*')
             .eq('tenant_id', tenantId)
             .order('created_at', { ascending: false });
+          if (error) throw new Error(error.message);
           return data || [];
         },
         staleTime: PREFETCH_STALE_MS,
@@ -102,26 +108,18 @@ export function scheduleIdlePrefetch(
 ) {
   if (typeof window === 'undefined' || !tenantId) return () => {};
 
-  const executePrefetch = () => {
-    // Stagger prefetch requests by 250ms to prevent network saturation
-    const targets = [
-      () => prefetchRouteData(queryClient, '/dashboard/crm', tenantId, user),
-      () => prefetchRouteData(queryClient, '/dashboard/leads', tenantId, user),
-      () => prefetchRouteData(queryClient, '/dashboard/finance', tenantId, user),
-      () => prefetchRouteData(queryClient, '/dashboard/projects', tenantId, user),
-    ];
-
-    targets.forEach((fetcher, idx) => {
-      window.setTimeout(fetcher, (idx + 1) * 250);
-    });
+  let cancelled = false;
+  const executePrefetch = async () => {
+    // One request at a time; stop warming the old workspace on cleanup.
+    for (const href of ['/dashboard/clients', '/dashboard/leads', '/dashboard/finance', '/dashboard/projects']) {
+      if (cancelled) return;
+      await prefetchRouteData(queryClient, href, tenantId, user);
+    }
   };
-
-  let handle: number;
   if (typeof window.requestIdleCallback === 'function') {
-    handle = window.requestIdleCallback(executePrefetch, { timeout: 3000 });
-    return () => window.cancelIdleCallback(handle);
-  } else {
-    const timer = window.setTimeout(executePrefetch, 1000);
-    return () => window.clearTimeout(timer);
+    const handle = window.requestIdleCallback(() => void executePrefetch(), { timeout: 3000 });
+    return () => { cancelled = true; window.cancelIdleCallback(handle); };
   }
+  const timer = window.setTimeout(() => void executePrefetch(), 1500);
+  return () => { cancelled = true; window.clearTimeout(timer); };
 }

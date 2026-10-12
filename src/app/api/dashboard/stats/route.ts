@@ -1,3 +1,4 @@
+import { getOrLoadStatsCache } from '@/lib/dashboard/statsCache';
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { normalizeDashboardStats } from '@/lib/analytics/normalizeDashboardStats';
@@ -53,86 +54,82 @@ export async function GET(req: NextRequest) {
     // A membership lookup outage is availability failure, not proof of forbidden access.
     const { supabase, user } = await requireTenantAccess(tenantId, req);
 
-    // ── Try the optimised consolidated RPC first ──────────────────────────
-    let stats: Record<string, any> | null = null;
+    const period = parsePeriod(req);
+    const payload = await getOrLoadStatsCache(`home:${tenantId}:${user.id}:${period}`, async () => {
+      // ── Try the optimised consolidated RPC first ──────────────────────────
+      let stats: Record<string, any> | null = null;
+      const unavailableMetrics: string[] = [];
 
-    try {
-      const { data: rpcData, error: rpcError } = await supabase.rpc(
-        'get_consolidated_dashboard_stats',
-        { p_tenant_id: tenantId, p_user_id: user.id }
-      );
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+          'get_consolidated_dashboard_stats',
+          { p_tenant_id: tenantId, p_user_id: user.id }
+        );
 
-      if (rpcError) {
-        if (isTransientDatabaseFailure(rpcError)) {
-          console.warn('[dashboard/stats] transient database failure; refusing fallback fan-out:', rpcError.message);
+        if (rpcError) {
+          if (isTransientDatabaseFailure(rpcError)) {
+            console.warn('[dashboard/stats] transient database failure; refusing fallback fan-out:', rpcError.message);
+            return NextResponse.json(
+              { error: 'Dashboard data is temporarily unavailable. Please retry shortly.' },
+              { status: 503, headers: { 'Retry-After': '2' } },
+            );
+          }
+          throw rpcError;
+        } else if (rpcData) {
+          stats = { ...rpcData };
+        }
+      } catch (rpcException) {
+        if (isTransientDatabaseFailure(rpcException)) {
+          console.warn('[dashboard/stats] transient database exception; refusing fallback fan-out:', rpcException);
           return NextResponse.json(
             { error: 'Dashboard data is temporarily unavailable. Please retry shortly.' },
             { status: 503, headers: { 'Retry-After': '2' } },
           );
         }
-        throw rpcError;
-      } else if (rpcData) {
-        // Hydrate totalMessages separately (not in RPC)
-        let totalMessages = 0;
-        const { count: msgCount, error: messageError } = await supabase
-          .from('messages')
-          .select('id', { count: 'exact', head: true })
-          .eq('tenant_id', tenantId);
-        if (messageError) throw messageError;
-        if (typeof msgCount === 'number') totalMessages = msgCount;
-
-        stats = { ...rpcData, totalMessages };
+        throw rpcException;
       }
-    } catch (rpcException) {
-      if (isTransientDatabaseFailure(rpcException)) {
-        console.warn('[dashboard/stats] transient database exception; refusing fallback fan-out:', rpcException);
-        return NextResponse.json(
-          { error: 'Dashboard data is temporarily unavailable. Please retry shortly.' },
-          { status: 503, headers: { 'Retry-After': '2' } },
-        );
+
+      // Do not fan out when the consolidated statistics are unavailable.
+      if (!stats) {
+        return NextResponse.json({ error: 'Dashboard statistics are unavailable. Please retry shortly.' }, { status: 503, headers: { 'Retry-After': '2' } });
       }
-      throw rpcException;
-    }
 
-    // ── Fallback: direct table queries ────────────────────────────────────
-    if (!stats) {
-      return NextResponse.json({ error: 'Dashboard statistics are unavailable. Please retry shortly.' }, { status: 503, headers: { 'Retry-After': '2' } });
-    }
+      try {
+        const admin = createSupabaseAdminClient();
+        const [messages, periodMetrics] = await Promise.all([
+          supabase.from('messages').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+          dashboardStatsService.getHomePeriodMetrics(admin, tenantId, period),
+        ]);
+        if (messages.error) unavailableMetrics.push('totalMessages');
+        stats = {
+          ...stats,
+          totalMessages: messages.error ? null : messages.count,
+          revenue: periodMetrics.revenue,
+          totalRevenue: periodMetrics.revenue,
+          revenuePrev: periodMetrics.revenuePrev,
+          previousRevenue: periodMetrics.revenuePrev,
+          newLeads: periodMetrics.newLeads,
+          leadsPrev: periodMetrics.leadsPrev,
+          previousLeads: periodMetrics.leadsPrev,
+          dealsWon: periodMetrics.dealsWon,
+          dealsWonPrev: periodMetrics.dealsWonPrev,
+          previousDealsWon: periodMetrics.dealsWonPrev,
+          outstanding: periodMetrics.outstanding,
+          outstandingPrev: periodMetrics.outstandingPrev,
+          pendingRevenue: periodMetrics.outstanding,
+          overdueInvoices: periodMetrics.overdueInvoices,
+          periodPreset: period,
+          comparisonLabel: periodMetrics.comparisonLabel,
+        };
+      } catch (periodError) {
+        console.warn('[dashboard/stats] Period overlay failed:', periodError);
+        return NextResponse.json({ error: 'Dashboard period metrics are unavailable. Please retry shortly.' }, { status: 503, headers: { 'Retry-After': '2' } });
+      }
 
-    const period = parsePeriod(req);
-
-    try {
-      const admin = createSupabaseAdminClient();
-      const periodMetrics = await dashboardStatsService.getHomePeriodMetrics(
-        admin,
-        tenantId,
-        period,
-      );
-      stats = {
-        ...stats,
-        revenue: periodMetrics.revenue,
-        totalRevenue: periodMetrics.revenue,
-        revenuePrev: periodMetrics.revenuePrev,
-        previousRevenue: periodMetrics.revenuePrev,
-        newLeads: periodMetrics.newLeads,
-        leadsPrev: periodMetrics.leadsPrev,
-        previousLeads: periodMetrics.leadsPrev,
-        dealsWon: periodMetrics.dealsWon,
-        dealsWonPrev: periodMetrics.dealsWonPrev,
-        previousDealsWon: periodMetrics.dealsWonPrev,
-        outstanding: periodMetrics.outstanding,
-        outstandingPrev: periodMetrics.outstandingPrev,
-        pendingRevenue: periodMetrics.outstanding,
-        overdueInvoices: periodMetrics.overdueInvoices,
-        periodPreset: period,
-        comparisonLabel: periodMetrics.comparisonLabel,
-      };
-    } catch (periodError) {
-      console.warn('[dashboard/stats] Period overlay failed:', periodError);
-      return NextResponse.json({ error: 'Dashboard period metrics are unavailable. Please retry shortly.' }, { status: 503, headers: { 'Retry-After': '2' } });
-    }
-
-    return NextResponse.json({ stats: normalizeDashboardStats(stats) }, { headers: { 'Cache-Control': 'private, no-store' } });
+      return { stats: normalizeDashboardStats(stats), partial: unavailableMetrics.length > 0, unavailableMetrics };
+    });
+    if (payload instanceof Response) return payload.clone();
+    return NextResponse.json(payload, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (err: unknown) {
     return clientErrorResponse(err, { request: req, scope: 'dashboard/stats.GET' });
   }

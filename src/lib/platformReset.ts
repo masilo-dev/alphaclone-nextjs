@@ -3,6 +3,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { invalidateProfileReads } from '@/lib/profileRead';
+import { clearSavedStats } from '@/lib/dashboard/clientStatsCache';
 import { cacheService } from '@/services/cacheService';
 
 export type PlatformResetReason =
@@ -136,6 +137,7 @@ export async function resetPlatformState({
       queryClient.clear();
     }
 
+    clearSavedStats();
     cacheService.clear();
     clearBrowserStorage(clearAuth);
 

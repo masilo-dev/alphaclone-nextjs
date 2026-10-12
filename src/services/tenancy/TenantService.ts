@@ -411,7 +411,7 @@ class TenantService {
                             if (Date.now() - ts >= CACHE_TTL) {
                                 void this.fetchAndCacheStats(tenantId, userId, CACHE_KEY);
                             }
-                            return { stats, error: Date.now() - ts >= CACHE_TTL ? 'Showing saved dashboard data while refreshing.' : null };
+                            return { stats, error: null };
                         }
                     }
                 }

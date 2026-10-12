@@ -49,7 +49,7 @@ describe('CRM identity resolution wiring', () => {
   });
 
   it('client dashboard stats listen for invalidation events', () => {
-    const source = readFileSync(path.join(root, 'src/hooks/useDashboardStats.ts'), 'utf8');
+    const source = readFileSync(path.join(root, 'src/components/Providers.tsx'), 'utf8');
     assert.match(source, /ac:crm-stats-invalidate/);
   });
 

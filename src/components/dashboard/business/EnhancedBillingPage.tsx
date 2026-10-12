@@ -209,7 +209,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
     useEffect(() => {
         if (currentTenant?.id) {
-            loadInvoices();
+            loadInvoices(false);
             loadClients();
             void loadProjects();
         }
@@ -253,7 +253,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         if (!currentTenant?.id) return;
         const cacheKey = tenantQueryKeys.clients(currentTenant.id, 'summary');
         const cached = queryClient.getQueryData<any[]>(cacheKey);
-        if (cached && cached.length > 0) {
+        if (cached) {
             const map: Record<string, { name: string; email?: string }> = {};
             cached.forEach((c) => {
                 map[c.id] = { name: c.name, email: c.email || undefined };
@@ -276,7 +276,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         try {
             const cacheKey = tenantQueryKeys.projects(currentTenant.id, user.id, user.role);
             const cached = queryClient.getQueryData<any[]>(cacheKey);
-            if (cached && cached.length > 0) {
+            if (cached) {
                 setProjects(cached);
                 const pMap: Record<string, { name: string }> = {};
                 cached.forEach((p: any) => {
@@ -326,11 +326,11 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         });
     };
 
-    const loadInvoices = async () => {
+    const loadInvoices = async (force = true) => {
         if (!currentTenant?.id) return;
         const cacheKey = tenantQueryKeys.invoices(currentTenant.id);
         const cached = queryClient.getQueryData<BusinessInvoice[]>(cacheKey);
-        if (cached && cached.length > 0) {
+        if (cached) {
             setInvoices(cached);
             calculateStats(cached);
             loadRevenueData(cached);
@@ -338,7 +338,21 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         } else {
             setLoading(true);
         }
-        const { invoices: data } = await businessInvoiceService.getInvoices(currentTenant.id);
+        let data: BusinessInvoice[];
+        try {
+            data = await queryClient.fetchQuery({
+                queryKey: cacheKey, staleTime: force ? 0 : 60_000,
+                queryFn: async () => {
+                    const result = await businessInvoiceService.getInvoices(currentTenant.id);
+                    if (result.error) throw new Error(result.error);
+                    return result.invoices || [];
+                },
+            });
+        } catch (error) {
+            if (!cached) toast.error(error instanceof Error ? error.message : 'Could not load invoices');
+            setLoading(false);
+            return;
+        }
         if (data) {
             queryClient.setQueryData(cacheKey, data);
             setInvoices(data);

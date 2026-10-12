@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
         admin
           .from("integrations")
           .select("id, type, name, config, user_id, updated_at")
+          .eq("tenant_id", tenantId)
           .eq("enabled", true)
           .in("type", ["zoho", "sendgrid", "resend", "brevo"]),
       ]);

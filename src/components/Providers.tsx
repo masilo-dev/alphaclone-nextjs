@@ -20,6 +20,7 @@ import { LanguageProvider } from '@/contexts/LanguageContext';
 import { UserPreferencesBootstrap } from '@/components/UserPreferencesBootstrap';
 import ServiceWorkerBootstrap from '@/components/common/ServiceWorkerBootstrap';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
+import { clearSavedStats } from '@/lib/dashboard/clientStatsCache';
 import { registerPlatformQueryClient } from '@/lib/platformReset';
 import { alphacloneChakraTheme } from '@/theme/chakraTheme';
 import { BonnieDrawer } from '@/components/ui/os/BonnieDrawer';
@@ -69,6 +70,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => registerPlatformQueryClient(queryClient), [queryClient]);
+
+  useEffect(() => {
+    const invalidate = (event: Event) => {
+      const tenantId = (event as CustomEvent<{ tenantId?: string }>).detail?.tenantId;
+      clearSavedStats(tenantId);
+      void queryClient.invalidateQueries({ predicate: query =>
+        query.queryKey[0] === 'tenant' && query.queryKey[2] === 'stats' && (!tenantId || query.queryKey[1] === tenantId),
+      });
+    };
+    window.addEventListener('ac:crm-stats-invalidate', invalidate);
+    return () => window.removeEventListener('ac:crm-stats-invalidate', invalidate);
+  }, [queryClient]);
 
   useLayoutEffect(() => {
     applyAcThemeClass(readStoredAcTheme());
