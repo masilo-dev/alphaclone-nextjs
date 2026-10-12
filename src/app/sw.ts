@@ -25,6 +25,7 @@ const networkOnlyRetryOrError = new NetworkOnly({
             handlerDidError: async ({ request }) => {
                 try {
                     const req = request instanceof Request ? request : new Request(request);
+                    if (!['GET', 'HEAD'].includes(req.method)) return Response.error();
                     return await fetch(new Request(req, { cache: 'no-store' }));
                 } catch {
                     return Response.error();
@@ -35,7 +36,8 @@ const networkOnlyRetryOrError = new NetworkOnly({
 });
 
 // API and dashboard: same behavior — synthetic 503 breaks debugging and hides real status codes.
-const apiNetworkOnly = networkOnlyRetryOrError;
+// The browser transport owns read retries. A lost POST response must never trigger another send.
+const apiNetworkOnly = new NetworkOnly();
 const dashboardNetworkOnly = networkOnlyRetryOrError;
 const nextAssetNetworkOnly = networkOnlyRetryOrError;
 

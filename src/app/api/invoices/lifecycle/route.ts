@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { validateDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
-import { queueInvoiceSend } from '@/lib/invoices/durableInvoiceRouter';
+import { executeInvoiceSendCommand } from '@/lib/execution/commands/invoiceSendCommand';
+import { mapProviderCodeToHttpStatus } from '@/lib/execution/domainCapabilityGuard';
 
 /**
  * Start invoice lifecycle without MCP/AI.
@@ -38,9 +39,9 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
     if (error) throw error;
     if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
-    if (invoice.status !== 'draft') {
+    if (!['draft', 'approved'].includes(invoice.status)) {
       return NextResponse.json(
-        { error: `Only draft invoices can be sent. This invoice is ${invoice.status}.` },
+        { error: `Only draft or approved invoices can be sent. This invoice is ${invoice.status}.` },
         { status: 409 }
       );
     }
@@ -68,22 +69,29 @@ export async function POST(req: NextRequest) {
 
     await validateDailyResourceQuota(tenantId, user.id, 'invoices');
 
-    const queued = await queueInvoiceSend({
+    const execution = await executeInvoiceSendCommand({
       tenantId,
       userId: user.id,
       invoiceId,
       recipients,
       subject,
       message,
+      executionSource: 'ui',
     });
+    if (!execution.ok) {
+      const code = execution.failure_code || execution.error?.code || 'SEND_FAILED';
+      return NextResponse.json({ error: execution.error?.message || 'Invoice delivery blocked', code },
+        { status: mapProviderCodeToHttpStatus(code) });
+    }
+    const queued = execution.result!;
 
     return NextResponse.json(
       {
         success: true,
         ...queued,
         message: queued.durable
-          ? 'Invoice delivery queued on Bonnie durable runtime'
-          : 'Invoice delivery queued on workflow runtime',
+          ? 'Invoice queued for the background worker; no email has been confirmed yet. Check Bonnie outcome status using the run ID.'
+          : 'Invoice queued for the workflow worker; no email has been confirmed yet.',
       },
       { status: 202 }
     );

@@ -1,0 +1,71 @@
+✔ idempotent replay sends once and acceptance is never delivery (1.878096ms)
+✔ unknown outcome blocks repeat and reconciles before any further execution (0.339221ms)
+✔ concurrent replay does not run a second external write (0.291839ms)
+✔ dry-run sends zero messages and deduplicates normalized CRM emails (60.280212ms)
+✔ partial batch failure exposes accurate outcomes and explicit provider routing (45.027776ms)
+✔ approval resume preserves complete args and persists structured execution result (14.534476ms)
+✔ sanitizer drops style blocks and scripts while preserving inline layout (17.063917ms)
+✔ structured approval output preserves all recipient outcomes beyond summary truncation (29.360601ms)
+✔ MCP approval response returns failures and complete execution payload (23.369806ms)
+✔ Zoho sender recovery chooses the connected provider account rather than guessing (6.436525ms)
+✔ Brevo refuses an unverified configured sender before transmission (6.976398ms)
+✔ Brevo reconciliation maps acceptance, blocking and deferral without inventing delivery (8.205307ms)
+✔ approval policy receives the stable retry key before queuing (20.815492ms)
+✔ canonical provider adapter respects an explicit route despite other connected accounts (22.219915ms)
+✔ unknown provider response prevents fallback to another connected provider (18.540008ms)
+✔ durable claims and checkpoints use compatible receipt columns and exact tenant scope (12.701742ms)
+✔ Zoho verifies sender identities on the selected account without silent substitution (62.212074ms)
+✔ Zoho uploads PDF bytes before sending only file-store references (38.111984ms)
+✔ incomplete Zoho upload evidence prevents the send POST (40.32222ms)
+✔ provider HTTP 5xx remains uncertain and stops all provider fallback (20.715306ms)
+[outreach/send] Provider attempt result {
+  operationId: 'ui-outreach:aa8801263d8c3b78d09ec4d3e29b455df8033c450614cff0f668986aecdb684d',
+  provider: 'microsoft',
+  upstreamStatus: undefined,
+  upstreamRequestId: undefined,
+  outcome: 'unknown'
+}
+[apiAuth] Failed to verify tenant membership: { code: 'PGRST002' }
+[dashboard/stats] transient database failure; refusing fallback fan-out: schema cache unavailable
+✔ approval binds user, tenant, recipients, content, attachment bytes and sender revision (8.454261ms)
+✔ concurrent reads coalesce; mutations execute once without retry (6.782125ms)
+✔ read backoff respects Retry-After and cooldown stops widget fan-out (2.081903ms)
+✔ authorization and absence never retry; auth POST tokens never retry (0.52518ms)
+✔ install has one owner, early capture, one prompt per click, dismissal and listener cleanup (0.607194ms)
+✔ the exact early bootstrap executes and repeated evaluation does not add owners (1.269891ms)
+✔ service worker bypasses mutation requests, including outreach (5.062868ms)
+✔ real outreach handler rejects stale approval and cross-tenant requests without contacting provider (60.572472ms)
+✔ real outreach handler sends once under concurrency, replays acceptance and retains correlation identity (50.229603ms)
+✔ lost provider response remains unknown, blocks retry and reconciles acceptance without a second send (36.55109ms)
+✔ document detail resolves the list Doc OS identity and does not fan out for an absent document (299.267575ms)
+✔ preferences failed read performs no write; successful merge preserves unknown keys (11.507997ms)
+✔ real tenant authorization validates bearer identity, denies foreign tenant, and returns 503 on membership outage (65.101177ms)
+✔ dashboard availability errors never fan out and successful period metrics remain authorized (16.050838ms)
+[outreach/send] Provider attempt result {
+  operationId: 'ui-outreach:aa8801263d8c3b78d09ec4d3e29b455df8033c450614cff0f668986aecdb684d',
+  provider: 'microsoft',
+  upstreamStatus: undefined,
+  upstreamRequestId: undefined,
+  outcome: 'unknown'
+}
+[outreach/send] Provider attempt result {
+  operationId: 'ui-outreach:aa8801263d8c3b78d09ec4d3e29b455df8033c450614cff0f668986aecdb684d',
+  provider: 'microsoft',
+  upstreamStatus: 401,
+  upstreamRequestId: 'mock-request-rejected',
+  outcome: 'rejected'
+}
+✔ presence consumers share one heartbeat; cleanup removes listeners and hidden tabs do no RPC (23.110335ms)
+✔ presence retries after transient cooldown without marking the feature permanently unsupported (12.809976ms)
+✔ unresolved recipient hold survives edits and changing providers (28.471843ms)
+✔ annotation changes preserve the original email operation identity (0.175364ms)
+✔ provider authentication rejection is distinct from unknown delivery and retry replays safely (28.932957ms)
+✔ read coalescing cannot share different authentication contexts (10.83287ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1518.374684

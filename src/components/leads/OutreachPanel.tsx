@@ -1,5 +1,6 @@
 'use client';
 
+import { fetchApprovedOutreach } from '@/lib/email/approvedOutreachClient';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -208,7 +209,7 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
       }
 
       try {
-        const res = await fetch('/api/outreach/send', {
+        const res = await fetchApprovedOutreach('/api/outreach/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
 import { RouteAuthError } from './routeAuthError';
+import { isTransientDatabaseError } from '../transientDbError';
 
 export type ApiErrorBody = {
     error: string;
@@ -33,7 +34,9 @@ export function clientErrorResponse(
         fallbackMessage?: string;
     }
 ): NextResponse<ApiErrorBody> {
-    const requestId = options.request ? getRequestIdFromRequest(options.request) : undefined;
+    const suppliedId = options.request ? getRequestIdFromRequest(options.request) : undefined;
+    const requestId = suppliedId && /^[a-zA-Z0-9._:-]{1,128}$/.test(suppliedId) ? suppliedId : crypto.randomUUID();
+    const headers = { 'x-request-id': requestId, 'Cache-Control': 'private, no-store' };
 
     if (err instanceof RouteAuthError) {
         const body: ApiErrorBody = {
@@ -41,7 +44,12 @@ export function clientErrorResponse(
             code: err.code,
             ...(requestId ? { requestId } : {}),
         };
-        return NextResponse.json(body, { status: err.status });
+        return NextResponse.json(body, { status: err.status, headers: { ...headers, ...(err.status === 503 ? { 'Retry-After': '2' } : {}) } });
+    }
+
+    if (isTransientDatabaseError(err)) {
+        logServerError(options.scope, err, requestId);
+        return NextResponse.json({ error: 'Data is temporarily unavailable. Please retry shortly.', code: 'SERVICE_UNAVAILABLE', requestId }, { status: 503, headers: { ...headers, 'Retry-After': '2' } });
     }
 
     logServerError(options.scope, err, requestId);
@@ -55,5 +63,5 @@ export function clientErrorResponse(
         code: 'INTERNAL_ERROR',
         ...(requestId ? { requestId } : {}),
     };
-    return NextResponse.json(body, { status: 500 });
+    return NextResponse.json(body, { status: 500, headers });
 }

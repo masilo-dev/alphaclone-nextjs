@@ -83,6 +83,7 @@ async function graphRequest<T = any>(
   const baseUrl = beta ? 'https://graph.microsoft.com/beta' : GRAPH_BASE_URL;
   const response = await fetch(path.startsWith('http') ? path : `${baseUrl}${path}`, {
     ...init,
+    signal: init.signal || AbortSignal.timeout(10_000),
     headers: {
       Authorization: `Bearer ${connection.access_token}`,
       ...(init.body ? { 'Content-Type': 'application/json' } : {}),
@@ -106,7 +107,7 @@ async function graphRequest<T = any>(
       }
     }
 
-    throw new Error(message);
+    throw Object.assign(new Error(message), { status: response.status, providerRequestId: response.headers.get('request-id') || undefined });
   }
 
   if (response.status === 204 || response.status === 202) return {} as T;

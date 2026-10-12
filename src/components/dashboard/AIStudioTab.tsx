@@ -87,7 +87,10 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                 setConversationHistory([]);
             }
             setAiConversationReady(true);
-        })();
+        })().catch((error) => {
+            console.warn('Saved AI conversation is temporarily unavailable', error);
+            if (!cancelled) setAiConversationReady(false);
+        });
         return () => {
             cancelled = true;
         };

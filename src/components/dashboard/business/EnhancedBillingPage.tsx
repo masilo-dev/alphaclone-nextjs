@@ -1221,11 +1221,11 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                 const { startInvoiceLifecycleFromDashboard } = await import(
                                                     '@/lib/invoices/startInvoiceLifecycleFromDashboard'
                                                 );
-                                                await startInvoiceLifecycleFromDashboard({
+                                                const lifecycle = await startInvoiceLifecycleFromDashboard({
                                                     tenantId: currentTenant.id,
                                                     invoiceId: selectedInvoiceForOptions.id,
                                                 });
-                                                toast.success('Lifecycle started — email + reminders now automated.', { id: toastId });
+                                                toast.success(lifecycle.message, { id: toastId });
                                             } catch (err: any) {
                                                 toast.error(`Failed to start lifecycle: ${err.message}`, { id: toastId });
                                             }
@@ -1335,11 +1335,11 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                         const { startInvoiceLifecycleFromDashboard } = await import(
                                             '@/lib/invoices/startInvoiceLifecycleFromDashboard'
                                         );
-                                        await startInvoiceLifecycleFromDashboard({
+                                        const lifecycle = await startInvoiceLifecycleFromDashboard({
                                             tenantId: currentTenant.id,
                                             invoiceId: selectedInvoiceForOptions.id,
                                         });
-                                        toast.success('Lifecycle started — email + reminders now automated.', { id: toastId });
+                                        toast.success(lifecycle.message, { id: toastId });
                                         setShowPDFPreview(null);
                                     } catch (err: any) {
                                         toast.error(`Failed to start lifecycle: ${err.message}`, { id: toastId });

@@ -186,9 +186,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 }
             } catch (err) {
                 console.warn('Failed to fetch dashboard preferences:', err);
-                setRecentCommands([]);
+                if (!cancelled) setCommandHistoryReady(false);
+                return;
             }
-            setCommandHistoryReady(true);
+            if (!cancelled) setCommandHistoryReady(true);
         })();
         return () => {
             cancelled = true;

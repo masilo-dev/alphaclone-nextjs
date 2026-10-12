@@ -2,6 +2,7 @@
 
 import type { QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { invalidateProfileReads } from '@/lib/profileRead';
 import { cacheService } from '@/services/cacheService';
 
 export type PlatformResetReason =
@@ -33,6 +34,7 @@ function shouldPreserveLocalKey(key: string): boolean {
 
 function clearBrowserStorage(clearAuth: boolean): void {
   try {
+    invalidateProfileReads();
     sessionStorage.clear();
   } catch {
     // Storage can be disabled by browser policy.

@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchApprovedOutreach } from '@/lib/email/approvedOutreachClient';
 import { Input as AlphaCloneInput } from '@/components/ui/input';
 import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 
@@ -522,7 +523,7 @@ export default function UnifiedInboxTab({
     const t = toast.loading("Sending...");
     try {
       const provider = resolveSendProvider();
-      const res = await fetch("/api/outreach/send", {
+      const res = await fetchApprovedOutreach("/api/outreach/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -578,7 +579,7 @@ export default function UnifiedInboxTab({
         `Re: ${selectedMessage.subject || "Your message"}`;
       const provider = resolveSendProvider();
 
-      const response = await fetch("/api/outreach/send", {
+      const response = await fetchApprovedOutreach("/api/outreach/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

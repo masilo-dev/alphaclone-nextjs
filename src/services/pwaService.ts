@@ -2,6 +2,7 @@
  * PWA Service - Handles Progressive Web App features
  */
 
+import { promptCapturedInstall } from '@/lib/pwa/installLifecycle';
 import { supabase } from '@/lib/supabase';
 import { ENV } from '@/config/env';
 
@@ -185,46 +186,16 @@ export const pwaService = {
             return { prompt: null, error: 'Use Share → Add to Home Screen to install AlphaClone.' };
         }
 
-        // Listen for the next beforeinstallprompt event when none was captured.
-        return new Promise((resolve) => {
-            const handler = (e: Event) => {
-                e.preventDefault();
-                (window as any).deferredPrompt = e;
-                resolve({ prompt: e, error: null });
-                window.removeEventListener('beforeinstallprompt', handler);
-            };
-
-            window.addEventListener('beforeinstallprompt', handler);
-
-            // Timeout after 5 seconds
-            setTimeout(() => {
-                window.removeEventListener('beforeinstallprompt', handler);
-                resolve({ prompt: null, error: 'Install prompt not available' });
-            }, 5000);
-        });
+        return { prompt: null, error: 'Install is unavailable here. Use your browser menu if it offers installation.' };
     },
 
     /**
      * Prompt user to install app
      */
     async promptInstall(): Promise<{ success: boolean; error: string | null }> {
-        const deferredPrompt = (window as any).deferredPrompt;
-        if (!deferredPrompt) {
-            return { success: false, error: 'Install prompt not available' };
-        }
-
-        try {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            (window as any).deferredPrompt = null;
-
-            return { success: outcome === 'accepted', error: null };
-        } catch (error) {
-            return {
-                success: false,
-                error: error instanceof Error ? error.message : 'Install failed',
-            };
-        }
+        if (typeof window === 'undefined') return { success: false, error: 'Not in browser environment' };
+        const result = await promptCapturedInstall(window);
+        return { success: result.success, error: result.success || result.outcome === 'dismissed' ? null : 'Install prompt not available' };
     },
 
     /**

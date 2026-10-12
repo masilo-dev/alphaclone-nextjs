@@ -62,23 +62,12 @@ export async function GET(req: NextRequest) {
     const { admin } = await requireTenantAccess(workspaceId, req);
     const { data, error } = await admin.from('lead_searches').select('*')
       .eq('workspace_id', workspaceId).order('created_at', { ascending: false }).limit(100);
-    if (error) {
-      console.warn('[api/leads/searches] Database query notice:', error.message);
-      return NextResponse.json({
-        searches: [],
-        available: false,
-        notice: 'Lead search history table is initializing for this workspace.',
-      });
-    }
+    if (error) throw error;
 
     const searchesList = data || [];
     return NextResponse.json({ searches: searchesList, available: true });
   } catch (error) {
-    return NextResponse.json({
-      searches: [],
-      available: false,
-      notice: 'Lead search engine is initializing.',
-    });
+    return routeErrorResponse(error, 'Lead search history could not be loaded.', req);
   }
 }
 

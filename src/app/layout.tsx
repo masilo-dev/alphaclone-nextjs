@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { buildInstallBootstrapScript } from "@/lib/pwa/installLifecycle";
 import { Suspense } from "react";
 
 import "./globals.css";
@@ -118,7 +119,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script
           id="ac-pwa-deferred-prompt"
           dangerouslySetInnerHTML={{
-            __html: `(function(){if(typeof window!=='undefined'){window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.deferredPrompt=e;});}})();`,
+            __html: buildInstallBootstrapScript(),
           }}
         />
       </head>

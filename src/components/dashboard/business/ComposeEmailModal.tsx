@@ -1,5 +1,6 @@
 'use client';
 
+import { fetchApprovedOutreach } from '@/lib/email/approvedOutreachClient';
 import { Input as AlphaCloneInput } from '@/components/ui/input';
 
 
@@ -537,6 +538,10 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     };
 
     const handleSend = async () => {
+        if (attachments.length > 0) {
+            toast.error('This outreach composer cannot send attachments yet. Use the mailbox composer so every file is included.');
+            return;
+        }
         if (toRecipients.length === 0) {
             toast.error('Add at least one recipient.');
             return;
@@ -579,7 +584,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
             for (const recipient of allRecipients) {
                 const clientMatch = clients.find((client) => client.email?.toLowerCase() === recipient.toLowerCase());
-                const res = await fetch('/api/outreach/send', {
+                const res = await fetchApprovedOutreach('/api/outreach/send', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

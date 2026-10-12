@@ -411,7 +411,7 @@ class TenantService {
                             if (Date.now() - ts >= CACHE_TTL) {
                                 void this.fetchAndCacheStats(tenantId, userId, CACHE_KEY);
                             }
-                            return { stats, error: null };
+                            return { stats, error: Date.now() - ts >= CACHE_TTL ? 'Showing saved dashboard data while refreshing.' : null };
                         }
                     }
                 }
@@ -437,89 +437,21 @@ class TenantService {
     }
 
     private async executeFetchAndCacheStats(tenantId: string, userId: string, cacheKey: string): Promise<{ stats: any | null; error: string | null }> {
-        const EMPTY_STATS = {
-            totalRevenue: 0, clientCount: 0, activeProjects: 0,
-            pendingInvoices: 0, overdueInvoices: 0, totalMessages: 0, pendingRevenue: 0,
-            totalLeads: 0, totalDeals: 0, weightedPipeline: 0, salesForecast: 0,
-            recentActivity: [], monthlyRevenue: [], pipeline: {}
-        };
-
         try {
-            // Prefer server-side API proxy to avoid browser-side CORS/edge issues on direct RPC.
+            const res = await fetch(`/api/dashboard/stats?tenantId=${encodeURIComponent(tenantId)}`, {
+                credentials: 'include', headers: { Accept: 'application/json' }, cache: 'no-store',
+            });
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok || !payload.stats) {
+                return { stats: null, error: payload.error || 'Dashboard data is temporarily unavailable.' };
+            }
+            const stats = payload.stats;
             try {
-                const res = await fetch(`/api/dashboard/stats?tenantId=${encodeURIComponent(tenantId)}`, {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: { 'Accept': 'application/json' },
-                });
-                if (res.ok) {
-                    const payload = await res.json();
-                    const stats = {
-                        ...EMPTY_STATS,
-                        ...(payload?.stats || {}),
-                    };
-                    // Only cache if we got meaningful data (not all zeros)
-                    const hasData = stats.totalRevenue > 0 || stats.totalLeads > 0 ||
-                        stats.clientCount > 0 || stats.activeProjects > 0 ||
-                        stats.totalTasks > 0 || stats.unreadMessages > 0;
-                    if (hasData) {
-                        try {
-                            if (typeof window !== 'undefined') {
-                                localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), stats }));
-                            }
-                        } catch (_) { /* ignore cache write errors */ }
-                    }
-                    return { stats, error: null };
-                }
-                // Non-OK response (4xx/5xx) — do NOT write to cache, fall through to direct RPC
-                console.warn('[TenantService] API stats returned', res.status, '— falling back to direct RPC');
-            } catch (_) {
-                // Fall back to direct RPC below.
-            }
-
-            // Race the optimized RPC against a 20-second timeout
-            const timeout = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('Stats query timeout')), 20000)
-            );
-
-            // Execute the CONSOLIDATED RPC call - fetches everything in one pass
-            const { data: rpcData, error: rpcError } = await Promise.race([
-                supabase.rpc('get_consolidated_dashboard_stats', { 
-                    p_tenant_id: tenantId,
-                    p_user_id: userId
-                }),
-                timeout
-            ]) as any;
-
-            if (rpcError) throw rpcError;
-
-            // Map and Enrich the stats from the RPC response
-            const stats = {
-                ...EMPTY_STATS,
-                ...rpcData,
-                totalMessages: rpcData?.totalMessages ?? 0,
-            };
-
-            // Cache only non-zero results
-            const hasData = stats.totalRevenue > 0 || stats.totalLeads > 0 ||
-                stats.clientCount > 0 || stats.activeProjects > 0 ||
-                stats.totalTasks > 0;
-            if (hasData) {
-                try {
-                    if (typeof window !== 'undefined') {
-                        localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), stats }));
-                    }
-                } catch (_) { /* ignore cache write errors */ }
-            }
-
+                if (typeof window !== 'undefined') localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), stats }));
+            } catch { /* Storage restrictions must not discard successful network data. */ }
             return { stats, error: null };
-        } catch (err: any) {
-            console.error('[TenantService] Error fetching dashboard stats:', err?.message);
-            try {
-                const cached = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null;
-                if (cached) return { stats: JSON.parse(cached).stats, error: 'Unable to refresh dashboard stats' };
-            } catch { /* no usable cache */ }
-            return { stats: EMPTY_STATS, error: err?.message || 'Failed to load stats' };
+        } catch {
+            return { stats: null, error: 'Dashboard data could not be loaded. Check your connection and retry.' };
         }
     }
 

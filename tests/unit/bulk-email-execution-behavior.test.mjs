@@ -159,7 +159,7 @@ test('approval policy receives the stable retry key before queuing', async () =>
   assert.equal(args.idempotency_key, 'stable-original');
 });
 
-function providerFixture() {
+function providerFixture(failure = { ok: false, error: 'network timeout' }) {
   const calls = [];
   const { sendEmail } = load('src/lib/email/sendEmail.ts', {
     '@/lib/supabase-admin': { createSupabaseAdminClient: () => ({}) },
@@ -176,7 +176,7 @@ function providerFixture() {
     '@/lib/email/providerSenderIdentity': { assertBrevoSender: async () => {} },
     '@/lib/email/emailAttachment': { normalizeEmailAttachments: () => [] },
     '@/lib/email/emailRendering': { renderOutboundEmail: (opts) => ({ html: opts?.html, text: opts?.text }) },
-    '@/lib/email/providerSdk': { sendWithProviderSdk: async (provider) => { calls.push(provider); return { ok: false, error: 'network timeout' }; } },
+    '@/lib/email/providerSdk': { sendWithProviderSdk: async (provider) => { calls.push(provider); return failure; } },
   });
   const payload = { to: 'owner@example.com', subject: 'Test', text: 'Test', skipFooter: true, skipBonnieQualityCheck: true, listUnsubscribeUrl: 'https://example.com/unsubscribe' };
   return { calls, sendEmail, payload };
@@ -234,4 +234,12 @@ test('incomplete Zoho upload evidence prevents the send POST',async()=>{
  let requests=0;class Base{async getConfig(){return {accountId:'chosen',mailApiHost:'mail.zoho.eu'}};async callZohoAPI(){requests++;return {data:{storeName:'incomplete'}}}}
  const {ZohoMailService}=load('src/services/zoho/ZohoMailService.ts',{'./ZohoService':{ZohoService:Base},'@/lib/email/emailComposition':{normalizeEmailSubject:v=>v,ensureFooter:v=>v},'@/lib/email/parseEmailHeader':{extractEmailAddress:v=>v},__globals:{Buffer}});const service=new ZohoMailService();service.getSenderAddresses=async()=>['chosen@example.com'];
  await assert.rejects(()=>service.sendEmail({fromAddress:'chosen@example.com',toAddress:'bonniiehendrix@gmail.com',subject:'TEST ONLY',content:'Test',attachments:[{filename:'TEST_ONLY.pdf',content:'JVBERi10ZXN0'}]}),/complete attachment reference/);assert.equal(requests,1);
+});
+
+
+test('provider HTTP 5xx remains uncertain and stops all provider fallback', async () => {
+  const fixture = providerFixture({ ok: false, httpStatus: 502, error: 'Upstream gateway error' });
+  const result = await fixture.sendEmail('tenant', fixture.payload);
+  assert.deepEqual(fixture.calls, ['zoho']);
+  assert.equal(result.deliveryStatus, 'unknown'); assert.equal(result.code, 'OUTCOME_UNKNOWN');
 });

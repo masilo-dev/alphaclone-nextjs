@@ -1,5 +1,6 @@
 'use client';
 
+import { fetchApprovedOutreach } from '@/lib/email/approvedOutreachClient';
 import { Select as AlphaCloneSelect } from '@/components/ui/select';
 
 
@@ -577,7 +578,7 @@ export function OutreachInbox() {
           : null;
       const allRecipients = composeTo.split(',').map(e => e.trim()).filter(Boolean);
       for (const recipient of allRecipients) {
-        const res = await fetch('/api/outreach/send', {
+        const res = await fetchApprovedOutreach('/api/outreach/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',

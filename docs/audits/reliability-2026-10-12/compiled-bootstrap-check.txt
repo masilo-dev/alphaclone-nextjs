@@ -1,0 +1,1 @@
+PASS: final compiled bootstrap executes; two evaluations retain exactly one install listener pair and capture the event. Mock EventTarget boundary, not native device installation.

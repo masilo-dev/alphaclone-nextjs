@@ -1,5 +1,6 @@
 'use client';
 
+import { fetchApprovedOutreach } from '@/lib/email/approvedOutreachClient';
 import { Input as AlphaCloneInput } from '@/components/ui/input';
 import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 
@@ -226,7 +227,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
 
         setIsSending(true);
         try {
-            const response = await fetch('/api/outreach/send', {
+            const response = await fetchApprovedOutreach('/api/outreach/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

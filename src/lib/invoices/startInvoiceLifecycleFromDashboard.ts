@@ -28,7 +28,7 @@ export async function startInvoiceLifecycleFromDashboard(params: {
     throw new Error(payload?.error || `Invoice lifecycle failed (${response.status})`);
   }
   return {
-    runId: payload?.runId,
-    message: payload?.message || 'Invoice delivery queued',
+    runId: payload?.run_id || payload?.runId,
+    message: `${payload?.message || 'Invoice delivery queued; email acceptance is not yet confirmed.'}${payload?.run_id || payload?.runId ? ` Run: ${payload.run_id || payload.runId}` : ''}`,
   };
 }

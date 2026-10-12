@@ -30,7 +30,8 @@ export function MarketingProviders({ children }: { children: React.ReactNode }) 
             staleTime: 60_000,
             gcTime: 5 * 60_000,
             refetchOnWindowFocus: false,
-            retry: 1,
+            // The data transport owns bounded read retries; avoid layered retry storms.
+            retry: false,
           },
         },
       }),

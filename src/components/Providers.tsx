@@ -51,7 +51,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
             gcTime: 10 * 60 * 1000,
             refetchOnWindowFocus: true,
             refetchOnReconnect: true,
-            retry: 1,
+            // The data transport owns bounded read retries; avoid layered retry storms.
+            retry: false,
           },
         },
       }),

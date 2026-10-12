@@ -18,7 +18,7 @@ export function isTransientDatabaseError(error: unknown): boolean {
         code === '08000' || // connection_exception
         code === '08003' || // connection_does_not_exist
         code === '08006' || // connection_failure
-        message.includes('schema cache') ||
+        [408, 429, 502, 503, 504].includes(Number(candidate?.status)) ||
         message.includes('statement timeout') ||
         message.includes('timed out') ||
         message.includes('connection refused') ||
@@ -43,14 +43,14 @@ export async function withTransientDbRetry<T>(
             if (result && typeof result === 'object' && 'error' in result && (result as any).error) {
                 const error = (result as any).error;
                 if (isTransientDatabaseError(error) && attempt < maxRetries) {
-                    await new Promise((resolve) => setTimeout(resolve, baseDelayMs * Math.pow(2, attempt)));
+                    await new Promise((resolve) => setTimeout(resolve, Math.min(5_000, baseDelayMs * Math.pow(2, attempt)) + Math.floor(Math.random() * baseDelayMs)));
                     continue;
                 }
             }
             return result;
         } catch (err: unknown) {
             if (isTransientDatabaseError(err) && attempt < maxRetries) {
-                await new Promise((resolve) => setTimeout(resolve, baseDelayMs * Math.pow(2, attempt)));
+                await new Promise((resolve) => setTimeout(resolve, Math.min(5_000, baseDelayMs * Math.pow(2, attempt)) + Math.floor(Math.random() * baseDelayMs)));
                 continue;
             }
             throw err;

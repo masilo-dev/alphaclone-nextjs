@@ -439,11 +439,11 @@ export default function EnhancedInvoiceModal({
         const { startInvoiceLifecycleFromDashboard } = await import(
           '@/lib/invoices/startInvoiceLifecycleFromDashboard'
         );
-        await startInvoiceLifecycleFromDashboard({
+        const lifecycle = await startInvoiceLifecycleFromDashboard({
           tenantId,
           invoiceId: finalInvoice.id,
         });
-        toast.success("Invoice lifecycle started — email + reminders now managed automatically.", { id: toastId });
+        toast.success(lifecycle.message, { id: toastId });
       } catch (dispatchError: any) {
         console.error('Invoice lifecycle Error:', dispatchError);
         toast.error(`Invoice saved, but lifecycle automation failed: ${dispatchError.message}`, { id: toastId });

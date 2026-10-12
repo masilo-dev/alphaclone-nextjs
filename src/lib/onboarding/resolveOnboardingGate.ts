@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { readUserProfileState } from '@/lib/profileRead';
 import { getWalkthroughRecord, setWalkthroughState } from './walkthroughService';
 import { isFirstRunEligible } from './firstRunPolicy';
 
@@ -28,10 +29,7 @@ export async function resolveOnboardingGate(
 ): Promise<OnboardingGateState> {
   if (typeof window === 'undefined' || !userId || !tenantId) return suppressed;
   try {
-    const { data: profile, error } = await supabase.from('profiles')
-      .select('onboarding_completed, walkthrough_completed, created_at')
-      .eq('id', userId).maybeSingle();
-    if (error || !profile) return suppressed;
+    const profile = await readUserProfileState(userId);
 
     const readFlag = (key: string) => ['1', 'true'].includes(localStorage.getItem(key) ?? '');
     const onboardingKey = `onboarding_completed_${userId}`;

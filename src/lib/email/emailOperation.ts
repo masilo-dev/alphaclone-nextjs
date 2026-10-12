@@ -17,12 +17,13 @@ function safeOutput(output: Record<string, unknown>) {
   ]));
 }
 
-export function emailOperationStore(tenantId: string, tool: string, key: string): EmailOperationStore {
+export function emailOperationStore(tenantId: string, tool: string, key: string, approvalEvidence?: { userId: string; recipientHash: string; approvalFingerprint: string; senderRevision: string }): EmailOperationStore {
   const db = createSupabaseAdminClient();
   return {
     async claim(actionId) {
       const { error } = await db.from('mcp_action_receipts').insert({
         tenant_id: tenantId, tool, idempotency_key: key, action_id: actionId,
+        ...(approvalEvidence ? { user_id: approvalEvidence.userId, sanitized_input: { recipient_hash: approvalEvidence.recipientHash, approval_fingerprint: approvalEvidence.approvalFingerprint, sender_revision: approvalEvidence.senderRevision, approved_at: new Date().toISOString() } } : {}),
         final_status: 'running', success: false, entity_type: tool === 'email_batch' ? 'bulk_email' : 'email_message',
         sanitized_output: { status: 'executing', action_id: actionId },
       });
@@ -45,7 +46,7 @@ export function emailOperationStore(tenantId: string, tool: string, key: string)
       if (error) throw new Error(`EMAIL_OPERATION_UPDATE_FAILED: ${error.message}`);
     },
     async reconcile() {
-      if (tool !== 'canonical_email_send') return null;
+      if (!['canonical_email_send', 'ui_outreach_send'].includes(tool)) return null;
       const { data, error } = await db.from('email_messages')
         .select('id, provider_account_id, provider_message_id, provider_accepted_at, delivered_at, failed_at, bounced_at, delivery_status, metadata')
         .eq('tenant_id', tenantId).eq('idempotency_key', key).limit(1).maybeSingle();
@@ -68,7 +69,8 @@ export async function runEmailOperation<T extends Record<string, unknown>>(param
   if (!await params.store.claim(actionId)) {
     const existing = await params.store.read();
     if (!existing) throw new Error('EMAIL_OPERATION_CLAIM_NOT_FOUND');
-    const reconciled = await params.store.reconcile();
+    const providerEvidence = await params.store.reconcile();
+    const reconciled: Record<string, unknown> | null = providerEvidence ? { ...providerEvidence, logId: existing.sanitized_output?.logId, operationId: existing.sanitized_output?.operationId } : null;
     if (reconciled) {
       await params.store.save(existing.action_id, reconciled.deliveryStatus === 'failed' ? 'failed' : reconciled.deliveryStatus === 'delivered' ? 'delivered' : 'provider_accepted', reconciled);
       return { ...reconciled, idempotent_replay: true } as unknown as T;

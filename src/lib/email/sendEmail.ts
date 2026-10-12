@@ -223,7 +223,7 @@ export async function sendEmail(
       }
 
       if (!providerResult.ok) {
-        if (/timeout|timed out|network|fetch failed|abort|socket|ECONN/i.test(providerResult.error || '')) {
+        if ((providerResult.httpStatus && providerResult.httpStatus >= 500) || /timeout|timed out|network|fetch failed|abort|socket|ECONN|\b50[0-9]\b|bad gateway|service unavailable|internal server error/i.test(providerResult.error || '')) {
           return { success: false, provider: config.provider, providerAccountId: config.providerAccountId,
             sender: fromEmail, tried: [...tried, { provider: config.provider, error: 'Provider outcome is unknown' }],
             deliveryStatus: 'unknown', code: 'OUTCOME_UNKNOWN',

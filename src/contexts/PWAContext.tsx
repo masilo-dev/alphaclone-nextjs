@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { installEventOwner, promptCapturedInstall } from '@/lib/pwa/installLifecycle';
 import { isPWA } from '@/utils/pwaUtils';
 import { resolveAppSurface, type AppSurface } from '@/lib/pwa/appSurface';
 
@@ -75,30 +76,15 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
             setCanInstall(true);
         }
 
-        const handleBeforeInstallPrompt = (e: Event) => {
-            if (pwaActive) return;
-            if ((window as any).deferredPrompt === e) return;
-            e.preventDefault();
-            (window as any).deferredPrompt = e;
-            setDeferredPrompt(e);
-            setCanInstall(true);
+        installEventOwner(window);
+        const synchronizeInstall = () => {
+            const current = installEventOwner(window);
+            setDeferredPrompt(current.event);
+            setIsInstalled(current.installed || isPWA());
+            setCanInstall(!current.installed && !isPWA() && (Boolean(current.event) || iosDevice));
         };
-
-        const handleAppInstalled = () => {
-            setIsInstalled(true);
-            setCanInstall(false);
-            setDeferredPrompt(null);
-            (window as any).deferredPrompt = null;
-        };
-
-        // If prompt was captured before this hook mounted
-        if ((window as any).deferredPrompt) {
-            setDeferredPrompt((window as any).deferredPrompt);
-            setCanInstall(true);
-        }
-
-        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-        window.addEventListener('appinstalled', handleAppInstalled);
+        synchronizeInstall();
+        window.addEventListener('ac:install-state', synchronizeInstall);
 
         const standaloneQuery = window.matchMedia('(display-mode: standalone)');
         const overlayQuery = window.matchMedia('(display-mode: window-controls-overlay)');
@@ -115,8 +101,7 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
         window.addEventListener('resize', onDisplayModeChange, { passive: true });
 
         return () => {
-            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-            window.removeEventListener('appinstalled', handleAppInstalled);
+            window.removeEventListener('ac:install-state', synchronizeInstall);
             standaloneQuery.removeEventListener?.('change', onDisplayModeChange);
             overlayQuery.removeEventListener?.('change', onDisplayModeChange);
             window.removeEventListener('resize', onDisplayModeChange);
@@ -145,29 +130,10 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
     }, [appSurface, isPwaMode]);
 
     const promptInstall = useCallback(async (): Promise<{ success: boolean; outcome?: string }> => {
-        const promptEvent = deferredPrompt || (typeof window !== 'undefined' ? (window as any).deferredPrompt : null);
-        if (!promptEvent) {
-            return { success: false, outcome: isIOS ? 'manual_install' : 'unavailable' };
-        }
-        try {
-            await promptEvent.prompt();
-            const choice = await promptEvent.userChoice;
-            setDeferredPrompt(null);
-            if (typeof window !== 'undefined') {
-                (window as any).deferredPrompt = null;
-            }
-            if (choice?.outcome === 'accepted') {
-                setIsInstalled(true);
-                setCanInstall(false);
-                return { success: true, outcome: 'accepted' };
-            }
-            return { success: false, outcome: choice?.outcome || 'dismissed' };
-        } catch (err) {
-            setDeferredPrompt(null);
-            if (typeof window !== 'undefined') (window as any).deferredPrompt = null;
-            return { success: false, outcome: err instanceof Error ? err.message : 'unavailable' };
-        }
-    }, [deferredPrompt, isIOS]);
+        if (typeof window === 'undefined') return { success: false, outcome: 'unavailable' };
+        if (!installEventOwner(window).event) return { success: false, outcome: isIOS ? 'manual_install' : 'unavailable' };
+        return promptCapturedInstall(window);
+    }, [isIOS]);
 
     return (
         <PWAContext.Provider

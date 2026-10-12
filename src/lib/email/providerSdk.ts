@@ -80,7 +80,14 @@ export type EmailSendResult = {
     provider: EmailProvider;
     emailId?: string;
     error?: string;
+    httpStatus?: number;
 };
+
+function providerErrorStatus(error: unknown): number | undefined {
+    const value = error as { status?: number; statusCode?: number; code?: number; response?: { statusCode?: number; status?: number } };
+    const status = Number(value?.status || value?.statusCode || value?.response?.statusCode || value?.response?.status || value?.code);
+    return Number.isFinite(status) && status >= 100 && status < 600 ? status : undefined;
+}
 
 function normalizeRecipients(to: string | string[]): string[] {
     return Array.isArray(to) ? to : [to];
@@ -123,13 +130,14 @@ async function sendViaResend(input: EmailSendInput): Promise<EmailSendResult> {
         );
 
         if (error) {
-            return { ok: false, provider: 'resend', error: JSON.stringify(error) };
+            return { ok: false, provider: 'resend', httpStatus: providerErrorStatus(error), error: JSON.stringify(error) };
         }
         return { ok: true, provider: 'resend', emailId: data?.id };
     } catch (error) {
         return {
             ok: false,
             provider: 'resend',
+            httpStatus: providerErrorStatus(error),
             error: error instanceof Error ? error.message : 'Resend send failed',
         };
     }
@@ -185,7 +193,7 @@ async function sendViaSendGrid(input: EmailSendInput): Promise<EmailSendResult> 
                     ? error.message
                     : 'SendGrid send failed';
 
-        return { ok: false, provider: 'sendgrid', error: msg };
+        return { ok: false, provider: 'sendgrid', httpStatus: providerErrorStatus(error), error: msg };
     }
 }
 
@@ -228,7 +236,7 @@ async function sendViaBrevo(input: EmailSendInput): Promise<EmailSendResult> {
 
         const bodyText = await response.text();
         if (!response.ok) {
-            return { ok: false, provider: 'brevo', error: bodyText || `Brevo rejected request (${response.status})` };
+            return { ok: false, provider: 'brevo', httpStatus: response.status, error: bodyText || `Brevo rejected request (${response.status})` };
         }
         const body = bodyText ? JSON.parse(bodyText) : {};
         return { ok: true, provider: 'brevo', emailId: body.messageId };
@@ -236,6 +244,7 @@ async function sendViaBrevo(input: EmailSendInput): Promise<EmailSendResult> {
         return {
             ok: false,
             provider: 'brevo',
+            httpStatus: providerErrorStatus(error),
             error: error instanceof Error ? error.message : 'Brevo send failed',
         };
     }
@@ -275,6 +284,7 @@ async function sendViaZoho(input: EmailSendInput): Promise<EmailSendResult> {
         return {
             ok: false,
             provider: 'zoho',
+            httpStatus: providerErrorStatus(error),
             error: error instanceof Error ? error.message : 'Zoho send failed',
         };
     }
@@ -367,6 +377,7 @@ async function sendViaGmail(input: EmailSendInput): Promise<EmailSendResult> {
         return {
             ok: false,
             provider: 'gmail',
+            httpStatus: providerErrorStatus(error),
             error: error instanceof Error ? error.message : 'Gmail SMTP send failed',
         };
     }
@@ -399,6 +410,7 @@ async function sendViaOutlook(input: EmailSendInput): Promise<EmailSendResult> {
         return {
             ok: false,
             provider: 'outlook',
+            httpStatus: providerErrorStatus(error),
             error: error instanceof Error ? error.message : 'Outlook send failed',
         };
     }
@@ -453,6 +465,7 @@ async function sendViaSmtp(input: EmailSendInput): Promise<EmailSendResult> {
         return {
             ok: false,
             provider: 'smtp',
+            httpStatus: providerErrorStatus(error),
             error: error instanceof Error ? error.message : 'SMTP send failed',
         };
     }
@@ -488,6 +501,7 @@ async function sendViaMailflow(input: EmailSendInput): Promise<EmailSendResult> 
         return {
             ok: false,
             provider: 'mailflow',
+            httpStatus: providerErrorStatus(error),
             error: error instanceof Error ? error.message : 'Mailflow send failed',
         };
     }

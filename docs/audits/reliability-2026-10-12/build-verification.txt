@@ -1,0 +1,6 @@
+PASS: final npm run build completed with exit code 0, including build typecheck. 422 static pages generated.
+PASS: compiled outreach route contains native_message_reference_pending_sync.
+PASS: compiled early install bootstrap executes with mock EventTarget and retains one listener pair.
+PASS: git diff --check.
+PASS: git apply --check --reverse AlphaClone_Reliability_Repair.patch against the repaired working tree.
+LIMIT: Node 24 local runtime versus declared Node 22 production. No production credentials loaded; missing optional provider/Supabase settings and unrelated optional dependency warnings remain visible.

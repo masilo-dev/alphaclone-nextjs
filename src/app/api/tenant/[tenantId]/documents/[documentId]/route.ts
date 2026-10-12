@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { mapDocOsRowToCatalog } from '@/lib/documents/docOsCatalogBridge';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
 const updateSchema = z.object({
@@ -17,20 +18,39 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
     const { tenantId, documentId } = await context.params;
     const ids = z.object({ tenantId: z.string().uuid(), documentId: z.string().uuid() }).parse({ tenantId, documentId });
     const { admin } = await requireTenantAccess(ids.tenantId, req);
-    const [documentResult, relationshipResult, activityResult, versionResult, legacyVersionResult, intelligenceJobsResult, findingsResult, comparisonsResult] = await Promise.all([
-      admin.from('documents').select('*').eq('tenant_id', ids.tenantId).eq('id', ids.documentId).is('deleted_at', null).maybeSingle(),
-      admin.from('document_relationships').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId),
-      admin.from('document_activity').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('created_at', { ascending: false }).limit(100),
-      admin.from('document_versions').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('version_number', { ascending: false }).limit(100),
-      admin.from('tenant_document_versions').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('version', { ascending: false }).limit(100),
-      admin.from('document_intelligence_jobs').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('created_at', { ascending: false }).limit(50),
-      admin.from('document_findings').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('created_at', { ascending: false }).limit(250),
-      admin.from('document_comparisons').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('created_at', { ascending: false }).limit(25),
+    // The list bridges Doc OS identities. Resolve those same identities before detail fan-out.
+    let { data: document, error: documentError } = await admin.from('documents').select('*')
+      .eq('tenant_id', ids.tenantId).eq('id', ids.documentId).is('deleted_at', null).maybeSingle();
+    if (documentError) throw documentError;
+    if (!document) {
+      const linked = await admin.from('documents').select('*').eq('tenant_id', ids.tenantId)
+        .eq('doc_os_document_id', ids.documentId).maybeSingle();
+      if (linked.error) throw linked.error;
+      // A linked soft-deleted record must not become visible through the bridge.
+      if (linked.data?.deleted_at) return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+      document = linked.data;
+    }
+    if (!document) {
+      const bridge = await admin.from('doc_os_documents').select('*').eq('tenant_id', ids.tenantId)
+        .eq('document_id', ids.documentId).is('archived_at', null).maybeSingle();
+      if (bridge.error) throw bridge.error;
+      if (!bridge.data) return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+      return NextResponse.json({ document: mapDocOsRowToCatalog(bridge.data), relationships: [], activity: [],
+        versions: [], legacyVersions: [], intelligenceJobs: [], findings: [], comparisons: [],
+        detailAvailability: 'doc_os_summary' }, { headers: { 'Cache-Control': 'private, no-store' } });
+    }
+    const canonicalId = document.id;
+    const [relationshipResult, activityResult, versionResult, legacyVersionResult, intelligenceJobsResult, findingsResult, comparisonsResult] = await Promise.all([
+      admin.from('document_relationships').select('*').eq('tenant_id', ids.tenantId).eq('document_id', canonicalId),
+      admin.from('document_activity').select('*').eq('tenant_id', ids.tenantId).eq('document_id', canonicalId).order('created_at', { ascending: false }).limit(100),
+      admin.from('document_versions').select('*').eq('tenant_id', ids.tenantId).eq('document_id', canonicalId).order('version_number', { ascending: false }).limit(100),
+      admin.from('tenant_document_versions').select('*').eq('tenant_id', ids.tenantId).eq('document_id', canonicalId).order('version', { ascending: false }).limit(100),
+      admin.from('document_intelligence_jobs').select('*').eq('tenant_id', ids.tenantId).eq('document_id', canonicalId).order('created_at', { ascending: false }).limit(50),
+      admin.from('document_findings').select('*').eq('tenant_id', ids.tenantId).eq('document_id', canonicalId).order('created_at', { ascending: false }).limit(250),
+      admin.from('document_comparisons').select('*').eq('tenant_id', ids.tenantId).eq('document_id', canonicalId).order('created_at', { ascending: false }).limit(25),
     ]);
-    if (documentResult.error) throw documentResult.error;
-    if (!documentResult.data) return NextResponse.json({ error: 'Document not found' }, { status: 404 });
     return NextResponse.json({
-      document: documentResult.data,
+      document,
       relationships: relationshipResult.data || [],
       activity: activityResult.data || [],
       versions: versionResult.data || [],

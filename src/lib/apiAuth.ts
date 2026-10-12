@@ -36,6 +36,7 @@ export async function requireAuthenticatedUser(
     req?: Request,
     options?: { allowMissingProfile?: boolean; allowPendingDeletion?: boolean }
 ) {
+    const freshLookup = !req || !['GET', 'HEAD'].includes(req.method);
     const bearer = req?.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
     if (bearer) {
         if (!ENV.VITE_SUPABASE_URL) {
@@ -45,21 +46,23 @@ export async function requireAuthenticatedUser(
             ? createSupabaseAdminClient()
             : createSupabaseAdminClient(bearer);
         const { data, error } = await admin.auth.getUser(bearer);
+        if (error && isTransientDatabaseError(error)) throw new RouteAuthError(503, 'Session verification is temporarily unavailable', 'SERVICE_UNAVAILABLE');
         if (error || !data?.user?.id) {
             throw new RouteAuthError(401, 'Unauthorized', 'UNAUTHORIZED');
         }
-        await requireActiveProfile(admin, data.user.id, options);
+        await requireActiveProfile(admin, data.user.id, { ...options, freshLookup });
         return { supabase: admin, user: data.user, admin };
     }
 
     const supabase = await getSupabaseServerClient();
     const { data, error } = await supabase.auth.getUser();
 
+    if (error && isTransientDatabaseError(error)) throw new RouteAuthError(503, 'Session verification is temporarily unavailable', 'SERVICE_UNAVAILABLE');
     if (error || !data?.user?.id) {
         throw new RouteAuthError(401, 'Unauthorized', 'UNAUTHORIZED');
     }
 
-    await requireActiveProfile(supabase, data.user.id, options);
+    await requireActiveProfile(supabase, data.user.id, { ...options, freshLookup });
 
     // Prefer service-role admin. Without it, reuse the cookie-authenticated server
     // client so RLS still works even when getSession() has no access_token.
@@ -84,34 +87,38 @@ type CachedProfile = {
 const profileCache = new Map<string, CachedProfile>();
 const membershipCache = new Map<string, { membership: TenantMembership; cachedAt: number }>();
 const AUTH_CACHE_TTL_MS = 15_000;
-const AUTH_CACHE_STALE_TTL_MS = 300_000; // 5-minute stale-while-revalidate grace during transient DB schema reloads
+
+const pendingAuthLookups = new Map<string, Promise<unknown>>();
+async function singleFlightAuthLookup<T>(key: string, lookup: () => Promise<T>): Promise<T> {
+    const existing = pendingAuthLookups.get(key);
+    if (existing) return await existing as T;
+    const pending = lookup();
+    pendingAuthLookups.set(key, pending);
+    try { return await pending; }
+    finally { if (pendingAuthLookups.get(key) === pending) pendingAuthLookups.delete(key); }
+}
 
 async function requireActiveProfile(
     supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>,
     userId: string,
-    options?: { allowMissingProfile?: boolean; allowPendingDeletion?: boolean }
+    options?: { allowMissingProfile?: boolean; allowPendingDeletion?: boolean; freshLookup?: boolean }
 ) {
     const now = Date.now();
     const cached = profileCache.get(userId);
-    let profile = cached && (now - cached.cachedAt < AUTH_CACHE_TTL_MS) ? cached.profile : null;
+    let profile = !options?.freshLookup && cached && (now - cached.cachedAt < AUTH_CACHE_TTL_MS) ? cached.profile : null;
 
     if (!profile) {
-        const { data, error } = await withTransientDbRetry(async () => {
+        const { data, error } = await singleFlightAuthLookup(`profile:${userId}`, () => withTransientDbRetry(async () => {
             return await supabase
                 .from('profiles')
                 .select('id, role, account_status, scheduled_deletion_at')
                 .eq('id', userId)
                 .maybeSingle();
-        });
+        }));
 
         if (error) {
-            if (isTransientDatabaseError(error) && cached && (now - cached.cachedAt < AUTH_CACHE_STALE_TTL_MS)) {
-                console.warn('[apiAuth] Serving stale cached profile during transient DB error:', error.message || error.code);
-                profile = cached.profile;
-            } else {
-                console.error('[apiAuth] Failed to verify account status:', error);
-                throw new RouteAuthError(503, 'Account verification is temporarily unavailable', 'INTERNAL_ERROR');
-            }
+            console.error('[apiAuth] Failed to verify account status:', { code: error.code });
+            throw new RouteAuthError(503, 'Account verification is temporarily unavailable', 'SERVICE_UNAVAILABLE');
         } else {
             profile = data;
         }
@@ -155,26 +162,21 @@ export async function requireTenantAccess(tenantId: string, req?: Request) {
     const cacheKey = `${user.id}:${cleanTenantId}`;
     const now = Date.now();
     const cached = membershipCache.get(cacheKey);
-    let membership = cached && (now - cached.cachedAt < AUTH_CACHE_TTL_MS) ? cached.membership : null;
+    let membership = req && ['GET', 'HEAD'].includes(req.method) && cached && (now - cached.cachedAt < AUTH_CACHE_TTL_MS) ? cached.membership : null;
 
     if (!membership) {
-        const { data, error } = await withTransientDbRetry(async () => {
+        const { data, error } = await singleFlightAuthLookup(`membership:${cacheKey}`, () => withTransientDbRetry(async () => {
             return await supabase
                 .from('tenant_users')
                 .select('tenant_id, role')
                 .eq('tenant_id', cleanTenantId)
                 .eq('user_id', user.id)
                 .maybeSingle();
-        });
+        }));
 
         if (error) {
-            if (isTransientDatabaseError(error) && cached && (now - cached.cachedAt < AUTH_CACHE_STALE_TTL_MS)) {
-                console.warn('[apiAuth] Serving stale cached membership during transient DB error:', error.message || error.code);
-                membership = cached.membership;
-            } else {
-                console.error('[apiAuth] Failed to verify tenant membership:', error);
-                throw new RouteAuthError(500, 'Failed to verify tenant access', 'INTERNAL_ERROR');
-            }
+            console.error('[apiAuth] Failed to verify tenant membership:', { code: error.code });
+            throw new RouteAuthError(503, 'Workspace verification is temporarily unavailable', 'SERVICE_UNAVAILABLE');
         } else if (!data) {
             throw new RouteAuthError(403, 'Forbidden', 'FORBIDDEN');
         } else {

@@ -1,0 +1,21 @@
+{
+  "baseline": "8f9f596a7a8b8273a50c44e37bd78661debe2c2a",
+  "scope": "isolated mocked boundaries; no live requests",
+  "concurrentIdenticalHealthyReads": {
+    "consumers": 20,
+    "before": 20,
+    "after": 1
+  },
+  "residualPresenceListenersAfter20MountCycles": {
+    "before": {
+      "mousemove": 20,
+      "focus": 20,
+      "beforeunload": 20
+    },
+    "after": {
+      "mousemove": 0,
+      "focus": 0,
+      "beforeunload": 0
+    }
+  }
+}

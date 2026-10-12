@@ -1,3 +1,5 @@
+import { outreachFingerprint, outreachOperationKey, signOutreachApproval, verifyOutreachApproval } from '@/lib/email/outreachApproval';
+import { emailOperationStore, runEmailOperation } from '@/lib/email/emailOperation';
 import { NextResponse } from 'next/server';
 import { microsoftServerService } from '@/services/server/microsoftServerService';
 import { ZohoMailService } from '../../../../services/zoho/ZohoMailService';
@@ -146,7 +148,7 @@ function injectTrackingPixel(body: string, trackingId: string): string {
  *   queue?:       boolean   // if true: log as 'queued' but don't send
  * }
  */
-export async function POST(request: Request) {
+async function executeOutreach(request: Request, access: Awaited<ReturnType<typeof requireTenantAccess>>) {
   try {
     const body = await request.json();
     const parsed = outreachSendSchema.safeParse(body);
@@ -187,7 +189,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Subject is required.' }, { status: 400 });
     }
 
-    const tenantCtx = await requireTenantAccess(tenantId);
+    const tenantCtx = access;
     const admin = createAdminSupabaseClientOrThrow();
 
     if (bulkOutreach) {
@@ -309,7 +311,7 @@ export async function POST(request: Request) {
       .single();
 
     if (logErr) {
-      console.warn('[Outreach/Send] Log insert failed (non-fatal):', logErr);
+      throw logErr; // Never contact a provider without a durable local record.
     }
 
     const logId = logRow?.id;
@@ -404,6 +406,9 @@ export async function POST(request: Request) {
 
     const microsoftConnection = await microsoftServerService.getConnection(tenantCtx.user.id).catch(() => null);
     if (microsoftConnection) {
+      if (fromAddress && fromAddress.toLowerCase() !== microsoftConnection.microsoft_email?.toLowerCase()) {
+        return NextResponse.json({ success: false, error: 'The requested sender does not match the connected Microsoft account.' }, { status: 409 });
+      }
       providerConfigs.unshift({
         provider: 'microsoft',
         apiKey: '',
@@ -526,7 +531,10 @@ export async function POST(request: Request) {
     let sentFromEmail = '';
     let sentFromName = '';
 
-    for (const selectedProvider of providerQueue) {
+    // Approval covers one selected sending identity. No automatic provider switching.
+    const approvedProvider = preferred ? providerQueue.find((p) => p.provider === preferred) : providerQueue[0];
+    if (!approvedProvider) return NextResponse.json({ success: false, error: 'The approved provider is unavailable. Review the sender and approve again.' }, { status: 409 });
+    for (const selectedProvider of [approvedProvider]) {
       try {
         if (selectedProvider.provider === 'microsoft') {
           await microsoftServerService.sendEmail(tenantCtx.user.id, {
@@ -534,6 +542,7 @@ export async function POST(request: Request) {
             subject: normalizedSubject,
             html: htmlWithComplianceFooter,
           });
+          // Graph 202 proves acceptance but not delivery; no fabricated provider ID.
           providerMessageId = null;
         } else if (selectedProvider.provider === 'zoho') {
           const zohoService = new ZohoMailService(tenantCtx.user.id, tenantId);
@@ -543,7 +552,8 @@ export async function POST(request: Request) {
             subject: normalizedSubject,
             content: htmlWithComplianceFooter,
           });
-          providerMessageId = sendResult?.data?.messageId || null;
+          providerMessageId = sendResult?.data?.messageId || sendResult?.messageId || null;
+          if (!providerMessageId) throw Object.assign(new Error('Zoho acceptance has no message reference'), { code: 'OUTCOME_UNKNOWN' });
         } else if (
           selectedProvider.provider === 'brevo' ||
           selectedProvider.provider === 'resend' ||
@@ -553,7 +563,10 @@ export async function POST(request: Request) {
             tenantId,
             to: leadEmail,
             subject: normalizedSubject,
-            message: htmlWithComplianceFooter.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+            html: htmlWithComplianceFooter,
+            preserveContent: true,
+            skipRecipientGate: isDirectSend,
+            idempotencyKey: request.headers.get('x-outreach-operation-id') || undefined,
             fromName: selectedProvider.fromName,
             userId: tenantCtx.user.id,
             listUnsubscribeUrl: unsubscribeUrl,
@@ -562,7 +575,7 @@ export async function POST(request: Request) {
             preferredProvider: selectedProvider.provider,
           });
           if (!result.success) {
-            throw new Error(result.error || `Failed to send via ${selectedProvider.provider}`);
+            throw Object.assign(new Error(result.error || `Failed to send via ${selectedProvider.provider}`), { code: result.code, deliveryStatus: result.deliveryStatus });
           }
           providerMessageId = result.emailId || null;
         }
@@ -572,6 +585,14 @@ export async function POST(request: Request) {
         sentFromName = selectedProvider.fromName || 'AlphaClone Systems';
         break;
       } catch (err) {
+        const failure = err as Error & { code?: string; deliveryStatus?: string; status?: number; providerRequestId?: string };
+        const rejected = typeof failure.status === 'number' && failure.status >= 400 && failure.status < 500;
+        console.warn('[outreach/send] Provider attempt result', { operationId: request.headers.get('x-outreach-operation-id'), provider: selectedProvider.provider, upstreamStatus: failure.status, upstreamRequestId: failure.providerRequestId, outcome: rejected ? 'rejected' : 'unknown' });
+        const kind = classifyProviderFailure(failure.message || '');
+        if (failure.code === 'OUTCOME_UNKNOWN' || failure.deliveryStatus === 'unknown' || (!rejected && kind === 'network_or_unknown')) {
+          if (logId) await admin.from('lead_outreach_log').update({ status: 'queued', error_message: 'Delivery outcome unknown; reconciliation required before another attempt.' }).eq('tenant_id', tenantId).eq('id', logId);
+          return NextResponse.json({ success: false, status: 'unknown', deliveryStatus: 'unknown', code: 'OUTCOME_UNKNOWN', logId, trackingId, provider: selectedProvider.provider, operationId: request.headers.get('x-outreach-operation-id'), error: 'The provider may have accepted this email. Check its send record before trying again; no fallback email was sent.' }, { status: 409 });
+        }
         providerFailures.push({
           provider: selectedProvider.provider,
           error: err instanceof Error ? err.message : 'Provider send failed',
@@ -651,14 +672,15 @@ export async function POST(request: Request) {
         postSendWarnings.push('message_capture_failed');
       }
 
-      if (providerMessageId || sentProvider === 'microsoft' || sentProvider === 'zoho') {
+      if (!providerMessageId) postSendWarnings.push('native_message_reference_pending_sync');
+      if (providerMessageId) {
         try {
           await persistCanonicalOutboundEmail({
             supabase: admin,
             tenantId,
             userId: tenantCtx.user.id,
             provider: sentProvider === 'microsoft' ? 'microsoft_graph' : sentProvider,
-            providerMessageId: providerMessageId || trackingId || logId || crypto.randomUUID(),
+            providerMessageId,
             fromEmail: sentFromEmail,
             recipients: [leadEmail],
             subject: normalizedSubject,
@@ -667,6 +689,7 @@ export async function POST(request: Request) {
             hasAttachments: false,
             metadata: {
               source: 'api.outreach.send',
+              idempotency_key: request.headers.get('x-outreach-operation-id'),
               outreach_log_id: logId,
               tracking_id: trackingId,
               provider: sentProvider,
@@ -698,7 +721,7 @@ export async function POST(request: Request) {
               lead_email: leadEmail,
             },
           });
-          await admin.from('contacts').update({ last_activity_at: new Date().toISOString() }).eq('id', resolvedContactId);
+          await admin.from('contacts').update({ last_activity_at: new Date().toISOString() }).eq('tenant_id', tenantId).eq('id', resolvedContactId);
         } catch (activityErr) {
           console.warn('[Outreach/Send] Contact activity log failed (non-fatal):', activityErr);
         }
@@ -707,10 +730,11 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success:    true,
         status:     'sent',
+        deliveryStatus: 'provider_accepted',
         logId,
         trackingId,
         provider: sentProvider,
-        failoverAttempts: providerFailures,
+        failoverAttempts: [],
         messageId: providerMessageId,
         warnings: postSendWarnings,
       });
@@ -744,7 +768,7 @@ export async function POST(request: Request) {
             'Open Settings > Integrations, reconnect Resend/SendGrid/Brevo/Zoho/Gmail with your own user credentials, then retry.',
           logId,
           trackingId,
-          failoverAttempts: classifiedFailures,
+          failoverAttempts: classifiedFailures.map(({ provider, category }) => ({ provider, category })),
         },
         { status: 400 }
       );
@@ -759,7 +783,7 @@ export async function POST(request: Request) {
           error: 'All selected providers are currently rate-limited. Retry shortly or enable additional provider failover.',
           logId,
           trackingId,
-          failoverAttempts: classifiedFailures,
+          failoverAttempts: classifiedFailures.map(({ provider, category }) => ({ provider, category })),
         },
         { status: 429 }
       );
@@ -775,12 +799,92 @@ export async function POST(request: Request) {
           'Check provider API keys, sender verification, and provider account status in Integrations before retrying.',
         logId,
         trackingId,
-        failoverAttempts: classifiedFailures,
+        failoverAttempts: classifiedFailures.map(({ provider, category }) => ({ provider, category })),
       },
       { status: 502 }
     );
 
   } catch (error: unknown) {
-    return routeErrorResponse(error, 'Failed to send outreach email.', request);
+    console.error('[outreach/send] Operation interrupted', request.headers.get('x-outreach-operation-id'), { code: (error as { code?: string })?.code });
+    return NextResponse.json({ success: false, status: 'unknown', deliveryStatus: 'unknown', code: 'OUTCOME_UNKNOWN', error: 'This attempt could not be confirmed. Reconcile its original operation before retrying.' }, { status: 409 });
+  }
+}
+
+
+/** The explicit UI Send action prepares approval and then submits the exact snapshot. */
+export async function POST(request: Request) {
+  try {
+    const raw = await request.json();
+    if (raw.attachments?.length || raw.cc?.length || raw.bcc?.length) {
+      return NextResponse.json({ error: 'Use the mailbox composer for attachments, CC or BCC. No email was sent.' }, { status: 422 });
+    }
+    const parsed = outreachSendSchema.safeParse(raw);
+    if (!parsed.success) return NextResponse.json({ error: 'Invalid outreach request', details: parsed.error.flatten() }, { status: 400 });
+    const payload = parsed.data;
+    const access = await requireTenantAccess(payload.tenantId, request);
+    const headers = new Headers(request.headers);
+    if (payload.queue || payload.autoSend !== true) {
+      return executeOutreach(new Request(request, { body: JSON.stringify(payload) }), access);
+    }
+    // Bind approval to provider records and actual connected Microsoft identity.
+    const connections = await access.admin.from('integrations').select('type, user_id, config, enabled, updated_at')
+      .eq('tenant_id', payload.tenantId).eq('enabled', true).in('type', ['microsoft', 'brevo', 'resend', 'sendgrid', 'zoho', 'email_profile']);
+    if (connections.error) throw connections.error;
+    const accounts = await access.admin.from('email_provider_accounts').select('id, provider, owner_user_id, email_address, display_name, connection_status, updated_at').eq('tenant_id', payload.tenantId).eq('connection_status', 'connected').is('deleted_at', null);
+    if (accounts.error) throw accounts.error;
+    const microsoft = await microsoftServerService.getConnection(access.user.id);
+    const senderRevision = outreachFingerprint({
+      integrations: (connections.data || []).sort((a: { type: string; user_id: string }, b: { type: string; user_id: string }) => `${a.type}:${a.user_id}`.localeCompare(`${b.type}:${b.user_id}`)),
+      accounts: (accounts.data || []).sort((a: { id: string }, b: { id: string }) => a.id.localeCompare(b.id)),
+      microsoft: microsoft ? { userId: microsoft.user_id, email: microsoft.microsoft_email } : null,
+    });
+    const secret = process.env.AUTH_SECRET || process.env.ENCRYPTION_SECRET || '';
+    const operationId = outreachOperationKey(access.user.id, payload);
+    if (request.headers.get('x-outreach-phase') === 'approve') {
+      return NextResponse.json({ approvalToken: signOutreachApproval(secret, access.user.id, payload, senderRevision), operationId }, { headers: { 'Cache-Control': 'private, no-store' } });
+    }
+    if (!verifyOutreachApproval(request.headers.get('x-outreach-approval') || '', secret, access.user.id, payload, senderRevision)) {
+      return NextResponse.json({ error: 'Review the recipients, message and sender, then approve this send again.', code: 'APPROVAL_REQUIRED' }, { status: 409 });
+    }
+    const recipientHash = outreachFingerprint({ tenantId: payload.tenantId, recipient: payload.leadEmail.trim().toLowerCase() });
+    // Editing a draft or changing a provider must not bypass an unresolved attempt for this recipient.
+    const unresolved = await access.admin.from('mcp_action_receipts').select('action_id')
+      .eq('tenant_id', payload.tenantId).eq('tool', 'ui_outreach_send')
+      .eq('sanitized_input->>recipient_hash', recipientHash).in('final_status', ['running', 'unknown_execution_state'])
+      .neq('idempotency_key', operationId).limit(1);
+    if (unresolved.error) throw unresolved.error;
+    if (unresolved.data?.length) return NextResponse.json({ success: false, deliveryStatus: 'unknown', code: 'OUTCOME_UNKNOWN', error: 'An earlier email to this recipient is still unconfirmed. Reconcile it before approving another attempt.' }, { status: 409 });
+    const legacyHistory = await access.admin.from('lead_outreach_log').select('id, error_message')
+      .eq('tenant_id', payload.tenantId).ilike('lead_email', payload.leadEmail)
+      .in('status', ['queued', 'failed']).order('created_at', { ascending: false }).limit(20);
+    if (legacyHistory.error) throw legacyHistory.error;
+    const uncertainLegacyRows = (legacyHistory.data || []).filter((row: { id: string; error_message?: string }) =>
+      /timeout|timed out|network|fetch failed|socket|ECONN|unknown|reconcil/i.test(row.error_message || ''));
+    if (uncertainLegacyRows.length) {
+      const confirmed = await access.admin.from('mcp_action_receipts').select('sanitized_output')
+        .eq('tenant_id', payload.tenantId).eq('tool', 'ui_outreach_send')
+        .eq('sanitized_input->>recipient_hash', recipientHash).in('final_status', ['provider_accepted', 'delivered', 'completed']).limit(20);
+      if (confirmed.error) throw confirmed.error;
+      const confirmedLogs = new Set((confirmed.data || []).map((row: { sanitized_output?: { logId?: string } }) => row.sanitized_output?.logId).filter(Boolean));
+      if (uncertainLegacyRows.some((row: { id: string }) => !confirmedLogs.has(row.id))) {
+        // The original operation is allowed to replay/reconcile its own receipt.
+        const ownReceipt = await access.admin.from('mcp_action_receipts').select('action_id')
+          .eq('tenant_id', payload.tenantId).eq('tool', 'ui_outreach_send').eq('idempotency_key', operationId).maybeSingle();
+        if (ownReceipt.error) throw ownReceipt.error;
+        if (!ownReceipt.data) return NextResponse.json({ success: false, deliveryStatus: 'unknown', code: 'OUTCOME_UNKNOWN', error: 'A previous attempt has uncertain delivery. Verify its provider record before sending another email to this recipient.' }, { status: 409 });
+      }
+    }
+    headers.set('x-outreach-operation-id', operationId);
+    const result = await runEmailOperation({
+      store: emailOperationStore(payload.tenantId, 'ui_outreach_send', operationId, { userId: access.user.id, recipientHash, approvalFingerprint: outreachFingerprint(payload), senderRevision }),
+      execute: async () => {
+        const response = await executeOutreach(new Request(request, { headers, body: JSON.stringify(payload) }), access);
+        return { ...await response.json(), httpStatus: response.status, operationId };
+      },
+    });
+    const { httpStatus, ...body } = result;
+    return NextResponse.json(body, { status: Number(httpStatus) || (body.success ? 200 : 409), headers: { 'x-request-id': operationId, 'Cache-Control': 'private, no-store' } });
+  } catch (error) {
+    return routeErrorResponse(error, 'The send could not be confirmed. Check the original operation before trying again.', request);
   }
 }

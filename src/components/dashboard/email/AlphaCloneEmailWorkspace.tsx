@@ -1,5 +1,6 @@
 'use client';
 
+import { fetchApprovedOutreach } from '@/lib/email/approvedOutreachClient';
 import { Input as AlphaCloneInput } from '@/components/ui/input';
 import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 import { Select as AlphaCloneSelect } from '@/components/ui/select';
@@ -479,7 +480,7 @@ export default function AlphaCloneEmailWorkspace() {
     const tid = toast.loading('Sending reply…');
     try {
       const provider = resolveSendProvider();
-      const res = await fetch('/api/outreach/send', {
+      const res = await fetchApprovedOutreach('/api/outreach/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -511,7 +512,7 @@ export default function AlphaCloneEmailWorkspace() {
     const tid = toast.loading('Sending…');
     try {
       const provider = resolveSendProvider();
-      const res = await fetch('/api/outreach/send', {
+      const res = await fetchApprovedOutreach('/api/outreach/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -8,7 +8,8 @@ export function bypassAuthenticationFetch(event: Pick<FetchEvent, 'request' | 's
         '/auth', '/login', '/authorize', '/portal-login', '/api/auth',
         '/api/mcp', '/api/client-portal-auth',
     ].some((path) => url.pathname === path || url.pathname.startsWith(`${path}/`));
-    if (isProvider || isAuthPath) {
+    const isMutation = !['GET', 'HEAD'].includes(event.request.method);
+    if (isProvider || isAuthPath || isMutation) {
         // Do not call respondWith: NetworkOnly still intercepts the request and can
         // replace a redirect/CORS failure with Response.error or an offline page.
         event.stopImmediatePropagation();

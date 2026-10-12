@@ -81,6 +81,8 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
   const [creating, setCreating] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState('');
+  const [detailAttempt, setDetailAttempt] = useState(0);
   const documentId = searchParams?.get('documentId');
   const [name, setName] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -134,9 +136,12 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
       return;
     }
     let cancelled = false;
+    const controller = new AbortController();
+    setSelectedDocument(null);
+    setDetailError('');
     setDetailLoading(true);
     fetch(`/api/tenant/${currentTenant.id}/documents/${encodeURIComponent(documentId)}`, {
-      credentials: 'include',
+      credentials: 'include', signal: controller.signal,
     })
       .then(async (response) => {
         const payload = await response.json().catch(() => ({}));
@@ -144,15 +149,16 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
         if (!cancelled) setSelectedDocument(payload);
       })
       .catch((caught) => {
-        if (!cancelled) toast.error(caught instanceof Error ? caught.message : 'Document could not be loaded');
+        if (!cancelled) setDetailError(caught instanceof Error ? caught.message : 'Document could not be loaded');
       })
       .finally(() => {
         if (!cancelled) setDetailLoading(false);
       });
     return () => {
       cancelled = true;
+      controller.abort();
     };
-  }, [currentTenant?.id, documentId]);
+  }, [currentTenant?.id, documentId, detailAttempt]);
 
   const openDocument = useCallback((id: string) => {
     const params = new URLSearchParams(searchParams?.toString() || '');
@@ -500,7 +506,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
         )}
       </div>
 
-      {(detailLoading || selectedDocument) && (
+      {(documentId && (detailLoading || selectedDocument || detailError)) && (
         <div className="fixed inset-0 ac-layer-overlay flex justify-end bg-[var(--ws-canvas)]" role="presentation" onClick={closeDocument}>
           <section
             role="dialog"
@@ -513,7 +519,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
               <div className="min-w-0 flex-1">
                 <p className="type-caption font-black uppercase tracking-wider text-[var(--brand-blue-300)]">Document details</p>
                 <h2 className="mt-1 text-xl font-semibold text-white truncate">
-                  {selectedDocument?.document?.title || selectedDocument?.document?.name || 'Loading document…'}
+                  {selectedDocument?.document?.title || selectedDocument?.document?.name || (detailError ? 'Document unavailable' : 'Loading document…')}
                 </h2>
               </div>
               <div className="flex items-center gap-2">
@@ -534,6 +540,12 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
             </div>
             {detailLoading ? (
               <div className="mt-8 space-y-3">{[1,2,3].map((i) => <div key={i} className="h-20 animate-pulse rounded-xl bg-white/5" />)}</div>
+            ) : detailError ? (
+              <div className="p-4" role="alert">
+                <p>{detailError}</p>
+                <button type="button" className="mt-3 min-h-11 px-4" onClick={() => setDetailAttempt((n) => n + 1)}>Retry document</button>
+                <button type="button" className="mt-3 min-h-11 px-4" onClick={closeDocument}>Back to documents</button>
+              </div>
             ) : selectedDocument ? (
               <div className="mt-6 space-y-5">
                 {selectedDocument.document?.storage_path ? (

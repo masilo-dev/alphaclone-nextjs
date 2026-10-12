@@ -1,0 +1,2926 @@
+diff --git a/src/app/api/dashboard/stats/route.ts b/src/app/api/dashboard/stats/route.ts
+index 0d54972..a848382 100644
+--- a/src/app/api/dashboard/stats/route.ts
++++ b/src/app/api/dashboard/stats/route.ts
+@@ -1,12 +1,10 @@
+ import { NextRequest, NextResponse } from 'next/server';
+ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+ import { normalizeDashboardStats } from '@/lib/analytics/normalizeDashboardStats';
+-import { createSupabaseServerClient } from '@/lib/supabase-server';
++import { requireTenantAccess } from '@/lib/apiAuth';
+ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+-import { LEGACY_PROJECT_STATUS_ENUM_ACTIVE } from '@/lib/crm/canonicalWorkspaceStats';
+ import { dashboardStatsService } from '@/services/dashboardStatsService';
+ import {
+-  resolveMetricDateRange,
+   type MetricPeriodPreset,
+ } from '@/lib/metrics/dateRange';
+ 
+@@ -45,323 +43,15 @@ export const dynamic = 'force-dynamic';
+ export const runtime = 'nodejs';
+ export const maxDuration = 800;
+ 
+-/**
+- * Direct-query fallback: runs when the consolidated RPC fails (e.g. type errors, missing function).
+- * Queries tables individually in parallel — returns the same shape as the RPC.
+- */
+-async function getStatsFallback(supabase: any, tenantId: string, userId: string) {
+-  const safeCount = async (table: string, filters: Record<string, any> = {}) => {
+-    try {
+-      let q = supabase.from(table).select('id', { count: 'exact', head: true });
+-      for (const [k, v] of Object.entries(filters)) {
+-        if (v === null) q = q.is(k, null);
+-        else q = q.eq(k, v);
+-      }
+-      const { count, error } = await q;
+-      if (error) return 0;
+-      return typeof count === 'number' ? count : 0;
+-    } catch { return 0; }
+-  };
+-
+-  const safeSum = async (table: string, column: string, filters: Record<string, any> = {}) => {
+-    try {
+-      let q = supabase.from(table).select(column).eq('tenant_id', tenantId);
+-      for (const [k, v] of Object.entries(filters)) {
+-        q = q.eq(k, v);
+-      }
+-      const { data, error } = await q;
+-      if (error || !data) return 0;
+-      return data.reduce((acc: number, row: any) => acc + Number(row[column] || 0), 0);
+-    } catch { return 0; }
+-  };
+-
+-  const safeRows = async (table: string, select: string, filters: Record<string, any> = {}, limit = 5) => {
+-    try {
+-      let q = supabase.from(table).select(select).eq('tenant_id', tenantId);
+-      for (const [k, v] of Object.entries(filters)) {
+-        q = q.eq(k, v);
+-      }
+-      const { data } = await q.order('created_at', { ascending: false }).limit(limit);
+-      return data || [];
+-    } catch { return []; }
+-  };
+-
+-  // Run all queries in parallel
+-  const [
+-    totalLeads,
+-    clientCount,
+-    activeProjects,
+-    totalTasks,
+-    completedTasks,
+-    totalMessages,
+-    unreadMessages,
+-    paidRevenue,
+-    pendingRevenue,
+-    overdueInvoices,
+-    pendingInvoices,
+-    activeCampaigns,
+-    upcomingMeetings,
+-    activity24h,
+-    newLeads24h,
+-    recentActivityRows,
+-    staleLeadsCount,
+-    qualifiedLeadsCount,
+-  ] = await Promise.all([
+-    safeCount('leads', { tenant_id: tenantId }),
+-    safeCount('business_clients', { tenant_id: tenantId, is_active: true }),
+-    // active projects = in-flight labels of the `project_status` enum. Any label
+-    // the enum lacks (e.g. 'planning', 'on_hold') makes Postgres reject the query
+-    // and the count silently reads 0.
+-    (async () => {
+-      try {
+-        const { count } = await supabase
+-          .from('projects')
+-          .select('id', { count: 'exact', head: true })
+-          .eq('tenant_id', tenantId)
+-          .in('status', [...LEGACY_PROJECT_STATUS_ENUM_ACTIVE]);
+-        return typeof count === 'number' ? count : 0;
+-      } catch { return 0; }
+-    })(),
+-    safeCount('tasks', { tenant_id: tenantId }),
+-    (async () => {
+-      try {
+-        const { count } = await supabase
+-          .from('tasks')
+-          .select('id', { count: 'exact', head: true })
+-          .eq('tenant_id', tenantId)
+-          .eq('status', 'completed');
+-        return typeof count === 'number' ? count : 0;
+-      } catch { return 0; }
+-    })(),
+-    safeCount('messages', { tenant_id: tenantId }),
+-    (async () => {
+-      try {
+-        const { count } = await supabase
+-          .from('messages')
+-          .select('id', { count: 'exact', head: true })
+-          .eq('tenant_id', tenantId)
+-          .is('read_at', null);
+-        return typeof count === 'number' ? count : 0;
+-      } catch { return 0; }
+-    })(),
+-    // 1. Paid Revenue (from General Ledger)
+-    (async () => {
+-      try {
+-        const { data, error } = await supabase
+-          .from('journal_entry_lines')
+-          .select(`
+-            debit_amount,
+-            credit_amount,
+-            account:account_id (
+-              account_type,
+-              normal_balance
+-            )
+-          `)
+-          .eq('tenant_id', tenantId)
+-          .innerJoin('journal_entries', 'entry_id', 'id')
+-          .filter('journal_entries.status', 'eq', 'posted')
+-          .filter('journal_entries.voided_at', 'is', null)
+-          .in('account.account_type', ['revenue', 'other_income']);
+-
+-        if (error || !data) return 0;
+-        
+-        return data.reduce((acc: number, row: any) => {
+-          const isDebit = row.account.normal_balance === 'debit';
+-          const amount = isDebit 
+-            ? (row.debit_amount - row.credit_amount)
+-            : (row.credit_amount - row.debit_amount);
+-          return acc + amount;
+-        }, 0);
+-      } catch {
+-        // Fallback to business_invoices if accounting tables fail
+-        return safeSum('business_invoices', 'total', { status: 'paid' });
+-      }
+-    })(),
+-    // 2. Pending Revenue (from Invoices)
+-    (async () => {
+-      try {
+-        const { data } = await supabase
+-          .from('business_invoices')
+-          .select('total')
+-          .eq('tenant_id', tenantId)
+-          .in('status', ['sent', 'overdue']);
+-        if (!data) return 0;
+-        return data.reduce((acc: number, r: any) => acc + Number(r.total || 0), 0);
+-      } catch { return 0; }
+-    })(),
+-    (async () => {
+-      try {
+-        const { count } = await supabase
+-          .from('business_invoices')
+-          .select('id', { count: 'exact', head: true })
+-          .eq('tenant_id', tenantId)
+-          .eq('status', 'overdue');
+-        return typeof count === 'number' ? count : 0;
+-      } catch { return 0; }
+-    })(),
+-    (async () => {
+-      try {
+-        const { count } = await supabase
+-          .from('business_invoices')
+-          .select('id', { count: 'exact', head: true })
+-          .eq('tenant_id', tenantId)
+-          .eq('status', 'sent');
+-        return typeof count === 'number' ? count : 0;
+-      } catch { return 0; }
+-    })(),
+-    (async () => {
+-      try {
+-        const { count } = await supabase
+-          .from('email_campaigns')
+-          .select('id', { count: 'exact', head: true })
+-          .eq('tenant_id', tenantId)
+-          .in('status', ['scheduled', 'sending']);
+-        return typeof count === 'number' ? count : 0;
+-      } catch { return 0; }
+-    })(),
+-    (async () => {
+-      try {
+-        const { count } = await supabase
+-          .from('calendar_events')
+-          .select('id', { count: 'exact', head: true })
+-          .eq('tenant_id', tenantId)
+-          .gt('start_time', new Date().toISOString());
+-        return typeof count === 'number' ? count : 0;
+-      } catch { return 0; }
+-    })(),
+-    (async () => {
+-      try {
+-        const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+-        const { count } = await supabase
+-          .from('audit_logs')
+-          .select('id', { count: 'exact', head: true })
+-          .eq('tenant_id', tenantId)
+-          .gte('created_at', since);
+-        return typeof count === 'number' ? count : 0;
+-      } catch { return 0; }
+-    })(),
+-    (async () => {
+-      try {
+-        const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+-        const { count } = await supabase
+-          .from('leads')
+-          .select('id', { count: 'exact', head: true })
+-          .eq('tenant_id', tenantId)
+-          .gte('created_at', since);
+-        return typeof count === 'number' ? count : 0;
+-      } catch { return 0; }
+-    })(),
+-    safeRows('audit_logs', 'action,metadata,created_at'),
+-    (async () => {
+-      try {
+-        const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+-        const { count } = await supabase
+-          .from('leads')
+-          .select('id', { count: 'exact', head: true })
+-          .eq('tenant_id', tenantId)
+-          .lt('created_at', cutoff)
+-          .not('status', 'in', '("closed_won","closed_lost","won","lost")');
+-        return typeof count === 'number' ? count : 0;
+-      } catch {
+-        try {
+-          const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+-          const { count } = await supabase
+-            .from('leads')
+-            .select('id', { count: 'exact', head: true })
+-            .eq('tenant_id', tenantId)
+-            .lt('created_at', cutoff);
+-          return typeof count === 'number' ? count : 0;
+-        } catch {
+-          return 0;
+-        }
+-      }
+-    })(),
+-    (async () => {
+-      try {
+-        const { count } = await supabase
+-          .from('leads')
+-          .select('id', { count: 'exact', head: true })
+-          .eq('tenant_id', tenantId)
+-          .in('stage', ['qualified', 'proposal', 'negotiation', 'discovery', 'contacted', 'engaged']);
+-        return typeof count === 'number' ? count : 0;
+-      } catch {
+-        try {
+-          const { count } = await supabase
+-            .from('leads')
+-            .select('id', { count: 'exact', head: true })
+-            .eq('tenant_id', tenantId)
+-            .eq('status', 'qualified');
+-          return typeof count === 'number' ? count : 0;
+-        } catch {
+-          return 0;
+-        }
+-      }
+-    })(),
+-  ]);
+-
+-  const recentActivity = recentActivityRows.map((r: any) => ({
+-    type: r.action,
+-    title: r.metadata?.clientName || r.action,
+-    date: r.created_at,
+-  }));
+-
+-  const momentumScore = Math.min(100, activity24h * 5 + newLeads24h * 10);
+-
+-  return {
+-    totalRevenue: paidRevenue,
+-    pendingRevenue,
+-    pendingInvoices,
+-    overdueInvoices,
+-    activeProjects,
+-    totalLeads,
+-    clientCount,
+-    weightedPipeline: 0,
+-    salesForecast: 0,
+-    totalWonValue: 0,
+-    recentActivity,
+-    pipeline: {},
+-    momentumScore,
+-    loginStreak: 1,
+-    activity24h,
+-    newLeads24h,
+-    staleLeads: staleLeadsCount,
+-    qualifiedLeads: qualifiedLeadsCount,
+-    activeCampaigns,
+-    upcomingMeetings,
+-    unreadMessages,
+-    totalTasks,
+-    completedTasks,
+-    totalMessages,
+-    serverTime: new Date().toISOString(),
+-  };
+-}
+-
+ export async function GET(req: NextRequest) {
+   try {
+-    const supabase = await createSupabaseServerClient();
+-    const {
+-      data: { user },
+-    } = await supabase.auth.getUser();
+-
+-    if (!user) {
+-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+-    }
+-
+     const tenantId = req.nextUrl.searchParams.get('tenantId')?.trim();
+     if (!tenantId) {
+       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
+     }
+-
+-    const { data: member, error: membershipError } = await supabase
+-      .from('tenant_users')
+-      .select('tenant_id')
+-      .eq('tenant_id', tenantId)
+-      .eq('user_id', user.id)
+-      .maybeSingle();
+-
+-    if (membershipError || !member) {
+-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+-    }
++    // Shared auth validates both bearer/cookie sessions and active tenant membership.
++    // A membership lookup outage is availability failure, not proof of forbidden access.
++    const { supabase, user } = await requireTenantAccess(tenantId, req);
+ 
+     // ── Try the optimised consolidated RPC first ──────────────────────────
+     let stats: Record<string, any> | null = null;
+@@ -380,14 +70,15 @@ export async function GET(req: NextRequest) {
+             { status: 503, headers: { 'Retry-After': '2' } },
+           );
+         }
+-        console.warn('[dashboard/stats] RPC failed, using direct-query fallback:', rpcError.message);
++        throw rpcError;
+       } else if (rpcData) {
+         // Hydrate totalMessages separately (not in RPC)
+         let totalMessages = 0;
+-        const { count: msgCount } = await supabase
++        const { count: msgCount, error: messageError } = await supabase
+           .from('messages')
+           .select('id', { count: 'exact', head: true })
+           .eq('tenant_id', tenantId);
++        if (messageError) throw messageError;
+         if (typeof msgCount === 'number') totalMessages = msgCount;
+ 
+         stats = { ...rpcData, totalMessages };
+@@ -400,17 +91,16 @@ export async function GET(req: NextRequest) {
+           { status: 503, headers: { 'Retry-After': '2' } },
+         );
+       }
+-      console.warn('[dashboard/stats] RPC threw exception, falling back:', rpcException);
++      throw rpcException;
+     }
+ 
+     // ── Fallback: direct table queries ────────────────────────────────────
+     if (!stats) {
+-      console.info('[dashboard/stats] Running direct-query fallback for tenant:', tenantId);
+-      stats = await getStatsFallback(supabase, tenantId, user.id);
++      return NextResponse.json({ error: 'Dashboard statistics are unavailable. Please retry shortly.' }, { status: 503, headers: { 'Retry-After': '2' } });
+     }
+ 
+     const period = parsePeriod(req);
+-    const range = resolveMetricDateRange(period);
++
+     try {
+       const admin = createSupabaseAdminClient();
+       const periodMetrics = await dashboardStatsService.getHomePeriodMetrics(
+@@ -439,10 +129,10 @@ export async function GET(req: NextRequest) {
+       };
+     } catch (periodError) {
+       console.warn('[dashboard/stats] Period overlay failed:', periodError);
+-      stats = { ...stats, comparisonLabel: range.comparisonLabel, periodPreset: period };
++      return NextResponse.json({ error: 'Dashboard period metrics are unavailable. Please retry shortly.' }, { status: 503, headers: { 'Retry-After': '2' } });
+     }
+ 
+-    return NextResponse.json({ stats: normalizeDashboardStats(stats) });
++    return NextResponse.json({ stats: normalizeDashboardStats(stats) }, { headers: { 'Cache-Control': 'private, no-store' } });
+   } catch (err: unknown) {
+     return clientErrorResponse(err, { request: req, scope: 'dashboard/stats.GET' });
+   }
+diff --git a/src/app/api/invoices/lifecycle/route.ts b/src/app/api/invoices/lifecycle/route.ts
+index 14f01d4..e9a2398 100644
+--- a/src/app/api/invoices/lifecycle/route.ts
++++ b/src/app/api/invoices/lifecycle/route.ts
+@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
+ import { z } from 'zod';
+ import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+ import { validateDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+-import { queueInvoiceSend } from '@/lib/invoices/durableInvoiceRouter';
++import { executeInvoiceSendCommand } from '@/lib/execution/commands/invoiceSendCommand';
++import { mapProviderCodeToHttpStatus } from '@/lib/execution/domainCapabilityGuard';
+ 
+ /**
+  * Start invoice lifecycle without MCP/AI.
+@@ -38,9 +39,9 @@ export async function POST(req: NextRequest) {
+       .maybeSingle();
+     if (error) throw error;
+     if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+-    if (invoice.status !== 'draft') {
++    if (!['draft', 'approved'].includes(invoice.status)) {
+       return NextResponse.json(
+-        { error: `Only draft invoices can be sent. This invoice is ${invoice.status}.` },
++        { error: `Only draft or approved invoices can be sent. This invoice is ${invoice.status}.` },
+         { status: 409 }
+       );
+     }
+@@ -68,22 +69,29 @@ export async function POST(req: NextRequest) {
+ 
+     await validateDailyResourceQuota(tenantId, user.id, 'invoices');
+ 
+-    const queued = await queueInvoiceSend({
++    const execution = await executeInvoiceSendCommand({
+       tenantId,
+       userId: user.id,
+       invoiceId,
+       recipients,
+       subject,
+       message,
++      executionSource: 'ui',
+     });
++    if (!execution.ok) {
++      const code = execution.failure_code || execution.error?.code || 'SEND_FAILED';
++      return NextResponse.json({ error: execution.error?.message || 'Invoice delivery blocked', code },
++        { status: mapProviderCodeToHttpStatus(code) });
++    }
++    const queued = execution.result!;
+ 
+     return NextResponse.json(
+       {
+         success: true,
+         ...queued,
+         message: queued.durable
+-          ? 'Invoice delivery queued on Bonnie durable runtime'
+-          : 'Invoice delivery queued on workflow runtime',
++          ? 'Invoice queued for the background worker; no email has been confirmed yet. Check Bonnie outcome status using the run ID.'
++          : 'Invoice queued for the workflow worker; no email has been confirmed yet.',
+       },
+       { status: 202 }
+     );
+diff --git a/src/app/api/leads/searches/route.ts b/src/app/api/leads/searches/route.ts
+index 454fd24..92d4afd 100644
+--- a/src/app/api/leads/searches/route.ts
++++ b/src/app/api/leads/searches/route.ts
+@@ -62,23 +62,12 @@ export async function GET(req: NextRequest) {
+     const { admin } = await requireTenantAccess(workspaceId, req);
+     const { data, error } = await admin.from('lead_searches').select('*')
+       .eq('workspace_id', workspaceId).order('created_at', { ascending: false }).limit(100);
+-    if (error) {
+-      console.warn('[api/leads/searches] Database query notice:', error.message);
+-      return NextResponse.json({
+-        searches: [],
+-        available: false,
+-        notice: 'Lead search history table is initializing for this workspace.',
+-      });
+-    }
++    if (error) throw error;
+ 
+     const searchesList = data || [];
+     return NextResponse.json({ searches: searchesList, available: true });
+   } catch (error) {
+-    return NextResponse.json({
+-      searches: [],
+-      available: false,
+-      notice: 'Lead search engine is initializing.',
+-    });
++    return routeErrorResponse(error, 'Lead search history could not be loaded.', req);
+   }
+ }
+ 
+diff --git a/src/app/api/outreach/send/route.ts b/src/app/api/outreach/send/route.ts
+index f8bd9b0..50e74d5 100644
+--- a/src/app/api/outreach/send/route.ts
++++ b/src/app/api/outreach/send/route.ts
+@@ -1,3 +1,5 @@
++import { outreachFingerprint, outreachOperationKey, signOutreachApproval, verifyOutreachApproval } from '@/lib/email/outreachApproval';
++import { emailOperationStore, runEmailOperation } from '@/lib/email/emailOperation';
+ import { NextResponse } from 'next/server';
+ import { microsoftServerService } from '@/services/server/microsoftServerService';
+ import { ZohoMailService } from '../../../../services/zoho/ZohoMailService';
+@@ -146,7 +148,7 @@ function injectTrackingPixel(body: string, trackingId: string): string {
+  *   queue?:       boolean   // if true: log as 'queued' but don't send
+  * }
+  */
+-export async function POST(request: Request) {
++async function executeOutreach(request: Request, access: Awaited<ReturnType<typeof requireTenantAccess>>) {
+   try {
+     const body = await request.json();
+     const parsed = outreachSendSchema.safeParse(body);
+@@ -187,7 +189,7 @@ export async function POST(request: Request) {
+       return NextResponse.json({ error: 'Subject is required.' }, { status: 400 });
+     }
+ 
+-    const tenantCtx = await requireTenantAccess(tenantId);
++    const tenantCtx = access;
+     const admin = createAdminSupabaseClientOrThrow();
+ 
+     if (bulkOutreach) {
+@@ -309,7 +311,7 @@ export async function POST(request: Request) {
+       .single();
+ 
+     if (logErr) {
+-      console.warn('[Outreach/Send] Log insert failed (non-fatal):', logErr);
++      throw logErr; // Never contact a provider without a durable local record.
+     }
+ 
+     const logId = logRow?.id;
+@@ -404,6 +406,9 @@ export async function POST(request: Request) {
+ 
+     const microsoftConnection = await microsoftServerService.getConnection(tenantCtx.user.id).catch(() => null);
+     if (microsoftConnection) {
++      if (fromAddress && fromAddress.toLowerCase() !== microsoftConnection.microsoft_email?.toLowerCase()) {
++        return NextResponse.json({ success: false, error: 'The requested sender does not match the connected Microsoft account.' }, { status: 409 });
++      }
+       providerConfigs.unshift({
+         provider: 'microsoft',
+         apiKey: '',
+@@ -526,7 +531,10 @@ export async function POST(request: Request) {
+     let sentFromEmail = '';
+     let sentFromName = '';
+ 
+-    for (const selectedProvider of providerQueue) {
++    // Approval covers one selected sending identity. No automatic provider switching.
++    const approvedProvider = preferred ? providerQueue.find((p) => p.provider === preferred) : providerQueue[0];
++    if (!approvedProvider) return NextResponse.json({ success: false, error: 'The approved provider is unavailable. Review the sender and approve again.' }, { status: 409 });
++    for (const selectedProvider of [approvedProvider]) {
+       try {
+         if (selectedProvider.provider === 'microsoft') {
+           await microsoftServerService.sendEmail(tenantCtx.user.id, {
+@@ -534,6 +542,7 @@ export async function POST(request: Request) {
+             subject: normalizedSubject,
+             html: htmlWithComplianceFooter,
+           });
++          // Graph 202 proves acceptance but not delivery; no fabricated provider ID.
+           providerMessageId = null;
+         } else if (selectedProvider.provider === 'zoho') {
+           const zohoService = new ZohoMailService(tenantCtx.user.id, tenantId);
+@@ -543,7 +552,8 @@ export async function POST(request: Request) {
+             subject: normalizedSubject,
+             content: htmlWithComplianceFooter,
+           });
+-          providerMessageId = sendResult?.data?.messageId || null;
++          providerMessageId = sendResult?.data?.messageId || sendResult?.messageId || null;
++          if (!providerMessageId) throw Object.assign(new Error('Zoho acceptance has no message reference'), { code: 'OUTCOME_UNKNOWN' });
+         } else if (
+           selectedProvider.provider === 'brevo' ||
+           selectedProvider.provider === 'resend' ||
+@@ -553,7 +563,10 @@ export async function POST(request: Request) {
+             tenantId,
+             to: leadEmail,
+             subject: normalizedSubject,
+-            message: htmlWithComplianceFooter.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
++            html: htmlWithComplianceFooter,
++            preserveContent: true,
++            skipRecipientGate: isDirectSend,
++            idempotencyKey: request.headers.get('x-outreach-operation-id') || undefined,
+             fromName: selectedProvider.fromName,
+             userId: tenantCtx.user.id,
+             listUnsubscribeUrl: unsubscribeUrl,
+@@ -562,7 +575,7 @@ export async function POST(request: Request) {
+             preferredProvider: selectedProvider.provider,
+           });
+           if (!result.success) {
+-            throw new Error(result.error || `Failed to send via ${selectedProvider.provider}`);
++            throw Object.assign(new Error(result.error || `Failed to send via ${selectedProvider.provider}`), { code: result.code, deliveryStatus: result.deliveryStatus });
+           }
+           providerMessageId = result.emailId || null;
+         }
+@@ -572,6 +585,14 @@ export async function POST(request: Request) {
+         sentFromName = selectedProvider.fromName || 'AlphaClone Systems';
+         break;
+       } catch (err) {
++        const failure = err as Error & { code?: string; deliveryStatus?: string; status?: number; providerRequestId?: string };
++        const rejected = typeof failure.status === 'number' && failure.status >= 400 && failure.status < 500;
++        console.warn('[outreach/send] Provider attempt result', { operationId: request.headers.get('x-outreach-operation-id'), provider: selectedProvider.provider, upstreamStatus: failure.status, upstreamRequestId: failure.providerRequestId, outcome: rejected ? 'rejected' : 'unknown' });
++        const kind = classifyProviderFailure(failure.message || '');
++        if (failure.code === 'OUTCOME_UNKNOWN' || failure.deliveryStatus === 'unknown' || (!rejected && kind === 'network_or_unknown')) {
++          if (logId) await admin.from('lead_outreach_log').update({ status: 'queued', error_message: 'Delivery outcome unknown; reconciliation required before another attempt.' }).eq('tenant_id', tenantId).eq('id', logId);
++          return NextResponse.json({ success: false, status: 'unknown', deliveryStatus: 'unknown', code: 'OUTCOME_UNKNOWN', logId, trackingId, provider: selectedProvider.provider, operationId: request.headers.get('x-outreach-operation-id'), error: 'The provider may have accepted this email. Check its send record before trying again; no fallback email was sent.' }, { status: 409 });
++        }
+         providerFailures.push({
+           provider: selectedProvider.provider,
+           error: err instanceof Error ? err.message : 'Provider send failed',
+@@ -651,14 +672,15 @@ export async function POST(request: Request) {
+         postSendWarnings.push('message_capture_failed');
+       }
+ 
+-      if (providerMessageId || sentProvider === 'microsoft' || sentProvider === 'zoho') {
++      if (!providerMessageId) postSendWarnings.push('native_message_reference_pending_sync');
++      if (providerMessageId) {
+         try {
+           await persistCanonicalOutboundEmail({
+             supabase: admin,
+             tenantId,
+             userId: tenantCtx.user.id,
+             provider: sentProvider === 'microsoft' ? 'microsoft_graph' : sentProvider,
+-            providerMessageId: providerMessageId || trackingId || logId || crypto.randomUUID(),
++            providerMessageId,
+             fromEmail: sentFromEmail,
+             recipients: [leadEmail],
+             subject: normalizedSubject,
+@@ -667,6 +689,7 @@ export async function POST(request: Request) {
+             hasAttachments: false,
+             metadata: {
+               source: 'api.outreach.send',
++              idempotency_key: request.headers.get('x-outreach-operation-id'),
+               outreach_log_id: logId,
+               tracking_id: trackingId,
+               provider: sentProvider,
+@@ -698,7 +721,7 @@ export async function POST(request: Request) {
+               lead_email: leadEmail,
+             },
+           });
+-          await admin.from('contacts').update({ last_activity_at: new Date().toISOString() }).eq('id', resolvedContactId);
++          await admin.from('contacts').update({ last_activity_at: new Date().toISOString() }).eq('tenant_id', tenantId).eq('id', resolvedContactId);
+         } catch (activityErr) {
+           console.warn('[Outreach/Send] Contact activity log failed (non-fatal):', activityErr);
+         }
+@@ -707,10 +730,11 @@ export async function POST(request: Request) {
+       return NextResponse.json({
+         success:    true,
+         status:     'sent',
++        deliveryStatus: 'provider_accepted',
+         logId,
+         trackingId,
+         provider: sentProvider,
+-        failoverAttempts: providerFailures,
++        failoverAttempts: [],
+         messageId: providerMessageId,
+         warnings: postSendWarnings,
+       });
+@@ -744,7 +768,7 @@ export async function POST(request: Request) {
+             'Open Settings > Integrations, reconnect Resend/SendGrid/Brevo/Zoho/Gmail with your own user credentials, then retry.',
+           logId,
+           trackingId,
+-          failoverAttempts: classifiedFailures,
++          failoverAttempts: classifiedFailures.map(({ provider, category }) => ({ provider, category })),
+         },
+         { status: 400 }
+       );
+@@ -759,7 +783,7 @@ export async function POST(request: Request) {
+           error: 'All selected providers are currently rate-limited. Retry shortly or enable additional provider failover.',
+           logId,
+           trackingId,
+-          failoverAttempts: classifiedFailures,
++          failoverAttempts: classifiedFailures.map(({ provider, category }) => ({ provider, category })),
+         },
+         { status: 429 }
+       );
+@@ -775,12 +799,92 @@ export async function POST(request: Request) {
+           'Check provider API keys, sender verification, and provider account status in Integrations before retrying.',
+         logId,
+         trackingId,
+-        failoverAttempts: classifiedFailures,
++        failoverAttempts: classifiedFailures.map(({ provider, category }) => ({ provider, category })),
+       },
+       { status: 502 }
+     );
+ 
+   } catch (error: unknown) {
+-    return routeErrorResponse(error, 'Failed to send outreach email.', request);
++    console.error('[outreach/send] Operation interrupted', request.headers.get('x-outreach-operation-id'), { code: (error as { code?: string })?.code });
++    return NextResponse.json({ success: false, status: 'unknown', deliveryStatus: 'unknown', code: 'OUTCOME_UNKNOWN', error: 'This attempt could not be confirmed. Reconcile its original operation before retrying.' }, { status: 409 });
++  }
++}
++
++
++/** The explicit UI Send action prepares approval and then submits the exact snapshot. */
++export async function POST(request: Request) {
++  try {
++    const raw = await request.json();
++    if (raw.attachments?.length || raw.cc?.length || raw.bcc?.length) {
++      return NextResponse.json({ error: 'Use the mailbox composer for attachments, CC or BCC. No email was sent.' }, { status: 422 });
++    }
++    const parsed = outreachSendSchema.safeParse(raw);
++    if (!parsed.success) return NextResponse.json({ error: 'Invalid outreach request', details: parsed.error.flatten() }, { status: 400 });
++    const payload = parsed.data;
++    const access = await requireTenantAccess(payload.tenantId, request);
++    const headers = new Headers(request.headers);
++    if (payload.queue || payload.autoSend !== true) {
++      return executeOutreach(new Request(request, { body: JSON.stringify(payload) }), access);
++    }
++    // Bind approval to provider records and actual connected Microsoft identity.
++    const connections = await access.admin.from('integrations').select('type, user_id, config, enabled, updated_at')
++      .eq('tenant_id', payload.tenantId).eq('enabled', true).in('type', ['microsoft', 'brevo', 'resend', 'sendgrid', 'zoho', 'email_profile']);
++    if (connections.error) throw connections.error;
++    const accounts = await access.admin.from('email_provider_accounts').select('id, provider, owner_user_id, email_address, display_name, connection_status, updated_at').eq('tenant_id', payload.tenantId).eq('connection_status', 'connected').is('deleted_at', null);
++    if (accounts.error) throw accounts.error;
++    const microsoft = await microsoftServerService.getConnection(access.user.id);
++    const senderRevision = outreachFingerprint({
++      integrations: (connections.data || []).sort((a: { type: string; user_id: string }, b: { type: string; user_id: string }) => `${a.type}:${a.user_id}`.localeCompare(`${b.type}:${b.user_id}`)),
++      accounts: (accounts.data || []).sort((a: { id: string }, b: { id: string }) => a.id.localeCompare(b.id)),
++      microsoft: microsoft ? { userId: microsoft.user_id, email: microsoft.microsoft_email } : null,
++    });
++    const secret = process.env.AUTH_SECRET || process.env.ENCRYPTION_SECRET || '';
++    const operationId = outreachOperationKey(access.user.id, payload);
++    if (request.headers.get('x-outreach-phase') === 'approve') {
++      return NextResponse.json({ approvalToken: signOutreachApproval(secret, access.user.id, payload, senderRevision), operationId }, { headers: { 'Cache-Control': 'private, no-store' } });
++    }
++    if (!verifyOutreachApproval(request.headers.get('x-outreach-approval') || '', secret, access.user.id, payload, senderRevision)) {
++      return NextResponse.json({ error: 'Review the recipients, message and sender, then approve this send again.', code: 'APPROVAL_REQUIRED' }, { status: 409 });
++    }
++    const recipientHash = outreachFingerprint({ tenantId: payload.tenantId, recipient: payload.leadEmail.trim().toLowerCase() });
++    // Editing a draft or changing a provider must not bypass an unresolved attempt for this recipient.
++    const unresolved = await access.admin.from('mcp_action_receipts').select('action_id')
++      .eq('tenant_id', payload.tenantId).eq('tool', 'ui_outreach_send')
++      .eq('sanitized_input->>recipient_hash', recipientHash).in('final_status', ['running', 'unknown_execution_state'])
++      .neq('idempotency_key', operationId).limit(1);
++    if (unresolved.error) throw unresolved.error;
++    if (unresolved.data?.length) return NextResponse.json({ success: false, deliveryStatus: 'unknown', code: 'OUTCOME_UNKNOWN', error: 'An earlier email to this recipient is still unconfirmed. Reconcile it before approving another attempt.' }, { status: 409 });
++    const legacyHistory = await access.admin.from('lead_outreach_log').select('id, error_message')
++      .eq('tenant_id', payload.tenantId).ilike('lead_email', payload.leadEmail)
++      .in('status', ['queued', 'failed']).order('created_at', { ascending: false }).limit(20);
++    if (legacyHistory.error) throw legacyHistory.error;
++    const uncertainLegacyRows = (legacyHistory.data || []).filter((row: { id: string; error_message?: string }) =>
++      /timeout|timed out|network|fetch failed|socket|ECONN|unknown|reconcil/i.test(row.error_message || ''));
++    if (uncertainLegacyRows.length) {
++      const confirmed = await access.admin.from('mcp_action_receipts').select('sanitized_output')
++        .eq('tenant_id', payload.tenantId).eq('tool', 'ui_outreach_send')
++        .eq('sanitized_input->>recipient_hash', recipientHash).in('final_status', ['provider_accepted', 'delivered', 'completed']).limit(20);
++      if (confirmed.error) throw confirmed.error;
++      const confirmedLogs = new Set((confirmed.data || []).map((row: { sanitized_output?: { logId?: string } }) => row.sanitized_output?.logId).filter(Boolean));
++      if (uncertainLegacyRows.some((row: { id: string }) => !confirmedLogs.has(row.id))) {
++        // The original operation is allowed to replay/reconcile its own receipt.
++        const ownReceipt = await access.admin.from('mcp_action_receipts').select('action_id')
++          .eq('tenant_id', payload.tenantId).eq('tool', 'ui_outreach_send').eq('idempotency_key', operationId).maybeSingle();
++        if (ownReceipt.error) throw ownReceipt.error;
++        if (!ownReceipt.data) return NextResponse.json({ success: false, deliveryStatus: 'unknown', code: 'OUTCOME_UNKNOWN', error: 'A previous attempt has uncertain delivery. Verify its provider record before sending another email to this recipient.' }, { status: 409 });
++      }
++    }
++    headers.set('x-outreach-operation-id', operationId);
++    const result = await runEmailOperation({
++      store: emailOperationStore(payload.tenantId, 'ui_outreach_send', operationId, { userId: access.user.id, recipientHash, approvalFingerprint: outreachFingerprint(payload), senderRevision }),
++      execute: async () => {
++        const response = await executeOutreach(new Request(request, { headers, body: JSON.stringify(payload) }), access);
++        return { ...await response.json(), httpStatus: response.status, operationId };
++      },
++    });
++    const { httpStatus, ...body } = result;
++    return NextResponse.json(body, { status: Number(httpStatus) || (body.success ? 200 : 409), headers: { 'x-request-id': operationId, 'Cache-Control': 'private, no-store' } });
++  } catch (error) {
++    return routeErrorResponse(error, 'The send could not be confirmed. Check the original operation before trying again.', request);
+   }
+ }
+diff --git a/src/app/api/tenant/[tenantId]/documents/[documentId]/route.ts b/src/app/api/tenant/[tenantId]/documents/[documentId]/route.ts
+index e640f64..310ea51 100644
+--- a/src/app/api/tenant/[tenantId]/documents/[documentId]/route.ts
++++ b/src/app/api/tenant/[tenantId]/documents/[documentId]/route.ts
+@@ -1,5 +1,6 @@
+ import { NextRequest, NextResponse } from 'next/server';
+ import { z } from 'zod';
++import { mapDocOsRowToCatalog } from '@/lib/documents/docOsCatalogBridge';
+ import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+ 
+ const updateSchema = z.object({
+@@ -17,20 +18,39 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
+     const { tenantId, documentId } = await context.params;
+     const ids = z.object({ tenantId: z.string().uuid(), documentId: z.string().uuid() }).parse({ tenantId, documentId });
+     const { admin } = await requireTenantAccess(ids.tenantId, req);
+-    const [documentResult, relationshipResult, activityResult, versionResult, legacyVersionResult, intelligenceJobsResult, findingsResult, comparisonsResult] = await Promise.all([
+-      admin.from('documents').select('*').eq('tenant_id', ids.tenantId).eq('id', ids.documentId).is('deleted_at', null).maybeSingle(),
+-      admin.from('document_relationships').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId),
+-      admin.from('document_activity').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('created_at', { ascending: false }).limit(100),
+-      admin.from('document_versions').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('version_number', { ascending: false }).limit(100),
+-      admin.from('tenant_document_versions').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('version', { ascending: false }).limit(100),
+-      admin.from('document_intelligence_jobs').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('created_at', { ascending: false }).limit(50),
+-      admin.from('document_findings').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('created_at', { ascending: false }).limit(250),
+-      admin.from('document_comparisons').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('created_at', { ascending: false }).limit(25),
++    // The list bridges Doc OS identities. Resolve those same identities before detail fan-out.
++    let { data: document, error: documentError } = await admin.from('documents').select('*')
++      .eq('tenant_id', ids.tenantId).eq('id', ids.documentId).is('deleted_at', null).maybeSingle();
++    if (documentError) throw documentError;
++    if (!document) {
++      const linked = await admin.from('documents').select('*').eq('tenant_id', ids.tenantId)
++        .eq('doc_os_document_id', ids.documentId).maybeSingle();
++      if (linked.error) throw linked.error;
++      // A linked soft-deleted record must not become visible through the bridge.
++      if (linked.data?.deleted_at) return NextResponse.json({ error: 'Document not found' }, { status: 404 });
++      document = linked.data;
++    }
++    if (!document) {
++      const bridge = await admin.from('doc_os_documents').select('*').eq('tenant_id', ids.tenantId)
++        .eq('document_id', ids.documentId).is('archived_at', null).maybeSingle();
++      if (bridge.error) throw bridge.error;
++      if (!bridge.data) return NextResponse.json({ error: 'Document not found' }, { status: 404 });
++      return NextResponse.json({ document: mapDocOsRowToCatalog(bridge.data), relationships: [], activity: [],
++        versions: [], legacyVersions: [], intelligenceJobs: [], findings: [], comparisons: [],
++        detailAvailability: 'doc_os_summary' }, { headers: { 'Cache-Control': 'private, no-store' } });
++    }
++    const canonicalId = document.id;
++    const [relationshipResult, activityResult, versionResult, legacyVersionResult, intelligenceJobsResult, findingsResult, comparisonsResult] = await Promise.all([
++      admin.from('document_relationships').select('*').eq('tenant_id', ids.tenantId).eq('document_id', canonicalId),
++      admin.from('document_activity').select('*').eq('tenant_id', ids.tenantId).eq('document_id', canonicalId).order('created_at', { ascending: false }).limit(100),
++      admin.from('document_versions').select('*').eq('tenant_id', ids.tenantId).eq('document_id', canonicalId).order('version_number', { ascending: false }).limit(100),
++      admin.from('tenant_document_versions').select('*').eq('tenant_id', ids.tenantId).eq('document_id', canonicalId).order('version', { ascending: false }).limit(100),
++      admin.from('document_intelligence_jobs').select('*').eq('tenant_id', ids.tenantId).eq('document_id', canonicalId).order('created_at', { ascending: false }).limit(50),
++      admin.from('document_findings').select('*').eq('tenant_id', ids.tenantId).eq('document_id', canonicalId).order('created_at', { ascending: false }).limit(250),
++      admin.from('document_comparisons').select('*').eq('tenant_id', ids.tenantId).eq('document_id', canonicalId).order('created_at', { ascending: false }).limit(25),
+     ]);
+-    if (documentResult.error) throw documentResult.error;
+-    if (!documentResult.data) return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+     return NextResponse.json({
+-      document: documentResult.data,
++      document,
+       relationships: relationshipResult.data || [],
+       activity: activityResult.data || [],
+       versions: versionResult.data || [],
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index 5475407..6b8d142 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -1,4 +1,5 @@
+ import type { Metadata, Viewport } from "next";
++import { buildInstallBootstrapScript } from "@/lib/pwa/installLifecycle";
+ import { Suspense } from "react";
+ 
+ import "./globals.css";
+@@ -118,7 +119,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
+         <script
+           id="ac-pwa-deferred-prompt"
+           dangerouslySetInnerHTML={{
+-            __html: `(function(){if(typeof window!=='undefined'){window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.deferredPrompt=e;});}})();`,
++            __html: buildInstallBootstrapScript(),
+           }}
+         />
+       </head>
+diff --git a/src/app/sw.ts b/src/app/sw.ts
+index 3f621e6..ac916f3 100644
+--- a/src/app/sw.ts
++++ b/src/app/sw.ts
+@@ -25,6 +25,7 @@ const networkOnlyRetryOrError = new NetworkOnly({
+             handlerDidError: async ({ request }) => {
+                 try {
+                     const req = request instanceof Request ? request : new Request(request);
++                    if (!['GET', 'HEAD'].includes(req.method)) return Response.error();
+                     return await fetch(new Request(req, { cache: 'no-store' }));
+                 } catch {
+                     return Response.error();
+@@ -35,7 +36,8 @@ const networkOnlyRetryOrError = new NetworkOnly({
+ });
+ 
+ // API and dashboard: same behavior — synthetic 503 breaks debugging and hides real status codes.
+-const apiNetworkOnly = networkOnlyRetryOrError;
++// The browser transport owns read retries. A lost POST response must never trigger another send.
++const apiNetworkOnly = new NetworkOnly();
+ const dashboardNetworkOnly = networkOnlyRetryOrError;
+ const nextAssetNetworkOnly = networkOnlyRetryOrError;
+ 
+diff --git a/src/components/MarketingProviders.tsx b/src/components/MarketingProviders.tsx
+index a7968f5..06fa012 100644
+--- a/src/components/MarketingProviders.tsx
++++ b/src/components/MarketingProviders.tsx
+@@ -30,7 +30,8 @@ export function MarketingProviders({ children }: { children: React.ReactNode })
+             staleTime: 60_000,
+             gcTime: 5 * 60_000,
+             refetchOnWindowFocus: false,
+-            retry: 1,
++            // The data transport owns bounded read retries; avoid layered retry storms.
++            retry: false,
+           },
+         },
+       }),
+diff --git a/src/components/Providers.tsx b/src/components/Providers.tsx
+index 5f8c506..7864716 100644
+--- a/src/components/Providers.tsx
++++ b/src/components/Providers.tsx
+@@ -51,7 +51,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
+             gcTime: 10 * 60 * 1000,
+             refetchOnWindowFocus: true,
+             refetchOnReconnect: true,
+-            retry: 1,
++            // The data transport owns bounded read retries; avoid layered retry storms.
++            retry: false,
+           },
+         },
+       }),
+diff --git a/src/components/dashboard/AIStudioTab.tsx b/src/components/dashboard/AIStudioTab.tsx
+index 6d05fc2..5d7744f 100644
+--- a/src/components/dashboard/AIStudioTab.tsx
++++ b/src/components/dashboard/AIStudioTab.tsx
+@@ -87,7 +87,10 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
+                 setConversationHistory([]);
+             }
+             setAiConversationReady(true);
+-        })();
++        })().catch((error) => {
++            console.warn('Saved AI conversation is temporarily unavailable', error);
++            if (!cancelled) setAiConversationReady(false);
++        });
+         return () => {
+             cancelled = true;
+         };
+diff --git a/src/components/dashboard/CommandPalette.tsx b/src/components/dashboard/CommandPalette.tsx
+index a349c53..f737396 100644
+--- a/src/components/dashboard/CommandPalette.tsx
++++ b/src/components/dashboard/CommandPalette.tsx
+@@ -186,9 +186,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
+                 }
+             } catch (err) {
+                 console.warn('Failed to fetch dashboard preferences:', err);
+-                setRecentCommands([]);
++                if (!cancelled) setCommandHistoryReady(false);
++                return;
+             }
+-            setCommandHistoryReady(true);
++            if (!cancelled) setCommandHistoryReady(true);
+         })();
+         return () => {
+             cancelled = true;
+diff --git a/src/components/dashboard/EnhancedInvoiceModal.tsx b/src/components/dashboard/EnhancedInvoiceModal.tsx
+index f10d476..a84d533 100644
+--- a/src/components/dashboard/EnhancedInvoiceModal.tsx
++++ b/src/components/dashboard/EnhancedInvoiceModal.tsx
+@@ -439,11 +439,11 @@ export default function EnhancedInvoiceModal({
+         const { startInvoiceLifecycleFromDashboard } = await import(
+           '@/lib/invoices/startInvoiceLifecycleFromDashboard'
+         );
+-        await startInvoiceLifecycleFromDashboard({
++        const lifecycle = await startInvoiceLifecycleFromDashboard({
+           tenantId,
+           invoiceId: finalInvoice.id,
+         });
+-        toast.success("Invoice lifecycle started — email + reminders now managed automatically.", { id: toastId });
++        toast.success(lifecycle.message, { id: toastId });
+       } catch (dispatchError: any) {
+         console.error('Invoice lifecycle Error:', dispatchError);
+         toast.error(`Invoice saved, but lifecycle automation failed: ${dispatchError.message}`, { id: toastId });
+diff --git a/src/components/dashboard/business/AIOutreachModal.tsx b/src/components/dashboard/business/AIOutreachModal.tsx
+index f4114b0..a147740 100644
+--- a/src/components/dashboard/business/AIOutreachModal.tsx
++++ b/src/components/dashboard/business/AIOutreachModal.tsx
+@@ -1,5 +1,6 @@
+ 'use client';
+ 
++import { fetchApprovedOutreach } from '@/lib/email/approvedOutreachClient';
+ import { Input as AlphaCloneInput } from '@/components/ui/input';
+ import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+ 
+@@ -218,7 +219,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
+                 }
+ 
+                 try {
+-                    const sendResponse = await fetch('/api/outreach/send', {
++                    const sendResponse = await fetchApprovedOutreach('/api/outreach/send', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify({
+diff --git a/src/components/dashboard/business/ComposeEmailModal.tsx b/src/components/dashboard/business/ComposeEmailModal.tsx
+index 0696838..1d6f36b 100644
+--- a/src/components/dashboard/business/ComposeEmailModal.tsx
++++ b/src/components/dashboard/business/ComposeEmailModal.tsx
+@@ -1,5 +1,6 @@
+ 'use client';
+ 
++import { fetchApprovedOutreach } from '@/lib/email/approvedOutreachClient';
+ import { Input as AlphaCloneInput } from '@/components/ui/input';
+ 
+ 
+@@ -537,6 +538,10 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
+     };
+ 
+     const handleSend = async () => {
++        if (attachments.length > 0) {
++            toast.error('This outreach composer cannot send attachments yet. Use the mailbox composer so every file is included.');
++            return;
++        }
+         if (toRecipients.length === 0) {
+             toast.error('Add at least one recipient.');
+             return;
+@@ -579,7 +584,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
+ 
+             for (const recipient of allRecipients) {
+                 const clientMatch = clients.find((client) => client.email?.toLowerCase() === recipient.toLowerCase());
+-                const res = await fetch('/api/outreach/send', {
++                const res = await fetchApprovedOutreach('/api/outreach/send', {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({
+diff --git a/src/components/dashboard/business/EnhancedBillingPage.tsx b/src/components/dashboard/business/EnhancedBillingPage.tsx
+index 66882f1..f0ed0ea 100644
+--- a/src/components/dashboard/business/EnhancedBillingPage.tsx
++++ b/src/components/dashboard/business/EnhancedBillingPage.tsx
+@@ -1221,11 +1221,11 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
+                                                 const { startInvoiceLifecycleFromDashboard } = await import(
+                                                     '@/lib/invoices/startInvoiceLifecycleFromDashboard'
+                                                 );
+-                                                await startInvoiceLifecycleFromDashboard({
++                                                const lifecycle = await startInvoiceLifecycleFromDashboard({
+                                                     tenantId: currentTenant.id,
+                                                     invoiceId: selectedInvoiceForOptions.id,
+                                                 });
+-                                                toast.success('Lifecycle started — email + reminders now automated.', { id: toastId });
++                                                toast.success(lifecycle.message, { id: toastId });
+                                             } catch (err: any) {
+                                                 toast.error(`Failed to start lifecycle: ${err.message}`, { id: toastId });
+                                             }
+@@ -1335,11 +1335,11 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
+                                         const { startInvoiceLifecycleFromDashboard } = await import(
+                                             '@/lib/invoices/startInvoiceLifecycleFromDashboard'
+                                         );
+-                                        await startInvoiceLifecycleFromDashboard({
++                                        const lifecycle = await startInvoiceLifecycleFromDashboard({
+                                             tenantId: currentTenant.id,
+                                             invoiceId: selectedInvoiceForOptions.id,
+                                         });
+-                                        toast.success('Lifecycle started — email + reminders now automated.', { id: toastId });
++                                        toast.success(lifecycle.message, { id: toastId });
+                                         setShowPDFPreview(null);
+                                     } catch (err: any) {
+                                         toast.error(`Failed to start lifecycle: ${err.message}`, { id: toastId });
+diff --git a/src/components/dashboard/business/UnifiedInboxTab.tsx b/src/components/dashboard/business/UnifiedInboxTab.tsx
+index de5bbd5..5d448b0 100644
+--- a/src/components/dashboard/business/UnifiedInboxTab.tsx
++++ b/src/components/dashboard/business/UnifiedInboxTab.tsx
+@@ -1,5 +1,6 @@
+ "use client";
+ 
++import { fetchApprovedOutreach } from '@/lib/email/approvedOutreachClient';
+ import { Input as AlphaCloneInput } from '@/components/ui/input';
+ import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+ 
+@@ -522,7 +523,7 @@ export default function UnifiedInboxTab({
+     const t = toast.loading("Sending...");
+     try {
+       const provider = resolveSendProvider();
+-      const res = await fetch("/api/outreach/send", {
++      const res = await fetchApprovedOutreach("/api/outreach/send", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({
+@@ -578,7 +579,7 @@ export default function UnifiedInboxTab({
+         `Re: ${selectedMessage.subject || "Your message"}`;
+       const provider = resolveSendProvider();
+ 
+-      const response = await fetch("/api/outreach/send", {
++      const response = await fetchApprovedOutreach("/api/outreach/send", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({
+diff --git a/src/components/dashboard/crm/CommunicationModal.tsx b/src/components/dashboard/crm/CommunicationModal.tsx
+index f525bb1..41d5a75 100644
+--- a/src/components/dashboard/crm/CommunicationModal.tsx
++++ b/src/components/dashboard/crm/CommunicationModal.tsx
+@@ -1,5 +1,6 @@
+ 'use client';
+ 
++import { fetchApprovedOutreach } from '@/lib/email/approvedOutreachClient';
+ import { Input as AlphaCloneInput } from '@/components/ui/input';
+ import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+ 
+@@ -226,7 +227,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
+ 
+         setIsSending(true);
+         try {
+-            const response = await fetch('/api/outreach/send', {
++            const response = await fetchApprovedOutreach('/api/outreach/send', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({
+diff --git a/src/components/dashboard/email/AlphaCloneEmailWorkspace.tsx b/src/components/dashboard/email/AlphaCloneEmailWorkspace.tsx
+index 0a96e42..64a3c42 100644
+--- a/src/components/dashboard/email/AlphaCloneEmailWorkspace.tsx
++++ b/src/components/dashboard/email/AlphaCloneEmailWorkspace.tsx
+@@ -1,5 +1,6 @@
+ 'use client';
+ 
++import { fetchApprovedOutreach } from '@/lib/email/approvedOutreachClient';
+ import { Input as AlphaCloneInput } from '@/components/ui/input';
+ import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
+ import { Select as AlphaCloneSelect } from '@/components/ui/select';
+@@ -479,7 +480,7 @@ export default function AlphaCloneEmailWorkspace() {
+     const tid = toast.loading('Sending reply…');
+     try {
+       const provider = resolveSendProvider();
+-      const res = await fetch('/api/outreach/send', {
++      const res = await fetchApprovedOutreach('/api/outreach/send', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
+@@ -511,7 +512,7 @@ export default function AlphaCloneEmailWorkspace() {
+     const tid = toast.loading('Sending…');
+     try {
+       const provider = resolveSendProvider();
+-      const res = await fetch('/api/outreach/send', {
++      const res = await fetchApprovedOutreach('/api/outreach/send', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
+diff --git a/src/components/dashboard/outreach/OutreachInbox.tsx b/src/components/dashboard/outreach/OutreachInbox.tsx
+index 302db6c..6618adc 100644
+--- a/src/components/dashboard/outreach/OutreachInbox.tsx
++++ b/src/components/dashboard/outreach/OutreachInbox.tsx
+@@ -1,5 +1,6 @@
+ 'use client';
+ 
++import { fetchApprovedOutreach } from '@/lib/email/approvedOutreachClient';
+ import { Select as AlphaCloneSelect } from '@/components/ui/select';
+ 
+ 
+@@ -577,7 +578,7 @@ export function OutreachInbox() {
+           : null;
+       const allRecipients = composeTo.split(',').map(e => e.trim()).filter(Boolean);
+       for (const recipient of allRecipients) {
+-        const res = await fetch('/api/outreach/send', {
++        const res = await fetchApprovedOutreach('/api/outreach/send', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           credentials: 'include',
+diff --git a/src/components/documents/SharedDocumentsWorkspace.tsx b/src/components/documents/SharedDocumentsWorkspace.tsx
+index c48d6c5..c19f6ad 100644
+--- a/src/components/documents/SharedDocumentsWorkspace.tsx
++++ b/src/components/documents/SharedDocumentsWorkspace.tsx
+@@ -81,6 +81,8 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
+   const [creating, setCreating] = useState(false);
+   const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
+   const [detailLoading, setDetailLoading] = useState(false);
++  const [detailError, setDetailError] = useState('');
++  const [detailAttempt, setDetailAttempt] = useState(0);
+   const documentId = searchParams?.get('documentId');
+   const [name, setName] = useState('');
+   const inputRef = useRef<HTMLInputElement>(null);
+@@ -134,9 +136,12 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
+       return;
+     }
+     let cancelled = false;
++    const controller = new AbortController();
++    setSelectedDocument(null);
++    setDetailError('');
+     setDetailLoading(true);
+     fetch(`/api/tenant/${currentTenant.id}/documents/${encodeURIComponent(documentId)}`, {
+-      credentials: 'include',
++      credentials: 'include', signal: controller.signal,
+     })
+       .then(async (response) => {
+         const payload = await response.json().catch(() => ({}));
+@@ -144,15 +149,16 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
+         if (!cancelled) setSelectedDocument(payload);
+       })
+       .catch((caught) => {
+-        if (!cancelled) toast.error(caught instanceof Error ? caught.message : 'Document could not be loaded');
++        if (!cancelled) setDetailError(caught instanceof Error ? caught.message : 'Document could not be loaded');
+       })
+       .finally(() => {
+         if (!cancelled) setDetailLoading(false);
+       });
+     return () => {
+       cancelled = true;
++      controller.abort();
+     };
+-  }, [currentTenant?.id, documentId]);
++  }, [currentTenant?.id, documentId, detailAttempt]);
+ 
+   const openDocument = useCallback((id: string) => {
+     const params = new URLSearchParams(searchParams?.toString() || '');
+@@ -500,7 +506,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
+         )}
+       </div>
+ 
+-      {(detailLoading || selectedDocument) && (
++      {(documentId && (detailLoading || selectedDocument || detailError)) && (
+         <div className="fixed inset-0 ac-layer-overlay flex justify-end bg-[var(--ws-canvas)]" role="presentation" onClick={closeDocument}>
+           <section
+             role="dialog"
+@@ -513,7 +519,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
+               <div className="min-w-0 flex-1">
+                 <p className="type-caption font-black uppercase tracking-wider text-[var(--brand-blue-300)]">Document details</p>
+                 <h2 className="mt-1 text-xl font-semibold text-white truncate">
+-                  {selectedDocument?.document?.title || selectedDocument?.document?.name || 'Loading document…'}
++                  {selectedDocument?.document?.title || selectedDocument?.document?.name || (detailError ? 'Document unavailable' : 'Loading document…')}
+                 </h2>
+               </div>
+               <div className="flex items-center gap-2">
+@@ -534,6 +540,12 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
+             </div>
+             {detailLoading ? (
+               <div className="mt-8 space-y-3">{[1,2,3].map((i) => <div key={i} className="h-20 animate-pulse rounded-xl bg-white/5" />)}</div>
++            ) : detailError ? (
++              <div className="p-4" role="alert">
++                <p>{detailError}</p>
++                <button type="button" className="mt-3 min-h-11 px-4" onClick={() => setDetailAttempt((n) => n + 1)}>Retry document</button>
++                <button type="button" className="mt-3 min-h-11 px-4" onClick={closeDocument}>Back to documents</button>
++              </div>
+             ) : selectedDocument ? (
+               <div className="mt-6 space-y-5">
+                 {selectedDocument.document?.storage_path ? (
+diff --git a/src/components/leads/OutreachPanel.tsx b/src/components/leads/OutreachPanel.tsx
+index c310622..b7d746a 100644
+--- a/src/components/leads/OutreachPanel.tsx
++++ b/src/components/leads/OutreachPanel.tsx
+@@ -1,5 +1,6 @@
+ 'use client';
+ 
++import { fetchApprovedOutreach } from '@/lib/email/approvedOutreachClient';
+ import React, { useState, useEffect } from 'react';
+ import { motion, AnimatePresence } from 'framer-motion';
+ import {
+@@ -208,7 +209,7 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
+       }
+ 
+       try {
+-        const res = await fetch('/api/outreach/send', {
++        const res = await fetchApprovedOutreach('/api/outreach/send', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+diff --git a/src/contexts/PWAContext.tsx b/src/contexts/PWAContext.tsx
+index 527a835..7eb06c9 100644
+--- a/src/contexts/PWAContext.tsx
++++ b/src/contexts/PWAContext.tsx
+@@ -1,6 +1,7 @@
+ 'use client';
+ 
+ import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
++import { installEventOwner, promptCapturedInstall } from '@/lib/pwa/installLifecycle';
+ import { isPWA } from '@/utils/pwaUtils';
+ import { resolveAppSurface, type AppSurface } from '@/lib/pwa/appSurface';
+ 
+@@ -75,30 +76,15 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
+             setCanInstall(true);
+         }
+ 
+-        const handleBeforeInstallPrompt = (e: Event) => {
+-            if (pwaActive) return;
+-            if ((window as any).deferredPrompt === e) return;
+-            e.preventDefault();
+-            (window as any).deferredPrompt = e;
+-            setDeferredPrompt(e);
+-            setCanInstall(true);
+-        };
+-
+-        const handleAppInstalled = () => {
+-            setIsInstalled(true);
+-            setCanInstall(false);
+-            setDeferredPrompt(null);
+-            (window as any).deferredPrompt = null;
++        installEventOwner(window);
++        const synchronizeInstall = () => {
++            const current = installEventOwner(window);
++            setDeferredPrompt(current.event);
++            setIsInstalled(current.installed || isPWA());
++            setCanInstall(!current.installed && !isPWA() && (Boolean(current.event) || iosDevice));
+         };
+-
+-        // If prompt was captured before this hook mounted
+-        if ((window as any).deferredPrompt) {
+-            setDeferredPrompt((window as any).deferredPrompt);
+-            setCanInstall(true);
+-        }
+-
+-        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+-        window.addEventListener('appinstalled', handleAppInstalled);
++        synchronizeInstall();
++        window.addEventListener('ac:install-state', synchronizeInstall);
+ 
+         const standaloneQuery = window.matchMedia('(display-mode: standalone)');
+         const overlayQuery = window.matchMedia('(display-mode: window-controls-overlay)');
+@@ -115,8 +101,7 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
+         window.addEventListener('resize', onDisplayModeChange, { passive: true });
+ 
+         return () => {
+-            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+-            window.removeEventListener('appinstalled', handleAppInstalled);
++            window.removeEventListener('ac:install-state', synchronizeInstall);
+             standaloneQuery.removeEventListener?.('change', onDisplayModeChange);
+             overlayQuery.removeEventListener?.('change', onDisplayModeChange);
+             window.removeEventListener('resize', onDisplayModeChange);
+@@ -145,29 +130,10 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
+     }, [appSurface, isPwaMode]);
+ 
+     const promptInstall = useCallback(async (): Promise<{ success: boolean; outcome?: string }> => {
+-        const promptEvent = deferredPrompt || (typeof window !== 'undefined' ? (window as any).deferredPrompt : null);
+-        if (!promptEvent) {
+-            return { success: false, outcome: isIOS ? 'manual_install' : 'unavailable' };
+-        }
+-        try {
+-            await promptEvent.prompt();
+-            const choice = await promptEvent.userChoice;
+-            setDeferredPrompt(null);
+-            if (typeof window !== 'undefined') {
+-                (window as any).deferredPrompt = null;
+-            }
+-            if (choice?.outcome === 'accepted') {
+-                setIsInstalled(true);
+-                setCanInstall(false);
+-                return { success: true, outcome: 'accepted' };
+-            }
+-            return { success: false, outcome: choice?.outcome || 'dismissed' };
+-        } catch (err) {
+-            setDeferredPrompt(null);
+-            if (typeof window !== 'undefined') (window as any).deferredPrompt = null;
+-            return { success: false, outcome: err instanceof Error ? err.message : 'unavailable' };
+-        }
+-    }, [deferredPrompt, isIOS]);
++        if (typeof window === 'undefined') return { success: false, outcome: 'unavailable' };
++        if (!installEventOwner(window).event) return { success: false, outcome: isIOS ? 'manual_install' : 'unavailable' };
++        return promptCapturedInstall(window);
++    }, [isIOS]);
+ 
+     return (
+         <PWAContext.Provider
+diff --git a/src/lib/api/clientErrorResponse.ts b/src/lib/api/clientErrorResponse.ts
+index d65e0e9..43d0a21 100644
+--- a/src/lib/api/clientErrorResponse.ts
++++ b/src/lib/api/clientErrorResponse.ts
+@@ -1,6 +1,7 @@
+ import { NextResponse } from 'next/server';
+ import * as Sentry from '@sentry/nextjs';
+ import { RouteAuthError } from './routeAuthError';
++import { isTransientDatabaseError } from '../transientDbError';
+ 
+ export type ApiErrorBody = {
+     error: string;
+@@ -33,7 +34,9 @@ export function clientErrorResponse(
+         fallbackMessage?: string;
+     }
+ ): NextResponse<ApiErrorBody> {
+-    const requestId = options.request ? getRequestIdFromRequest(options.request) : undefined;
++    const suppliedId = options.request ? getRequestIdFromRequest(options.request) : undefined;
++    const requestId = suppliedId && /^[a-zA-Z0-9._:-]{1,128}$/.test(suppliedId) ? suppliedId : crypto.randomUUID();
++    const headers = { 'x-request-id': requestId, 'Cache-Control': 'private, no-store' };
+ 
+     if (err instanceof RouteAuthError) {
+         const body: ApiErrorBody = {
+@@ -41,7 +44,12 @@ export function clientErrorResponse(
+             code: err.code,
+             ...(requestId ? { requestId } : {}),
+         };
+-        return NextResponse.json(body, { status: err.status });
++        return NextResponse.json(body, { status: err.status, headers: { ...headers, ...(err.status === 503 ? { 'Retry-After': '2' } : {}) } });
++    }
++
++    if (isTransientDatabaseError(err)) {
++        logServerError(options.scope, err, requestId);
++        return NextResponse.json({ error: 'Data is temporarily unavailable. Please retry shortly.', code: 'SERVICE_UNAVAILABLE', requestId }, { status: 503, headers: { ...headers, 'Retry-After': '2' } });
+     }
+ 
+     logServerError(options.scope, err, requestId);
+@@ -55,5 +63,5 @@ export function clientErrorResponse(
+         code: 'INTERNAL_ERROR',
+         ...(requestId ? { requestId } : {}),
+     };
+-    return NextResponse.json(body, { status: 500 });
++    return NextResponse.json(body, { status: 500, headers });
+ }
+diff --git a/src/lib/apiAuth.ts b/src/lib/apiAuth.ts
+index d3c4207..aadbc61 100644
+--- a/src/lib/apiAuth.ts
++++ b/src/lib/apiAuth.ts
+@@ -36,6 +36,7 @@ export async function requireAuthenticatedUser(
+     req?: Request,
+     options?: { allowMissingProfile?: boolean; allowPendingDeletion?: boolean }
+ ) {
++    const freshLookup = !req || !['GET', 'HEAD'].includes(req.method);
+     const bearer = req?.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
+     if (bearer) {
+         if (!ENV.VITE_SUPABASE_URL) {
+@@ -45,21 +46,23 @@ export async function requireAuthenticatedUser(
+             ? createSupabaseAdminClient()
+             : createSupabaseAdminClient(bearer);
+         const { data, error } = await admin.auth.getUser(bearer);
++        if (error && isTransientDatabaseError(error)) throw new RouteAuthError(503, 'Session verification is temporarily unavailable', 'SERVICE_UNAVAILABLE');
+         if (error || !data?.user?.id) {
+             throw new RouteAuthError(401, 'Unauthorized', 'UNAUTHORIZED');
+         }
+-        await requireActiveProfile(admin, data.user.id, options);
++        await requireActiveProfile(admin, data.user.id, { ...options, freshLookup });
+         return { supabase: admin, user: data.user, admin };
+     }
+ 
+     const supabase = await getSupabaseServerClient();
+     const { data, error } = await supabase.auth.getUser();
+ 
++    if (error && isTransientDatabaseError(error)) throw new RouteAuthError(503, 'Session verification is temporarily unavailable', 'SERVICE_UNAVAILABLE');
+     if (error || !data?.user?.id) {
+         throw new RouteAuthError(401, 'Unauthorized', 'UNAUTHORIZED');
+     }
+ 
+-    await requireActiveProfile(supabase, data.user.id, options);
++    await requireActiveProfile(supabase, data.user.id, { ...options, freshLookup });
+ 
+     // Prefer service-role admin. Without it, reuse the cookie-authenticated server
+     // client so RLS still works even when getSession() has no access_token.
+@@ -84,34 +87,38 @@ type CachedProfile = {
+ const profileCache = new Map<string, CachedProfile>();
+ const membershipCache = new Map<string, { membership: TenantMembership; cachedAt: number }>();
+ const AUTH_CACHE_TTL_MS = 15_000;
+-const AUTH_CACHE_STALE_TTL_MS = 300_000; // 5-minute stale-while-revalidate grace during transient DB schema reloads
++
++const pendingAuthLookups = new Map<string, Promise<unknown>>();
++async function singleFlightAuthLookup<T>(key: string, lookup: () => Promise<T>): Promise<T> {
++    const existing = pendingAuthLookups.get(key);
++    if (existing) return await existing as T;
++    const pending = lookup();
++    pendingAuthLookups.set(key, pending);
++    try { return await pending; }
++    finally { if (pendingAuthLookups.get(key) === pending) pendingAuthLookups.delete(key); }
++}
+ 
+ async function requireActiveProfile(
+     supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>,
+     userId: string,
+-    options?: { allowMissingProfile?: boolean; allowPendingDeletion?: boolean }
++    options?: { allowMissingProfile?: boolean; allowPendingDeletion?: boolean; freshLookup?: boolean }
+ ) {
+     const now = Date.now();
+     const cached = profileCache.get(userId);
+-    let profile = cached && (now - cached.cachedAt < AUTH_CACHE_TTL_MS) ? cached.profile : null;
++    let profile = !options?.freshLookup && cached && (now - cached.cachedAt < AUTH_CACHE_TTL_MS) ? cached.profile : null;
+ 
+     if (!profile) {
+-        const { data, error } = await withTransientDbRetry(async () => {
++        const { data, error } = await singleFlightAuthLookup(`profile:${userId}`, () => withTransientDbRetry(async () => {
+             return await supabase
+                 .from('profiles')
+                 .select('id, role, account_status, scheduled_deletion_at')
+                 .eq('id', userId)
+                 .maybeSingle();
+-        });
++        }));
+ 
+         if (error) {
+-            if (isTransientDatabaseError(error) && cached && (now - cached.cachedAt < AUTH_CACHE_STALE_TTL_MS)) {
+-                console.warn('[apiAuth] Serving stale cached profile during transient DB error:', error.message || error.code);
+-                profile = cached.profile;
+-            } else {
+-                console.error('[apiAuth] Failed to verify account status:', error);
+-                throw new RouteAuthError(503, 'Account verification is temporarily unavailable', 'INTERNAL_ERROR');
+-            }
++            console.error('[apiAuth] Failed to verify account status:', { code: error.code });
++            throw new RouteAuthError(503, 'Account verification is temporarily unavailable', 'SERVICE_UNAVAILABLE');
+         } else {
+             profile = data;
+         }
+@@ -155,26 +162,21 @@ export async function requireTenantAccess(tenantId: string, req?: Request) {
+     const cacheKey = `${user.id}:${cleanTenantId}`;
+     const now = Date.now();
+     const cached = membershipCache.get(cacheKey);
+-    let membership = cached && (now - cached.cachedAt < AUTH_CACHE_TTL_MS) ? cached.membership : null;
++    let membership = req && ['GET', 'HEAD'].includes(req.method) && cached && (now - cached.cachedAt < AUTH_CACHE_TTL_MS) ? cached.membership : null;
+ 
+     if (!membership) {
+-        const { data, error } = await withTransientDbRetry(async () => {
++        const { data, error } = await singleFlightAuthLookup(`membership:${cacheKey}`, () => withTransientDbRetry(async () => {
+             return await supabase
+                 .from('tenant_users')
+                 .select('tenant_id, role')
+                 .eq('tenant_id', cleanTenantId)
+                 .eq('user_id', user.id)
+                 .maybeSingle();
+-        });
++        }));
+ 
+         if (error) {
+-            if (isTransientDatabaseError(error) && cached && (now - cached.cachedAt < AUTH_CACHE_STALE_TTL_MS)) {
+-                console.warn('[apiAuth] Serving stale cached membership during transient DB error:', error.message || error.code);
+-                membership = cached.membership;
+-            } else {
+-                console.error('[apiAuth] Failed to verify tenant membership:', error);
+-                throw new RouteAuthError(500, 'Failed to verify tenant access', 'INTERNAL_ERROR');
+-            }
++            console.error('[apiAuth] Failed to verify tenant membership:', { code: error.code });
++            throw new RouteAuthError(503, 'Workspace verification is temporarily unavailable', 'SERVICE_UNAVAILABLE');
+         } else if (!data) {
+             throw new RouteAuthError(403, 'Forbidden', 'FORBIDDEN');
+         } else {
+diff --git a/src/lib/email/emailOperation.ts b/src/lib/email/emailOperation.ts
+index 3b30f50..8de907d 100644
+--- a/src/lib/email/emailOperation.ts
++++ b/src/lib/email/emailOperation.ts
+@@ -17,12 +17,13 @@ function safeOutput(output: Record<string, unknown>) {
+   ]));
+ }
+ 
+-export function emailOperationStore(tenantId: string, tool: string, key: string): EmailOperationStore {
++export function emailOperationStore(tenantId: string, tool: string, key: string, approvalEvidence?: { userId: string; recipientHash: string; approvalFingerprint: string; senderRevision: string }): EmailOperationStore {
+   const db = createSupabaseAdminClient();
+   return {
+     async claim(actionId) {
+       const { error } = await db.from('mcp_action_receipts').insert({
+         tenant_id: tenantId, tool, idempotency_key: key, action_id: actionId,
++        ...(approvalEvidence ? { user_id: approvalEvidence.userId, sanitized_input: { recipient_hash: approvalEvidence.recipientHash, approval_fingerprint: approvalEvidence.approvalFingerprint, sender_revision: approvalEvidence.senderRevision, approved_at: new Date().toISOString() } } : {}),
+         final_status: 'running', success: false, entity_type: tool === 'email_batch' ? 'bulk_email' : 'email_message',
+         sanitized_output: { status: 'executing', action_id: actionId },
+       });
+@@ -45,7 +46,7 @@ export function emailOperationStore(tenantId: string, tool: string, key: string)
+       if (error) throw new Error(`EMAIL_OPERATION_UPDATE_FAILED: ${error.message}`);
+     },
+     async reconcile() {
+-      if (tool !== 'canonical_email_send') return null;
++      if (!['canonical_email_send', 'ui_outreach_send'].includes(tool)) return null;
+       const { data, error } = await db.from('email_messages')
+         .select('id, provider_account_id, provider_message_id, provider_accepted_at, delivered_at, failed_at, bounced_at, delivery_status, metadata')
+         .eq('tenant_id', tenantId).eq('idempotency_key', key).limit(1).maybeSingle();
+@@ -68,7 +69,8 @@ export async function runEmailOperation<T extends Record<string, unknown>>(param
+   if (!await params.store.claim(actionId)) {
+     const existing = await params.store.read();
+     if (!existing) throw new Error('EMAIL_OPERATION_CLAIM_NOT_FOUND');
+-    const reconciled = await params.store.reconcile();
++    const providerEvidence = await params.store.reconcile();
++    const reconciled: Record<string, unknown> | null = providerEvidence ? { ...providerEvidence, logId: existing.sanitized_output?.logId, operationId: existing.sanitized_output?.operationId } : null;
+     if (reconciled) {
+       await params.store.save(existing.action_id, reconciled.deliveryStatus === 'failed' ? 'failed' : reconciled.deliveryStatus === 'delivered' ? 'delivered' : 'provider_accepted', reconciled);
+       return { ...reconciled, idempotent_replay: true } as unknown as T;
+diff --git a/src/lib/email/providerSdk.ts b/src/lib/email/providerSdk.ts
+index 9a7ff49..a767ea4 100644
+--- a/src/lib/email/providerSdk.ts
++++ b/src/lib/email/providerSdk.ts
+@@ -80,8 +80,15 @@ export type EmailSendResult = {
+     provider: EmailProvider;
+     emailId?: string;
+     error?: string;
++    httpStatus?: number;
+ };
+ 
++function providerErrorStatus(error: unknown): number | undefined {
++    const value = error as { status?: number; statusCode?: number; code?: number; response?: { statusCode?: number; status?: number } };
++    const status = Number(value?.status || value?.statusCode || value?.response?.statusCode || value?.response?.status || value?.code);
++    return Number.isFinite(status) && status >= 100 && status < 600 ? status : undefined;
++}
++
+ function normalizeRecipients(to: string | string[]): string[] {
+     return Array.isArray(to) ? to : [to];
+ }
+@@ -123,13 +130,14 @@ async function sendViaResend(input: EmailSendInput): Promise<EmailSendResult> {
+         );
+ 
+         if (error) {
+-            return { ok: false, provider: 'resend', error: JSON.stringify(error) };
++            return { ok: false, provider: 'resend', httpStatus: providerErrorStatus(error), error: JSON.stringify(error) };
+         }
+         return { ok: true, provider: 'resend', emailId: data?.id };
+     } catch (error) {
+         return {
+             ok: false,
+             provider: 'resend',
++            httpStatus: providerErrorStatus(error),
+             error: error instanceof Error ? error.message : 'Resend send failed',
+         };
+     }
+@@ -185,7 +193,7 @@ async function sendViaSendGrid(input: EmailSendInput): Promise<EmailSendResult>
+                     ? error.message
+                     : 'SendGrid send failed';
+ 
+-        return { ok: false, provider: 'sendgrid', error: msg };
++        return { ok: false, provider: 'sendgrid', httpStatus: providerErrorStatus(error), error: msg };
+     }
+ }
+ 
+@@ -228,7 +236,7 @@ async function sendViaBrevo(input: EmailSendInput): Promise<EmailSendResult> {
+ 
+         const bodyText = await response.text();
+         if (!response.ok) {
+-            return { ok: false, provider: 'brevo', error: bodyText || `Brevo rejected request (${response.status})` };
++            return { ok: false, provider: 'brevo', httpStatus: response.status, error: bodyText || `Brevo rejected request (${response.status})` };
+         }
+         const body = bodyText ? JSON.parse(bodyText) : {};
+         return { ok: true, provider: 'brevo', emailId: body.messageId };
+@@ -236,6 +244,7 @@ async function sendViaBrevo(input: EmailSendInput): Promise<EmailSendResult> {
+         return {
+             ok: false,
+             provider: 'brevo',
++            httpStatus: providerErrorStatus(error),
+             error: error instanceof Error ? error.message : 'Brevo send failed',
+         };
+     }
+@@ -275,6 +284,7 @@ async function sendViaZoho(input: EmailSendInput): Promise<EmailSendResult> {
+         return {
+             ok: false,
+             provider: 'zoho',
++            httpStatus: providerErrorStatus(error),
+             error: error instanceof Error ? error.message : 'Zoho send failed',
+         };
+     }
+@@ -367,6 +377,7 @@ async function sendViaGmail(input: EmailSendInput): Promise<EmailSendResult> {
+         return {
+             ok: false,
+             provider: 'gmail',
++            httpStatus: providerErrorStatus(error),
+             error: error instanceof Error ? error.message : 'Gmail SMTP send failed',
+         };
+     }
+@@ -399,6 +410,7 @@ async function sendViaOutlook(input: EmailSendInput): Promise<EmailSendResult> {
+         return {
+             ok: false,
+             provider: 'outlook',
++            httpStatus: providerErrorStatus(error),
+             error: error instanceof Error ? error.message : 'Outlook send failed',
+         };
+     }
+@@ -453,6 +465,7 @@ async function sendViaSmtp(input: EmailSendInput): Promise<EmailSendResult> {
+         return {
+             ok: false,
+             provider: 'smtp',
++            httpStatus: providerErrorStatus(error),
+             error: error instanceof Error ? error.message : 'SMTP send failed',
+         };
+     }
+@@ -488,6 +501,7 @@ async function sendViaMailflow(input: EmailSendInput): Promise<EmailSendResult>
+         return {
+             ok: false,
+             provider: 'mailflow',
++            httpStatus: providerErrorStatus(error),
+             error: error instanceof Error ? error.message : 'Mailflow send failed',
+         };
+     }
+diff --git a/src/lib/email/sendEmail.ts b/src/lib/email/sendEmail.ts
+index 32b8e16..52ebafe 100644
+--- a/src/lib/email/sendEmail.ts
++++ b/src/lib/email/sendEmail.ts
+@@ -223,7 +223,7 @@ export async function sendEmail(
+       }
+ 
+       if (!providerResult.ok) {
+-        if (/timeout|timed out|network|fetch failed|abort|socket|ECONN/i.test(providerResult.error || '')) {
++        if ((providerResult.httpStatus && providerResult.httpStatus >= 500) || /timeout|timed out|network|fetch failed|abort|socket|ECONN|\b50[0-9]\b|bad gateway|service unavailable|internal server error/i.test(providerResult.error || '')) {
+           return { success: false, provider: config.provider, providerAccountId: config.providerAccountId,
+             sender: fromEmail, tried: [...tried, { provider: config.provider, error: 'Provider outcome is unknown' }],
+             deliveryStatus: 'unknown', code: 'OUTCOME_UNKNOWN',
+diff --git a/src/lib/invoices/startInvoiceLifecycleFromDashboard.ts b/src/lib/invoices/startInvoiceLifecycleFromDashboard.ts
+index 5f2db55..d0e55ce 100644
+--- a/src/lib/invoices/startInvoiceLifecycleFromDashboard.ts
++++ b/src/lib/invoices/startInvoiceLifecycleFromDashboard.ts
+@@ -28,7 +28,7 @@ export async function startInvoiceLifecycleFromDashboard(params: {
+     throw new Error(payload?.error || `Invoice lifecycle failed (${response.status})`);
+   }
+   return {
+-    runId: payload?.runId,
+-    message: payload?.message || 'Invoice delivery queued',
++    runId: payload?.run_id || payload?.runId,
++    message: `${payload?.message || 'Invoice delivery queued; email acceptance is not yet confirmed.'}${payload?.run_id || payload?.runId ? ` Run: ${payload.run_id || payload.runId}` : ''}`,
+   };
+ }
+diff --git a/src/lib/onboarding/resolveOnboardingGate.ts b/src/lib/onboarding/resolveOnboardingGate.ts
+index edcf6dd..652b037 100644
+--- a/src/lib/onboarding/resolveOnboardingGate.ts
++++ b/src/lib/onboarding/resolveOnboardingGate.ts
+@@ -1,4 +1,5 @@
+ import { supabase } from '@/lib/supabase';
++import { readUserProfileState } from '@/lib/profileRead';
+ import { getWalkthroughRecord, setWalkthroughState } from './walkthroughService';
+ import { isFirstRunEligible } from './firstRunPolicy';
+ 
+@@ -28,10 +29,7 @@ export async function resolveOnboardingGate(
+ ): Promise<OnboardingGateState> {
+   if (typeof window === 'undefined' || !userId || !tenantId) return suppressed;
+   try {
+-    const { data: profile, error } = await supabase.from('profiles')
+-      .select('onboarding_completed, walkthrough_completed, created_at')
+-      .eq('id', userId).maybeSingle();
+-    if (error || !profile) return suppressed;
++    const profile = await readUserProfileState(userId);
+ 
+     const readFlag = (key: string) => ['1', 'true'].includes(localStorage.getItem(key) ?? '');
+     const onboardingKey = `onboarding_completed_${userId}`;
+diff --git a/src/lib/platformReset.ts b/src/lib/platformReset.ts
+index 351279d..e688854 100644
+--- a/src/lib/platformReset.ts
++++ b/src/lib/platformReset.ts
+@@ -2,6 +2,7 @@
+ 
+ import type { QueryClient } from '@tanstack/react-query';
+ import { supabase } from '@/lib/supabase';
++import { invalidateProfileReads } from '@/lib/profileRead';
+ import { cacheService } from '@/services/cacheService';
+ 
+ export type PlatformResetReason =
+@@ -33,6 +34,7 @@ function shouldPreserveLocalKey(key: string): boolean {
+ 
+ function clearBrowserStorage(clearAuth: boolean): void {
+   try {
++    invalidateProfileReads();
+     sessionStorage.clear();
+   } catch {
+     // Storage can be disabled by browser policy.
+diff --git a/src/lib/pwa/authNetworkBypass.ts b/src/lib/pwa/authNetworkBypass.ts
+index bd32d55..c578486 100644
+--- a/src/lib/pwa/authNetworkBypass.ts
++++ b/src/lib/pwa/authNetworkBypass.ts
+@@ -8,7 +8,8 @@ export function bypassAuthenticationFetch(event: Pick<FetchEvent, 'request' | 's
+         '/auth', '/login', '/authorize', '/portal-login', '/api/auth',
+         '/api/mcp', '/api/client-portal-auth',
+     ].some((path) => url.pathname === path || url.pathname.startsWith(`${path}/`));
+-    if (isProvider || isAuthPath) {
++    const isMutation = !['GET', 'HEAD'].includes(event.request.method);
++    if (isProvider || isAuthPath || isMutation) {
+         // Do not call respondWith: NetworkOnly still intercepts the request and can
+         // replace a redirect/CORS failure with Response.error or an offline page.
+         event.stopImmediatePropagation();
+diff --git a/src/lib/supabase.ts b/src/lib/supabase.ts
+index 758e43c..8b3932d 100644
+--- a/src/lib/supabase.ts
++++ b/src/lib/supabase.ts
+@@ -1,33 +1,11 @@
++import { createReadRequestClient } from './readRequestPolicy';
+ import { ENV } from '@/config/env';
+ import { createBrowserClient } from '@supabase/ssr';
+ import { createUnavailableSupabaseClient, isSupabaseConfigured } from './supabase-shared';
+ 
+ export { isSupabaseConfigured, SUPABASE_NOT_CONFIGURED_MESSAGE } from './supabase-shared';
+ 
+-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+-
+-async function resilientSupabaseFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+-    const method = String(init?.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();
+-    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+-    const isAuthToken = url.includes('/auth/v1/token');
+-    const retryableMethod = ['GET', 'HEAD', 'OPTIONS'].includes(method) || isAuthToken;
+-    const maxAttempts = retryableMethod ? 3 : 1;
+-
+-    let lastError: unknown;
+-    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+-        try {
+-            const response = await fetch(input, init);
+-            if (![408, 429, 502, 503, 504, 520, 522, 524].includes(response.status) || attempt === maxAttempts - 1) {
+-                return response;
+-            }
+-        } catch (error) {
+-            lastError = error;
+-            if (attempt === maxAttempts - 1) throw error;
+-        }
+-        await sleep(250 * 2 ** attempt + Math.floor(Math.random() * 150));
+-    }
+-    throw lastError instanceof Error ? lastError : new Error('Supabase request failed after retries');
+-}
++const resilientSupabaseFetch = createReadRequestClient({ fetch: (...args) => fetch(...args) });
+ 
+ export const createClient = () => {
+     if (!isSupabaseConfigured()) {
+diff --git a/src/lib/transientDbError.ts b/src/lib/transientDbError.ts
+index 29e9538..787add7 100644
+--- a/src/lib/transientDbError.ts
++++ b/src/lib/transientDbError.ts
+@@ -18,7 +18,7 @@ export function isTransientDatabaseError(error: unknown): boolean {
+         code === '08000' || // connection_exception
+         code === '08003' || // connection_does_not_exist
+         code === '08006' || // connection_failure
+-        message.includes('schema cache') ||
++        [408, 429, 502, 503, 504].includes(Number(candidate?.status)) ||
+         message.includes('statement timeout') ||
+         message.includes('timed out') ||
+         message.includes('connection refused') ||
+@@ -43,14 +43,14 @@ export async function withTransientDbRetry<T>(
+             if (result && typeof result === 'object' && 'error' in result && (result as any).error) {
+                 const error = (result as any).error;
+                 if (isTransientDatabaseError(error) && attempt < maxRetries) {
+-                    await new Promise((resolve) => setTimeout(resolve, baseDelayMs * Math.pow(2, attempt)));
++                    await new Promise((resolve) => setTimeout(resolve, Math.min(5_000, baseDelayMs * Math.pow(2, attempt)) + Math.floor(Math.random() * baseDelayMs)));
+                     continue;
+                 }
+             }
+             return result;
+         } catch (err: unknown) {
+             if (isTransientDatabaseError(err) && attempt < maxRetries) {
+-                await new Promise((resolve) => setTimeout(resolve, baseDelayMs * Math.pow(2, attempt)));
++                await new Promise((resolve) => setTimeout(resolve, Math.min(5_000, baseDelayMs * Math.pow(2, attempt)) + Math.floor(Math.random() * baseDelayMs)));
+                 continue;
+             }
+             throw err;
+diff --git a/src/services/presenceService.ts b/src/services/presenceService.ts
+index a73bb79..a07a488 100644
+--- a/src/services/presenceService.ts
++++ b/src/services/presenceService.ts
+@@ -25,164 +25,91 @@ class PresenceService {
+     private presenceSupported: boolean | null = null;
+     private activeUserId: string | null = null;
+ 
++    private owners = 0;
++    private cleanupListeners: (() => void) | null = null;
++    private updateInFlight: Promise<{ error: string | null }> | null = null;
++    private retryAt = 0;
++    private failures = 0;
++
+     private isMissingRpc(error: { code?: string; message?: string } | null | undefined): boolean {
+-        if (!error) return false;
+-        const message = String(error.message || '').toLowerCase();
+-        return (
+-            error.code === 'PGRST202' ||
+-            error.code === '42883' ||
+-            message.includes('could not find the function') ||
+-            message.includes('schema cache')
+-        );
++        return !!error && (error.code === 'PGRST202' || error.code === '42883');
+     }
+-
+     private isTransientDbError(error: { code?: string; message?: string } | null | undefined): boolean {
+-        if (!error) return false;
+-        const message = String(error.message || '').toLowerCase();
+-        return (
+-            this.isMissingRpc(error) ||
+-            message.includes('503') ||
+-            message.includes('service unavailable') ||
+-            message.includes('schema cache')
+-        );
++        return !!error && (['PGRST000', 'PGRST001', 'PGRST002', 'PGRST003', '57014', '53300'].includes(error.code || '') || /503|service unavailable|timeout|timed out|network|fetch/i.test(error.message || ''));
+     }
+-
+     private isPresenceAuthError(error: { message?: string } | null | undefined): boolean {
+-        const message = String(error?.message || '').toLowerCase();
+-        return message.includes('not authorized to update this presence record');
+-    }
+-
+-    private async resolvePresenceUserId(userId: string): Promise<string | null> {
+-        const { data: { user } } = await supabase.auth.getUser();
+-        if (!user) return null;
+-        return user.id === userId ? userId : user.id;
+-    }
+-
+-    private markUnsupported(): void {
+-        this.presenceSupported = false;
+-        this.stopHeartbeat();
++        return /not authorized to update this presence record/i.test(error?.message || '');
+     }
++    private markUnsupported(): void { this.presenceSupported = false; this.stopHeartbeat(); }
+ 
+-    /**
+-     * Initialize presence tracking for current user
+-     */
+     async initializePresence(userId: string, status: PresenceStatus = 'online'): Promise<{ error: string | null }> {
+-        if (this.presenceSupported === false) {
+-            return { error: null };
+-        }
+-
+-        try {
+-            const resolvedUserId = await this.resolvePresenceUserId(userId);
+-            if (!resolvedUserId) return { error: null };
+-
+-            const { error } = await supabase.rpc('update_user_presence', {
+-                p_user_id: resolvedUserId,
+-                p_status: status,
+-                p_device_info: {
+-                    userAgent: navigator.userAgent,
+-                    timestamp: new Date().toISOString(),
+-                },
+-            });
+-
+-            if (error) {
+-                if (this.isTransientDbError(error) || this.isPresenceAuthError(error)) {
+-                    this.markUnsupported();
+-                    return { error: null };
+-                }
+-                return { error: error.message };
+-            }
+-
+-            this.presenceSupported = true;
+-            this.activeUserId = resolvedUserId;
+-            this.startHeartbeat(resolvedUserId);
+-            return { error: null };
+-        } catch (err) {
+-            return { error: err instanceof Error ? err.message : 'Failed to initialize presence' };
+-        }
++        this.owners++;
++        this.activeUserId = userId;
++        const result = await this.updatePresence(userId, status);
++        // A cleanup may happen while the initial RPC is pending.
++        if (this.owners > 0 && this.presenceSupported !== false && this.activeUserId) this.startHeartbeat(this.activeUserId);
++        return result;
+     }
+ 
+     private startHeartbeat(userId: string): void {
+         this.stopHeartbeat();
+-
+-        const updateActivityTime = () => {
+-            this.lastActivityTime = Date.now();
++        const updateActivityTime = () => { this.lastActivityTime = Date.now(); };
++        const onVisible = () => {
++            if (document.visibilityState === 'visible') void this.updatePresence(userId, 'online');
+         };
+-
+-        window.addEventListener('mousemove', updateActivityTime, { passive: true });
+-        window.addEventListener('keydown', updateActivityTime, { passive: true });
+-        window.addEventListener('click', updateActivityTime, { passive: true });
+-        window.addEventListener('scroll', updateActivityTime, { passive: true });
+-
+-        this.heartbeatInterval = setInterval(async () => {
+-            if (this.presenceSupported === false) return;
+-
+-            try {
+-                const idleTime = Date.now() - this.lastActivityTime;
+-                const isIdle = idleTime > 5 * 60 * 1000;
+-                const nextStatus = isIdle ? 'away' : 'online';
+-
+-                const { error } = await supabase.rpc('update_user_presence', {
+-                    p_user_id: userId,
+-                    p_status: nextStatus,
+-                    p_device_info: null,
+-                });
+-
+-                if (error && (this.isTransientDbError(error) || this.isPresenceAuthError(error))) {
+-                    this.markUnsupported();
+-                }
+-            } catch {
+-                // Heartbeat failures are non-critical
+-            }
++        const onFocus = () => onVisible();
++        const activityEvents = ['mousemove', 'keydown', 'click', 'scroll'] as const;
++        for (const event of activityEvents) window.addEventListener(event, updateActivityTime, { passive: true });
++        window.addEventListener('focus', onFocus);
++        document.addEventListener('visibilitychange', onVisible);
++        this.cleanupListeners = () => {
++            for (const event of activityEvents) window.removeEventListener(event, updateActivityTime);
++            window.removeEventListener('focus', onFocus);
++            document.removeEventListener('visibilitychange', onVisible);
++        };
++        this.heartbeatInterval = setInterval(() => {
++            if (document.visibilityState !== 'visible') return;
++            const nextStatus = Date.now() - this.lastActivityTime > 5 * 60_000 ? 'away' : 'online';
++            void this.updatePresence(userId, nextStatus);
+         }, this.HEARTBEAT_INTERVAL);
+-
+-        window.addEventListener('focus', () => {
+-            void this.updatePresence(userId, 'online');
+-        });
+-
+-        window.addEventListener('beforeunload', () => {
+-            void this.updatePresence(userId, 'offline');
+-        });
+     }
+ 
+     stopHeartbeat(): void {
+-        if (this.heartbeatInterval) {
+-            clearInterval(this.heartbeatInterval);
+-            this.heartbeatInterval = null;
+-        }
++        if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
++        this.heartbeatInterval = null;
++        this.cleanupListeners?.();
++        this.cleanupListeners = null;
+     }
+ 
+-    async updatePresence(
+-        userId: string,
+-        status: PresenceStatus,
+-    ): Promise<{ error: string | null }> {
+-        if (this.presenceSupported === false) {
+-            return { error: null };
+-        }
+-
+-        try {
+-            const resolvedUserId = await this.resolvePresenceUserId(userId);
+-            if (!resolvedUserId) return { error: null };
+-
+-            const { error } = await supabase.rpc('update_user_presence', {
+-                p_user_id: resolvedUserId,
+-                p_status: status,
+-                p_device_info: null,
+-            });
+-
+-            if (error) {
+-                if (this.isTransientDbError(error) || this.isPresenceAuthError(error)) {
+-                    this.markUnsupported();
+-                    return { error: null };
++    async updatePresence(userId: string, status: PresenceStatus): Promise<{ error: string | null }> {
++        if (this.presenceSupported === false || Date.now() < this.retryAt) return { error: null };
++        if (status !== 'offline' && typeof document !== 'undefined' && document.visibilityState !== 'visible') return { error: null };
++        if (this.updateInFlight) return this.updateInFlight;
++        const execute = async () => {
++            try {
++                const { data: { user }, error: authError } = await supabase.auth.getUser();
++                if (authError) throw authError;
++                if (!user || user.id !== userId) return { error: 'Presence session is unavailable.' };
++                this.activeUserId = user.id;
++                const { error } = await supabase.rpc('update_user_presence', {
++                    p_user_id: user.id, p_status: status, p_device_info: null,
++                });
++                if (error) throw error;
++                this.failures = 0; this.retryAt = 0; this.presenceSupported = true;
++                return { error: null };
++            } catch (error) {
++                const failure = error as { code?: string; message?: string };
++                if (this.isMissingRpc(failure) || this.isPresenceAuthError(failure)) this.markUnsupported();
++                else {
++                    this.failures++;
++                    this.retryAt = Date.now() + Math.min(300_000, 30_000 * 2 ** (this.failures - 1)) + Math.floor(Math.random() * 5_000);
+                 }
+-                return { error: error.message };
++                return { error: this.isTransientDbError(failure) ? 'Presence is temporarily unavailable; business workflows remain available.' : failure.message || 'Presence update failed' };
+             }
+-
+-            this.presenceSupported = true;
+-            this.activeUserId = resolvedUserId;
+-            return { error: null };
+-        } catch (err) {
+-            return { error: err instanceof Error ? err.message : 'Failed to update presence' };
+-        }
++        };
++        this.updateInFlight = execute();
++        try { return await this.updateInFlight; }
++        finally { this.updateInFlight = null; }
+     }
+ 
+     async getOnlineUsers(excludeUserId?: string): Promise<{ users: UserPresence[]; error: string | null }> {
+@@ -306,11 +233,13 @@ class PresenceService {
+     }
+ 
+     async cleanup(userId: string): Promise<void> {
++        this.owners = Math.max(0, this.owners - 1);
++        if (this.owners > 0) return;
+         this.stopHeartbeat();
++        if (this.updateInFlight) await this.updateInFlight;
++        if (this.owners > 0) return;
+         await this.updatePresence(userId, 'offline');
+-        if (this.activeUserId === userId) {
+-            this.activeUserId = null;
+-        }
++        if (this.owners === 0 && this.activeUserId === userId) this.activeUserId = null;
+     }
+ }
+ 
+diff --git a/src/services/pwaService.ts b/src/services/pwaService.ts
+index 0ec8c94..12abf6f 100644
+--- a/src/services/pwaService.ts
++++ b/src/services/pwaService.ts
+@@ -2,6 +2,7 @@
+  * PWA Service - Handles Progressive Web App features
+  */
+ 
++import { promptCapturedInstall } from '@/lib/pwa/installLifecycle';
+ import { supabase } from '@/lib/supabase';
+ import { ENV } from '@/config/env';
+ 
+@@ -185,46 +186,16 @@ export const pwaService = {
+             return { prompt: null, error: 'Use Share → Add to Home Screen to install AlphaClone.' };
+         }
+ 
+-        // Listen for the next beforeinstallprompt event when none was captured.
+-        return new Promise((resolve) => {
+-            const handler = (e: Event) => {
+-                e.preventDefault();
+-                (window as any).deferredPrompt = e;
+-                resolve({ prompt: e, error: null });
+-                window.removeEventListener('beforeinstallprompt', handler);
+-            };
+-
+-            window.addEventListener('beforeinstallprompt', handler);
+-
+-            // Timeout after 5 seconds
+-            setTimeout(() => {
+-                window.removeEventListener('beforeinstallprompt', handler);
+-                resolve({ prompt: null, error: 'Install prompt not available' });
+-            }, 5000);
+-        });
++        return { prompt: null, error: 'Install is unavailable here. Use your browser menu if it offers installation.' };
+     },
+ 
+     /**
+      * Prompt user to install app
+      */
+     async promptInstall(): Promise<{ success: boolean; error: string | null }> {
+-        const deferredPrompt = (window as any).deferredPrompt;
+-        if (!deferredPrompt) {
+-            return { success: false, error: 'Install prompt not available' };
+-        }
+-
+-        try {
+-            deferredPrompt.prompt();
+-            const { outcome } = await deferredPrompt.userChoice;
+-            (window as any).deferredPrompt = null;
+-
+-            return { success: outcome === 'accepted', error: null };
+-        } catch (error) {
+-            return {
+-                success: false,
+-                error: error instanceof Error ? error.message : 'Install failed',
+-            };
+-        }
++        if (typeof window === 'undefined') return { success: false, error: 'Not in browser environment' };
++        const result = await promptCapturedInstall(window);
++        return { success: result.success, error: result.success || result.outcome === 'dismissed' ? null : 'Install prompt not available' };
+     },
+ 
+     /**
+diff --git a/src/services/server/microsoftServerService.ts b/src/services/server/microsoftServerService.ts
+index eded62e..74f8bdb 100644
+--- a/src/services/server/microsoftServerService.ts
++++ b/src/services/server/microsoftServerService.ts
+@@ -83,6 +83,7 @@ async function graphRequest<T = any>(
+   const baseUrl = beta ? 'https://graph.microsoft.com/beta' : GRAPH_BASE_URL;
+   const response = await fetch(path.startsWith('http') ? path : `${baseUrl}${path}`, {
+     ...init,
++    signal: init.signal || AbortSignal.timeout(10_000),
+     headers: {
+       Authorization: `Bearer ${connection.access_token}`,
+       ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+@@ -106,7 +107,7 @@ async function graphRequest<T = any>(
+       }
+     }
+ 
+-    throw new Error(message);
++    throw Object.assign(new Error(message), { status: response.status, providerRequestId: response.headers.get('request-id') || undefined });
+   }
+ 
+   if (response.status === 204 || response.status === 202) return {} as T;
+diff --git a/src/services/tenancy/TenantService.ts b/src/services/tenancy/TenantService.ts
+index b022819..43eb251 100644
+--- a/src/services/tenancy/TenantService.ts
++++ b/src/services/tenancy/TenantService.ts
+@@ -411,7 +411,7 @@ class TenantService {
+                             if (Date.now() - ts >= CACHE_TTL) {
+                                 void this.fetchAndCacheStats(tenantId, userId, CACHE_KEY);
+                             }
+-                            return { stats, error: null };
++                            return { stats, error: Date.now() - ts >= CACHE_TTL ? 'Showing saved dashboard data while refreshing.' : null };
+                         }
+                     }
+                 }
+@@ -437,89 +437,21 @@ class TenantService {
+     }
+ 
+     private async executeFetchAndCacheStats(tenantId: string, userId: string, cacheKey: string): Promise<{ stats: any | null; error: string | null }> {
+-        const EMPTY_STATS = {
+-            totalRevenue: 0, clientCount: 0, activeProjects: 0,
+-            pendingInvoices: 0, overdueInvoices: 0, totalMessages: 0, pendingRevenue: 0,
+-            totalLeads: 0, totalDeals: 0, weightedPipeline: 0, salesForecast: 0,
+-            recentActivity: [], monthlyRevenue: [], pipeline: {}
+-        };
+-
+         try {
+-            // Prefer server-side API proxy to avoid browser-side CORS/edge issues on direct RPC.
+-            try {
+-                const res = await fetch(`/api/dashboard/stats?tenantId=${encodeURIComponent(tenantId)}`, {
+-                    method: 'GET',
+-                    credentials: 'include',
+-                    headers: { 'Accept': 'application/json' },
+-                });
+-                if (res.ok) {
+-                    const payload = await res.json();
+-                    const stats = {
+-                        ...EMPTY_STATS,
+-                        ...(payload?.stats || {}),
+-                    };
+-                    // Only cache if we got meaningful data (not all zeros)
+-                    const hasData = stats.totalRevenue > 0 || stats.totalLeads > 0 ||
+-                        stats.clientCount > 0 || stats.activeProjects > 0 ||
+-                        stats.totalTasks > 0 || stats.unreadMessages > 0;
+-                    if (hasData) {
+-                        try {
+-                            if (typeof window !== 'undefined') {
+-                                localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), stats }));
+-                            }
+-                        } catch (_) { /* ignore cache write errors */ }
+-                    }
+-                    return { stats, error: null };
+-                }
+-                // Non-OK response (4xx/5xx) — do NOT write to cache, fall through to direct RPC
+-                console.warn('[TenantService] API stats returned', res.status, '— falling back to direct RPC');
+-            } catch (_) {
+-                // Fall back to direct RPC below.
+-            }
+-
+-            // Race the optimized RPC against a 20-second timeout
+-            const timeout = new Promise<never>((_, reject) =>
+-                setTimeout(() => reject(new Error('Stats query timeout')), 20000)
+-            );
+-
+-            // Execute the CONSOLIDATED RPC call - fetches everything in one pass
+-            const { data: rpcData, error: rpcError } = await Promise.race([
+-                supabase.rpc('get_consolidated_dashboard_stats', { 
+-                    p_tenant_id: tenantId,
+-                    p_user_id: userId
+-                }),
+-                timeout
+-            ]) as any;
+-
+-            if (rpcError) throw rpcError;
+-
+-            // Map and Enrich the stats from the RPC response
+-            const stats = {
+-                ...EMPTY_STATS,
+-                ...rpcData,
+-                totalMessages: rpcData?.totalMessages ?? 0,
+-            };
+-
+-            // Cache only non-zero results
+-            const hasData = stats.totalRevenue > 0 || stats.totalLeads > 0 ||
+-                stats.clientCount > 0 || stats.activeProjects > 0 ||
+-                stats.totalTasks > 0;
+-            if (hasData) {
+-                try {
+-                    if (typeof window !== 'undefined') {
+-                        localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), stats }));
+-                    }
+-                } catch (_) { /* ignore cache write errors */ }
++            const res = await fetch(`/api/dashboard/stats?tenantId=${encodeURIComponent(tenantId)}`, {
++                credentials: 'include', headers: { Accept: 'application/json' }, cache: 'no-store',
++            });
++            const payload = await res.json().catch(() => ({}));
++            if (!res.ok || !payload.stats) {
++                return { stats: null, error: payload.error || 'Dashboard data is temporarily unavailable.' };
+             }
+-
+-            return { stats, error: null };
+-        } catch (err: any) {
+-            console.error('[TenantService] Error fetching dashboard stats:', err?.message);
++            const stats = payload.stats;
+             try {
+-                const cached = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null;
+-                if (cached) return { stats: JSON.parse(cached).stats, error: 'Unable to refresh dashboard stats' };
+-            } catch { /* no usable cache */ }
+-            return { stats: EMPTY_STATS, error: err?.message || 'Failed to load stats' };
++                if (typeof window !== 'undefined') localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), stats }));
++            } catch { /* Storage restrictions must not discard successful network data. */ }
++            return { stats, error: null };
++        } catch {
++            return { stats: null, error: 'Dashboard data could not be loaded. Check your connection and retry.' };
+         }
+     }
+ 
+diff --git a/src/services/userDashboardPreferencesService.ts b/src/services/userDashboardPreferencesService.ts
+index 490ab02..9552d09 100644
+--- a/src/services/userDashboardPreferencesService.ts
++++ b/src/services/userDashboardPreferencesService.ts
+@@ -1,4 +1,5 @@
+ import { supabase } from '@/lib/supabase';
++import { readUserProfileState, invalidateProfileReads } from '@/lib/profileRead';
+ 
+ export type DashboardConversationEntry = {
+   type: 'user' | 'ai';
+@@ -67,13 +68,7 @@ function parsePreferences(raw: unknown): DashboardPreferencesPayload {
+ 
+ export async function fetchDashboardPreferences(userId: string): Promise<DashboardPreferencesPayload> {
+   if (!userId) return {};
+-  const { data, error } = await supabase
+-    .from('profiles')
+-    .select('dashboard_preferences')
+-    .eq('id', userId)
+-    .maybeSingle();
+-
+-  if (error || !data) return {};
++  const data = await readUserProfileState(userId);
+   return parsePreferences(data.dashboard_preferences);
+ }
+ 
+@@ -83,18 +78,21 @@ export async function mergeDashboardPreferences(
+ ): Promise<{ ok: boolean; error?: string }> {
+   if (!userId) return { ok: false, error: 'Missing user id' };
+ 
+-  const current = await fetchDashboardPreferences(userId);
+-  const next: DashboardPreferencesPayload = { ...current };
+-
+-  (Object.keys(patch) as (keyof DashboardPreferencesPayload)[]).forEach((key) => {
+-    const value = patch[key];
+-    if (value !== undefined) {
+-      (next as Record<string, unknown>)[key] = value;
+-    }
+-  });
+-
+-  const { error } = await supabase.from('profiles').update({ dashboard_preferences: next }).eq('id', userId);
+-
+-  if (error) return { ok: false, error: error.message };
+-  return { ok: true };
++  for (let attempt = 0; attempt < 2; attempt++) {
++    let stored: unknown;
++    try { stored = (await readUserProfileState(userId, true)).dashboard_preferences; }
++    catch { return { ok: false, error: 'Saved preferences are unavailable. No changes were written.' }; }
++    const next: Record<string, unknown> = stored && typeof stored === 'object' && !Array.isArray(stored)
++      ? { ...stored as Record<string, unknown> } : {};
++    for (const [key, value] of Object.entries(patch)) if (value !== undefined) next[key] = value;
++    let update = supabase.from('profiles').update({ dashboard_preferences: next }).eq('id', userId);
++    // Compare-and-swap protects unrelated keys against concurrent tabs and components.
++    update = stored == null ? update.is('dashboard_preferences', null)
++      : update.eq('dashboard_preferences', JSON.stringify(stored));
++    const { data, error } = await update.select('id').maybeSingle();
++    if (error) return { ok: false, error: 'Preferences could not be saved. Retry after connectivity recovers.' };
++    invalidateProfileReads(userId);
++    if (data) return { ok: true };
++  }
++  return { ok: false, error: 'Preferences changed in another tab. Please retry your change.' };
+ }
+diff --git a/tests/unit/bulk-email-execution-behavior.test.mjs b/tests/unit/bulk-email-execution-behavior.test.mjs
+index d93af7d..cbaf911 100644
+--- a/tests/unit/bulk-email-execution-behavior.test.mjs
++++ b/tests/unit/bulk-email-execution-behavior.test.mjs
+@@ -159,7 +159,7 @@ test('approval policy receives the stable retry key before queuing', async () =>
+   assert.equal(args.idempotency_key, 'stable-original');
+ });
+ 
+-function providerFixture() {
++function providerFixture(failure = { ok: false, error: 'network timeout' }) {
+   const calls = [];
+   const { sendEmail } = load('src/lib/email/sendEmail.ts', {
+     '@/lib/supabase-admin': { createSupabaseAdminClient: () => ({}) },
+@@ -176,7 +176,7 @@ function providerFixture() {
+     '@/lib/email/providerSenderIdentity': { assertBrevoSender: async () => {} },
+     '@/lib/email/emailAttachment': { normalizeEmailAttachments: () => [] },
+     '@/lib/email/emailRendering': { renderOutboundEmail: (opts) => ({ html: opts?.html, text: opts?.text }) },
+-    '@/lib/email/providerSdk': { sendWithProviderSdk: async (provider) => { calls.push(provider); return { ok: false, error: 'network timeout' }; } },
++    '@/lib/email/providerSdk': { sendWithProviderSdk: async (provider) => { calls.push(provider); return failure; } },
+   });
+   const payload = { to: 'owner@example.com', subject: 'Test', text: 'Test', skipFooter: true, skipBonnieQualityCheck: true, listUnsubscribeUrl: 'https://example.com/unsubscribe' };
+   return { calls, sendEmail, payload };
+@@ -235,3 +235,11 @@ test('incomplete Zoho upload evidence prevents the send POST',async()=>{
+  const {ZohoMailService}=load('src/services/zoho/ZohoMailService.ts',{'./ZohoService':{ZohoService:Base},'@/lib/email/emailComposition':{normalizeEmailSubject:v=>v,ensureFooter:v=>v},'@/lib/email/parseEmailHeader':{extractEmailAddress:v=>v},__globals:{Buffer}});const service=new ZohoMailService();service.getSenderAddresses=async()=>['chosen@example.com'];
+  await assert.rejects(()=>service.sendEmail({fromAddress:'chosen@example.com',toAddress:'bonniiehendrix@gmail.com',subject:'TEST ONLY',content:'Test',attachments:[{filename:'TEST_ONLY.pdf',content:'JVBERi10ZXN0'}]}),/complete attachment reference/);assert.equal(requests,1);
+ });
++
++
++test('provider HTTP 5xx remains uncertain and stops all provider fallback', async () => {
++  const fixture = providerFixture({ ok: false, httpStatus: 502, error: 'Upstream gateway error' });
++  const result = await fixture.sendEmail('tenant', fixture.payload);
++  assert.deepEqual(fixture.calls, ['zoho']);
++  assert.equal(result.deliveryStatus, 'unknown'); assert.equal(result.code, 'OUTCOME_UNKNOWN');
++});
+diff --git a/src/lib/email/approvedOutreachClient.ts b/src/lib/email/approvedOutreachClient.ts
+new file mode 100644
+index 0000000..b9ddfa7
+--- /dev/null
++++ b/src/lib/email/approvedOutreachClient.ts
+@@ -0,0 +1,15 @@
++/** Called only by existing Send/Approve button handlers; never schedules a send. */
++export async function fetchApprovedOutreach(url: string, init: RequestInit): Promise<Response> {
++  const payload = JSON.parse(String(init.body || '{}'));
++  if (payload.queue || payload.autoSend !== true) return fetch(url, init);
++  const headers = new Headers(init.headers);
++  headers.set('x-outreach-phase', 'approve');
++  const approval = await fetch(url, { ...init, headers });
++  if (!approval.ok) return approval;
++  const { approvalToken } = await approval.json();
++  if (!approvalToken) throw new Error('Approval could not be recorded. No email was sent.');
++  headers.delete('x-outreach-phase');
++  headers.set('x-outreach-approval', approvalToken);
++  // No automatic retries. The same payload has a durable server operation identity.
++  return fetch(url, { ...init, headers });
++}
+diff --git a/src/lib/email/outreachApproval.ts b/src/lib/email/outreachApproval.ts
+new file mode 100644
+index 0000000..1628cb1
+--- /dev/null
++++ b/src/lib/email/outreachApproval.ts
+@@ -0,0 +1,36 @@
++import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
++
++function canonical(value: unknown): string {
++  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
++  if (value && typeof value === 'object') return `{${Object.entries(value).filter(([, v]) => v !== undefined).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(',')}}`;
++  return JSON.stringify(value) ?? 'null';
++}
++export function outreachFingerprint(value: unknown): string {
++  return createHash('sha256').update(canonical(value)).digest('hex');
++}
++export function outreachOperationKey(userId: string, payload: unknown): string {
++  const input = payload as Record<string, unknown>;
++  // Non-message annotations must not create a second send identity on retry.
++  const identity = { tenantId: input.tenantId, recipient: String(input.leadEmail || '').trim().toLowerCase(),
++    subject: String(input.subject || '').trim(), body: input.body, fromAddress: input.fromAddress,
++    preferredProvider: input.preferredProvider, deliveryProviders: Array.isArray(input.deliveryProviders) ? [...input.deliveryProviders].sort() : [],
++    attachments: input.attachments, cc: input.cc, bcc: input.bcc };
++  return `ui-outreach:${outreachFingerprint({ userId, identity })}`;
++}
++export function signOutreachApproval(secret: string, userId: string, payload: unknown, senderRevision: string, now = Date.now()): string {
++  if (!secret) throw new Error('OUTREACH_APPROVAL_SECRET_MISSING');
++  const claims = Buffer.from(JSON.stringify({ userId, digest: outreachFingerprint(payload), senderRevision, expires: now + 10 * 60_000 })).toString('base64url');
++  return `${claims}.${createHmac('sha256', secret).update(claims).digest('base64url')}`;
++}
++export function verifyOutreachApproval(token: string, secret: string, userId: string, payload: unknown, senderRevision: string, now = Date.now()): boolean {
++  if (!secret || !token || token.length > 2048) return false;
++  const [claims, signature, extra] = token.split('.');
++  if (!claims || !signature || extra) return false;
++  const expected = createHmac('sha256', secret).update(claims).digest();
++  const supplied = Buffer.from(signature, 'base64url');
++  if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) return false;
++  try {
++    const data = JSON.parse(Buffer.from(claims, 'base64url').toString());
++    return data.userId === userId && data.digest === outreachFingerprint(payload) && data.senderRevision === senderRevision && data.expires > now;
++  } catch { return false; }
++}
+diff --git a/src/lib/profileRead.ts b/src/lib/profileRead.ts
+new file mode 100644
+index 0000000..97c4fbf
+--- /dev/null
++++ b/src/lib/profileRead.ts
+@@ -0,0 +1,31 @@
++import { supabase } from './supabase';
++
++type ProfileState = { onboarding_completed: boolean | null; walkthrough_completed: boolean | null; created_at: string; dashboard_preferences: unknown };
++const pending = new Map<string, Promise<ProfileState>>();
++const cache = new Map<string, { expires: number; value: ProfileState }>();
++let epoch = 0;
++export function invalidateProfileReads(userId?: string): void {
++  epoch++;
++  if (userId) { cache.delete(userId); pending.delete(userId); }
++  else { cache.clear(); pending.clear(); }
++}
++export async function readUserProfileState(userId: string, fresh = false): Promise<ProfileState> {
++  if (!fresh) {
++    const cached = cache.get(userId);
++    if (cached && cached.expires > Date.now()) return cached.value;
++    const existing = pending.get(userId);
++    if (existing) return existing;
++  }
++  const readEpoch = epoch;
++  const request = (async () => {
++    const { data, error } = await supabase.from('profiles')
++      .select('onboarding_completed, walkthrough_completed, created_at, dashboard_preferences').eq('id', userId).maybeSingle();
++    if (error) throw error;
++    if (!data) throw new Error('Profile is unavailable. Saved preferences were not changed.');
++    if (epoch === readEpoch) cache.set(userId, { value: data, expires: Date.now() + 15_000 });
++    return data as ProfileState;
++  })();
++  pending.set(userId, request);
++  try { return await request; }
++  finally { if (pending.get(userId) === request) pending.delete(userId); }
++}
+diff --git a/src/lib/pwa/installLifecycle.ts b/src/lib/pwa/installLifecycle.ts
+new file mode 100644
+index 0000000..4966812
+--- /dev/null
++++ b/src/lib/pwa/installLifecycle.ts
+@@ -0,0 +1,56 @@
++export type InstallPromptEvent = Event & {
++  prompt(): Promise<void>;
++  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
++};
++type InstallOwner = { event: InstallPromptEvent | null; installed: boolean; prompting: boolean; dispose(): void };
++type InstallWindow = Window & { __acInstallOwner?: InstallOwner; deferredPrompt?: InstallPromptEvent | null };
++
++/** One page-lifetime owner, also used by the early head bootstrap. No external closures. */
++export function installEventOwner(target: InstallWindow): InstallOwner {
++  if (target.__acInstallOwner) return target.__acInstallOwner;
++  const installed = target.matchMedia('(display-mode: standalone)').matches ||
++    (target.navigator as Navigator & { standalone?: boolean }).standalone === true;
++  const notify = () => target.dispatchEvent(new Event('ac:install-state'));
++  const owner: InstallOwner = { event: null, installed, prompting: false, dispose: () => {
++    target.removeEventListener('beforeinstallprompt', onPrompt);
++    target.removeEventListener('appinstalled', onInstalled);
++    owner.event = null; target.deferredPrompt = null;
++    delete target.__acInstallOwner;
++  } };
++  const onPrompt = (event: Event) => {
++    if (owner.installed || owner.prompting) return;
++    event.preventDefault();
++    owner.event = event as InstallPromptEvent;
++    target.deferredPrompt = owner.event;
++    notify();
++  };
++  const onInstalled = () => {
++    owner.installed = true; owner.event = null; owner.prompting = false;
++    target.deferredPrompt = null; notify();
++  };
++  target.__acInstallOwner = owner;
++  target.addEventListener('beforeinstallprompt', onPrompt);
++  target.addEventListener('appinstalled', onInstalled);
++  return owner;
++}
++export function buildInstallBootstrapScript(): string {
++  return `(${installEventOwner.toString()})(window);`;
++}
++export async function promptCapturedInstall(target: InstallWindow): Promise<{ success: boolean; outcome: string }> {
++  const owner = installEventOwner(target);
++  if (owner.installed || owner.prompting || !owner.event) return { success: false, outcome: 'unavailable' };
++  const event = owner.event;
++  // Consume before awaiting: concurrent clicks cannot reuse the browser event.
++  owner.event = null; target.deferredPrompt = null; owner.prompting = true;
++  target.dispatchEvent(new Event('ac:install-state'));
++  try {
++    await event.prompt(); // Called directly from the existing user click handler.
++    const choice = await event.userChoice;
++    return { success: choice.outcome === 'accepted', outcome: choice.outcome };
++  } catch {
++    return { success: false, outcome: 'unavailable' };
++  } finally {
++    owner.prompting = false;
++    target.dispatchEvent(new Event('ac:install-state'));
++  }
++}
+diff --git a/src/lib/readRequestPolicy.ts b/src/lib/readRequestPolicy.ts
+new file mode 100644
+index 0000000..8612abd
+--- /dev/null
++++ b/src/lib/readRequestPolicy.ts
+@@ -0,0 +1,59 @@
++export function retryAfterMs(value: string | null, now = Date.now()): number | null {
++  if (!value) return null;
++  const seconds = Number(value);
++  const delay = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(value) - now;
++  return Number.isFinite(delay) ? Math.max(0, delay) : null;
++}
++
++/** Per-browser read coalescing and origin cooldown. Mutations are never retried. */
++export function createReadRequestClient(options: {
++  fetch: typeof fetch;
++  now?: () => number;
++  sleep?: (ms: number) => Promise<void>;
++  random?: () => number;
++}) {
++  const now = options.now || Date.now;
++  const sleep = options.sleep || ((ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
++  const random = options.random || Math.random;
++  const pending = new Map<string, Promise<Response>>();
++  const cooldown = new Map<string, { until: number; response: Response }>();
++  return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
++    const method = String(init?.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();
++    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
++    const origin = new URL(url).origin;
++    if (!['GET', 'HEAD'].includes(method) || url.includes('/auth/v1/')) return options.fetch(input, init);
++    const blocked = cooldown.get(origin);
++    if (blocked && blocked.until > now()) return blocked.response.clone();
++    if (blocked) cooldown.delete(origin);
++    const headers = new Headers(input instanceof Request ? input.headers : undefined);
++    new Headers(init?.headers).forEach((value, name) => headers.set(name, value));
++    const key = JSON.stringify([method, url, [...headers.entries()].sort(), init?.credentials]);
++    // Independently abortable reads cannot safely share the owner's AbortSignal.
++    const canShare = !init?.signal && !(input instanceof Request);
++    const existing = canShare ? pending.get(key) : undefined;
++    if (existing) return (await existing).clone();
++    const execute = async () => {
++      for (let attempt = 0; ; attempt++) {
++        let response: Response;
++        try { response = await options.fetch(input, init); }
++        catch (error) {
++          if (attempt >= 1 || init?.signal?.aborted || (error as Error)?.name === 'AbortError') throw error;
++          await sleep(500 + Math.floor(random() * 250));
++          continue;
++        }
++        if (![408, 429, 502, 503, 504].includes(response.status)) return response;
++        const instructed = retryAfterMs(response.headers.get('Retry-After'), now());
++        // Let unrelated widgets fail quickly during an outage rather than amplifying it.
++        cooldown.set(origin, { until: now() + Math.max(instructed ?? 0, 5_000), response: new Response(JSON.stringify({ code: 'SERVICE_UNAVAILABLE', message: 'Data is temporarily unavailable. Please retry shortly.' }), { status: 503, headers: { 'Content-Type': 'application/json', 'Retry-After': String(Math.ceil(Math.max(instructed ?? 0, 5_000) / 1000)) } }) });
++        if (attempt >= 1 || (instructed ?? 0) > 5_000) return response;
++        const delay = Math.max(instructed ?? 0, 500 + Math.floor(random() * 250));
++        await response.body?.cancel();
++        await sleep(delay);
++      }
++    };
++    const request = execute();
++    if (canShare) pending.set(key, request);
++    try { return (await request).clone(); }
++    finally { if (canShare && pending.get(key) === request) pending.delete(key); }
++  };
++}
+diff --git a/tests/unit/reliability-a-z.test.mjs b/tests/unit/reliability-a-z.test.mjs
+new file mode 100644
+index 0000000..3064cd7
+--- /dev/null
++++ b/tests/unit/reliability-a-z.test.mjs
+@@ -0,0 +1,375 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import fs from 'node:fs';
++import vm from 'node:vm';
++import ts from 'typescript';
++import crypto from 'node:crypto';
++import sanitizeHtml from 'sanitize-html';
++import { z } from 'zod';
++
++function load(path, dependencies = {}, globals = {}) {
++  const code = ts.transpileModule(fs.readFileSync(path, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
++  const exports = {};
++  vm.runInNewContext(code, { exports, require: n => n === 'node:crypto' ? crypto : dependencies[n] || {}, crypto,
++    console, process, setTimeout, clearTimeout, setInterval, clearInterval, Buffer, Request, Response, Headers, URL, Event, Error,
++    fetch: () => { throw new Error('Unmocked network is prohibited'); }, ...globals }, { filename: path });
++  return exports;
++}
++const approval = load('src/lib/email/outreachApproval.ts');
++test('approval binds user, tenant, recipients, content, attachment bytes and sender revision', () => {
++  const payload = { tenantId: 'tenant-a', leadEmail: 'test@example.com', body: 'approved', attachments: [{ content: 'AAA' }] };
++  const token = approval.signOutreachApproval('test-only-secret', 'user-a', payload, 'sender-1', 1000);
++  assert.equal(approval.verifyOutreachApproval(token, 'test-only-secret', 'user-a', payload, 'sender-1', 1100), true);
++  for (const changed of [{ ...payload, tenantId: 'tenant-b' }, { ...payload, leadEmail: 'other@example.com' }, { ...payload, body: 'edited' }, { ...payload, attachments: [{ content: 'BBB' }] }]) {
++    assert.equal(approval.verifyOutreachApproval(token, 'test-only-secret', 'user-a', changed, 'sender-1', 1100), false);
++  }
++  assert.equal(approval.verifyOutreachApproval(token, 'test-only-secret', 'user-b', payload, 'sender-1', 1100), false);
++  assert.equal(approval.verifyOutreachApproval(token, 'test-only-secret', 'user-a', payload, 'sender-2', 1100), false);
++  assert.equal(approval.verifyOutreachApproval(token, 'test-only-secret', 'user-a', payload, 'sender-1', 601001), false);
++  assert.equal(approval.outreachOperationKey('user-a', payload), approval.outreachOperationKey('user-a', { ...payload }));
++});
++const policy = load('src/lib/readRequestPolicy.ts');
++test('concurrent reads coalesce; mutations execute once without retry', async () => {
++  let calls = 0, release;
++  const wait = new Promise(r => release = r);
++  const read = policy.createReadRequestClient({ fetch: async () => { calls++; await wait; return Response.json({ ok: true }); } });
++  const requests = Array.from({ length: 20 }, () => read('https://db.example/rest/v1/profiles?id=eq.user'));
++  release(); const results = await Promise.all(requests);
++  assert.equal(calls, 1); for (const response of results) assert.equal((await response.json()).ok, true);
++  calls = 0;
++  const send = policy.createReadRequestClient({ fetch: async () => { calls++; return new Response('lost', { status: 502 }); } });
++  assert.equal((await send('https://db.example/rest/v1/rpc/send', { method: 'POST' })).status, 502);
++  assert.equal(calls, 1);
++});
++test('read backoff respects Retry-After and cooldown stops widget fan-out', async () => {
++  let calls = 0, time = 0; const waits = [];
++  const read = policy.createReadRequestClient({ now: () => time, random: () => 0,
++    sleep: async ms => { waits.push(ms); time += ms; }, fetch: async () => { calls++; return new Response('outage', { status: 503, headers: { 'Retry-After': '2' } }); } });
++  assert.equal((await read('https://db.example/profiles')).status, 503); assert.equal(calls, 2); assert.equal(waits[0], 2000);
++  for (const widget of ['tasks', 'messages', 'history']) assert.equal((await read(`https://db.example/${widget}`)).status, 503);
++  assert.equal(calls, 2);
++  time += 6000; await read('https://db.example/messages'); assert.equal(calls, 4);
++});
++test('authorization and absence never retry; auth POST tokens never retry', async () => {
++  for (const status of [401, 403, 404]) {
++    let calls = 0; const read = policy.createReadRequestClient({ fetch: async () => { calls++; return new Response('', { status }); } });
++    await read('https://db.example/data'); assert.equal(calls, 1);
++  }
++  let calls = 0; const read = policy.createReadRequestClient({ fetch: async () => { calls++; return new Response('', { status: 503 }); } });
++  await read('https://db.example/auth/v1/token', { method: 'POST' }); assert.equal(calls, 1);
++});
++function browserFixture() {
++  const counts = new Map(), target = new EventTarget();
++  const originalAdd = target.addEventListener.bind(target), originalRemove = target.removeEventListener.bind(target);
++  target.addEventListener = (name, fn) => { counts.set(name, (counts.get(name) || 0) + 1); originalAdd(name, fn); };
++  target.removeEventListener = (name, fn) => { counts.set(name, (counts.get(name) || 0) - 1); originalRemove(name, fn); };
++  target.matchMedia = () => ({ matches: false }); target.navigator = {};
++  return { target, counts };
++}
++const install = load('src/lib/pwa/installLifecycle.ts');
++test('install has one owner, early capture, one prompt per click, dismissal and listener cleanup', async () => {
++  const { target, counts } = browserFixture();
++  for (let n = 0; n < 20; n++) install.installEventOwner(target);
++  assert.equal(counts.get('beforeinstallprompt'), 1); assert.equal(counts.get('appinstalled'), 1);
++  let prompts = 0, choose;
++  const event = new Event('beforeinstallprompt', { cancelable: true });
++  event.prompt = async () => { prompts++; }; event.userChoice = new Promise(r => choose = r);
++  target.dispatchEvent(event); assert.equal(event.defaultPrevented, true); assert.equal(target.deferredPrompt, event);
++  const first = install.promptCapturedInstall(target); const duplicate = await install.promptCapturedInstall(target);
++  assert.equal(duplicate.outcome, 'unavailable'); choose({ outcome: 'dismissed' }); await first;
++  assert.equal(prompts, 1); assert.equal(target.deferredPrompt, null);
++  assert.equal((await install.promptCapturedInstall(target)).outcome, 'unavailable');
++  target.dispatchEvent(new Event('appinstalled')); assert.equal(install.installEventOwner(target).installed, true);
++  install.installEventOwner(target).dispose(); assert.equal(counts.get('beforeinstallprompt'), 0); assert.equal(counts.get('appinstalled'), 0);
++});
++test('the exact early bootstrap executes and repeated evaluation does not add owners', () => {
++  const { target, counts } = browserFixture();
++  const code = install.buildInstallBootstrapScript();
++  vm.runInNewContext(code, { window: target, Event }); vm.runInNewContext(code, { window: target, Event });
++  assert.equal(counts.get('beforeinstallprompt'), 1); assert.equal(counts.get('appinstalled'), 1);
++});
++test('service worker bypasses mutation requests, including outreach', () => {
++  const { bypassAuthenticationFetch } = load('src/lib/pwa/authNetworkBypass.ts');
++  let bypasses = 0;
++  bypassAuthenticationFetch({ request: new Request('https://app.example/api/outreach/send', { method: 'POST' }), stopImmediatePropagation: () => bypasses++ }, 'https://app.example');
++  assert.equal(bypasses, 1);
++});
++function queryFixture(resolve) {
++  return { from(table) {
++    const state = { table, filters: {}, operation: 'select' };
++    const q = new Proxy({}, { get(_, key) {
++      if (key === 'then') return (yes, no) => Promise.resolve(resolve(state)).then(yes, no);
++      return (...args) => {
++        if (key === 'eq' || key === 'is') state.filters[args[0]] = args[1];
++        if (key === 'neq') state.exclude = { ...state.exclude, [args[0]]: args[1] };
++        if (key === 'insert' || key === 'update') { state.operation = key; state.values = args[0]; }
++        return q;
++      };
++    } }); return q;
++  } };
++}
++const fakeResponse = { NextResponse: { json: (value, init) => Response.json(value, init) } };
++const tenantId = '10000000-0000-4000-8000-000000000001', userId = '20000000-0000-4000-8000-000000000001';
++const run = load('src/lib/email/emailOperation.ts').runEmailOperation;
++function memoryStore(evidenceInput) {
++  let row, evidence;
++  return { async claim(id) { if (row) return false; row = { action_id: id, final_status: 'running', sanitized_input: evidenceInput ? { recipient_hash: evidenceInput.recipientHash } : {} }; return true; },
++    async read() { return row; }, async save(id, status, output) { row = { ...row, action_id: id, final_status: status, sanitized_output: output }; },
++    async reconcile() { return evidence || null; }, setEvidence(value) { evidence = value; } };
++}
++function outreachFixture(sendImpl = async () => ({})) {
++  let sends = 0; const stores = new Map();
++  const admin = queryFixture(async s => {
++    if (s.table === 'mcp_action_receipts') {
++      const found = [];
++      for (const [key, store] of stores) {
++        const row = await store.read();
++        if (!row || key === s.exclude?.idempotency_key) continue;
++        if (s.filters['sanitized_input->>recipient_hash'] &&
++          (row.sanitized_input.recipient_hash !== s.filters['sanitized_input->>recipient_hash'] || !['running', 'unknown_execution_state'].includes(row.final_status))) continue;
++        if (s.filters.idempotency_key && key !== s.filters.idempotency_key) continue;
++        found.push(row);
++      }
++      return { data: s.filters.idempotency_key ? found[0] || null : found, error: null };
++    }
++    return { data: s.table === 'lead_outreach_log' && s.operation === 'insert' ? { id: 'log-test' } : s.table === 'tenants' ? { name: 'Test workspace' } : s.table === 'integrations' ? [] : null, error: null };
++  });
++  const access = { admin, user: { id: userId, email: 'owner@example.com', user_metadata: {} } };
++  const connections = { getConnection: async () => ({ user_id: userId, microsoft_email: 'owner@example.com' }), sendEmail: async () => { sends++; return sendImpl(); } };
++  const module = load('src/app/api/outreach/send/route.ts', {
++    'next/server': fakeResponse,
++    '@/lib/email/outreachApproval': approval,
++    '@/lib/email/emailOperation': { runEmailOperation: run, emailOperationStore: (tenant, tool, key, evidenceInput) => { if (!stores.has(key)) stores.set(key, memoryStore(evidenceInput)); return stores.get(key); } },
++    '@/services/server/microsoftServerService': { microsoftServerService: connections },
++    '@/lib/apiAuth': { requireTenantAccess: async (tenant) => { if (tenant !== tenantId) throw { status: 403 }; return access; }, createAdminSupabaseClientOrThrow: () => admin, routeErrorResponse: err => Response.json({ error: 'blocked' }, { status: err.status || 503 }) },
++    '@/schemas/validation': { outreachSendSchema: { safeParse: data => ({ success: true, data }) } },
++    '@/lib/email/suppression': { isEmailSuppressed: async () => false },
++    '@/lib/email/unsubscribe': { isUnsubscribed: async () => false },
++    '@/lib/email/validateRecipient': { validateRecipient: async () => ({ allowed: true }) },
++    '@/lib/email/emailComposition': { normalizeEmailSubject: x => x.trim() },
++    '@/lib/email/unsubscribeToken': { buildUnsubscribeUrl: () => 'https://example.com/unsubscribe' },
++    '@/lib/email/template': { buildEmail: p => p.bodyHtml },
++    '@/lib/email/emailRendering': { renderOutboundEmail: p => ({ html: p.html || p.text }) },
++    'sanitize-html': sanitizeHtml,
++    '@/services/intelligence/signalCaptureAdminService': { captureUnifiedMessageFromWebhook: async () => {} },
++    '@/lib/email/persistCanonicalEmail': { persistCanonicalOutboundEmail: async () => {} },
++  });
++  const payload = { tenantId, leadEmail: 'controlled@example.com', subject: 'Mock test', body: 'Approved test body', autoSend: true, consentGranted: true, confidenceScore: 100, preferredProvider: 'microsoft', deliveryProviders: ['microsoft'] };
++  const request = (data, headers = {}) => new Request('https://app.example/api/outreach/send', { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(data) });
++  return { module, payload, request, get sends() { return sends; }, stores };
++}
++process.env.AUTH_SECRET = 'test-only-approval-secret';
++test('real outreach handler rejects stale approval and cross-tenant requests without contacting provider', async () => {
++  const f = outreachFixture();
++  const issued = await (await f.module.POST(f.request(f.payload, { 'x-outreach-phase': 'approve' }))).json();
++  const rejected = await f.module.POST(f.request({ ...f.payload, body: 'Unapproved edit' }, { 'x-outreach-approval': issued.approvalToken }));
++  assert.equal(rejected.status, 409); assert.equal(f.sends, 0);
++  const forbidden = await f.module.POST(f.request({ ...f.payload, tenantId: 'other' }));
++  assert.equal(forbidden.status, 403); assert.equal(f.sends, 0);
++});
++test('real outreach handler sends once under concurrency, replays acceptance and retains correlation identity', async () => {
++  const f = outreachFixture();
++  const issued = await (await f.module.POST(f.request(f.payload, { 'x-outreach-phase': 'approve' }))).json();
++  const results = await Promise.all(Array.from({ length: 10 }, () => f.module.POST(f.request(f.payload, { 'x-outreach-approval': issued.approvalToken }))));
++  assert.equal(f.sends, 1);
++  const retry = await f.module.POST(f.request(f.payload, { 'x-outreach-approval': issued.approvalToken }));
++  const data = await retry.json(); assert.equal(data.deliveryStatus, 'provider_accepted'); assert.equal(data.idempotent_replay, true);
++  assert.equal(retry.headers.get('x-request-id'), issued.operationId); assert.equal(f.sends, 1);
++  assert.ok(results.every(r => [200, 409].includes(r.status)));
++});
++test('lost provider response remains unknown, blocks retry and reconciles acceptance without a second send', async () => {
++  const f = outreachFixture(async () => { throw new Error('ECONNRESET after provider acceptance'); });
++  const issued = await (await f.module.POST(f.request(f.payload, { 'x-outreach-phase': 'approve' }))).json();
++  for (let n = 0; n < 3; n++) {
++    const response = await f.module.POST(f.request(f.payload, { 'x-outreach-approval': issued.approvalToken }));
++    assert.equal(response.status, 409); assert.equal((await response.json()).deliveryStatus, 'unknown');
++  }
++  assert.equal(f.sends, 1);
++  f.stores.get(issued.operationId).setEvidence({ success: true, deliveryStatus: 'provider_accepted', emailId: 'mock-provider-accepted-1' });
++  const reconciled = await (await f.module.POST(f.request(f.payload, { 'x-outreach-approval': issued.approvalToken }))).json();
++  assert.equal(reconciled.emailId, 'mock-provider-accepted-1'); assert.equal(f.sends, 1);
++});
++test('document detail resolves the list Doc OS identity and does not fan out for an absent document', async () => {
++  const trace = []; let exists = true;
++  const admin = queryFixture(s => { trace.push(s); return { error: null, data: s.table === 'doc_os_documents' && exists ? {
++    document_id: '30000000-0000-4000-8000-000000000001', tenant_id: tenantId, title: 'Mock contract', status: 'draft', structured_data: {}, created_at: '2026-10-12', updated_at: '2026-10-12', version: 1,
++  } : null }; });
++  const bridge = load('src/lib/documents/docOsCatalogBridge.ts');
++  const realZod = await import('zod');
++  const handler = load('src/app/api/tenant/[tenantId]/documents/[documentId]/route.ts', {
++    'next/server': fakeResponse, zod: realZod,
++    '@/lib/apiAuth': { requireTenantAccess: async () => ({ admin }), routeErrorResponse: () => Response.json({ error: 'unavailable' }, { status: 503 }) },
++    '@/lib/documents/docOsCatalogBridge': bridge,
++  });
++  const context = { params: Promise.resolve({ tenantId, documentId: '30000000-0000-4000-8000-000000000001' }) };
++  const response = await handler.GET(new Request('https://app.example/document'), context);
++  assert.equal(response.status, 200); assert.equal((await response.json()).document.source, 'doc_os');
++  assert.ok(trace.every(s => s.filters.tenant_id === tenantId)); assert.equal(trace.length, 3);
++  exists = false; trace.length = 0;
++  assert.equal((await handler.GET(new Request('https://app.example/document'), context)).status, 404); assert.equal(trace.length, 3);
++});
++test('preferences failed read performs no write; successful merge preserves unknown keys', async () => {
++  let readsFail = true, writes = 0, saved;
++  const module = load('src/services/userDashboardPreferencesService.ts', {
++    '@/lib/profileRead': { readUserProfileState: async () => { if (readsFail) throw new Error('503'); return { dashboard_preferences: { otherFeature: { keep: true }, widgetOrder: ['existing'] } }; }, invalidateProfileReads() {} },
++    '@/lib/supabase': { supabase: queryFixture(s => { if (s.operation === 'update') { writes++; saved = s.values.dashboard_preferences; } return { data: { id: userId }, error: null }; }) },
++  });
++  assert.equal((await module.mergeDashboardPreferences(userId, { commandHistory: ['new'] })).ok, false); assert.equal(writes, 0);
++  readsFail = false; assert.equal((await module.mergeDashboardPreferences(userId, { commandHistory: ['new'] })).ok, true);
++  assert.equal(saved.otherFeature.keep, true); assert.equal(saved.widgetOrder[0], 'existing');
++});
++class AuthError extends Error { constructor(status, message, code) { super(message); this.status = status; this.code = code; } }
++test('real tenant authorization validates bearer identity, denies foreign tenant, and returns 503 on membership outage', async () => {
++  for (const mode of ['allowed', 'foreign', 'outage', 'expired']) {
++    const queries = [];
++    const admin = { ...queryFixture(s => {
++      queries.push(s);
++      if (s.table === 'profiles') return { data: { id: userId, account_status: 'active' }, error: null };
++      return { data: mode === 'allowed' && s.filters.tenant_id === tenantId && s.filters.user_id === userId ? { tenant_id: tenantId, role: 'owner' } : null,
++        error: mode === 'outage' ? { code: 'PGRST002' } : null };
++    }), auth: { getUser: async token => ({ data: { user: mode === 'expired' || token !== 'test-token' ? null : { id: userId } }, error: null }) } };
++    const auth = load('src/lib/apiAuth.ts', {
++      'next/server': fakeResponse,
++      './supabase-admin': { createSupabaseAdminClient: () => admin, hasSupabaseServiceRole: () => true },
++      './api/routeAuthError': { RouteAuthError: AuthError },
++      '@/config/env': { ENV: { VITE_SUPABASE_URL: 'https://test.example' } },
++      './transientDbError': { withTransientDbRetry: fn => fn(), isTransientDatabaseError: error => error?.status === 503 },
++    });
++    const request = new Request('https://app.example/api/dashboard/stats', { headers: { Authorization: 'Bearer test-token' } });
++    if (mode === 'allowed') {
++      assert.equal((await auth.requireTenantAccess(tenantId, request)).membership.role, 'owner');
++    } else {
++      await assert.rejects(() => auth.requireTenantAccess(mode === 'foreign' ? 'foreign-tenant' : tenantId, request), e => e.status === (mode === 'expired' ? 401 : mode === 'outage' ? 503 : 403));
++    }
++    for (const query of queries.filter(q => q.table === 'tenant_users')) assert.equal(query.filters.user_id, userId);
++  }
++});
++test('dashboard availability errors never fan out and successful period metrics remain authorized', async () => {
++  for (const mode of ['healthy', 'outage', 'forbidden']) {
++    let databaseCalls = 0;
++    const db = { rpc: async () => { databaseCalls++; return mode === 'outage' ? { error: { code: 'PGRST002', message: 'schema cache unavailable' } } : { data: { totalLeads: 7 }, error: null }; },
++      ...queryFixture(() => { databaseCalls++; return { count: 2, error: null }; }) };
++    const stats = load('src/app/api/dashboard/stats/route.ts', {
++      'next/server': fakeResponse,
++      '@/lib/apiAuth': { requireTenantAccess: async () => { if (mode === 'forbidden') throw new AuthError(403, 'Forbidden'); return { supabase: db, user: { id: userId } }; } },
++      '@/lib/api/clientErrorResponse': { clientErrorResponse: err => Response.json({ error: 'blocked' }, { status: err.status || 503 }) },
++      '@/lib/supabase-admin': { createSupabaseAdminClient: () => db },
++      '@/lib/analytics/normalizeDashboardStats': { normalizeDashboardStats: x => x },
++      '@/services/dashboardStatsService': { dashboardStatsService: { getHomePeriodMetrics: async () => ({ revenue: 5, newLeads: 3 }) } },
++    });
++    const req = { nextUrl: new URL(`https://app.example/api/dashboard/stats?tenantId=${tenantId}`), headers: new Headers() };
++    const response = await stats.GET(req);
++    assert.equal(response.status, mode === 'healthy' ? 200 : mode === 'outage' ? 503 : 403);
++    assert.equal(databaseCalls, mode === 'healthy' ? 2 : mode === 'outage' ? 1 : 0);
++    if (mode === 'healthy') assert.equal((await response.json()).stats.totalLeads, 7);
++  }
++});
++test('presence consumers share one heartbeat; cleanup removes listeners and hidden tabs do no RPC', async () => {
++  const window = new EventTarget(), document = new EventTarget(); document.visibilityState = 'visible';
++  let rpcCalls = 0, release, time = 0, timerId = 0;
++  const timers = new Map(), counts = new Map();
++  const add = window.addEventListener.bind(window), remove = window.removeEventListener.bind(window);
++  window.addEventListener = (event, fn) => { counts.set(event, (counts.get(event) || 0) + 1); add(event, fn); };
++  window.removeEventListener = (event, fn) => { counts.set(event, (counts.get(event) || 0) - 1); remove(event, fn); };
++  const barrier = new Promise(r => release = r);
++  const service = load('src/services/presenceService.ts', { '../lib/supabase': { supabase: {
++    auth: { getUser: async () => ({ data: { user: { id: userId } } }) },
++    rpc: async () => { rpcCalls++; if (rpcCalls === 1) await barrier; return { error: null }; },
++  } } }, { window, document, Date: class extends Date { static now() { return time; } },
++    setInterval: fn => { const id = ++timerId; timers.set(id, fn); return id; }, clearInterval: id => timers.delete(id) }).presenceService;
++  const a = service.initializePresence(userId), b = service.initializePresence(userId);
++  release(); await Promise.all([a, b]);
++  assert.equal(rpcCalls, 1); assert.equal(timers.size, 1); assert.equal(counts.get('focus'), 1);
++  document.visibilityState = 'hidden'; for (const tick of timers.values()) tick();
++  await new Promise(r => setTimeout(r, 0)); assert.equal(rpcCalls, 1);
++  document.visibilityState = 'visible'; await service.cleanup(userId); assert.equal(timers.size, 1);
++  await service.cleanup(userId); assert.equal(timers.size, 0); assert.equal(counts.get('focus'), 0); assert.equal(counts.get('mousemove'), 0);
++});
++test('presence retries after transient cooldown without marking the feature permanently unsupported', async () => {
++  let clock = 0, calls = 0;
++  const window = new EventTarget(), document = new EventTarget(); document.visibilityState = 'visible';
++  const service = load('src/services/presenceService.ts', { '../lib/supabase': { supabase: {
++    auth: { getUser: async () => ({ data: { user: { id: userId } } }) },
++    rpc: async () => ({ error: ++calls === 1 ? { code: 'PGRST002', message: 'schema cache unavailable' } : null }),
++  } } }, { window, document, Date: class extends Date { static now() { return clock; } }, setInterval: () => 1, clearInterval() {} }).presenceService;
++  await service.initializePresence(userId); await service.updatePresence(userId, 'online'); assert.equal(calls, 1);
++  clock = 60_000; assert.equal((await service.updatePresence(userId, 'online')).error, null); assert.equal(calls, 2);
++  await service.cleanup(userId);
++});
++
++test('unresolved recipient hold survives edits and changing providers', async () => {
++  const f = outreachFixture(async () => { throw new Error('ECONNRESET after possible acceptance'); });
++  const approval1 = await (await f.module.POST(f.request(f.payload, { 'x-outreach-phase': 'approve' }))).json();
++  await f.module.POST(f.request(f.payload, { 'x-outreach-approval': approval1.approvalToken }));
++  const edited = { ...f.payload, body: 'Edited and approved again', preferredProvider: 'brevo' };
++  const approval2 = await (await f.module.POST(f.request(edited, { 'x-outreach-phase': 'approve' }))).json();
++  const blocked = await f.module.POST(f.request(edited, { 'x-outreach-approval': approval2.approvalToken }));
++  assert.equal(blocked.status, 409); assert.equal((await blocked.json()).code, 'OUTCOME_UNKNOWN'); assert.equal(f.sends, 1);
++});
++test('annotation changes preserve the original email operation identity', () => {
++  const payload = { tenantId, leadEmail: 'CONTROLLED@example.com', subject: 'Test', body: 'same body', pitchAngle: 'old', score: 10 };
++  assert.equal(approval.outreachOperationKey(userId, payload), approval.outreachOperationKey(userId, { ...payload, leadEmail: 'controlled@example.com', pitchAngle: 'new', score: 90 }));
++});
++
++test('provider authentication rejection is distinct from unknown delivery and retry replays safely', async () => {
++  const f = outreachFixture(async () => { throw Object.assign(new Error('unauthorized'), { status: 401, providerRequestId: 'mock-request-rejected' }); });
++  const issued = await (await f.module.POST(f.request(f.payload, { 'x-outreach-phase': 'approve' }))).json();
++  const response = await f.module.POST(f.request(f.payload, { 'x-outreach-approval': issued.approvalToken }));
++  assert.equal(response.status, 400); const data = await response.json();
++  assert.equal(data.status, 'failed'); assert.equal(data.code, 'OUTREACH_PROVIDER_AUTH_FAILED');
++  const replay = await f.module.POST(f.request(f.payload, { 'x-outreach-approval': issued.approvalToken }));
++  assert.equal(replay.status, 400); assert.equal(f.sends, 1);
++});
++test('read coalescing cannot share different authentication contexts', async () => {
++  const policy = load('src/lib/readRequestPolicy.ts'); let calls = 0;
++  const read = policy.createReadRequestClient({ fetch: async (_url, init) => { calls++; return Response.json({ actor: new Headers(init.headers).get('Authorization') }); } });
++  const [a, b] = await Promise.all([
++    read('https://mock.example/profiles', { headers: { Authorization: 'Bearer synthetic-a' } }),
++    read('https://mock.example/profiles', { headers: { Authorization: 'Bearer synthetic-b' } }),
++  ]);
++  assert.equal(calls, 2); assert.equal((await a.json()).actor, 'Bearer synthetic-a'); assert.equal((await b.json()).actor, 'Bearer synthetic-b');
++});
++
++test('invoice lifecycle client preserves queued run identity and truthful recovery message', async () => {
++  const client = load('src/lib/invoices/startInvoiceLifecycleFromDashboard.ts', {}, {
++    fetch: async () => Response.json({ run_id: 'controlled-run', message: 'Queued; no email confirmed.' }, { status: 202 }),
++  });
++  const result = await client.startInvoiceLifecycleFromDashboard({ tenantId: 'test', invoiceId: 'invoice' });
++  assert.equal(result.runId, 'controlled-run');
++  assert.match(result.message, /no email confirmed/);
++  assert.match(result.message, /controlled-run/);
++});
++test('invoice lifecycle client surfaces approval or backend failure without claiming a send', async () => {
++  for (const status of [403, 503]) {
++    let calls = 0;
++    const client = load('src/lib/invoices/startInvoiceLifecycleFromDashboard.ts', {}, {
++      fetch: async () => { calls++; return Response.json({ error: 'Delivery blocked; review required' }, { status }); },
++    });
++    await assert.rejects(client.startInvoiceLifecycleFromDashboard({ tenantId: 'test', invoiceId: 'invoice' }), /review required/);
++    assert.equal(calls, 1);
++  }
++});
++
++test('invoice lifecycle route uses guarded command, accepts approved invoice and preserves denial', async () => {
++  const tenantId = '11111111-1111-4111-8111-111111111111';
++  const invoiceId = '22222222-2222-4222-8222-222222222222';
++  for (const allowed of [true, false]) {
++    let commandInput;
++    const query = { select() { return this; }, eq() { return this; }, async maybeSingle() { return { data: { id: invoiceId, status: 'approved', clients: { email: 'controlled@example.test' } }, error: null }; } };
++    const route = load('src/app/api/invoices/lifecycle/route.ts', {
++      'next/server': { NextResponse: { json: (body, options) => Response.json(body, options) } },
++      zod: { z },
++      '@/lib/apiAuth': { requireTenantAccess: async () => ({ user: { id: 'test-user' }, admin: { from: () => query } }), routeErrorResponse: () => Response.json({ error: 'unexpected' }, { status: 500 }) },
++      '@/lib/server/dailyResourceQuota': { validateDailyResourceQuota: async () => {} },
++      '@/lib/execution/commands/invoiceSendCommand': { executeInvoiceSendCommand: async input => { commandInput = input; return allowed ? { ok: true, result: { durable: true, status: 'queued', run_id: 'test-run' } } : { ok: false, failure_code: 'APPROVAL_REQUIRED', error: { message: 'Approval required' } }; } },
++      '@/lib/execution/domainCapabilityGuard': { mapProviderCodeToHttpStatus: () => 403 },
++    });
++    const response = await route.POST(new Request('https://app.example/api/invoices/lifecycle', { method: 'POST', body: JSON.stringify({ tenantId, invoiceId }) }));
++    assert.equal(commandInput.executionSource, 'ui');
++    assert.equal(commandInput.tenantId, tenantId);
++    assert.equal(response.status, allowed ? 202 : 403);
++    const body = await response.json();
++    if (allowed) { assert.equal(body.run_id, 'test-run'); assert.match(body.message, /no email has been confirmed/); }
++    else { assert.equal(body.code, 'APPROVAL_REQUIRED'); assert.equal(body.success, undefined); }
++  }
++});
