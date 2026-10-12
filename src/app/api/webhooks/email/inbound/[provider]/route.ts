@@ -177,7 +177,11 @@ export async function POST(req: NextRequest, context: { params: Promise<{ provid
                 },
             });
             await recordInboundOutreachReply({ admin, tenantId: integration.tenant_id, channel: 'email', sender: message.from, text: message.text || message.html || '', provider, providerEventId: message.messageId || null })
-                .catch((replyError) => console.error('[email-inbound] outreach reply capture failed', replyError));
+  .then(async (reply) => {
+                if (!reply.matched || !reply.sourceType || !reply.sourceId) return;
+                const { resolveChasesForDomainEvent } = await import('@/lib/chaser/chaseEventBridge');
+                await resolveChasesForDomainEvent({ tenantId: integration.tenant_id, eventType: 'communication.reply_received', entityType: reply.sourceType, entityId: reply.sourceId, outcome: 'replied' });
+            }).catch((replyError) => console.error('[email-inbound] outreach reply capture failed', replyError));
 
             const projectId = extractProjectThreadMarker(message.subject, message.text, message.html);
             if (projectId) {
