@@ -240,7 +240,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                         <h3 className="text-base font-bold text-[var(--ws-text-primary)] leading-tight">
                             Instant Meeting
                         </h3>
-                        <p className="type-card-description text-gray-400">
+                        <p className="type-card-description text-[var(--ws-text-muted)]">
                             Your secure room is ready.
                         </p>
                     </div>
@@ -251,7 +251,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                     {/* Link Section */}
                     <div>
                         <div className="flex items-center justify-between mb-1">
-                            <span className="type-caption text-gray-500 font-bold uppercase tracking-wider">
+                            <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-wider">
                                 Invite Link
                             </span>
                             {copied && (
@@ -279,7 +279,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                     {/* PIN Section */}
                     {room.pin && (
                         <div className="pt-2 border-t border-[var(--ws-border)]">
-                            <span className="type-caption text-gray-500 font-bold uppercase tracking-wider block mb-1">
+                            <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-wider block mb-1">
                                 Access Code
                             </span>
                             <div className="flex gap-2 items-center">

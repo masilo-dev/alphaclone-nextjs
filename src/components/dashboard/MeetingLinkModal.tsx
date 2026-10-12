@@ -49,12 +49,12 @@ const MeetingLinkModal: React.FC<MeetingLinkModalProps> = ({
                             </div>
                             <div>
                                 <h2 className="text-lg sm:text-2xl font-bold text-[var(--ws-text-primary)]">Meeting Ready</h2>
-                                <p className="type-card-description sm:text-sm text-gray-400">Copy link to invite</p>
+                                <p className="type-card-description sm:text-sm text-[var(--ws-text-muted)]">Copy link to invite</p>
                             </div>
                         </div>
                         <button
                             onClick={onClose}
-                            className="text-gray-400 hover:text-[var(--ws-text-primary)] transition-colors p-1"
+                            className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors p-1"
                         >
                             <X className="w-5 h-5 sm:w-6 sm:h-6" />
                         </button>
@@ -96,14 +96,14 @@ const MeetingLinkModal: React.FC<MeetingLinkModalProps> = ({
                     {/* Meeting Details */}
                     <div className="grid grid-cols-2 gap-3 sm:gap-4">
                         <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700">
-                            <div className="flex items-center gap-1.5 text-gray-400 mb-1">
+                            <div className="flex items-center gap-1.5 text-[var(--ws-text-muted)] mb-1">
                                 <Users className="w-3.5 h-3.5" />
                                 <span className="type-caption sm:text-xs uppercase tracking-wider">Max</span>
                             </div>
                             <p className="text-base sm:text-xl font-bold text-[var(--ws-text-primary)]">10 people</p>
                         </div>
                         <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700">
-                            <div className="flex items-center gap-1.5 text-gray-400 mb-1">
+                            <div className="flex items-center gap-1.5 text-[var(--ws-text-muted)] mb-1">
                                 <Clock className="w-3.5 h-3.5" />
                                 <span className="type-caption sm:text-xs uppercase tracking-wider">Room ID</span>
                             </div>
@@ -116,7 +116,7 @@ const MeetingLinkModal: React.FC<MeetingLinkModalProps> = ({
                         <p className="text-[var(--ws-text-primary)] font-semibold mb-1 type-card-description sm:text-sm">
                             How to Use:
                         </p>
-                        <ul className="type-caption sm:text-sm text-gray-300 space-y-0.5 sm:space-y-1 pl-1">
+                        <ul className="type-caption sm:text-sm text-[var(--ws-text-secondary)] space-y-0.5 sm:space-y-1 pl-1">
                             <li>• Share the link above</li>
                             <li>• Anyone can join (no login)</li>
                         </ul>

@@ -418,7 +418,7 @@ export default function EnhancedVideoCall({
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h3 className="text-[var(--ws-text-primary)] text-lg mb-2">Connection Error</h3>
-          <p className="text-gray-400 mb-4">{errorMessage}</p>
+          <p className="text-[var(--ws-text-muted)] mb-4">{errorMessage}</p>
           <button
             onClick={() => window.location.reload()}
             className="bg-blue-600 text-[var(--ws-text-primary)] px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 mx-auto"
@@ -442,7 +442,7 @@ export default function EnhancedVideoCall({
           <Video className="w-6 h-6 text-blue-500" />
           <span className="text-[var(--ws-text-primary)] font-semibold">Video Call</span>
           {isMinimized && (
-            <span className="text-gray-400 type-ui">
+            <span className="text-[var(--ws-text-muted)] type-ui">
               {participants.length + 1} participants
             </span>
           )}
@@ -453,13 +453,13 @@ export default function EnhancedVideoCall({
             <>
               <button
                 onClick={() => setShowChat(!showChat)}
-                className="p-2 text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-gray-700 rounded-lg"
+                className="p-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-gray-700 rounded-lg"
               >
                 <MessageSquare className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setShowParticipants(!showParticipants)}
-                className="p-2 text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-gray-700 rounded-lg"
+                className="p-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-gray-700 rounded-lg"
               >
                 <Users className="w-5 h-5" />
               </button>
@@ -468,7 +468,7 @@ export default function EnhancedVideoCall({
 
           <button
             onClick={() => setIsMinimized(!isMinimized)}
-            className="p-2 text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-gray-700 rounded-lg"
+            className="p-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-gray-700 rounded-lg"
           >
             {isMinimized ? <Maximize2 className="w-5 h-5" /> : <Minimize2 className="w-5 h-5" />}
           </button>
@@ -557,7 +557,7 @@ export default function EnhancedVideoCall({
                       "p-2 rounded-lg",
                       msg.isOwn ? "bg-blue-600 ml-8" : "bg-gray-700 mr-8"
                     )}>
-                      <div className="type-caption text-gray-300 mb-1">{msg.sender}</div>
+                      <div className="type-caption text-[var(--ws-text-secondary)] mb-1">{msg.sender}</div>
                       <div className="text-[var(--ws-text-primary)] type-ui">{msg.text}</div>
                     </div>
                   ))}

@@ -152,7 +152,7 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ onJoinRoom 
                             Calendly Ready
                         </span>
                     </h3>
-                    <p className="type-card-description text-gray-300">
+                    <p className="type-card-description text-[var(--ws-text-secondary)]">
                         Perfect for booking tools or email signatures. Guests enter the meeting code you share with them.
                     </p>
                 </div>
@@ -162,7 +162,7 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ onJoinRoom 
             <div className="bg-gray-900/50 border-2 border-blue-500/50 rounded-lg p-4 mb-4">
                 <div className="flex items-center gap-2 mb-2">
                     <ExternalLink className="w-4 h-4 text-blue-400" />
-                    <span className="type-caption text-gray-400 font-semibold uppercase tracking-wider">
+                    <span className="type-caption text-[var(--ws-text-muted)] font-semibold uppercase tracking-wider">
                         Permanent Meeting Link
                     </span>
                 </div>
@@ -194,7 +194,7 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ onJoinRoom 
             <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
                 <div className="flex gap-2">
                     <AlertCircle className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                    <div className="type-caption text-gray-300 space-y-1">
+                    <div className="type-caption text-[var(--ws-text-secondary)] space-y-1">
                         <p><strong className="text-[var(--ws-text-primary)]">Guest Ready:</strong> No account required; guests join with your secure meeting code</p>
                         <p><strong className="text-[var(--ws-text-primary)]">Always Ready:</strong> The room stays available until an administrator rotates its code</p>
                         <p><strong className="text-[var(--ws-text-primary)]">Your Domain:</strong> Professional [alphaclonesystems.com/meet/...] branding</p>

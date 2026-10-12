@@ -109,10 +109,10 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-[var(--ws-text-primary)] tracking-tight">AI Growth Agent: Lead Discovery</h2>
-                            <p className="type-caption font-bold text-gray-500 uppercase tracking-widest mt-0.5">Identify and engage high-intent prospects instantly</p>
+                            <p className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest mt-0.5">Identify and engage high-intent prospects instantly</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 text-gray-500 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-xl transition-all">
+                    <button onClick={onClose} className="p-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-xl transition-all">
                         <X size={20} />
                     </button>
                 </div>
@@ -127,7 +127,7 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                                     onClick={() => setSelectedProvider(provider)}
                                     className={`px-4 py-2 rounded-2xl type-caption font-black uppercase tracking-widest transition-all border ${selectedProvider?.id === provider.id
                                         ? 'bg-teal-600 text-[var(--text-inverse)] border-teal-500 shadow-lg shadow-teal-500/20'
-                                        : 'bg-gray-950/50 text-gray-500 border-[var(--ws-border)] hover:border-[var(--ws-border)]'
+                                        : 'bg-gray-950/50 text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-[var(--ws-border)]'
                                         }`}
                                 >
                                     {provider.name}
@@ -136,13 +136,13 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                         </div>
                     )}
                     {availableProviders.length === 0 && (
-                        <div className="type-caption text-gray-500 mb-2">
+                        <div className="type-caption text-[var(--ws-text-muted)] mb-2">
                             No email providers connected. Please connect Zoho, Outlook, or Gmail in Settings → Integrations.
                         </div>
                     )}
                     
                     <form onSubmit={handleSearch} className="relative group">
-                        <div className="absolute inset-y-0 left-5 flex items-center text-gray-500 group-focus-within:text-teal-400 transition-colors pointer-events-none">
+                        <div className="absolute inset-y-0 left-5 flex items-center text-[var(--ws-text-muted)] group-focus-within:text-teal-400 transition-colors pointer-events-none">
                             <Search size={20} />
                         </div>
                         <AlphaCloneInput
@@ -193,7 +193,7 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
                                     <div className="space-y-3 flex-1">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg flex items-center justify-center border border-[var(--ws-border)] text-gray-400 font-bold">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg flex items-center justify-center border border-[var(--ws-border)] text-[var(--ws-text-muted)] font-bold">
                                                 {lead.businessName?.charAt(0)}
                                             </div>
                                             <div>
@@ -203,14 +203,14 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                                                         <Briefcase size={10} />
                                                         <span>{lead.industry}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-1 type-caption font-bold text-gray-500 uppercase tracking-widest">
+                                                    <div className="flex items-center gap-1 type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">
                                                         <MapPin size={10} />
                                                         <span>{lead.location}</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <p className="type-card-description text-gray-400 leading-relaxed font-medium">{lead.notes}</p>
+                                        <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed font-medium">{lead.notes}</p>
                                     </div>
 
                                     <div className="flex md:flex-col gap-2 shrink-0">
@@ -238,7 +238,7 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                                                 )}
                                             </button>
                                         )}
-                                        <button className="bg-gray-800/50 hover:bg-gray-800 text-gray-400 px-6 py-2.5 rounded-xl font-black type-caption uppercase tracking-widest border border-[var(--ws-border)] transition-all">
+                                        <button className="bg-gray-800/50 hover:bg-gray-800 text-[var(--ws-text-muted)] px-6 py-2.5 rounded-xl font-black type-caption uppercase tracking-widest border border-[var(--ws-border)] transition-all">
                                             Quick View
                                         </button>
                                     </div>
@@ -250,12 +250,12 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
 
                 {/* Footer Info */}
                 <div className="p-4 bg-gray-950/80 border-t border-[var(--ws-border)] flex items-center justify-between px-8">
-                    <div className="flex items-center gap-2 type-caption font-bold text-gray-600 uppercase tracking-widest">
+                    <div className="flex items-center gap-2 type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">
                         <CheckCircle2 size={14} className="text-teal-500" />
                         <span>Connected to Zoho CRM & AlphaClone Native Storage</span>
                     </div>
                     <div className="flex items-center gap-4">
-                        <span className="type-caption font-bold text-gray-600 uppercase tracking-widest">Credits: Unlimited</span>
+                        <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Credits: Unlimited</span>
                     </div>
                 </div>
             </motion.div>

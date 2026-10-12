@@ -930,8 +930,8 @@ const AIAgentsTab: React.FC = () => {
                     className="w-full h-11 px-3 transition-all cursor-pointer font-bold"
                   >
                     <option value="draft_and_task">Draft reply & create follow-up task (Standard Mode)</option>
-                    <option value="task_only">Create follow-up task only (Strict AI Refusal of Direct Replies)</option>
-                    <option value="draft_only">Draft response only (Zero Task Pollution Mode)</option>
+                    <option value="task_only">Create follow-up task only (no auto-replies)</option>
+                    <option value="draft_only">Draft response only (no task creation)</option>
                   </AlphaCloneSelect>
                   <span className="type-ui text-[var(--ws-text-muted)] block leading-relaxed">
                     Controls how the AI responds when a buying signal is detected. You can require tasks only, draft messaging only, or both.
@@ -1020,7 +1020,7 @@ const AIAgentsTab: React.FC = () => {
               <div className="mt-6 pt-6 border-t border-[var(--ws-border)] space-y-4">
                 <div>
                   <h4 className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-                    <Brain className="w-3.5 h-3.5 text-purple-400 animate-pulse" /> AI Agent Refusal & Dispatch Telemetry
+                    <Brain className="w-3.5 h-3.5 text-purple-400 animate-pulse" /> AI Activity Monitor
                   </h4>
                   <p className="type-caption text-[var(--ws-text-muted)] mt-0.5">Real-time log of automated actions, safety checks, and review triggers.</p>
                 </div>

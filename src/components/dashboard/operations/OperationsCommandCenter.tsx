@@ -194,13 +194,13 @@ export function OperationsCommandCenter() {
             <span className="px-2.5 py-0.5 rounded-full type-caption font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 tracking-wide uppercase">
               ALAMOS OS 2.0
             </span>
-            <span className="type-caption text-gray-400 font-mono">Tenant: {currentTenant?.name || 'Workspace'}</span>
+            <span className="type-caption text-[var(--ws-text-muted)] font-mono">Tenant: {currentTenant?.name || 'Workspace'}</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-[var(--ws-text-primary)] tracking-tight mt-1 flex items-center gap-2">
             <Activity className="w-7 h-7 text-cyan-400" />
             Operations Command Center
           </h1>
-          <p className="type-card-description text-gray-400 mt-1 max-w-2xl">
+          <p className="type-card-description text-[var(--ws-text-muted)] mt-1 max-w-2xl">
             Real-time exception-based operating system. Zero noise, high velocity decision-making & accountability.
           </p>
         </div>
@@ -208,7 +208,7 @@ export function OperationsCommandCenter() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => void loadData()}
-            className="px-3.5 py-2 rounded-lg bg-[var(--ws-hover)] hover:bg-[var(--ws-hover)] text-gray-300 type-caption font-semibold flex items-center gap-1.5 transition border border-[var(--ws-border)]"
+            className="px-3.5 py-2 rounded-lg bg-[var(--ws-hover)] hover:bg-[var(--ws-hover)] text-[var(--ws-text-secondary)] type-caption font-semibold flex items-center gap-1.5 transition border border-[var(--ws-border)]"
           >
             <RefreshCw className={cn('w-3.5 h-3.5', loading && 'animate-spin')} />
             Refresh HUD
@@ -226,7 +226,7 @@ export function OperationsCommandCenter() {
       {/* 8-Tile Executive Status Strip */}
       <section className="grid grid-cols-2 min-[576px]:grid-cols-4 lg:grid-cols-7 gap-3">
         <div className="p-3.5 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-cyan-500/40 transition">
-          <div className="flex items-center justify-between type-caption text-gray-400">
+          <div className="flex items-center justify-between type-caption text-[var(--ws-text-muted)]">
             <span>Due Today</span>
             <Clock className="w-4 h-4 text-cyan-400" />
           </div>
@@ -234,7 +234,7 @@ export function OperationsCommandCenter() {
         </div>
 
         <div className="p-3.5 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-red-500/40 transition">
-          <div className="flex items-center justify-between type-caption text-gray-400">
+          <div className="flex items-center justify-between type-caption text-[var(--ws-text-muted)]">
             <span>Overdue Work</span>
             <AlertTriangle className="w-4 h-4 text-red-400" />
           </div>
@@ -242,7 +242,7 @@ export function OperationsCommandCenter() {
         </div>
 
         <div className="p-3.5 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-amber-500/40 transition">
-          <div className="flex items-center justify-between type-caption text-gray-400">
+          <div className="flex items-center justify-between type-caption text-[var(--ws-text-muted)]">
             <span>Client 24h SLA</span>
             <MessageSquare className="w-4 h-4 text-amber-400" />
           </div>
@@ -250,7 +250,7 @@ export function OperationsCommandCenter() {
         </div>
 
         <div className="p-3.5 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-purple-500/40 transition">
-          <div className="flex items-center justify-between type-caption text-gray-400">
+          <div className="flex items-center justify-between type-caption text-[var(--ws-text-muted)]">
             <span>Approvals</span>
             <FileCheck className="w-4 h-4 text-purple-400" />
           </div>
@@ -258,7 +258,7 @@ export function OperationsCommandCenter() {
         </div>
 
         <div className="p-3.5 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-orange-500/40 transition">
-          <div className="flex items-center justify-between type-caption text-gray-400">
+          <div className="flex items-center justify-between type-caption text-[var(--ws-text-muted)]">
             <span>Blockers</span>
             <Lock className="w-4 h-4 text-orange-400" />
           </div>
@@ -266,7 +266,7 @@ export function OperationsCommandCenter() {
         </div>
 
         <div className="p-3.5 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-rose-500/40 transition">
-          <div className="flex items-center justify-between type-caption text-gray-400">
+          <div className="flex items-center justify-between type-caption text-[var(--ws-text-muted)]">
             <span>Failures</span>
             <XCircle className="w-4 h-4 text-rose-400" />
           </div>
@@ -274,7 +274,7 @@ export function OperationsCommandCenter() {
         </div>
 
         <div className="p-3.5 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-emerald-500/40 transition col-span-2 min-[576px]:col-span-1">
-          <div className="flex items-center justify-between type-caption text-gray-400">
+          <div className="flex items-center justify-between type-caption text-[var(--ws-text-muted)]">
             <span>Overdue A/R</span>
             <TrendingUp className="w-4 h-4 text-emerald-400" />
           </div>
@@ -290,7 +290,7 @@ export function OperationsCommandCenter() {
             'px-4 py-2 rounded-lg type-caption font-bold transition flex items-center gap-2 whitespace-nowrap',
             activeTab === 'hud'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-              : 'text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
+              : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
           )}
         >
           <Zap className="w-4 h-4" />
@@ -303,7 +303,7 @@ export function OperationsCommandCenter() {
             'px-4 py-2 rounded-lg type-caption font-bold transition flex items-center gap-2 whitespace-nowrap',
             activeTab === 'health'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-              : 'text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
+              : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
           )}
         >
           <Activity className="w-4 h-4" />
@@ -316,7 +316,7 @@ export function OperationsCommandCenter() {
             'px-4 py-2 rounded-lg type-caption font-bold transition flex items-center gap-2 whitespace-nowrap',
             activeTab === 'alamos'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-              : 'text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
+              : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
           )}
         >
           <ShieldAlert className="w-4 h-4" />
@@ -329,7 +329,7 @@ export function OperationsCommandCenter() {
             'px-4 py-2 rounded-lg type-caption font-bold transition flex items-center gap-2 whitespace-nowrap',
             activeTab === 'failures'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-              : 'text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
+              : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
           )}
         >
           <XCircle className="w-4 h-4" />
@@ -342,7 +342,7 @@ export function OperationsCommandCenter() {
             'px-4 py-2 rounded-lg type-caption font-bold transition flex items-center gap-2 whitespace-nowrap',
             activeTab === 'ask_bonnie'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-              : 'text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
+              : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
           )}
         >
           <Brain className="w-4 h-4" />
@@ -355,7 +355,7 @@ export function OperationsCommandCenter() {
             'px-4 py-2 rounded-lg type-caption font-bold transition flex items-center gap-2 whitespace-nowrap',
             activeTab === 'clients_360'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-              : 'text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
+              : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
           )}
         >
           <Users className="w-4 h-4" />
@@ -375,11 +375,11 @@ export function OperationsCommandCenter() {
                   <Clock className="w-4 h-4 text-cyan-400" />
                   Priority Tasks Requiring Action Today
                 </h3>
-                <span className="type-caption text-gray-400">{hudData?.tasksDueToday?.length || 0} items</span>
+                <span className="type-caption text-[var(--ws-text-muted)]">{hudData?.tasksDueToday?.length || 0} items</span>
               </div>
 
               {hudData?.tasksDueToday?.length === 0 ? (
-                <p className="type-card-description text-gray-500 italic">No tasks due today. All operations running smoothly.</p>
+                <p className="type-card-description text-[var(--ws-text-muted)] italic">No tasks due today. All operations running smoothly.</p>
               ) : (
                 <div className="space-y-2.5">
                   {(hudData?.tasksDueToday || []).map((t: any) => (
@@ -389,7 +389,7 @@ export function OperationsCommandCenter() {
                     >
                       <div>
                         <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{t.title}</p>
-                        <p className="type-card-description text-gray-400 mt-0.5">
+                        <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">
                           Status: <span className="text-cyan-400 font-medium">{t.status}</span> · Priority:{' '}
                           <span className="text-amber-400 font-medium">{t.priority || 'medium'}</span>
                         </p>
@@ -417,7 +417,7 @@ export function OperationsCommandCenter() {
               </div>
 
               {hudData?.slaItems?.length === 0 ? (
-                <p className="type-card-description text-gray-500 italic">Zero pending client communications breaching SLA.</p>
+                <p className="type-card-description text-[var(--ws-text-muted)] italic">Zero pending client communications breaching SLA.</p>
               ) : (
                 <div className="space-y-2.5">
                   {(hudData?.slaItems || []).map((s: any) => (
@@ -427,7 +427,7 @@ export function OperationsCommandCenter() {
                     >
                       <div>
                         <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{s.subject || 'Client Message'}</p>
-                        <p className="type-card-description text-gray-400 mt-0.5">
+                        <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">
                           From: {s.contact_email || 'Client'} · Received:{' '}
                           {new Date(s.received_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
@@ -454,14 +454,14 @@ export function OperationsCommandCenter() {
               </h3>
 
               {hudData?.blockers?.length === 0 ? (
-                <p className="type-card-description text-gray-500 italic">No active work blockers reported.</p>
+                <p className="type-card-description text-[var(--ws-text-muted)] italic">No active work blockers reported.</p>
               ) : (
                 <div className="space-y-2.5">
                   {(hudData?.blockers || []).map((b: any) => (
                     <div key={b.id} className="p-3 rounded-xl bg-orange-500/5 border border-orange-500/20">
                       <p className="type-card-description font-bold text-orange-300">{b.title}</p>
-                      <p className="type-card-description text-gray-400 mt-1">{b.blocker_cause}</p>
-                      <p className="type-card-description text-gray-500 mt-1.5 font-medium">Impact: {b.business_impact}</p>
+                      <p className="type-card-description text-[var(--ws-text-muted)] mt-1">{b.blocker_cause}</p>
+                      <p className="type-card-description text-[var(--ws-text-muted)] mt-1.5 font-medium">Impact: {b.business_impact}</p>
                     </div>
                   ))}
                 </div>
@@ -476,13 +476,13 @@ export function OperationsCommandCenter() {
               </h3>
 
               {hudData?.approvals?.length === 0 ? (
-                <p className="type-card-description text-gray-500 italic">No actions requiring human sign-off.</p>
+                <p className="type-card-description text-[var(--ws-text-muted)] italic">No actions requiring human sign-off.</p>
               ) : (
                 <div className="space-y-2.5">
                   {(hudData?.approvals || []).map((a: any) => (
                     <div key={a.id} className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/20">
                       <p className="type-card-description font-bold text-purple-300">{a.action_type || 'Approval Requested'}</p>
-                      <p className="type-card-description text-gray-400 mt-1">{a.details || 'Pending owner decision'}</p>
+                      <p className="type-card-description text-[var(--ws-text-muted)] mt-1">{a.details || 'Pending owner decision'}</p>
                     </div>
                   ))}
                 </div>
@@ -504,30 +504,30 @@ export function OperationsCommandCenter() {
             <h3 className="text-xl font-black text-[var(--ws-text-primary)]">
               {healthData?.primaryBottleneck || 'Scanning operating bottlenecks...'}
             </h3>
-            <p className="type-card-description text-gray-400 max-w-2xl">
+            <p className="type-card-description text-[var(--ws-text-muted)] max-w-2xl">
               ALAMOS constantly audits workflow queues, task resolution rates, and SLA compliance to surface the #1 operational bottleneck restricting overall company throughput.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div className="p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-2">
-              <p className="type-card-description font-medium text-gray-400">Active Projects</p>
+              <p className="type-card-description font-medium text-[var(--ws-text-muted)]">Active Projects</p>
               <p className="text-3xl font-black text-[var(--ws-text-primary)]">{healthData?.activeProjectsCount || 0}</p>
               <p className="type-card-description text-red-400">{healthData?.projectsAtRiskCount || 0} projects at risk</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-2">
-              <p className="type-card-description font-medium text-gray-400">24h SLA Compliance</p>
+              <p className="type-card-description font-medium text-[var(--ws-text-muted)]">24h SLA Compliance</p>
               <p className="text-3xl font-black text-cyan-400">{healthData?.slaCompliancePct || 100}%</p>
-              <p className="type-card-description text-gray-400">Client response timeliness</p>
+              <p className="type-card-description text-[var(--ws-text-muted)]">Client response timeliness</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-2">
-              <p className="type-card-description font-medium text-gray-400">Outstanding Revenue (A/R)</p>
+              <p className="type-card-description font-medium text-[var(--ws-text-muted)]">Outstanding Revenue (A/R)</p>
               <p className="text-3xl font-black text-emerald-400">
                 £{(healthData?.outstandingRevenue || 0).toLocaleString()}
               </p>
-              <p className="type-card-description text-gray-400">Pending collection</p>
+              <p className="type-card-description text-[var(--ws-text-muted)]">Pending collection</p>
             </div>
           </div>
         </div>
@@ -539,7 +539,7 @@ export function OperationsCommandCenter() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-[var(--ws-text-primary)]">Decision Records & ALAMOS 01–07 Protocol</h3>
-              <p className="type-card-description text-gray-400">
+              <p className="type-card-description text-[var(--ws-text-muted)]">
                 Structured decision records with evidence quality tags and mandatory gates for high-risk actions.
               </p>
             </div>
@@ -554,7 +554,7 @@ export function OperationsCommandCenter() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {decisions.length === 0 ? (
-              <p className="type-card-description text-gray-500 italic col-span-2">No decision records logged yet.</p>
+              <p className="type-card-description text-[var(--ws-text-muted)] italic col-span-2">No decision records logged yet.</p>
             ) : (
               decisions.map((d) => (
                 <div key={d.id} className="p-5 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] space-y-3">
@@ -562,13 +562,13 @@ export function OperationsCommandCenter() {
                     <span className="px-2.5 py-0.5 rounded type-ui font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
                       {d.evidence_label}
                     </span>
-                    <span className="type-caption text-gray-400 font-mono">
+                    <span className="type-caption text-[var(--ws-text-muted)] font-mono">
                       {new Date(d.decision_date).toLocaleDateString()}
                     </span>
                   </div>
                   <h4 className="text-base font-bold text-[var(--ws-text-primary)]">{d.decision_title}</h4>
-                  <p className="type-card-description text-gray-300">{d.context}</p>
-                  <div className="pt-2 border-t border-[var(--ws-border)] flex items-center justify-between type-caption text-gray-400">
+                  <p className="type-card-description text-[var(--ws-text-secondary)]">{d.context}</p>
+                  <div className="pt-2 border-t border-[var(--ws-border)] flex items-center justify-between type-caption text-[var(--ws-text-muted)]">
                     <span>Reversibility: <strong className="text-[var(--ws-text-primary)]">{d.reversibility}</strong></span>
                     <span>Cost: <strong className="text-emerald-400">£{(d.cost_amount || 0).toLocaleString()}</strong></span>
                   </div>
@@ -583,12 +583,12 @@ export function OperationsCommandCenter() {
       {activeTab === 'failures' && (
         <div className="space-y-4">
           <h3 className="text-lg font-bold text-[var(--ws-text-primary)]">System & Process Failure Incident Log</h3>
-          <p className="type-card-description text-gray-400">
+          <p className="type-card-description text-[var(--ws-text-muted)]">
             Immutable log of operational, automation, API, and deliverable failures to eliminate repeat mistakes.
           </p>
 
           {failures.length === 0 ? (
-            <p className="type-card-description text-gray-500 italic">Zero failure incidents recorded.</p>
+            <p className="type-card-description text-[var(--ws-text-muted)] italic">Zero failure incidents recorded.</p>
           ) : (
             <div className="space-y-3">
               {failures.map((f) => (
@@ -597,13 +597,13 @@ export function OperationsCommandCenter() {
                     <span className="px-2.5 py-0.5 rounded type-caption font-bold bg-rose-500/20 text-[var(--error-text,var(--error-500))] uppercase">
                       Category: {f.category}
                     </span>
-                    <span className="type-caption text-gray-400 font-mono">
+                    <span className="type-caption text-[var(--ws-text-muted)] font-mono">
                       {new Date(f.failure_time).toLocaleString()}
                     </span>
                   </div>
                   <h4 className="type-ui font-bold text-[var(--ws-text-primary)]">{f.title}</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 type-caption text-gray-300 pt-1">
-                    <p><strong className="text-gray-400">Expected:</strong> {f.expected_result}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 type-caption text-[var(--ws-text-secondary)] pt-1">
+                    <p><strong className="text-[var(--ws-text-muted)]">Expected:</strong> {f.expected_result}</p>
                     <p><strong className="text-rose-400">Actual:</strong> {f.actual_result}</p>
                   </div>
                   <p className="type-card-description text-[var(--warning-text,var(--warning-500))] font-medium pt-1">Business Impact: {f.business_impact}</p>
@@ -622,7 +622,7 @@ export function OperationsCommandCenter() {
               <Brain className="w-5 h-5 text-cyan-400" />
               Ask Bonnie Operations Engine
             </h3>
-            <p className="type-card-description text-gray-400 mt-1">
+            <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
               Ask natural language operational questions. Bonnie evaluates current system records and responds with explicit data evidence tags.
             </p>
           </div>
@@ -673,14 +673,14 @@ export function OperationsCommandCenter() {
                 <Users className="w-5 h-5 text-cyan-400" />
                 Client Operations 360° Relationship Graph
               </h3>
-              <p className="type-card-description text-gray-400 mt-1">
+              <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                 Unified 360° view of client relationships, promises/commitments, lifetime value, active deals, and interaction timelines.
               </p>
             </div>
             {selectedClientId && (
               <button
                 onClick={() => setSelectedClientId(null)}
-                className="px-3.5 py-2 rounded-lg bg-[var(--ws-hover)] text-gray-300 type-caption font-semibold hover:bg-white/20 transition"
+                className="px-3.5 py-2 rounded-lg bg-[var(--ws-hover)] text-[var(--ws-text-secondary)] type-caption font-semibold hover:bg-white/20 transition"
               >
                 ← Back to All Clients
               </button>
@@ -697,7 +697,7 @@ export function OperationsCommandCenter() {
             <div className="space-y-4">
               <h4 className="type-ui font-bold text-[var(--ws-text-primary)]">Select a Client to View 360° Relationship Graph:</h4>
               {clientsList.length === 0 ? (
-                <p className="type-card-description text-gray-500 italic">No clients found in workspace. Add clients in CRM Workspace.</p>
+                <p className="type-card-description text-[var(--ws-text-muted)] italic">No clients found in workspace. Add clients in CRM Workspace.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {clientsList.map((c: any) => (
@@ -707,7 +707,7 @@ export function OperationsCommandCenter() {
                       className="p-4 rounded-xl bg-[var(--ws-hover)] border border-[var(--ws-border)] hover:border-cyan-500/40 hover:bg-cyan-500/5 cursor-pointer transition space-y-1"
                     >
                       <p className="type-card-description font-bold text-[var(--ws-text-primary)]">{c.name}</p>
-                      <p className="type-card-description text-gray-400">{c.email || c.company || 'No email specified'}</p>
+                      <p className="type-card-description text-[var(--ws-text-muted)]">{c.email || c.company || 'No email specified'}</p>
                       <span className="inline-block mt-2 px-2 py-0.5 rounded type-ui font-semibold bg-cyan-500/20 text-cyan-300">
                         View 360° Relationship Profile →
                       </span>
@@ -727,7 +727,7 @@ export function OperationsCommandCenter() {
             <h3 className="text-lg font-bold text-[var(--ws-text-primary)]">Log Decision Record</h3>
             <form onSubmit={submitNewDecision} className="space-y-3 type-caption">
               <div>
-                <label className="block text-gray-400 mb-1">Decision Title</label>
+                <label className="block text-[var(--ws-text-muted)] mb-1">Decision Title</label>
                 <AlphaCloneInput
                   type="text"
                   required
@@ -737,7 +737,7 @@ export function OperationsCommandCenter() {
                 />
               </div>
               <div>
-                <label className="block text-gray-400 mb-1">Context & Background</label>
+                <label className="block text-[var(--ws-text-muted)] mb-1">Context & Background</label>
                 <AlphaCloneTextarea
                   required
                   value={newDecision.context}
@@ -746,7 +746,7 @@ export function OperationsCommandCenter() {
                 />
               </div>
               <div>
-                <label className="block text-gray-400 mb-1">Objective</label>
+                <label className="block text-[var(--ws-text-muted)] mb-1">Objective</label>
                 <AlphaCloneInput
                   type="text"
                   required
@@ -757,7 +757,7 @@ export function OperationsCommandCenter() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-gray-400 mb-1">Cost (£)</label>
+                  <label className="block text-[var(--ws-text-muted)] mb-1">Cost (£)</label>
                   <AlphaCloneInput
                     type="number"
                     value={newDecision.cost_amount}
@@ -766,7 +766,7 @@ export function OperationsCommandCenter() {
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-400 mb-1">Reversibility</label>
+                  <label className="block text-[var(--ws-text-muted)] mb-1">Reversibility</label>
                   <AlphaCloneSelect
                     value={newDecision.reversibility}
                     onChange={(e) => setNewDecision({ ...newDecision, reversibility: e.target.value as any })}
@@ -782,7 +782,7 @@ export function OperationsCommandCenter() {
                 <button
                   type="button"
                   onClick={() => setShowNewDecisionModal(false)}
-                  className="px-4 py-2 rounded-lg bg-[var(--ws-hover)] text-gray-300 font-semibold"
+                  className="px-4 py-2 rounded-lg bg-[var(--ws-hover)] text-[var(--ws-text-secondary)] font-semibold"
                 >
                   Cancel
                 </button>
@@ -805,7 +805,7 @@ export function OperationsCommandCenter() {
             </h3>
             <form onSubmit={submitAlamosEvaluation} className="space-y-3 type-caption">
               <div>
-                <label className="block text-gray-400 mb-1">Decision / Project Title</label>
+                <label className="block text-[var(--ws-text-muted)] mb-1">Decision / Project Title</label>
                 <AlphaCloneInput
                   type="text"
                   required
@@ -914,7 +914,7 @@ export function OperationsCommandCenter() {
                 <button
                   type="button"
                   onClick={() => setShowAlamosModal(false)}
-                  className="px-4 py-2 rounded-lg bg-[var(--ws-hover)] text-gray-300 font-semibold"
+                  className="px-4 py-2 rounded-lg bg-[var(--ws-hover)] text-[var(--ws-text-secondary)] font-semibold"
                 >
                   Cancel
                 </button>

@@ -38,7 +38,7 @@ export default function EmojiPicker({ onEmojiSelect, onClose }: EmojiPickerProps
         <h3 className="type-ui font-semibold text-gray-900">Select Emoji</h3>
         <button
           onClick={onClose}
-          className="p-1 text-gray-500 hover:text-gray-700 rounded"
+          className="p-1 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-muted)] rounded"
         >
           <X className="w-4 h-4" />
         </button>
@@ -52,7 +52,7 @@ export default function EmojiPicker({ onEmojiSelect, onClose }: EmojiPickerProps
             className={`px-2 py-1 type-caption rounded ${
               selectedCategory === category
                 ? 'bg-blue-100 text-blue-700'
-                : 'text-gray-600 hover:bg-gray-100'
+                : 'text-[var(--ws-text-muted)] hover:bg-gray-100'
             }`}
           >
             {category.split(' ')[0]}

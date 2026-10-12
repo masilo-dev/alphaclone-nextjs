@@ -250,7 +250,7 @@ export default function ScreenShareManager({
       >
         {/* Loading state */}
         {!screenShareParticipant && (
-          <div className="text-center text-gray-400">
+          <div className="text-center text-[var(--ws-text-muted)]">
             <Monitor className="w-12 h-12 mx-auto mb-2 animate-pulse" />
             <p>Loading screen share...</p>
           </div>

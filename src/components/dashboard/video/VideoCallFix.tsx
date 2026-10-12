@@ -196,7 +196,7 @@ export default function VideoCallFix({ roomId, userName, userId, isAdmin = false
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <h2 className="text-[var(--ws-text-primary)] text-xl mb-2">Loading Video Call</h2>
-          <p className="text-gray-400">Preparing your meeting environment...</p>
+          <p className="text-[var(--ws-text-muted)]">Preparing your meeting environment...</p>
           
           {isMobileDevice() && (
             <div className="mt-4 p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg">
@@ -222,7 +222,7 @@ export default function VideoCallFix({ roomId, userName, userId, isAdmin = false
           </div>
           
           <h2 className="text-[var(--ws-text-primary)] text-xl mb-2">Video Call Error</h2>
-          <p className="text-gray-400 mb-6">{error}</p>
+          <p className="text-[var(--ws-text-muted)] mb-6">{error}</p>
           
           <div className="space-y-3">
             <button

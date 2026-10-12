@@ -122,7 +122,7 @@ export function AIAssistant() {
                         </div>
                         <button
                             onClick={() => setIsOpen(false)}
-                            className="text-white hover:text-gray-200 transition-colors"
+                            className="text-white hover:text-[var(--ws-text-secondary)] transition-colors"
                         >
                             <X className="h-5 w-5" />
                         </button>
@@ -149,7 +149,7 @@ export function AIAssistant() {
                         {loading && (
                             <div className="flex justify-start">
                                 <div className="bg-gray-100 rounded-2xl px-4 py-2">
-                                    <Loader className="h-5 w-5 animate-spin text-gray-600" />
+                                    <Loader className="h-5 w-5 animate-spin text-[var(--ws-text-muted)]" />
                                 </div>
                             </div>
                         )}
@@ -176,7 +176,7 @@ export function AIAssistant() {
                                 <Send className="h-5 w-5" />
                             </button>
                         </div>
-                        <p className="type-card-description text-gray-500 mt-2 text-center">
+                        <p className="type-card-description text-[var(--ws-text-muted)] mt-2 text-center">
                             Powered by OpenAI & Anthropic
                         </p>
                     </div>

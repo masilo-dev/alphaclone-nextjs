@@ -93,7 +93,7 @@ export default function ZohoCRMIntegration() {
                     <h2 className="text-xl font-bold flex items-center gap-2">
                         <Database className="text-orange-500" /> Zoho CRM Synchronization
                     </h2>
-                    <p className="text-gray-400 type-card-description mt-1">Keep your leads, contacts and deals synced automatically.</p>
+                    <p className="text-[var(--ws-text-muted)] type-card-description mt-1">Keep your leads, contacts and deals synced automatically.</p>
                 </div>
                 <button 
                     onClick={handleConnect}
@@ -109,7 +109,7 @@ export default function ZohoCRMIntegration() {
                         <div className="flex justify-between items-start">
                             <div>
                                 <h3 className="font-bold">Contacts & Leads</h3>
-                                <p className="text-gray-400 type-card-description">Syncs full names, emails, and company info.</p>
+                                <p className="text-[var(--ws-text-muted)] type-card-description">Syncs full names, emails, and company info.</p>
                             </div>
                             <Layout className="text-blue-500 opacity-50" />
                         </div>
@@ -126,7 +126,7 @@ export default function ZohoCRMIntegration() {
                         <div className="flex justify-between items-start">
                             <div>
                                 <h3 className="font-bold">Deals & Pipelines</h3>
-                                <p className="text-gray-400 type-card-description">Syncs deal names, values, and stages.</p>
+                                <p className="text-[var(--ws-text-muted)] type-card-description">Syncs deal names, values, and stages.</p>
                             </div>
                             <RefreshCw className="text-green-500 opacity-50" size={20} />
                         </div>
@@ -150,7 +150,7 @@ export default function ZohoCRMIntegration() {
                 )}
             </div>
 
-            <div className="px-6 py-4 bg-gray-800/30 border-t border-gray-800 flex items-center justify-between type-caption text-gray-500">
+            <div className="px-6 py-4 bg-gray-800/30 border-t border-gray-800 flex items-center justify-between type-caption text-[var(--ws-text-muted)]">
                 <p>
                     {connectionLoading
                         ? 'Checking Zoho connection...'

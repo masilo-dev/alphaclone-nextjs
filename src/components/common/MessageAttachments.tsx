@@ -37,7 +37,7 @@ export default function MessageAttachments({ files, onRemove, onPreview }: Messa
           key={index}
           className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
         >
-          <div className="flex-shrink-0 text-gray-500">
+          <div className="flex-shrink-0 text-[var(--ws-text-muted)]">
             {getFileIcon(file)}
           </div>
           
@@ -45,7 +45,7 @@ export default function MessageAttachments({ files, onRemove, onPreview }: Messa
             <p className="type-card-description font-medium text-gray-900 truncate">
               {file.name}
             </p>
-            <p className="type-card-description text-gray-500">
+            <p className="type-card-description text-[var(--ws-text-muted)]">
               {formatFileSize(file.size)}
             </p>
           </div>
@@ -54,7 +54,7 @@ export default function MessageAttachments({ files, onRemove, onPreview }: Messa
             {file.type.startsWith('image/') && onPreview && (
               <button
                 onClick={() => onPreview(file)}
-                className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded"
+                className="p-1 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-muted)] hover:bg-gray-200 rounded"
                 title="Preview"
               >
                 <Eye className="w-4 h-4" />
@@ -63,7 +63,7 @@ export default function MessageAttachments({ files, onRemove, onPreview }: Messa
             
             <button
               onClick={() => onRemove(index)}
-              className="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded"
+              className="p-1 text-[var(--ws-text-muted)] hover:text-red-600 hover:bg-red-50 rounded"
               title="Remove"
             >
               <X className="w-4 h-4" />

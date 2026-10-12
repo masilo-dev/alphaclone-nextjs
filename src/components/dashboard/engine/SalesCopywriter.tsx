@@ -72,7 +72,7 @@ export default function SalesCopywriter() {
                         </div>
                         Sales Intelligence Workbench
                     </h1>
-                    <p className="text-gray-500 mt-2 font-medium uppercase tracking-widest type-caption">
+                    <p className="text-[var(--ws-text-muted)] mt-2 font-medium uppercase tracking-widest type-caption">
                         Convert any draft into the "Best Outreach Message Ever" using AI Psychology
                     </p>
                 </div>
@@ -90,7 +90,7 @@ export default function SalesCopywriter() {
                             <Quote size={120} />
                         </div>
                         
-                        <label className="block type-caption font-black text-gray-500 uppercase tracking-caps mb-4 flex items-center gap-2">
+                        <label className="block type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps mb-4 flex items-center gap-2">
                             <BarChart3 size={12} className="text-indigo-400" />
                             Original Draft or Copied Message
                         </label>
@@ -103,7 +103,7 @@ export default function SalesCopywriter() {
                         />
 
                         <div className="mt-6 space-y-4">
-                            <label className="block type-caption font-black text-gray-500 uppercase tracking-caps flex items-center gap-2">
+                            <label className="block type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps flex items-center gap-2">
                                 <Sparkles size={12} className="text-amber-400" />
                                 Add Context (Industry, Pain Points, Recipient)
                             </label>
@@ -158,7 +158,7 @@ export default function SalesCopywriter() {
                                         </div>
                                         <button 
                                             onClick={handleCopy}
-                                            className="p-2 bg-[var(--ws-hover)] hover:bg-[var(--ws-hover)] rounded-xl text-gray-400 hover:text-[var(--ws-text-primary)] transition-all flex items-center gap-2 type-caption font-bold uppercase"
+                                            className="p-2 bg-[var(--ws-hover)] hover:bg-[var(--ws-hover)] rounded-xl text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-all flex items-center gap-2 type-caption font-bold uppercase"
                                         >
                                             {copied ? <CheckCircle2 size={14} className="text-green-500" /> : <Copy size={14} />}
                                             {copied ? 'Copied' : 'Copy Message'}
@@ -166,7 +166,7 @@ export default function SalesCopywriter() {
                                     </div>
 
                                     <div className="bg-black/60 rounded-2xl p-6 border border-[var(--ws-border)] shadow-inner">
-                                        <p className="text-gray-200 leading-relaxed whitespace-pre-wrap selection:bg-indigo-500/30">
+                                        <p className="text-[var(--ws-text-secondary)] leading-relaxed whitespace-pre-wrap selection:bg-indigo-500/30">
                                             {parsed.message}
                                         </p>
                                     </div>
@@ -175,7 +175,7 @@ export default function SalesCopywriter() {
                                 {/* Response Probability */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="bg-gray-900/60 border border-[var(--ws-border)] rounded-3xl p-6 shadow-xl">
-                                        <span className="type-caption font-black text-gray-500 uppercase tracking-caps block mb-3">Predicted Response</span>
+                                        <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps block mb-3">Predicted Response</span>
                                         <div className="flex items-end gap-3">
                                             <span className="text-5xl font-black text-[var(--ws-text-primary)] leading-none">
                                                 {parsed.probability}
@@ -195,26 +195,26 @@ export default function SalesCopywriter() {
 
                                     <div className="bg-gray-900/60 border border-[var(--ws-border)] rounded-3xl p-6 shadow-xl flex items-center justify-center text-center">
                                         <div className="space-y-1">
-                                            <div className="type-caption font-black text-gray-500 uppercase tracking-caps">Status</div>
+                                            <div className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps">Status</div>
                                             <div className="text-lg font-black text-green-500 uppercase tracking-tighter">High Intent</div>
-                                            <div className="type-caption text-gray-600 font-bold uppercase">Ready for deployment</div>
+                                            <div className="type-caption text-[var(--ws-text-muted)] font-bold uppercase">Ready for deployment</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Strategy Analysis */}
                                 <div className="bg-gray-900/40 border border-[var(--ws-border)] rounded-3xl p-6 shadow-xl">
-                                    <span className="type-caption font-black text-gray-500 uppercase tracking-caps block mb-4">Strategy Analysis</span>
-                                    <div className="type-caption text-gray-400 leading-relaxed space-y-3 whitespace-pre-wrap">
+                                    <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps block mb-4">Strategy Analysis</span>
+                                    <div className="type-caption text-[var(--ws-text-muted)] leading-relaxed space-y-3 whitespace-pre-wrap">
                                         {parsed.analysis}
                                     </div>
                                 </div>
                             </motion.div>
                         ) : (
                             <div className="h-full min-h-[500px] flex flex-col items-center justify-center text-center p-12 border-2 border-dashed border-[var(--ws-border)] rounded-[40px] opacity-20">
-                                <BarChart3 size={64} className="mb-6 text-gray-600" />
-                                <h3 className="text-xl font-black uppercase tracking-widest text-gray-500">Awaiting Intelligence</h3>
-                                <p className="type-caption text-gray-600 mt-2 max-w-xs uppercase leading-relaxed font-bold tracking-tighter">
+                                <BarChart3 size={64} className="mb-6 text-[var(--ws-text-muted)]" />
+                                <h3 className="text-xl font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Awaiting Intelligence</h3>
+                                <p className="type-caption text-[var(--ws-text-muted)] mt-2 max-w-xs uppercase leading-relaxed font-bold tracking-tighter">
                                     Paste your draft on the left to see the Predicted Response Probability and Sales Psychology analysis.
                                 </p>
                             </div>

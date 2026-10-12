@@ -339,7 +339,7 @@ export default function PresentationTemplates() {
                         <Presentation className="w-10 h-10 text-teal-400" />
                         AlphaClone Presentation Templates
                     </h1>
-                    <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+                    <p className="text-xl text-[var(--ws-text-secondary)] max-w-3xl mx-auto">
                         Create stunning presentations with our professionally designed templates.
                         Perfect for pitches, reports, and business presentations.
                     </p>
@@ -374,7 +374,7 @@ export default function PresentationTemplates() {
                                             <Image src={template.thumbnail} alt={template.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
                                         </div>
                                         <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-2">{template.name}</h3>
-                                        <p className="text-gray-400 type-card-description mb-4">{template.description}</p>
+                                        <p className="text-[var(--ws-text-muted)] type-card-description mb-4">{template.description}</p>
 
                                         <div className="flex justify-center gap-1 mb-4">
                                             {template.colors.map((color, index) => (
@@ -386,7 +386,7 @@ export default function PresentationTemplates() {
                                             ))}
                                         </div>
 
-                                        <div className="flex items-center justify-between type-ui text-gray-400">
+                                        <div className="flex items-center justify-between type-ui text-[var(--ws-text-muted)]">
                                             <span>{template.slideCount} slides</span>
                                             <span className="capitalize">{template.category}</span>
                                         </div>
@@ -420,7 +420,7 @@ export default function PresentationTemplates() {
 
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block type-label font-medium text-gray-300 mb-2">Color Scheme</label>
+                                        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Color Scheme</label>
                                         <div className="grid grid-cols-4 gap-2">
                                             {selectedTemplate.colors.map((color, index) => (
                                                 <button
@@ -435,7 +435,7 @@ export default function PresentationTemplates() {
                                     </div>
 
                                     <div>
-                                        <label className="block type-label font-medium text-gray-300 mb-2">Font Family</label>
+                                        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Font Family</label>
                                         <AlphaCloneSelect
                                             value={selectedFont}
                                             onChange={(e) => setSelectedFont(parseInt(e.target.value))}
@@ -476,7 +476,7 @@ export default function PresentationTemplates() {
                                                     <p className="text-[var(--ws-text-primary)] type-card-description font-medium truncate">
                                                         {slide.title}
                                                     </p>
-                                                    <p className="text-gray-400 type-card-description">
+                                                    <p className="text-[var(--ws-text-muted)] type-card-description">
                                                         {slide.layout} layout
                                                     </p>
                                                 </div>
@@ -485,7 +485,7 @@ export default function PresentationTemplates() {
                                                         e.stopPropagation();
                                                         deleteSlide(index);
                                                     }}
-                                                    className="p-1 text-gray-400 hover:text-red-400"
+                                                    className="p-1 text-[var(--ws-text-muted)] hover:text-red-400"
                                                 >
                                                     <X className="w-3 h-3" />
                                                 </button>
@@ -532,7 +532,7 @@ export default function PresentationTemplates() {
 
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block type-label font-medium text-gray-300 mb-2">Title</label>
+                                        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Title</label>
                                         <AlphaCloneInput
                                             type="text"
                                             value={slides[currentSlide].title}
@@ -542,7 +542,7 @@ export default function PresentationTemplates() {
                                     </div>
 
                                     <div>
-                                        <label className="block type-label font-medium text-gray-300 mb-2">Subtitle (Optional)</label>
+                                        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Subtitle (Optional)</label>
                                         <AlphaCloneInput
                                             type="text"
                                             value={slides[currentSlide].subtitle || ''}
@@ -552,7 +552,7 @@ export default function PresentationTemplates() {
                                     </div>
 
                                     <div>
-                                        <label className="block type-label font-medium text-gray-300 mb-2">Layout</label>
+                                        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Layout</label>
                                         <AlphaCloneSelect
                                             value={slides[currentSlide].layout}
                                             onChange={(e) => handleSlideEdit(currentSlide, 'layout', e.target.value)}
@@ -568,7 +568,7 @@ export default function PresentationTemplates() {
                                     </div>
 
                                     <div>
-                                        <label className="block type-label font-medium text-gray-300 mb-2">Content (One per line)</label>
+                                        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Content (One per line)</label>
                                         <AlphaCloneTextarea
                                             value={slides[currentSlide].content.join('\n')}
                                             onChange={(e) => handleSlideEdit(currentSlide, 'content', e.target.value.split('\n').filter(line => line.trim()))}

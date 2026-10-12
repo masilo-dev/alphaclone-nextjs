@@ -98,7 +98,7 @@ export default function MessageThread({
       {/* System Message */}
       {isSystemMessage && (
         <div className="flex justify-center my-4">
-          <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full type-ui">
+          <div className="bg-gray-100 text-[var(--ws-text-muted)] px-3 py-1 rounded-full type-ui">
             {message.text}
           </div>
         </div>
@@ -130,11 +130,11 @@ export default function MessageThread({
               <span className="type-ui font-medium text-gray-900">
                 {message.sender_name}
               </span>
-              <span className="type-caption text-gray-500">
+              <span className="type-caption text-[var(--ws-text-muted)]">
                 {formatTime(message.created_at)}
               </span>
               {message.edited_at && (
-                <span className="type-caption text-gray-400">(edited)</span>
+                <span className="type-caption text-[var(--ws-text-muted)]">(edited)</span>
               )}
             </div>
 
@@ -153,7 +153,7 @@ export default function MessageThread({
                   "mb-2 pb-2 border-l-2 pl-3 type-ui",
                   isOwnMessage
                     ? "border-blue-400 text-blue-100"
-                    : "border-gray-300 text-gray-600"
+                    : "border-gray-300 text-[var(--ws-text-muted)]"
                 )}>
                   <div className="font-medium">Replying to message</div>
                   <div className="truncate">Original message text...</div>
@@ -179,7 +179,7 @@ export default function MessageThread({
                     </button>
                     <button
                       onClick={handleCancelEdit}
-                      className="px-3 py-1 bg-gray-300 text-gray-700 type-ui rounded hover:bg-gray-400"
+                      className="px-3 py-1 bg-gray-300 text-[var(--ws-text-muted)] type-ui rounded hover:bg-gray-400"
                     >
                       Cancel
                     </button>
@@ -241,7 +241,7 @@ export default function MessageThread({
               className={cn(
                 "p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity",
                 showMenu && "opacity-100",
-                "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-muted)] hover:bg-gray-100"
               )}
             >
               <MoreVertical className="w-4 h-4" />
@@ -251,7 +251,7 @@ export default function MessageThread({
               <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 min-w-32">
                 <button
                   onClick={() => onReply(message)}
-                  className="w-full flex items-center px-3 py-2 type-ui text-gray-700 hover:bg-gray-100"
+                  className="w-full flex items-center px-3 py-2 type-ui text-[var(--ws-text-muted)] hover:bg-gray-100"
                 >
                   <Reply className="w-4 h-4 mr-2" />
                   Reply
@@ -260,7 +260,7 @@ export default function MessageThread({
                 {isOwnMessage && (
                   <button
                     onClick={handleEdit}
-                    className="w-full flex items-center px-3 py-2 type-ui text-gray-700 hover:bg-gray-100"
+                    className="w-full flex items-center px-3 py-2 type-ui text-[var(--ws-text-muted)] hover:bg-gray-100"
                   >
                     <Edit className="w-4 h-4 mr-2" />
                     Edit
@@ -271,7 +271,7 @@ export default function MessageThread({
                 
                 <button
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="w-full flex items-center px-3 py-2 type-ui text-gray-700 hover:bg-gray-100"
+                  className="w-full flex items-center px-3 py-2 type-ui text-[var(--ws-text-muted)] hover:bg-gray-100"
                 >
                   <Smile className="w-4 h-4 mr-2" />
                   React

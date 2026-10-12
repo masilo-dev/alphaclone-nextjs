@@ -56,7 +56,7 @@ export default function MessageReactions({
               "flex items-center space-x-1 px-2 py-1 rounded-full type-caption transition-colors",
               isActive
                 ? "bg-blue-100 text-blue-700 border border-blue-200"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200"
+                : "bg-gray-100 text-[var(--ws-text-muted)] hover:bg-gray-200 border border-gray-200"
             )}
           >
             <span>{emoji}</span>
@@ -72,7 +72,7 @@ export default function MessageReactions({
             e.stopPropagation();
             // Show emoji picker
           }}
-          className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
+          className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-muted)] transition-colors"
         >
           <Plus className="w-3 h-3" />
         </button>

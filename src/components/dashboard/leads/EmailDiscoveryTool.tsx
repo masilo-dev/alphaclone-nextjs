@@ -44,7 +44,7 @@ const SOURCE_INFO: Record<string, { icon: React.ReactNode; description: string; 
   github_commits: {
     icon: <Github className="w-4 h-4" />,
     description: 'GitHub commit authors who work at this company',
-    color: 'text-gray-400'
+    color: 'text-[var(--ws-text-muted)]'
   },
   website_mailto: {
     icon: <Mail className="w-4 h-4" />,
@@ -462,7 +462,7 @@ export default function EmailDiscoveryTool() {
 
                 <div className="bg-[var(--ws-surface-secondary)] p-3 rounded-lg">
                   <h4 className="font-medium text-[var(--ws-text-primary)] flex items-center gap-2 mb-2">
-                    <Github className="w-4 h-4 text-gray-400" />
+                    <Github className="w-4 h-4 text-[var(--ws-text-muted)]" />
                     GitHub Public API
                   </h4>
                   <p className="type-card-description">

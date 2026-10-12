@@ -56,7 +56,7 @@ const ManualMeetingLink: React.FC<ManualMeetingLinkProps> = ({ user, onJoinRoom 
                     <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-1">
                         Manual Meeting Access
                     </h3>
-                    <p className="type-card-description text-gray-300">
+                    <p className="type-card-description text-[var(--ws-text-secondary)]">
                         Paste a direct meeting link below to join instantly.
                     </p>
                 </div>

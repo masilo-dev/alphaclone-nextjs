@@ -119,36 +119,36 @@ const SidebarContent = ({
 }) => (
     <div className="space-y-8">
         <div>
-            <div className="px-3 type-caption font-black text-gray-600 uppercase tracking-widest mb-4">Content Control</div>
+            <div className="px-3 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest mb-4">Content Control</div>
             <div className="space-y-1">
-                <button onClick={() => setActiveTab('post')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'post' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-gray-500 hover:text-gray-300 hover:bg-[var(--ws-hover)]'}`}>
+                <button onClick={() => setActiveTab('post')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'post' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)]'}`}>
                     <Plus size={20} />
                     <span className="type-ui font-bold">Compose Post</span>
                 </button>
-                <button onClick={() => setActiveTab('posts')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'posts' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-gray-500 hover:text-gray-300 hover:bg-[var(--ws-hover)]'}`}>
+                <button onClick={() => setActiveTab('posts')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'posts' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)]'}`}>
                     <Activity size={20} />
                     <span className="type-ui font-bold">Page Feed</span>
                 </button>
             </div>
         </div>
         <div>
-            <div className="px-3 type-caption font-black text-gray-600 uppercase tracking-widest mb-4">Direct Response</div>
+            <div className="px-3 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest mb-4">Direct Response</div>
             <div className="space-y-1">
-                <button onClick={() => setActiveTab('leads')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'leads' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-gray-500 hover:text-gray-300 hover:bg-[var(--ws-hover)]'}`}>
+                <button onClick={() => setActiveTab('leads')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'leads' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)]'}`}>
                     <Users size={20} />
                     <span className="type-ui font-bold">Lead Manager</span>
                     {leadsCount > 0 && <span className="ml-auto bg-teal-500 text-[var(--text-inverse)] type-caption px-2 py-1 rounded-full font-black">{leadsCount}</span>}
                 </button>
-                <button onClick={() => setActiveTab('messenger')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'messenger' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-gray-500 hover:text-gray-300 hover:bg-[var(--ws-hover)]'}`}>
+                <button onClick={() => setActiveTab('messenger')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'messenger' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)]'}`}>
                     <MessageCircle size={20} />
                     <span className="type-ui font-bold">Messenger Inbox</span>
                 </button>
             </div>
         </div>
         <div>
-            <div className="px-3 type-caption font-black text-gray-600 uppercase tracking-widest mb-4">Settings</div>
+            <div className="px-3 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest mb-4">Settings</div>
             <div className="space-y-1">
-                <button onClick={() => setActiveTab('pages')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'pages' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-gray-500 hover:text-gray-300 hover:bg-[var(--ws-hover)]'}`}>
+                <button onClick={() => setActiveTab('pages')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'pages' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)]'}`}>
                     <Building2 size={20} />
                     <span className="type-ui font-bold">Manage Pages</span>
                 </button>
@@ -887,7 +887,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         className={`px-5 py-3 rounded-xl type-caption font-black border whitespace-nowrap transition-all ${
                                             activeTab === tab
                                                 ? 'bg-teal-600 border-teal-500 text-[var(--text-inverse)] shadow-lg shadow-teal-900/20'
-                                                : 'bg-[var(--ws-hover)] border-[var(--ws-border)] text-gray-500 hover:text-gray-300'
+                                                : 'bg-[var(--ws-hover)] border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                                         }`}
                                     >
                                         {TAB_LABELS[tab]}
@@ -930,7 +930,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                             <button 
                                                 key={f}
                                                 onClick={() => setStatusFilter(f)}
-                                                className={`px-4 py-2 rounded-lg type-caption font-black uppercase tracking-widest ${statusFilter === f ? 'bg-[var(--ws-hover)] text-[var(--ws-text-primary)]' : 'text-gray-600'}`}
+                                                className={`px-4 py-2 rounded-lg type-caption font-black uppercase tracking-widest ${statusFilter === f ? 'bg-[var(--ws-hover)] text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-muted)]'}`}
                                             >
                                                 {f}
                                             </button>
@@ -947,7 +947,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                     </div>
                                                     <div className="min-w-0">
                                                         <h4 className="text-base font-black text-[var(--ws-text-primary)] truncate">{lead.first_name} {lead.last_name}</h4>
-                                                        <p className="type-caption text-gray-500 font-bold uppercase tracking-wider">{lead.company || 'Private Individual'}</p>
+                                                        <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-wider">{lead.company || 'Private Individual'}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
@@ -960,11 +960,11 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                 </div>
                                             </div>
                                             <div className="mt-4 pt-4 border-t border-[var(--ws-border)] grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                <div className="flex items-center gap-3 type-caption text-gray-400 bg-black/20 p-3 rounded-xl border border-[var(--ws-border)]">
+                                                <div className="flex items-center gap-3 type-caption text-[var(--ws-text-muted)] bg-black/20 p-3 rounded-xl border border-[var(--ws-border)]">
                                                     <Mail size={14} className="text-blue-500" />
                                                     <span className="truncate">{lead.email}</span>
                                                 </div>
-                                                <div className="flex items-center gap-3 type-caption text-gray-400 bg-black/20 p-3 rounded-xl border border-[var(--ws-border)]">
+                                                <div className="flex items-center gap-3 type-caption text-[var(--ws-text-muted)] bg-black/20 p-3 rounded-xl border border-[var(--ws-border)]">
                                                     <Phone size={14} className="text-green-500" />
                                                     <span>{lead.phone || 'No phone'}</span>
                                                 </div>
@@ -1005,13 +1005,13 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
 
                                 <div className="space-y-6 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-[32px] p-6 sm:p-8">
                                     <div className="space-y-2">
-                                        <label className="type-caption font-black text-gray-600 uppercase tracking-widest px-2">Page Selection</label>
+                                        <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest px-2">Page Selection</label>
                                         <div className="flex flex-wrap gap-2">
                                             {pages.map(p => (
                                                 <button 
                                                     key={p.page_id}
                                                     onClick={() => setSelectedPageId(p.page_id)}
-                                                    className={`h-12 px-4 rounded-xl type-caption font-black border transition-all ${selectedPageId === p.page_id ? 'bg-blue-600 border-blue-500 text-[var(--ws-text-primary)] shadow-lg' : 'bg-[var(--ws-hover)] border-[var(--ws-border)] text-gray-500'}`}
+                                                    className={`h-12 px-4 rounded-xl type-caption font-black border transition-all ${selectedPageId === p.page_id ? 'bg-blue-600 border-blue-500 text-[var(--ws-text-primary)] shadow-lg' : 'bg-[var(--ws-hover)] border-[var(--ws-border)] text-[var(--ws-text-muted)]'}`}
                                                 >
                                                     {p.page_name}
                                                 </button>
@@ -1047,7 +1047,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                             <input type="file" ref={imageInputRef} onChange={handleImageFileChange} className="hidden" accept="image/*,video/*" />
                                             
                                             <div className="relative">
-                                                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={20} />
+                                                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted)] pointer-events-none" size={20} />
                                                 <AlphaCloneInput
                                                     type="datetime-local"
                                                     value={scheduleAt}
@@ -1089,7 +1089,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                         <div>
                                             <h2 className="text-xl font-black text-[var(--ws-text-primary)] uppercase tracking-tight">Page Posts</h2>
-                                            <p className="type-card-description text-gray-500">Live posts, queued items, and publish diagnostics for the selected page.</p>
+                                            <p className="type-card-description text-[var(--ws-text-muted)]">Live posts, queued items, and publish diagnostics for the selected page.</p>
                                         </div>
                                         <div className="flex gap-2">
                                             <button
@@ -1111,7 +1111,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         </div>
                                     )}
 
-                                    {selectedPageId && <div className="mb-4 type-ui text-gray-300">
+                                    {selectedPageId && <div className="mb-4 type-ui text-[var(--ws-text-secondary)]">
                                         <p>Facebook — Connected</p>
                                         <p>Page: {pages.find((page) => page.page_id === selectedPageId)?.page_name}</p>
                                         <p>Publishing: {pages.find((page) => page.page_id === selectedPageId)?.can_publish === true ? 'Available' : 'Check permissions'}</p>
@@ -1121,8 +1121,8 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         <div className="rounded-2xl border border-[var(--ws-border)] bg-black/20 p-4">
                                             <div className="mb-3 flex items-center justify-between gap-3">
                                                 <div>
-                                                    <p className="type-caption font-black uppercase tracking-widest text-gray-500">Granted Page Capabilities</p>
-                                                    <p className="mt-1 type-card-description text-gray-300">{capabilitiesByPage[selectedPageId].note}</p>
+                                                    <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Granted Page Capabilities</p>
+                                                    <p className="mt-1 type-card-description text-[var(--ws-text-secondary)]">{capabilitiesByPage[selectedPageId].note}</p>
                                                 </div>
                                                 <span className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-2 py-1 type-caption font-black uppercase text-blue-200">
                                                     {capabilitiesByPage[selectedPageId].scope_mode}
@@ -1142,8 +1142,8 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         <div className="rounded-2xl border border-[var(--ws-border)] bg-black/20 p-4">
                                             <div className="mb-3 flex items-center justify-between gap-3">
                                                 <div>
-                                                    <p className="type-caption font-black uppercase tracking-widest text-gray-500">Page Profile</p>
-                                                    <p className="mt-1 type-card-description text-gray-300">
+                                                    <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Page Profile</p>
+                                                    <p className="mt-1 type-card-description text-[var(--ws-text-secondary)]">
                                                         {pageInfoErrorByPage[selectedPageId]
                                                             ? pageInfoErrorByPage[selectedPageId]
                                                             : pageInfoByPage[selectedPageId]?.name || 'Loading page details...'}
@@ -1158,32 +1158,32 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                 )}
                                             </div>
                                             {pageInfoLoadingByPage[selectedPageId] ? (
-                                                <div className="flex items-center gap-2 type-caption text-gray-500">
+                                                <div className="flex items-center gap-2 type-caption text-[var(--ws-text-muted)]">
                                                     <Loader2 size={14} className="animate-spin" />
                                                     Loading...
                                                 </div>
                                             ) : (
                                                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                                                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-hover)] px-3 py-2 type-caption text-gray-300">
-                                                        <span className="block type-caption font-black uppercase tracking-widest text-gray-500">Followers</span>
+                                                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-hover)] px-3 py-2 type-caption text-[var(--ws-text-secondary)]">
+                                                        <span className="block type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Followers</span>
                                                         <span className="mt-1 block type-ui font-black text-[var(--ws-text-primary)]">
                                                             {Number(pageInfoByPage[selectedPageId]?.followers_count || 0).toLocaleString()}
                                                         </span>
                                                     </div>
-                                                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-hover)] px-3 py-2 type-caption text-gray-300">
-                                                        <span className="block type-caption font-black uppercase tracking-widest text-gray-500">Talking</span>
+                                                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-hover)] px-3 py-2 type-caption text-[var(--ws-text-secondary)]">
+                                                        <span className="block type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Talking</span>
                                                         <span className="mt-1 block type-ui font-black text-[var(--ws-text-primary)]">
                                                             {Number(pageInfoByPage[selectedPageId]?.talking_about_count || 0).toLocaleString()}
                                                         </span>
                                                     </div>
-                                                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-hover)] px-3 py-2 type-caption text-gray-300">
-                                                        <span className="block type-caption font-black uppercase tracking-widest text-gray-500">Category</span>
+                                                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-hover)] px-3 py-2 type-caption text-[var(--ws-text-secondary)]">
+                                                        <span className="block type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Category</span>
                                                         <span className="mt-1 block truncate type-ui font-black text-[var(--ws-text-primary)]">
                                                             {String(pageInfoByPage[selectedPageId]?.category || '—')}
                                                         </span>
                                                     </div>
-                                                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-hover)] px-3 py-2 type-caption text-gray-300">
-                                                        <span className="block type-caption font-black uppercase tracking-widest text-gray-500">Username</span>
+                                                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-hover)] px-3 py-2 type-caption text-[var(--ws-text-secondary)]">
+                                                        <span className="block type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Username</span>
                                                         <span className="mt-1 block truncate type-ui font-black text-[var(--ws-text-primary)]">
                                                             {pageInfoByPage[selectedPageId]?.username ? `@${pageInfoByPage[selectedPageId].username}` : '—'}
                                                         </span>
@@ -1201,7 +1201,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                 className={`rounded-xl border px-4 py-2 type-caption font-black uppercase transition-all ${
                                                     selectedPageId === p.page_id
                                                         ? 'border-blue-500 bg-blue-600 text-[var(--ws-text-primary)]'
-                                                        : 'border-[var(--ws-border)] bg-[var(--ws-hover)] text-gray-400'
+                                                        : 'border-[var(--ws-border)] bg-[var(--ws-hover)] text-[var(--ws-text-muted)]'
                                                 }`}
                                             >
                                                 {p.page_name}
@@ -1220,7 +1220,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                         key={filter}
                                                         onClick={() => setActiveQueueFilter(filter)}
                                                         className={`rounded-lg px-3 py-1 type-caption font-black uppercase ${
-                                                            activeQueueFilter === filter ? 'bg-[var(--ws-hover)] text-[var(--ws-text-primary)]' : 'text-gray-500'
+                                                            activeQueueFilter === filter ? 'bg-[var(--ws-hover)] text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-muted)]'
                                                         }`}
                                                     >
                                                         {filter}
@@ -1230,7 +1230,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         </div>
 
                                         {queueLoading ? (
-                                            <div className="flex items-center justify-center py-16 text-gray-500">
+                                            <div className="flex items-center justify-center py-16 text-[var(--ws-text-muted)]">
                                                 <Loader2 className="animate-spin" size={20} />
                                             </div>
                                         ) : (
@@ -1244,18 +1244,18 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                                 <span className="truncate type-caption font-black uppercase tracking-widest text-[var(--ws-text-primary)]">
                                                                     {post.status}
                                                                 </span>
-                                                                <span className="type-caption text-gray-500">
+                                                                <span className="type-caption text-[var(--ws-text-muted)]">
                                                                     {new Date(post.scheduled_at || post.created_at).toLocaleString()}
                                                                 </span>
                                                             </div>
-                                                            <p className="line-clamp-3 type-card-description text-gray-300">{post.caption}</p>
+                                                            <p className="line-clamp-3 type-card-description text-[var(--ws-text-secondary)]">{post.caption}</p>
                                                             {post.error_message && (
                                                                 <p className="mt-2 type-card-description text-[var(--error-text,var(--error-500))]">{post.error_message}</p>
                                                             )}
                                                         </div>
                                                     ))}
                                                 {scheduledPosts.length === 0 && postHistory.length === 0 && (
-                                                    <div className="rounded-2xl border border-dashed border-[var(--ws-border)] px-4 py-10 text-center type-ui text-gray-500">
+                                                    <div className="rounded-2xl border border-dashed border-[var(--ws-border)] px-4 py-10 text-center type-ui text-[var(--ws-text-muted)]">
                                                         No posts in the publishing queue yet.
                                                     </div>
                                                 )}
@@ -1280,7 +1280,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         </div>
 
                                         {postsLoading && pagePosts.length === 0 ? (
-                                            <div className="flex items-center justify-center py-16 text-gray-500">
+                                            <div className="flex items-center justify-center py-16 text-[var(--ws-text-muted)]">
                                                 <Loader2 className="animate-spin" size={20} />
                                             </div>
                                         ) : (
@@ -1289,10 +1289,10 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                     <div key={post.id} className="rounded-2xl border border-[var(--ws-border)] bg-black/20 p-4">
                                                         <div className="mb-3 flex items-start justify-between gap-3">
                                                             <div>
-                                                                <p className="type-caption font-black uppercase tracking-widest text-gray-500">
+                                                                <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">
                                                                     {post.created_time ? new Date(post.created_time).toLocaleString() : 'Recent'}
                                                                 </p>
-                                                                <p className="mt-2 whitespace-pre-wrap type-card-description text-gray-200">
+                                                                <p className="mt-2 whitespace-pre-wrap type-card-description text-[var(--ws-text-secondary)]">
                                                                     {post.message || post.story || 'No caption.'}
                                                                 </p>
                                                             </div>
@@ -1303,7 +1303,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                             )}
                                                         </div>
 
-                                                        <div className="mb-3 space-y-1 type-caption text-gray-300">
+                                                        <div className="mb-3 space-y-1 type-caption text-[var(--ws-text-secondary)]">
                                                             <p className={post.status === 'failed' ? 'text-[var(--error-text,var(--error-500))]' : ''}>{post.status === 'failed' ? 'Failed — Facebook publishing failed' : post.status}</p>
                                                             {post.scheduled_at && <p>Scheduled: {new Date(post.scheduled_at).toLocaleString()}</p>}
                                                             {post.published_at && <p>Published: {new Date(post.published_at).toLocaleString()}</p>}
@@ -1370,7 +1370,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                         </div>
 
                                                         {commentsLoadingByPost[post.id] && (
-                                                            <div className="mt-3 type-caption text-gray-500">Loading comments...</div>
+                                                            <div className="mt-3 type-caption text-[var(--ws-text-muted)]">Loading comments...</div>
                                                         )}
                                                         {commentsErrorByPost[post.id] && (
                                                             <div className="mt-3 type-caption text-[var(--error-text,var(--error-500))]">{commentsErrorByPost[post.id]}</div>
@@ -1378,8 +1378,8 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                         {commentsByPost[post.id]?.length > 0 && (
                                                             <div className="mt-3 space-y-2">
                                                                 {commentsByPost[post.id].slice(0, 3).map((comment: any) => (
-                                                                    <div key={comment.id} className="rounded-xl border border-[var(--ws-border)] bg-white/[0.03] p-3 type-ui text-gray-300">
-                                                                        <div className="mb-1 type-caption font-black uppercase tracking-widest text-gray-500">
+                                                                    <div key={comment.id} className="rounded-xl border border-[var(--ws-border)] bg-white/[0.03] p-3 type-ui text-[var(--ws-text-secondary)]">
+                                                                        <div className="mb-1 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">
                                                                             {comment.from?.name || 'Comment'}
                                                                         </div>
                                                                         {comment.message || 'No comment text returned.'}
@@ -1391,20 +1391,20 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                             <div className="mt-3 grid gap-2 sm:grid-cols-2">
                                                                 {insightsByPost[post.id].rows!.slice(0, 4).map((row) => (
                                                                     <div key={row.name} className="rounded-xl border border-[var(--ws-border)] bg-white/[0.03] p-3">
-                                                                        <div className="type-caption font-black uppercase tracking-widest text-gray-500">{row.name}</div>
+                                                                        <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">{row.name}</div>
                                                                         <div className="mt-1 type-ui text-[var(--ws-text-primary)]">{row.values?.[0]?.value ?? 0}</div>
                                                                     </div>
                                                                 ))}
                                                             </div>
                                                         )}
                                                         {insightsByPost[post.id]?.note && (
-                                                            <div className="mt-3 type-caption text-gray-500">{insightsByPost[post.id]?.note}</div>
+                                                            <div className="mt-3 type-caption text-[var(--ws-text-muted)]">{insightsByPost[post.id]?.note}</div>
                                                         )}
                                                     </div>
                                                 ))}
 
                                                 {pagePosts.length === 0 && (
-                                                    <div className="rounded-2xl border border-dashed border-[var(--ws-border)] px-4 py-10 text-center type-ui text-gray-500">
+                                                    <div className="rounded-2xl border border-dashed border-[var(--ws-border)] px-4 py-10 text-center type-ui text-[var(--ws-text-muted)]">
                                                         No page posts returned yet for this page.
                                                     </div>
                                                 )}
@@ -1423,7 +1423,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                 <div className="absolute bottom-0 left-0 right-0 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] px-6 py-4 flex items-center justify-between z-[40] native-bottom-bar">
                     <div className="flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" />
-                        <span className="type-caption font-black text-gray-400 uppercase tracking-widest truncate max-w-[120px]">
+                        <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest truncate max-w-[120px]">
                             {pages.find(p => p.page_id === selectedPageId)?.page_name || 'No Page'}
                         </span>
                     </div>
@@ -1453,13 +1453,13 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                     </div>
                                     <h3 className="text-lg font-black text-[var(--ws-text-primary)] uppercase tracking-tight">AI Writer</h3>
                                 </div>
-                                <button onClick={() => setShowAiPanel(false)} className="w-11 h-11 flex items-center justify-center rounded-full bg-[var(--ws-hover)] text-gray-400 hover:text-[var(--ws-text-primary)] transition-colors">
+                                <button onClick={() => setShowAiPanel(false)} className="w-11 h-11 flex items-center justify-center rounded-full bg-[var(--ws-hover)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors">
                                     <X size={24} />
                                 </button>
                             </div>
                             <div className="p-6 sm:p-8 space-y-6">
                                 <div className="space-y-2">
-                                    <label className="type-caption font-black text-gray-600 uppercase tracking-widest px-2">Post Topic</label>
+                                    <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest px-2">Post Topic</label>
                                     <AlphaCloneInput
                                         type="text" 
                                         value={aiTopic}
@@ -1470,7 +1470,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="type-caption font-black text-gray-600 uppercase tracking-widest px-2">Tone</label>
+                                        <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest px-2">Tone</label>
                                         <AlphaCloneSelect
                                             value={aiTone}
                                             onChange={(e) => setAiTone(e.target.value as any)}
@@ -1483,7 +1483,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         </AlphaCloneSelect>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="type-caption font-black text-gray-600 uppercase tracking-widest px-2">Format</label>
+                                        <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest px-2">Format</label>
                                         <AlphaCloneSelect
                                             value={aiPostType}
                                             onChange={(e) => setAiPostType(e.target.value as any)}

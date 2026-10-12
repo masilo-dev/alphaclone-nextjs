@@ -339,7 +339,7 @@ export default function AccountingDashboard() {
                                 <div key={tx.id} className="p-4 flex items-center justify-between hover:bg-white/[0.02] transition-all">
                                     <div className="min-w-0 flex-1">
                                         <p className="type-card-description font-black text-[var(--ws-text-primary)] truncate">{tx.description}</p>
-                                        <p className="type-caption text-gray-500 font-bold uppercase tracking-widest mt-1">{new Date(tx.date).toLocaleDateString()}</p>
+                                        <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-widest mt-1">{new Date(tx.date).toLocaleDateString()}</p>
                                     </div>
                                     <div className={`text-right font-black ${tx.type === 'income' ? 'text-emerald-400' : 'text-[var(--ws-text-muted)]'}`}>
                                         {tx.type === 'income' ? '+' : '-'}${Math.abs(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -366,7 +366,7 @@ export default function AccountingDashboard() {
                         </div>
                         <div className="pt-6 border-t border-[var(--ws-border)]">
                             <div className="p-6 bg-white/[0.03] rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4">
-                                <span className="type-caption font-black uppercase tracking-widest text-gray-500">Net Operational Result</span>
+                                <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Net Operational Result</span>
                                 <span className={`text-3xl font-black ${stats.totalRevenue >= stats.totalExpenses ? 'text-emerald-400' : 'text-rose-400'}`}>${(stats.totalRevenue - stats.totalExpenses).toLocaleString()}</span>
                             </div>
                         </div>

@@ -267,7 +267,7 @@ export default function MessengerInbox() {
     const activeConv = conversations.find(c => c.id === selectedConversation);
 
     return (
-        <div className={`relative flex h-[calc(100dvh-160px)] min-h-[520px] flex-col overflow-hidden text-gray-100 ${WORKSPACE.panel.base} rounded-lg shadow-none`}>
+        <div className={`relative flex h-[calc(100dvh-160px)] min-h-[520px] flex-col overflow-hidden text-[var(--ws-text-primary)] ${WORKSPACE.panel.base} rounded-lg shadow-none`}>
             {isMobileMenuOpen && (
                 <button
                     type="button"
@@ -287,16 +287,16 @@ export default function MessengerInbox() {
                             <div className="p-2 bg-blue-600/10 rounded-xl text-teal-400">
                                 <MessageSquare size={20} />
                             </div>
-                            <span className="font-bold text-gray-200 tracking-tight text-lg">Messenger Suite</span>
+                            <span className="font-bold text-[var(--ws-text-secondary)] tracking-tight text-lg">Messenger Suite</span>
                         </div>
-                        <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden p-2 text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-xl transition-colors">
+                        <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden p-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-xl transition-colors">
                             <X size={20} />
                         </button>
                     </div>
 
                     <div className="p-4 px-6 border-b border-[var(--ws-border)]">
                         <div className="relative group">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-blue-500 transition-colors pointer-events-none" size={16} />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted)] group-focus-within:text-blue-500 transition-colors pointer-events-none" size={16} />
                             <AlphaCloneInput
                                 type="text" 
                                 placeholder="Search conversations..." 
@@ -341,20 +341,20 @@ export default function MessengerInbox() {
                                                 {conv.metadata?.platform === 'instagram' ? <Instagram size={18} /> : (conv.contacts?.full_name?.charAt(0) || <User size={18} />)}
                                             </div>
                                             <div className="min-w-0">
-                                                <h3 className={`font-bold type-ui truncate max-w-[140px] ${!conv.is_read ? 'text-[var(--ws-text-primary)]' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                                                <h3 className={`font-bold type-ui truncate max-w-[140px] ${!conv.is_read ? 'text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-muted)] group-hover:text-[var(--ws-text-secondary)]'}`}>
                                                     {conv.contacts?.full_name || `Customer ${conv.sender_id.substring(0, 4)}`}
                                                 </h3>
                                                 <div className="flex items-center gap-1">
                                                     <div className={`w-1.5 h-1.5 ${conv.metadata?.platform === 'instagram' ? 'bg-pink-500' : 'bg-green-500'} rounded-full`} />
-                                                    <span className="type-caption font-semibold text-gray-600 uppercase tracking-wide">{conv.metadata?.platform === 'instagram' ? 'Instagram' : 'Active'}</span>
+                                                    <span className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wide">{conv.metadata?.platform === 'instagram' ? 'Instagram' : 'Active'}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <span className="type-caption font-semibold text-gray-600 uppercase">
+                                        <span className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase">
                                             {new Date(conv.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
-                                    <p className={`type-card-description truncate ${!conv.is_read ? 'text-blue-200 font-semibold' : 'text-gray-500 group-hover:text-gray-400'}`}>
+                                    <p className={`type-card-description truncate ${!conv.is_read ? 'text-blue-200 font-semibold' : 'text-[var(--ws-text-muted)] group-hover:text-[var(--ws-text-muted)]'}`}>
                                         {conv.last_message_preview}
                                     </p>
                                     
@@ -376,12 +376,12 @@ export default function MessengerInbox() {
                                     <button
                                         type="button"
                                         onClick={() => setIsMobileMenuOpen(true)}
-                                        className="lg:hidden p-2 text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-xl transition-colors"
+                                        className="lg:hidden p-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-xl transition-colors"
                                         aria-label="Open conversations"
                                     >
                                         <Menu size={20} />
                                     </button>
-                                    <button onClick={() => setSelectedConversation(null)} className="lg:hidden p-2 text-gray-400 hover:text-[var(--ws-text-primary)] rounded-xl">
+                                    <button onClick={() => setSelectedConversation(null)} className="lg:hidden p-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] rounded-xl">
                                         <ArrowLeft size={20} />
                                     </button>
                                     <div className="flex items-center gap-3">
@@ -405,10 +405,10 @@ export default function MessengerInbox() {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button className="p-2.5 text-gray-500 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-xl transition-all" title="Link to Contact">
+                                    <button className="p-2.5 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-xl transition-all" title="Link to Contact">
                                         <LinkIcon size={18} />
                                     </button>
-                                    <button className="p-2.5 text-gray-500 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-xl transition-all" title="Refresh">
+                                    <button className="p-2.5 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-xl transition-all" title="Refresh">
                                         <RefreshCcw size={18} />
                                     </button>
                                 </div>
@@ -434,10 +434,10 @@ export default function MessengerInbox() {
                                                     <div className={`max-w-[70%] p-4 rounded-lg type-ui ${
                                                         isMe 
                                                         ? 'bg-teal-600 text-[var(--text-inverse)] rounded-br-none shadow-lg shadow-teal-600/20' 
-                                                        : 'bg-[var(--ws-hover)] text-gray-200 border border-[var(--ws-border)] rounded-bl-none'
+                                                        : 'bg-[var(--ws-hover)] text-[var(--ws-text-secondary)] border border-[var(--ws-border)] rounded-bl-none'
                                                     }`}>
                                                         <p className="leading-relaxed">{msg.text}</p>
-                                                        <div className={`type-caption mt-2 font-semibold uppercase tracking-wide ${isMe ? 'text-teal-200' : 'text-gray-500'}`}>
+                                                        <div className={`type-caption mt-2 font-semibold uppercase tracking-wide ${isMe ? 'text-teal-200' : 'text-[var(--ws-text-muted)]'}`}>
                                                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                         </div>
                                                     </div>
@@ -481,28 +481,28 @@ export default function MessengerInbox() {
                             </div>
                         </>
                     ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-gray-600 p-12 text-center">
+                        <div className="flex-1 flex flex-col items-center justify-center text-[var(--ws-text-muted)] p-12 text-center">
                             <button
                                 type="button"
                                 onClick={() => setIsMobileMenuOpen(true)}
-                                className="lg:hidden mb-6 inline-flex items-center gap-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-hover)] px-4 py-2.5 type-ui font-semibold text-gray-300 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] transition-colors"
+                                className="lg:hidden mb-6 inline-flex items-center gap-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-hover)] px-4 py-2.5 type-ui font-semibold text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] transition-colors"
                                 aria-label="Open conversations"
                             >
                                 <Menu size={18} />
                                 Browse conversations
                             </button>
                             <div className="w-24 h-24 bg-[var(--ws-hover)] rounded-3xl flex items-center justify-center mb-6 border border-[var(--ws-border)] shadow-2xl">
-                                <MessageSquare size={40} className="text-gray-700" />
+                                <MessageSquare size={40} className="text-[var(--ws-text-muted)]" />
                             </div>
-                            <h3 className="text-xl font-semibold text-gray-400 uppercase tracking-wide mb-2">Messenger Command</h3>
-                            <p className="type-caption text-gray-600 max-w-xs leading-relaxed uppercase tracking-tighter">Choose a customer thread to engage at scale with AI-assisted messaging.</p>
+                            <h3 className="text-xl font-semibold text-[var(--ws-text-muted)] uppercase tracking-wide mb-2">Messenger Command</h3>
+                            <p className="type-caption text-[var(--ws-text-muted)] max-w-xs leading-relaxed uppercase tracking-tighter">Choose a customer thread to engage at scale with AI-assisted messaging.</p>
                             
                             <div className="mt-12 p-6 bg-teal-600/5 rounded-lg border border-teal-500/10 max-w-sm">
                                 <div className="flex items-center gap-2 mb-3 text-teal-400">
                                     <ShieldCheck size={16} />
                                     <span className="type-caption font-semibold uppercase tracking-wide">Enterprise Shield</span>
                                 </div>
-                                <p className="type-caption text-gray-500 text-left leading-relaxed font-bold uppercase tracking-wide">
+                                <p className="type-caption text-[var(--ws-text-muted)] text-left leading-relaxed font-bold uppercase tracking-wide">
                                     Communication is end-to-end reliable. 
                                     Responses are tracked within the AlphaClone CRM for 360-degree customer intelligence.
                                 </p>

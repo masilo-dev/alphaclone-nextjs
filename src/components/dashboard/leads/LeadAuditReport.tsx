@@ -30,14 +30,14 @@ export const LeadAuditReport: React.FC<LeadAuditReportProps> = ({ audit, onClose
                         <BarChart className="w-6 h-6 text-blue-400" />
                         <div>
                             <h2 className="text-xl font-bold text-[var(--ws-text-primary)]">Lead Generation Audit</h2>
-                            <p className="type-card-description text-gray-400">Comparing Sales Agent output vs. Raw Maps API JSON</p>
+                            <p className="type-card-description text-[var(--ws-text-muted)]">Comparing Sales Agent output vs. Raw Maps API JSON</p>
                         </div>
                     </div>
                     <div className="flex flex-col items-end">
                         <span className={`text-3xl font-black ${getScoreColor(audit.accuracyScore)}`}>
                             {audit.accuracyScore}%
                         </span>
-                        <span className="type-caption uppercase tracking-wider text-gray-500 font-bold">Accuracy Score</span>
+                        <span className="type-caption uppercase tracking-wider text-[var(--ws-text-muted)] font-bold">Accuracy Score</span>
                     </div>
                 </div>
 
@@ -47,13 +47,13 @@ export const LeadAuditReport: React.FC<LeadAuditReportProps> = ({ audit, onClose
                         <div className="text-center py-12">
                             <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto mb-4 opacity-50" />
                             <h3 className="text-lg font-medium text-[var(--ws-text-primary)] mb-2">Perfect Accuracy!</h3>
-                            <p className="text-gray-400">No discrepancies found between the Sales Agent and the Maps API.</p>
+                            <p className="text-[var(--ws-text-muted)]">No discrepancies found between the Sales Agent and the Maps API.</p>
                         </div>
                     ) : (
                         <div className="space-y-4">
                             <div className="flex items-center gap-2 mb-4">
                                 <AlertTriangle className="w-4 h-4 text-amber-500" />
-                                <span className="type-ui font-medium text-gray-300">
+                                <span className="type-ui font-medium text-[var(--ws-text-secondary)]">
                                     Found {audit.flags.length} discrepancies in {audit.totalLeads} leads
                                 </span>
                             </div>
@@ -80,7 +80,7 @@ export const LeadAuditReport: React.FC<LeadAuditReportProps> = ({ audit, onClose
                                                     {flag.type}
                                                 </span>
                                             </div>
-                                            <p className="type-card-description text-gray-400 leading-relaxed font-medium">
+                                            <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed font-medium">
                                                 {flag.reason}
                                             </p>
                                         </div>

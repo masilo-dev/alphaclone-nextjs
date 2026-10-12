@@ -108,7 +108,7 @@ export function UserLocationTable() {
                         User Geo-Location Tracking
                     </CardTitle>
                     <div className="relative w-64">
-                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-[var(--ws-text-muted)]" />
                         <Input
                             placeholder="Search users, countries..."
                             className="pl-8"
@@ -149,7 +149,7 @@ export function UserLocationTable() {
                                             </Avatar>
                                             <div className="flex flex-col">
                                                 <span className="font-medium">{user.name}</span>
-                                                <span className="type-caption text-gray-500">{user.email}</span>
+                                                <span className="type-caption text-[var(--ws-text-muted)]">{user.email}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell>
@@ -162,16 +162,16 @@ export function UserLocationTable() {
                                                     <span>{user.registration_country}</span>
                                                 </div>
                                             ) : (
-                                                <span className="text-gray-400 italic">Not tracked</span>
+                                                <span className="text-[var(--ws-text-muted)] italic">Not tracked</span>
                                             )}
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-1.5 type-ui">
-                                                <MapPin className="h-3.5 w-3.5 text-gray-400" />
-                                                {user.last_location !== 'Unknown' ? user.last_location : <span className="text-gray-400">Unknown</span>}
+                                                <MapPin className="h-3.5 w-3.5 text-[var(--ws-text-muted)]" />
+                                                {user.last_location !== 'Unknown' ? user.last_location : <span className="text-[var(--ws-text-muted)]">Unknown</span>}
                                             </div>
                                         </TableCell>
-                                        <TableCell className="font-mono type-caption text-gray-500">
+                                        <TableCell className="font-mono type-caption text-[var(--ws-text-muted)]">
                                             {user.last_ip}
                                         </TableCell>
                                     </TableRow>
