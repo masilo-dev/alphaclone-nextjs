@@ -1121,7 +1121,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         <div className="rounded-2xl border border-[var(--ws-border)] bg-black/20 p-4">
                                             <div className="mb-3 flex items-center justify-between gap-3">
                                                 <div>
-                                                    <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Granted Page Capabilities</p>
+                                                    <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Page Permissions</p>
                                                     <p className="mt-1 type-card-description text-[var(--ws-text-secondary)]">{capabilitiesByPage[selectedPageId].note}</p>
                                                 </div>
                                                 <span className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-2 py-1 type-caption font-black uppercase text-blue-200">

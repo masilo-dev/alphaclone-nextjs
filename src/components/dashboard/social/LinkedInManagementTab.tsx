@@ -1343,7 +1343,7 @@ ${parentContext}Return only the comment text.`;
           </div>
 
           <div className="p-3 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]/60 col-span-2 sm:col-span-1">
-            <p className="type-card-description font-semibold text-[var(--ws-text-muted)]">ROAS / CAC</p>
+            <p className="type-card-description font-semibold text-[var(--ws-text-muted)]">Ad Return / Acquisition Cost</p>
             <p className="text-lg font-extrabold text-[var(--brand-blue-300)] mt-1">
               {pipelineMetrics?.formatted?.roas !== 'Insufficient data' ? pipelineMetrics?.formatted?.roas : pipelineMetrics?.formatted?.cac}
             </p>

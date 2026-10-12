@@ -15,7 +15,7 @@ import {
   ExternalLink, Eye, MousePointer, Target, Activity, ShieldCheck, AlertCircle,
   HelpCircle, Command, CornerDownRight, MoreVertical, Edit3, Sliders, Layers,
   Globe, Smartphone, FileSpreadsheet, Lock, Sparkle, Split, Workflow, CheckSquare,
-  Loader2,
+  Loader2, ArrowLeft,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -1232,6 +1232,13 @@ export default function AlphaCloneEmailWorkspace() {
                 <div className="sticky top-0 z-10 p-4 border-b border-[var(--ws-border)] bg-[var(--ws-canvas)] flex flex-wrap items-center justify-between gap-3 shrink-0 md:p-5">
                   <div className="min-w-0 space-y-1">
                     <div className="flex min-w-0 items-center gap-2">
+                      <button
+                        onClick={() => setSelectedThreadId(null)}
+                        className="md:hidden p-1.5 -ml-1 rounded-lg text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] transition-colors"
+                        aria-label="Back to threads"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                      </button>
                       <h2 className="truncate text-base font-black text-[var(--ws-text-primary)]">{selectedThread.subject}</h2>
                       <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 type-ui font-bold text-[var(--success-text,var(--success-500))]">
                         {selectedThread.crmStatus}
