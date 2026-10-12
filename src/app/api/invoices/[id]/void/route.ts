@@ -59,7 +59,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
             user_id: user?.id || null,
             metadata: { invoice_number: invoice.invoice_number, reason },
             created_at: new Date().toISOString(),
-        }).catch((err) => console.error('[void-route] audit log error', err));
+        }).catch((err: unknown) => console.error('[void-route] audit log error', err));
 
         return NextResponse.json({ success: true, invoiceId: id, status: 'void' });
     } catch (error) {

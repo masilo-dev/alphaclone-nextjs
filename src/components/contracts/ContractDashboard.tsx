@@ -168,7 +168,7 @@ const PAYMENT_OPTIONS = [
 
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'ZAR', 'NGN', 'GHS'];
 
-const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
+const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab }) => {
     const router = useRouter();
     const relationship = useRelationship();
     const searchParams = useSearchParams();

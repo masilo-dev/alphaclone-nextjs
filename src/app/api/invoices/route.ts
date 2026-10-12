@@ -32,6 +32,7 @@ const schema = z.object({
   isPublic: z.boolean().default(false),
   senderName: z.string().max(300).nullable().optional(),
   bankDetails: z.string().max(10_000).nullable().optional(),
+  mobilePaymentDetails: z.string().max(10_000).nullable().optional(),
   signature: z.union([z.string().max(2_000_000), z.object({ type: z.enum(['draw', 'type']), data: z.string().max(2_000_000) }), z.null()]).optional(),
   currency: z.string().trim().max(10).default('USD'),
   currencyCode: z.string().trim().max(10).optional(),

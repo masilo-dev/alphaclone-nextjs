@@ -15,6 +15,12 @@ export async function runTenantEventInboxDigest(): Promise<{
   let eventsConsumed = 0;
   let skipped = 0;
 
+  // The same events are buffered into notification_digest_events and delivered by the
+  // consolidated owner summary. Sending here too would double-notify the owner.
+  if (process.env.LEGACY_INBOX_DIGEST_EMAIL !== 'true') {
+    return { tenants_processed: 0, emails_sent: 0, events_consumed: 0, skipped: 0 };
+  }
+
   const { data: pendingByTenant } = await admin
     .from('tenant_business_event_inbox')
     .select('tenant_id')

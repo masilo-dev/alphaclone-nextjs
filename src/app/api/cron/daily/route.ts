@@ -40,12 +40,18 @@ export async function GET(req: NextRequest) {
         }
         console.log(`[Cron] Emails took ${Date.now() - emailStart}ms`);
 
-        // 4. Owner chase notifications. Each channel is independently bounded
-        // so one provider failure cannot suppress the remaining daily work.
+        // 4. Owner chase notifications. Morning/end-of-day chase briefs are merged into the
+        // consolidated owner summary (notification-digests cron, hourly, owner-local 18:00 by
+        // default). Standalone sends are opt-in only to keep the one-summary-per-day rule.
+        const standaloneChaseEmails = process.env.CHASER_STANDALONE_OWNER_EMAILS === 'true';
         const chase = {
-            morning: await runChaseMorningBriefEmails().catch((error) => ({ error: String(error) })),
+            morning: standaloneChaseEmails
+                ? await runChaseMorningBriefEmails().catch((error) => ({ error: String(error) }))
+                : { skipped: 'merged_into_daily_summary' },
             critical: await runCriticalChaseAlerts().catch((error) => ({ error: String(error) })),
-            endOfDay: await runChaseEndOfDayEmails().catch((error) => ({ error: String(error) })),
+            endOfDay: standaloneChaseEmails
+                ? await runChaseEndOfDayEmails().catch((error) => ({ error: String(error) }))
+                : { skipped: 'merged_into_daily_summary' },
         };
 
         const intelligenceStart = Date.now();

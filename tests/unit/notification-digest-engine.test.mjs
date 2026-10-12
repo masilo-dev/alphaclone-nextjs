@@ -38,3 +38,149 @@ test('250 identical MCP success events collapse into one concise summary group',
   assert.equal(aggregated.length, 1);
   assert.equal(aggregated[0].count, 250);
 });
+
+test('default summary schedule is ONE per day at 18:00 local time (max 7/week)', async () => {
+  const { resolveDueSummary, normalizeSummaryPreferences, maxSummariesPerWeek } = await import(
+    '../../src/lib/email/dailySummaryComposer.ts'
+  );
+
+  const defaultPrefs = normalizeSummaryPreferences(null);
+  assert.equal(defaultPrefs.schedule, 'daily');
+  assert.equal(defaultPrefs.eveningHour, 18);
+  assert.equal(defaultPrefs.morningHour, 8);
+  assert.equal(maxSummariesPerWeek(defaultPrefs), 7);
+
+  // In UTC timezone at 18:00
+  const at18UTC = new Date('2026-10-12T18:15:00.000Z');
+  const due18 = resolveDueSummary(at18UTC, 'UTC', defaultPrefs);
+  assert.ok(due18);
+  assert.equal(due18.type, 'evening');
+  assert.equal(due18.date, '2026-10-12');
+
+  // In UTC timezone at 08:00 -> NOT due under default 'daily' schedule
+  const at08UTC = new Date('2026-10-12T08:15:00.000Z');
+  const due08 = resolveDueSummary(at08UTC, 'UTC', defaultPrefs);
+  assert.equal(due08, null);
+
+  // In UTC timezone at 12:00 -> NOT due
+  const at12UTC = new Date('2026-10-12T12:00:00.000Z');
+  assert.equal(resolveDueSummary(at12UTC, 'UTC', defaultPrefs), null);
+});
+
+test('opt-in morning_evening schedule allows up to 14/week (08:00 and 18:00)', async () => {
+  const { resolveDueSummary, normalizeSummaryPreferences, maxSummariesPerWeek } = await import(
+    '../../src/lib/email/dailySummaryComposer.ts'
+  );
+
+  const optInPrefs = normalizeSummaryPreferences({
+    summary_schedule: 'morning_evening',
+  });
+  assert.equal(optInPrefs.schedule, 'morning_evening');
+  assert.equal(maxSummariesPerWeek(optInPrefs), 14);
+
+  const at08 = new Date('2026-10-12T08:00:00.000Z');
+  const dueMorning = resolveDueSummary(at08, 'UTC', optInPrefs);
+  assert.ok(dueMorning);
+  assert.equal(dueMorning.type, 'morning');
+
+  const at18 = new Date('2026-10-12T18:00:00.000Z');
+  const dueEvening = resolveDueSummary(at18, 'UTC', optInPrefs);
+  assert.ok(dueEvening);
+  assert.equal(dueEvening.type, 'evening');
+});
+
+test('custom summary delivery hour is honored and timezone aware', async () => {
+  const { resolveDueSummary, normalizeSummaryPreferences } = await import(
+    '../../src/lib/email/dailySummaryComposer.ts'
+  );
+
+  const customPrefs = normalizeSummaryPreferences({
+    summary_hour: 20, // 20:00 local
+  });
+  assert.equal(customPrefs.eveningHour, 20);
+
+  // In America/New_York (UTC-4 in October EDT), 20:00 local is 00:00 UTC next day
+  const at20EDT = new Date('2026-10-13T00:15:00.000Z');
+  const due = resolveDueSummary(at20EDT, 'America/New_York', customPrefs);
+  assert.ok(due);
+  assert.equal(due.type, 'evening');
+  assert.equal(due.date, '2026-10-12');
+});
+
+test('clean quiet brief emitted when zero stalled items and zero activity', async () => {
+  const { composeSummaryBody, NO_OUTSTANDING_ACTIONS } = await import(
+    '../../src/lib/email/dailySummaryComposer.ts'
+  );
+
+  const composed = composeSummaryBody({
+    type: 'evening',
+    date: '2026-10-12',
+    activity: [],
+    eventCount: 0,
+    chaseSections: [],
+  });
+
+  assert.equal(composed.isQuiet, true);
+  assert.match(composed.bodyHtml, new RegExp(NO_OUTSTANDING_ACTIONS));
+  assert.match(composed.bodyText, new RegExp(NO_OUTSTANDING_ACTIONS));
+});
+
+test('Universal Chaser stalled items are categorized correctly for owner brief', async () => {
+  const { groupChaseItemsForSummary, composeSummaryBody } = await import(
+    '../../src/lib/email/dailySummaryComposer.ts'
+  );
+
+  const sampleChases = [
+    { policy_key: 'project_chaser', severity: 'high', reason_code: 'no_progress', context_snapshot: { name: 'Acme Website Redesign' } },
+    { policy_key: 'milestone_chaser', severity: 'critical', reason_code: 'overdue', context_snapshot: { name: 'Phase 1 Frontend Delivery' } },
+    { policy_key: 'lead_chaser', severity: 'medium', reason_code: 'no_touch', context_snapshot: { business_name: 'Globex Corp' } },
+    { policy_key: 'contract_chaser', severity: 'high', reason_code: 'unsigned', context_snapshot: { title: 'Master Service Agreement' } },
+    { policy_key: 'invoice_chaser', severity: 'high', reason_code: 'overdue', context_snapshot: { invoice_number: 'INV-2026-0042' } },
+    { policy_key: 'quote_proposal_chaser', severity: 'medium', reason_code: 'viewed_no_decision', context_snapshot: { quote_number: 'Q-1008' } },
+  ];
+
+  const sections = groupChaseItemsForSummary(sampleChases);
+  const labels = sections.map((s) => s.label);
+
+  assert.ok(labels.includes('Stalled projects'));
+  assert.ok(labels.includes('Overdue milestones'));
+  assert.ok(labels.includes('Leads and deals needing attention'));
+  assert.ok(labels.includes('Contracts awaiting signature'));
+  assert.ok(labels.includes('Invoices due or overdue'));
+  assert.ok(labels.includes('Quotes awaiting a decision'));
+
+  const composed = composeSummaryBody({
+    type: 'evening',
+    date: '2026-10-12',
+    activity: [{ title: 'Invoice paid', summary: 'INV-2026-0010 paid', severity: 'info', count: 1 }],
+    eventCount: 1,
+    chaseSections: sections,
+  });
+
+  assert.equal(composed.isQuiet, false);
+  assert.match(composed.bodyHtml, /Needs your attention \(6\)/);
+  assert.match(composed.bodyHtml, /Acme Website Redesign/);
+  assert.match(composed.bodyHtml, /Phase 1 Frontend Delivery/);
+  assert.match(composed.bodyHtml, /Globex Corp/);
+  assert.match(composed.bodyHtml, /INV-2026-0042/);
+  assert.match(composed.bodyHtml, /No client or lead has been contacted as a result of these detections/);
+});
+
+test('milestone events exist in canonical taxonomy and milestone.completed stops milestone_chaser', async () => {
+  const { getCanonicalEvent, chaseStopForEvent } = await import(
+    '../../src/lib/events/businessEventTaxonomy.ts'
+  );
+
+  const created = getCanonicalEvent('milestone.created');
+  assert.ok(created);
+  assert.equal(created.category, 'projects');
+  assert.equal(created.entityType, 'milestone');
+
+  const completed = getCanonicalEvent('milestone.completed');
+  assert.ok(completed);
+  assert.deepEqual(chaseStopForEvent('milestone.completed'), {
+    entityType: 'milestone',
+    outcome: 'completed',
+  });
+});
+

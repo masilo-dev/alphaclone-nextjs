@@ -348,7 +348,7 @@ export async function POST(
   context: { params: Promise<{ tenantId: string; projectId: string }> },
 ) {
   try {
-    const { tenantId, projectId } = await access(req, context);
+    const { tenantId, projectId, auth } = await access(req, context);
     if (!validProjectId(projectId))
       return NextResponse.json(
         { error: "Valid project ID is required" },
@@ -363,7 +363,7 @@ export async function POST(
     const admin = createSupabaseAdminClient();
     const { data: project, error: projectError } = await admin
       .from("projects")
-      .select("id, portal_token, status, current_stage")
+      .select("id, portal_token, status, current_stage, progress, name, client_id, is_public, owner_id")
       .eq("id", projectId)
       .eq("tenant_id", tenantId)
       .maybeSingle();
@@ -388,7 +388,7 @@ export async function POST(
     ] = await Promise.all([
       admin
         .from("project_milestones")
-        .select("status")
+        .select("id, status")
         .eq("project_id", projectId),
       admin
         .from("tasks")
@@ -422,6 +422,55 @@ export async function POST(
       .eq("id", projectId)
       .eq("tenant_id", tenantId);
     if (error) throw error;
+
+    const beforeProgress = typeof project.progress === "number" ? project.progress : 0;
+    if (beforeProgress !== progress) {
+      if (project.client_id && project.is_public && project.portal_token) {
+        void notifyProjectClientProgressUpdate({
+          admin,
+          projectId,
+          tenantId,
+          previousProgress: beforeProgress,
+          newProgress: progress,
+          origin: req.nextUrl.origin,
+          trigger: "milestone",
+        }).catch((err) => console.warn("[projects] notify progress failed:", err));
+      }
+
+      void admin
+        .from("business_automation_events")
+        .insert({
+          tenant_id: tenantId,
+          event_type: "project_updated",
+          payload: {
+            projectId,
+            actorUserId: auth.user.id,
+            previousProgress: beforeProgress,
+            currentProgress: progress,
+            trigger: "milestone_progress_recalculate",
+          },
+        })
+        .then(() => undefined, () => undefined);
+    }
+
+    const completedMilestones = (milestones || []).filter(
+      (m: { id?: string; status?: string }) => m.status === "completed" || m.status === "done"
+    );
+    if (completedMilestones.length > 0) {
+      const { resolveChasesForDomainEvent } = await import("@/lib/chaser/chaseEventBridge");
+      for (const m of completedMilestones) {
+        if (m.id) {
+          void resolveChasesForDomainEvent({
+            tenantId,
+            eventType: "milestone.completed",
+            entityId: m.id,
+            entityType: "milestone",
+            outcome: "completed",
+          }).catch(() => undefined);
+        }
+      }
+    }
+
     return NextResponse.json({ progress });
   } catch (error) {
     return routeErrorResponse(

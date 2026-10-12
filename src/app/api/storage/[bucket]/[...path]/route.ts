@@ -102,6 +102,10 @@ export async function GET(
                     }
                 }
 
+                if (!targetTenantId) {
+                    return new NextResponse('Tenant required', { status: 400 });
+                }
+
                 assertTenantStoragePath({
                     filePath,
                     tenantId: targetTenantId,
