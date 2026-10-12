@@ -5,7 +5,7 @@ import { Select as AlphaCloneSelect } from '@/components/ui/select';
 import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages, Scale, Send, MessageSquare, Sparkles, Trash2, CheckSquare, Square, PenTool, Upload } from 'lucide-react';
+import { ArrowLeft, FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages, Scale, Send, MessageSquare, Sparkles, Trash2, CheckSquare, Square, PenTool, Upload } from 'lucide-react';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
 import { contractService, Contract } from '../../services/contractService';
 import { fileUploadService } from '../../services/fileUploadService';
@@ -800,7 +800,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                 // place instead of creating a duplicate row.
                 const { contract, error } = await contractService.updateContract(contractId, {
                     content,
-                    status: isSigned && existing.status === 'draft' ? 'sent' : undefined,
+                    status: existing.status,
                     payment_amount: parseFloat(form.totalAmount) || existing.payment_amount || 0,
                     admin_signature: isSigned ? signatureData : undefined,
                     admin_signed_at: isSigned ? (existing.admin_signed_at || new Date().toISOString()) : undefined,
@@ -820,7 +820,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                     title,
                     content,
                     client_id: form.clientId || undefined,
-                    status: isSigned ? 'sent' : 'draft',
+                    status: 'draft',
                     payment_amount: parseFloat(form.totalAmount) || 0,
                     admin_signature: isSigned ? signatureData : undefined,
                     admin_signed_at: isSigned ? new Date().toISOString() : undefined,
@@ -1901,7 +1901,18 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                         <div className="space-y-4">
                             {/* Action Bar */}
                             <div className="flex flex-wrap gap-3 items-center justify-between bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4">
-                                <div className="flex gap-2 flex-wrap">
+                                <div className="flex gap-2 flex-wrap items-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setActiveView('list');
+                                            setStep('form');
+                                        }}
+                                        className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[var(--ws-surface-secondary)] px-3 type-ui font-bold text-[var(--ws-text-secondary)] transition-all hover:bg-[var(--ws-surface-tertiary)] hover:text-white"
+                                        title="Return to saved contracts list"
+                                    >
+                                        <ArrowLeft className="w-3.5 h-3.5" /> Back to Contracts
+                                    </button>
                                     <button onClick={() => setStep('form')} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[var(--ws-surface-secondary)] px-3 type-ui font-bold text-[var(--ws-text-secondary)] transition-all hover:bg-[var(--ws-surface-tertiary)] hover:text-white">
                                         <RotateCcw className="w-3.5 h-3.5" /> Edit Parameters
                                     </button>

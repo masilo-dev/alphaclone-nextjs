@@ -937,7 +937,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     <div className={`p-2 rounded-full bg-[var(--ws-hover)] ${getStatusStyles(inv.status)}`}><FileText size={14} /></div>
                                     <div className="min-w-0">
                                         <p className="type-card-description font-black text-[var(--ws-text-primary)]">{inv.invoiceNumber}</p>
-                                        <p className="type-caption text-gray-500 font-bold uppercase tracking-caps">{inv.clientId && clientMap[inv.clientId]?.name ? clientMap[inv.clientId].name : 'Walk-in Client'}</p>
+                                        <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-caps">{inv.clientId && clientMap[inv.clientId]?.name ? clientMap[inv.clientId].name : 'Walk-in Client'}</p>
                                         {inv.projectId ? (
                                             <button
                                                 type="button"
@@ -954,7 +954,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                 </span>
                                             </button>
                                         ) : (
-                                            <p className="mt-1 type-caption text-gray-600 font-bold uppercase tracking-widest">—</p>
+                                            <p className="mt-1 type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-widest">—</p>
                                         )}
                                     </div>
                                 </div>
@@ -962,8 +962,8 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             </div>
                             <div className="flex justify-between items-end">
                                 <div>
-                                    <p className="type-caption text-gray-500 font-black uppercase tracking-caps">Due Date</p>
-                                    <p className="type-card-description font-bold text-gray-300">{new Date(inv.dueDate).toLocaleDateString()}</p>
+                                    <p className="type-caption text-[var(--ws-text-muted)] font-black uppercase tracking-caps">Due Date</p>
+                                    <p className="type-card-description font-bold text-[var(--ws-text-primary)]">{new Date(inv.dueDate).toLocaleDateString()}</p>
                                     {Number(inv.amountPaid || 0) > 0 && (
                                         <p className="mt-1 type-caption font-bold uppercase tracking-caps text-blue-300">
                                             Paid {Number(inv.amountPaid || 0).toLocaleString()} · Balance {Number(inv.balanceDue || 0).toLocaleString()}

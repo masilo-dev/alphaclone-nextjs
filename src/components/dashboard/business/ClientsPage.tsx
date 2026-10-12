@@ -1612,6 +1612,15 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         { label: showArchived ? 'Unarchive' : 'Archive', icon: showArchived ? <History className="w-4 h-4"/> : <Trash2 className="w-4 h-4"/>, onClick: () => handleArchiveClient(selectedClient.id), variant: showArchived ? 'default' : 'danger' }
                                                     ]}
                                                 />
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    aria-label="Close client details"
+                                                    title="Close details"
+                                                    className="!p-2 hover:bg-[var(--ws-surface-secondary)] rounded-xl text-[var(--ws-text-muted)] hover:text-white"
+                                                    icon={<X className="w-5 h-5" />}
+                                                    onClick={() => setSelectedClient(null)}
+                                                />
                                             </>
                                         }
                                     />

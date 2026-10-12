@@ -1022,7 +1022,7 @@ const AIAgentsTab: React.FC = () => {
                   <h4 className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
                     <Brain className="w-3.5 h-3.5 text-purple-400 animate-pulse" /> AI Agent Refusal & Dispatch Telemetry
                   </h4>
-                  <p className="type-caption text-[var(--ws-text-muted)] mt-0.5">Real-time trace of recent execution gates, skipped actions, and manual review triggers.</p>
+                  <p className="type-caption text-[var(--ws-text-muted)] mt-0.5">Real-time log of automated actions, safety checks, and review triggers.</p>
                 </div>
 
                 {sortedRefusalLogs.length === 0 ? (
