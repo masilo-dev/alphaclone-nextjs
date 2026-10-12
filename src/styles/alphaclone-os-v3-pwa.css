@@ -177,7 +177,7 @@ html.ac-pwa-mobile :is([role='dialog'], dialog) :is(.p-8, .p-10, .p-12) {
   padding: 1rem !important;
 }
 
-html.ac-pwa-mobile :is([role='dialog'], dialog) :is(.grid-cols-3, .grid-cols-4, .grid-cols-5, .grid-cols-6) {
+html.ac-pwa-mobile :is([role='dialog'], dialog) :is(.grid-cols-3, .grid-cols-4, .grid-cols-5, .grid-cols-6):not([data-record-actions]) {
   grid-template-columns: minmax(0, 1fr) !important;
 }
 
@@ -314,11 +314,11 @@ html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-wo
 }
 
 @media (max-width: 767px) {
-  html.ac-pwa-mobile .ac-module-frame :is(.grid-cols-3, .grid-cols-4, .grid-cols-5, .grid-cols-6) {
+  html.ac-pwa-mobile .ac-module-frame :is(.grid-cols-3, .grid-cols-4, .grid-cols-5, .grid-cols-6):not([data-record-actions]) {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
-  html.ac-pwa-mobile .ac-native-workspace :is(.grid-cols-3, .grid-cols-4, .grid-cols-5, .grid-cols-6) {
+  html.ac-pwa-mobile .ac-native-workspace :is(.grid-cols-3, .grid-cols-4, .grid-cols-5, .grid-cols-6):not([data-record-actions]) {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 

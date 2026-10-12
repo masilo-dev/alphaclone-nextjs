@@ -350,7 +350,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
     return (
         <div className="h-full min-h-0 flex flex-col overflow-y-auto overscroll-contain min-w-0 [-webkit-overflow-scrolling:touch]" data-tour="projects-center">
-            <div className="shrink-0 space-y-3 sm:space-y-4 px-3 py-4 sm:px-5 sm:py-5 md:px-8 md:pt-6 md:pb-3">
+            <div className="shrink-0 space-y-2 sm:space-y-4 px-3 py-2 sm:px-5 sm:py-5 md:px-8 md:pt-6 md:pb-3">
             <PlatformExecutionWelcome userId={user.id} surface="projects" />
             <div className="flex justify-end">
               <HelpDisclosure title="Projects Execution Guide" label="Projects guide">
@@ -430,8 +430,8 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
-                    <label className="relative flex-1 lg:w-52">
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
+                    <label className="relative w-full sm:w-auto sm:flex-1 lg:w-52">
                         <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--ws-text-muted)]" />
                         <AlphaCloneInput
                             value={searchQuery}
@@ -629,7 +629,7 @@ const ProjectListRow = ({
                     <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--ws-text-muted)]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h4 className="text-sm sm:text-base font-semibold text-[var(--ws-text-secondary)] group-hover:text-[var(--ws-text-primary)] transition-colors truncate">
+                    <h4 className="text-sm sm:text-base font-semibold text-[var(--ws-text-secondary)] group-hover:text-[var(--ws-text-primary)] transition-colors break-words sm:truncate">
                         {project.name}
                     </h4>
                     <div className="flex items-center gap-3 mt-1">
@@ -1113,7 +1113,7 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
                     return (
                         <div key={proj.id} className="flex hover:bg-white/[0.02] group transition-all duration-300 border-l-2 border-transparent hover:border-[var(--brand-blue-500)]/30">
                             <div className="w-64 min-w-[16rem] p-4 flex flex-col gap-1 border-r border-[var(--ws-border)] bg-[var(--ws-panel)]">
-                                <h4 className="type-card-title font-bold text-[var(--ws-text-secondary)] group-hover:text-[var(--brand-blue-400)] transition-colors truncate">{proj.name}</h4>
+                                <h4 className="type-card-title font-bold text-[var(--ws-text-secondary)] group-hover:text-[var(--brand-blue-400)] transition-colors break-words sm:truncate">{proj.name}</h4>
                             </div>
                             <div className="flex-1 relative h-14 flex items-center px-2">
                                 <div className="absolute inset-0 flex divide-x divide-white/5 pointer-events-none">

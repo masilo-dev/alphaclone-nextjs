@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
       return new Response(JSON.stringify({ error: 'tenantId and instruction are required' }), { status: 400 });
     }
 
-    const { user } = await requireTenantAccess(tenantId);
+    const { user } = await requireTenantAccess(tenantId, request);
     const supabase = await createSupabaseServerClient();
     const { data: authUser } = await supabase.auth.getUser();
     const userId = authUser.user?.id || user.id;
@@ -118,12 +118,17 @@ export async function POST(request: NextRequest) {
     if (blocked) return blocked;
 
     // Persist the conversation session and user message before streaming begins
-    const conversationId = await upsertConversation({
-      admin,
-      tenantId,
-      userId,
-      module: moduleContext,
-    });
+    const requestedConversation = typeof body.conversationId === 'string' ? body.conversationId.trim() : '';
+    let conversationId: string | null;
+    if (requestedConversation) {
+      const { data: conversation, error } = await admin.from('bonnie_conversations').select('id')
+        .eq('id', requestedConversation).eq('tenant_id', tenantId).eq('user_id', userId).maybeSingle();
+      if (error) throw error;
+      if (!conversation) return Response.json({ error: 'This conversation is unavailable in your workspace.' }, { status: 404 });
+      conversationId = conversation.id;
+    } else {
+      conversationId = await upsertConversation({ admin, tenantId, userId, module: moduleContext });
+    }
 
     if (conversationId) {
       await insertMessage({
@@ -136,10 +141,15 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    let disconnected = false;
+    const generation = new AbortController();
+    const signal = AbortSignal.any([request.signal, generation.signal]);
     const stream = new ReadableStream({
       async start(controller) {
         const push = (event: string, data: Record<string, unknown>) => {
-          controller.enqueue(sseEncode(event, data));
+          if (!disconnected && !request.signal.aborted) {
+            try { controller.enqueue(sseEncode(event, data)); } catch { disconnected = true; }
+          }
         };
 
         try {
@@ -148,6 +158,7 @@ export async function POST(request: NextRequest) {
           const result = await runBonnieAgent({
             tenantId,
             userId,
+            signal,
             instruction,
             pathname: pathname || undefined,
             moduleContext: moduleContext as any,
@@ -206,9 +217,10 @@ export async function POST(request: NextRequest) {
         } catch (error: any) {
           push('error', { message: error?.message || 'Bonnie stream failed' });
         } finally {
-          controller.close();
+          if (!disconnected) { try { controller.close(); } catch { /* client closed */ } }
         }
       },
+      cancel() { disconnected = true; generation.abort(); },
     });
 
     return new Response(stream, {

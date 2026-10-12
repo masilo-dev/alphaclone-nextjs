@@ -315,9 +315,23 @@ export default function BonnieChatPanel({
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (!workspaceMode || !inputRef.current) return;
+    const element = inputRef.current;
+    element.style.height = 'auto';
+    element.style.height = `${Math.min(120, Math.max(44, element.scrollHeight))}px`;
+  }, [input, workspaceMode]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const requestEpoch = useRef(0);
+  useEffect(() => {
+    requestEpoch.current++;
+    abortRef.current?.abort();
+    setSending(false);
+    setAgentPhase('idle');
+    return () => { requestEpoch.current++; abortRef.current?.abort(); };
+  }, [conversationId, tenantId]);
 
   const stopListening = useCallback(() => {
     recognitionRef.current?.stop();
@@ -478,7 +492,8 @@ export default function BonnieChatPanel({
         return { role: m.role, content };
       });
 
-    const phaseTimer = window.setTimeout(() => setAgentPhase('executing'), 1200);
+    const epoch = ++requestEpoch.current;
+    const isCurrentRequest = () => requestEpoch.current === epoch;
     // Reset plan/timeline for new request
     setPlanSteps([]);
     setTimelineEvents([]);
@@ -493,18 +508,20 @@ export default function BonnieChatPanel({
           text,
           history,
           (token) => {
+            if (!isCurrentRequest()) return;
             setMessages((prev) =>
               prev.map((m) => (m.id === streamMsgId ? { ...m, text: m.text + token } : m))
             );
           },
           (phase, meta) => {
+            if (!isCurrentRequest()) return;
             if (phase === 'executing' || phase === 'reading' || phase === 'verifying' || phase === 'awaiting_approval') {
               setAgentPhase('executing');
               const evId = `ev-${Date.now()}`;
               const labels: Record<string, string> = { reading: 'Reading workspace data', executing: 'Executing tools', verifying: 'Verifying results', awaiting_approval: 'Awaiting approval' };
               setTimelineEvents((prev) => [
                 ...prev.map((event) => event.status === 'running' ? { ...event, status: 'done' as const } : event),
-                { id: evId, label: labels[phase] || 'Executing tools', kind: phase === 'awaiting_approval' ? 'approval' : 'phase', status: phase === 'awaiting_approval' ? 'approval_required' : 'running', payload: meta },
+                { id: evId, label: meta?.tool ? `${labels[phase] || 'Working'}: ${String(meta.tool).replace(/_/g, ' ')}` : labels[phase] || 'Executing tools', kind: phase === 'awaiting_approval' ? 'approval' : 'phase', status: phase === 'awaiting_approval' ? 'approval_required' : 'running', payload: meta },
               ]);
             }
             if (phase === 'thinking' || phase === 'planning') {
@@ -521,7 +538,7 @@ export default function BonnieChatPanel({
           abortRef.current.signal
         );
 
-        window.clearTimeout(phaseTimer);
+        if (!isCurrentRequest()) return;
         // Mark all active timeline events done; approvals remain explicitly pending.
         setTimelineEvents((prev) =>
           prev.map((event) => event.status === 'running' ? { ...event, status: 'done' as const } : event)
@@ -547,7 +564,7 @@ export default function BonnieChatPanel({
         if (result.text) emitNavIntent(result.text, userRole);
       } else {
         const result = await onSend(text, history);
-        window.clearTimeout(phaseTimer);
+        if (!isCurrentRequest()) return;
         setAgentPhase('responding');
 
         setMessages((prev) => [
@@ -566,14 +583,14 @@ export default function BonnieChatPanel({
         if (result.text) emitNavIntent(result.text, userRole);
       }
     } catch (err: any) {
-      window.clearTimeout(phaseTimer);
+      if (!isCurrentRequest()) return;
       if (err?.name === 'AbortError') {
         setMessages((prev) => [
           ...prev,
           {
             id: `assistant-stop-${Date.now()}`,
             role: 'assistant',
-            text: 'Generation stopped.',
+            text: 'Response stopped. Any action already submitted may still be processing; check its status before retrying.',
           },
         ]);
       } else {
@@ -582,12 +599,13 @@ export default function BonnieChatPanel({
           {
             id: `assistant-${Date.now()}`,
             role: 'assistant',
-            text: 'Something went wrong. Check that DEEPSEEK_API_KEY is set and try again.',
+            text: 'Bonnie could not finish this request. Your conversation is saved. Check any pending actions before trying again.',
             error: true,
           },
         ]);
       }
     } finally {
+      if (!isCurrentRequest()) return;
       setSending(false);
       setAgentPhase('idle');
       abortRef.current = null;
@@ -603,9 +621,14 @@ export default function BonnieChatPanel({
 
   const stopGeneration = () => {
     abortRef.current?.abort();
+    setTimelineEvents(previous => previous.filter(event => event.status !== 'running'));
   };
 
   const clearChat = () => {
+    requestEpoch.current++;
+    abortRef.current?.abort();
+    setSending(false);
+    setAgentPhase('idle');
     clearHistory();
     setPlanSteps([]);
     setTimelineEvents([]);
@@ -663,8 +686,8 @@ export default function BonnieChatPanel({
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] ${
-        compact ? 'h-full min-h-[200px]' : 'h-full min-h-[360px]'
+      className={`ac-bonnie-chat flex flex-col min-h-0 overflow-hidden rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] ${
+        workspaceMode ? 'h-full min-h-0' : compact ? 'h-full min-h-[200px]' : 'h-full min-h-[360px]'
       }`}
     >
       {!compact && messages.length > 1 && (
@@ -685,7 +708,7 @@ export default function BonnieChatPanel({
         </div>
       )}
 
-      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-3 custom-scrollbar">
+      <div ref={scrollRef} className="ac-bonnie-messages flex-1 min-h-0 space-y-3 overflow-y-auto p-3 custom-scrollbar">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -925,16 +948,16 @@ export default function BonnieChatPanel({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 void handleSend();
               }
             }}
-            rows={compact ? 2 : 3}
-            disabled={disabled || sending}
+            rows={workspaceMode ? 1 : compact ? 2 : 3}
+            disabled={disabled}
             placeholder={
               workspaceMode
-                ? 'Message Bonnie… Use @customer @invoice @project · / for commands'
+                ? 'Message Bonnie…'
                 : placeholder
             }
             aria-label="Message Bonnie"
@@ -980,7 +1003,7 @@ export default function BonnieChatPanel({
           )}
         </div>
         <p className="mt-2 type-card-description leading-relaxed text-[var(--ws-text-muted)]">
-          Enter to send · Shift+Enter for newline · Stop cancels in-flight generation · High-risk actions always ask for approval
+          Stop pauses the response. Submitted actions keep their recorded status.
         </p>
       </div>
     </div>

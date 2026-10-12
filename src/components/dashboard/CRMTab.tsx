@@ -410,7 +410,7 @@ const LeadDetail: React.FC<{
   };
 
   const leadActions = (
-    <div className={`grid grid-cols-3 gap-2 ${inDrawer ? 'pt-2 border-t border-[var(--ws-border)]' : 'fixed bottom-0 left-0 right-0 md:absolute bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30'}`}>
+    <div data-record-actions className="ac-record-actions grid grid-cols-3 gap-2 shrink-0 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)] pt-2">
       <button
         onClick={() => onUpdate(lead.id, 'contacted')}
         className={`flex flex-col items-center justify-center gap-1 hover:bg-[var(--ws-panel)] transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-[var(--ws-border)] py-2' : 'py-3.5'}`}
@@ -752,7 +752,7 @@ const Client360Detail: React.FC<{
   };
 
   const clientActions = (
-    <div className={`grid grid-cols-3 gap-2 ${inDrawer ? `${isInstalledMobileCompanion ? 'sticky bottom-0 z-20 -mx-3 bg-[var(--ws-canvas)] px-3 pb-[max(env(safe-area-inset-bottom),8px)]' : ''} pt-2 border-t border-[var(--ws-border)]` : 'fixed bottom-0 left-0 right-0 md:absolute bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30'}`}>
+    <div data-record-actions className="ac-record-actions grid grid-cols-3 gap-2 shrink-0 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)] pt-2">
       <button
         onClick={() => {
           if (inDrawer) onBack();
@@ -820,7 +820,8 @@ const Client360Detail: React.FC<{
           }
         />
 
-        <div className="flex flex-col items-center gap-2 py-2">
+        {clientActions}
+        <div className="hidden sm:flex flex-col items-center gap-2 py-2">
           <div className={`w-16 h-16 rounded-[14px] ${hashColor(client.name)} flex items-center justify-center relative`}>
             <span className="text-xl font-bold text-[var(--ws-text-primary)]">{getInitials(client.name)}</span>
             <OnlineStatusBadge
@@ -1097,8 +1098,6 @@ const Client360Detail: React.FC<{
           )}
         </div>
       </div>
-
-      {clientActions}
 
       {showEmailModal && (
         <CommunicationModal

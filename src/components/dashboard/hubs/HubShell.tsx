@@ -247,7 +247,7 @@ export default function HubShell({
 
       <div
         className={cn(
-          'flex-1 min-h-0 ac-safe-bottom ac-native-workspace',
+          'flex-1 min-h-0 ac-native-workspace',
           isFullHeight
             ? 'h-full overflow-hidden p-0'
             : isInstalledMobileCompanion
@@ -256,7 +256,7 @@ export default function HubShell({
         )}
         data-native-workspace={isInstalledMobileCompanion ? 'true' : undefined}
       >
-        <BonnieModulePageShell showBonnieDock={!isFullHeight}>
+        <BonnieModulePageShell className={isFullHeight ? "h-full min-h-0 flex flex-col" : undefined} showBonnieDock={!isFullHeight}>
           {children}
         </BonnieModulePageShell>
       </div>

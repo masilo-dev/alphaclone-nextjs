@@ -51,3 +51,22 @@ describe('Bonnie persistence is scoped to the active conversation', () => {
     assert.match(panel, />Unlimited</);
   });
 });
+
+
+it('streaming requests carry the selected conversation and validate its tenant and owner', () => {
+  const service = read('../../src/services/bonnieService.ts');
+  const route = read('../../src/app/api/bonnie/stream/route.ts');
+  const view = read('../../src/components/dashboard/bonnie/BonnieFullView.tsx');
+  assert.match(service, /conversationId: options.conversationId/);
+  assert.match(view, /conversationId: activeConversationId/);
+  assert.match(route, /eq\('id', requestedConversation\).eq\('tenant_id', tenantId\).eq\('user_id', userId\)/);
+  assert.match(route, /status: 404/);
+});
+
+it('chat switches and clears invalidate old stream callbacks; UI never fabricates execution with a timer', () => {
+  const panel = read('../../src/components/dashboard/bonnie/BonnieChatPanel.tsx');
+  assert.match(panel, /if \(!isCurrentRequest\(\)\) return/);
+  assert.match(panel, /\[conversationId, tenantId\]/);
+  assert.doesNotMatch(panel, /setTimeout\(\(\) => setAgentPhase\('executing'\)/);
+  assert.match(panel, /Any action already submitted may still be processing/);
+});

@@ -41,6 +41,9 @@ export const ENTERPRISE_FULL_BLEED_TABS = new Set([
   // bottom of long messages can never be reached.
   '/dashboard/comms',
   '/dashboard/business/unified-inbox',
+  '/dashboard/projects',
+  '/dashboard/bonnie',
+  '/dashboard/business/bonnie',
   '/dashboard/business/projects',
   '/dashboard/business/projects/manage',
   '/dashboard/projects/manage',

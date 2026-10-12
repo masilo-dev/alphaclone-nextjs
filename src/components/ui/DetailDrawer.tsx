@@ -70,6 +70,7 @@ export function DetailDrawer({
                 : size === 'wide'
                   ? 'h-full !w-[min(100vw,44rem)] !p-4 !gap-2'
                   : 'h-full',
+          'ac-detail-drawer',
           className
         )}
       >

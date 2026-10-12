@@ -4,19 +4,18 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 type SessionRow = { id: number; item: AgentInputItem };
 
 /**
- * Persistent Agents SDK session scoped to one tenant/user pair.
- * It deliberately survives UI conversation boundaries so tool results and
- * unfinished model work can be resumed without browser-supplied chat history.
+ * Persistent Agents SDK session scoped to one tenant/user/conversation.
+ * Tool results resume inside their original thread.
  */
 export class BonnieDatabaseSession implements Session {
   readonly sessionId: string;
   private readonly tenantId: string;
   private readonly userId: string;
 
-  constructor(params: { tenantId: string; userId: string }) {
+  constructor(params: { tenantId: string; userId: string; conversationId?: string }) {
     this.tenantId = params.tenantId;
     this.userId = params.userId;
-    this.sessionId = `bonnie:${params.tenantId}:${params.userId}`;
+    this.sessionId = `bonnie:${params.tenantId}:${params.userId}${params.conversationId ? `:${params.conversationId}` : ""}`;
   }
 
   async getSessionId(): Promise<string> {
@@ -30,6 +29,7 @@ export class BonnieDatabaseSession implements Session {
       .select('id, item')
       .eq('tenant_id', this.tenantId)
       .eq('user_id', this.userId)
+      .eq('session_id', this.sessionId)
       .order('id', { ascending: false })
       .limit(Math.max(1, Math.min(limit, 200)));
     if (error) throw new Error(`Unable to load Bonnie SDK session: ${error.message}`);
@@ -57,6 +57,7 @@ export class BonnieDatabaseSession implements Session {
       .select('id, item')
       .eq('tenant_id', this.tenantId)
       .eq('user_id', this.userId)
+      .eq('session_id', this.sessionId)
       .order('id', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -67,7 +68,8 @@ export class BonnieDatabaseSession implements Session {
       .delete()
       .eq('id', data.id)
       .eq('tenant_id', this.tenantId)
-      .eq('user_id', this.userId);
+      .eq('user_id', this.userId)
+      .eq('session_id', this.sessionId);
     if (deleteError) throw new Error(`Unable to update Bonnie SDK session: ${deleteError.message}`);
     return data.item as AgentInputItem;
   }
@@ -78,7 +80,8 @@ export class BonnieDatabaseSession implements Session {
       .from('bonnie_sdk_session_items')
       .delete()
       .eq('tenant_id', this.tenantId)
-      .eq('user_id', this.userId);
+      .eq('user_id', this.userId)
+      .eq('session_id', this.sessionId);
     if (error) throw new Error(`Unable to clear Bonnie SDK session: ${error.message}`);
   }
 }

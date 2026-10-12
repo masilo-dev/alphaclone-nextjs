@@ -15,7 +15,7 @@ export async function warmBonnieWorkspaceContext(
   snapshot: Awaited<ReturnType<typeof getBonnieWorkspaceSnapshot>>;
   warmResults: BonnieToolResult[];
 }> {
-  const snapshot = await getBonnieWorkspaceSnapshot(tenantId);
+  const snapshotPromise = getBonnieWorkspaceSnapshot(tenantId);
 
   const summaryPromise = executeSingleBonnieTool({
     tenantId,
@@ -34,7 +34,7 @@ export async function warmBonnieWorkspaceContext(
         }).catch(() => null)
       : Promise.resolve(null);
 
-  const [summary, modResult] = await Promise.all([summaryPromise, modulePromise]);
+  const [snapshot, summary, modResult] = await Promise.all([snapshotPromise, summaryPromise, modulePromise]);
   const warmResults: BonnieToolResult[] = [summary];
   if (modResult) warmResults.push(modResult);
 

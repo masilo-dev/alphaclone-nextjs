@@ -5,6 +5,7 @@ import '@/styles/alphaclone-os-v3.css';
 import '@/styles/alphaclone-os-v3-pwa.css';
 import '@/styles/apple-fluid-system.css';
 import '@/styles/crisp-product-ui.css';
+import '@/styles/mobile-workspace-compact.css';
 
 // The authenticated dashboard must never be indexed. robots.txt already
 // disallows /dashboard, but search engines can still index disallowed URLs that

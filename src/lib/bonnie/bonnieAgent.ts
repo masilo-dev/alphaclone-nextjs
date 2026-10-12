@@ -21,6 +21,7 @@ import {
 } from '@/lib/bonnie/bonnieAgentConfig';
 
 export type BonnieAgentInput = {
+  signal?: AbortSignal;
   tenantId: string;
   userId: string;
   instruction: string;
@@ -260,12 +261,12 @@ async function conversationalReply(
   instruction: string,
   history: BonnieAgentInput['history'],
   moduleId: BonnieModuleId,
-  snapshot: Awaited<ReturnType<typeof getBonnieWorkspaceSnapshot>>,
+  snapshot: Awaited<ReturnType<typeof getBonnieWorkspaceSnapshot>> | undefined,
   tenantId: string,
   onStreamToken?: (token: string) => void
 ): Promise<{ text: string; model: string }> {
   const systemPrompt = buildBonnieConversationalPrompt(moduleId, tenantId, snapshot);
-  const contextBlock = `Workspace: ${snapshot.module_summary}\n\nUser:\n${instruction}`;
+  const contextBlock = `Workspace: ${snapshot?.module_summary || 'Conversational request; no workspace data loaded'}\n\nUser:\n${instruction}`;
 
   const model = 'deepseek-chat';
   if (onStreamToken) {
@@ -534,8 +535,16 @@ function resolveModuleId(
 }
 
 export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAgentResult> {
+  input.signal?.throwIfAborted();
   const { tenantId, userId, instruction, history = [], pathname, moduleContext, onStreamToken, onActivity, conversationId } = input;
   const moduleId = resolveModuleId(moduleContext, pathname);
+  // Greetings do not need CRM counts, tool discovery, or a business workflow.
+  if (looksLikePureChitchat(instruction)) {
+    onActivity?.('planning', { mode: 'conversation' });
+    const { text, model } = await conversationalReply(instruction, history, moduleId, undefined, tenantId, onStreamToken);
+    return { response: text, success: true, provider: 'bonnie-deepseek', model, toolResults: [], logs: [], rounds: 0, executionStatus: 'read_only_answer' };
+  }
+
 
   // Create a server-side workflow record to track this execution
   const workflowId = input.workflowId ||
@@ -797,44 +806,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
     }
   }
 
-  // Pure chitchat only — all business/data questions use the tool loop
-  if (looksLikePureChitchat(instruction)) {
-    try {
-      const { text, model: chatModel } = await conversationalReply(
-        instruction,
-        history,
-        moduleId,
-        snapshot,
-        tenantId,
-        onStreamToken
-      );
-      void wfUpdate({ status: 'completed', finalResponse: text, executionStatus: 'read_only_answer', completedAt: true });
-      return {
-        response: text,
-        success: true,
-        provider,
-        model: chatModel,
-        toolResults: [],
-        logs: ['Conversational reply (no tools)'],
-        rounds: 0,
-        executionStatus: 'executed',
-        workflowId: workflowId ?? undefined,
-      };
-    } catch (err: any) {
-      void wfUpdate({ status: 'failed', finalResponse: err.message, executionStatus: 'planning_failed', completedAt: true });
-      return {
-        response: `Bonnie could not answer that (${err.message}). Try rephrasing.`,
-        success: false,
-        provider,
-        model,
-        toolResults: [],
-        logs: [],
-        rounds: 0,
-        executionStatus: 'planning_failed',
-        workflowId: workflowId ?? undefined,
-      };
-    }
-  }
+
 
   void wfUpdate({ status: 'running' });
   const allToolResults: BonnieToolResult[] = [...warmResults];
@@ -946,6 +918,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
     try {
       const { runBonnieWithOpenAIAgents } = await import('@/lib/bonnie/bonnieOpenAIAgentsRunner');
       const sdkResult = await runBonnieWithOpenAIAgents({
+        signal: input.signal,
         tenantId,
         userId,
         instruction,
@@ -954,6 +927,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         workflowId: workflowId ?? undefined,
         conversationId: conversationId ?? undefined,
         onStreamToken,
+        onActivity,
       });
       const response = sanitizeBonnieResponse(sdkResult.response);
       await persistBonnieLogs(tenantId, sdkResult.logs).catch(() => undefined);
@@ -985,11 +959,13 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         workflowId: workflowId ?? undefined,
       };
     } catch (err: unknown) {
+      input.signal?.throwIfAborted();
       allLogs.push(`OpenAI Agents SDK fallback to legacy ReAct: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
   for (let round = 0; round < MAX_AGENT_ROUNDS; round++) {
+    input.signal?.throwIfAborted();
     let plan: BonniePlan;
     try {
       const planned = await planWithDeepSeek(
@@ -1040,6 +1016,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
       };
     }
 
+    input.signal?.throwIfAborted();
     const toolCalls = plan.tool_calls || [];
     if (!toolCalls.length || plan.done === true) {
       break;

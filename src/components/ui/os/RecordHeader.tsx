@@ -35,7 +35,7 @@ export function RecordHeader({
     <header
       className={cn(
         WORKSPACE.panel.base,
-        'p-3 sm:p-4 md:p-5 flex flex-wrap items-start justify-between gap-2.5 sm:gap-4',
+        'ac-record-header p-3 sm:p-4 md:p-5 flex flex-wrap items-start justify-between gap-2.5 sm:gap-4',
         className
       )}
       style={{ ['--module-accent' as string]: accent }}
@@ -47,7 +47,7 @@ export function RecordHeader({
             style={{ background: accent }}
             aria-hidden
           />
-          <h1 className="text-lg sm:text-xl md:text-2xl leading-tight font-bold text-[var(--ws-text-primary)] tracking-tight truncate">
+          <h1 className="text-lg sm:text-xl md:text-2xl leading-tight font-bold text-[var(--ws-text-primary)] tracking-tight break-words">
             {title}
           </h1>
           {status}

@@ -15,6 +15,7 @@ import { evaluateMissionExecution } from '@/lib/bonnie/bonnieMissionEvaluator';
 import { BonnieDatabaseSession } from '@/lib/bonnie/bonnieDatabaseSession';
 
 type RunInput = {
+  signal?: AbortSignal;
   tenantId: string;
   userId: string;
   instruction: string;
@@ -23,6 +24,7 @@ type RunInput = {
   workflowId?: string;
   conversationId?: string;
   onStreamToken?: (token: string) => void;
+  onActivity?: (phase: 'executing' | 'verifying' | 'awaiting_approval', meta?: Record<string, unknown>) => void;
   /** A durable runtime approval has already authorized this exact task payload. */
   policyAlreadyApproved?: boolean;
 };
@@ -101,6 +103,8 @@ export async function runBonnieWithOpenAIAgents(input: RunInput): Promise<OpenAI
       parameters: normalizeParameters(definition.inputSchema as Record<string, unknown>),
       strict: false,
       execute: async (rawArgs: unknown) => {
+        input.signal?.throwIfAborted();
+        input.onActivity?.('executing', { tool: definition.name });
         const args = rawArgs && typeof rawArgs === 'object' ? (rawArgs as Record<string, unknown>) : {};
         const result = await executeSingleBonnieTool({
           tenantId: input.tenantId,
@@ -113,12 +117,15 @@ export async function runBonnieWithOpenAIAgents(input: RunInput): Promise<OpenAI
           skipPolicy: input.policyAlreadyApproved === true,
         });
         toolResults.push(result);
+        input.onActivity?.(result.approvalRequired ? 'awaiting_approval' : 'verifying', { tool: definition.name, success: result.success });
         return JSON.stringify(result);
       },
     })
   );
 
+  const { default: OpenAI } = await import('openai');
   const provider = new OpenAIProvider({
+    openAIClient: new OpenAI({ apiKey, baseURL: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com', timeout: 45_000, maxRetries: 0 }),
     apiKey,
     baseURL: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
     useResponses: false,
@@ -126,7 +133,7 @@ export async function runBonnieWithOpenAIAgents(input: RunInput): Promise<OpenAI
   });
 
   try {
-    const session = new BonnieDatabaseSession({ tenantId: input.tenantId, userId: input.userId });
+    const session = new BonnieDatabaseSession({ tenantId: input.tenantId, userId: input.userId, conversationId: input.conversationId });
     const toolByName = new Map(sdkTools.map((sdkTool) => [sdkTool.name, sdkTool]));
     const specialistAgents = specialists.map(
       (specialist) =>
@@ -161,6 +168,7 @@ export async function runBonnieWithOpenAIAgents(input: RunInput): Promise<OpenAI
           const streamed = await runner.run(agent, buildInput(input), {
             maxTurns: BONNIE_MAX_AGENT_ROUNDS,
             stream: true,
+            signal: input.signal,
             session,
           });
           const textStream = streamed.toTextStream({ compatibleWithNodeStreams: true });
@@ -172,6 +180,7 @@ export async function runBonnieWithOpenAIAgents(input: RunInput): Promise<OpenAI
         })()
       : await runner.run(agent, buildInput(input), {
           maxTurns: BONNIE_MAX_AGENT_ROUNDS,
+          signal: input.signal,
           session,
         });
     const approvalPending = toolResults.some((item) => item.approvalRequired);

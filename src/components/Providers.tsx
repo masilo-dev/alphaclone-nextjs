@@ -20,6 +20,7 @@ import { LanguageProvider } from '@/contexts/LanguageContext';
 import { UserPreferencesBootstrap } from '@/components/UserPreferencesBootstrap';
 import ServiceWorkerBootstrap from '@/components/common/ServiceWorkerBootstrap';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
+import { usePhoneViewport } from '@/hooks/usePhoneViewport';
 import { clearSavedStats } from '@/lib/dashboard/clientStatsCache';
 import { registerPlatformQueryClient } from '@/lib/platformReset';
 import { alphacloneChakraTheme } from '@/theme/chakraTheme';
@@ -42,6 +43,7 @@ if (typeof window !== 'undefined') {
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  usePhoneViewport();
   // Create QueryClient inside component to avoid server/client hydration mismatch
   const [queryClient] = useState(
     () =>

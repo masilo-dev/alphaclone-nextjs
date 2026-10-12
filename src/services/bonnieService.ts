@@ -367,6 +367,7 @@ export const bonnieService = {
     instruction: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }> | undefined,
     options: {
+      conversationId?: string | null;
       pathname?: string;
       moduleContext?: string;
       onToken?: (token: string) => void;
@@ -380,6 +381,7 @@ export const bonnieService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         tenantId,
+        conversationId: options.conversationId,
         instruction,
         history,
         pathname: options.pathname,

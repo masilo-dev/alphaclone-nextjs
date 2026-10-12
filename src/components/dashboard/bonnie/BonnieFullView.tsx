@@ -299,6 +299,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
     startKeepAlive();
     try {
       const res = await bonnieService.streamInstruction(tenantId, text, history, {
+        conversationId: activeConversationId,
         pathname: contextPath || undefined,
         moduleContext: effectiveModule,
         onToken,
@@ -396,9 +397,9 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
       borderRadius={BC.radii.panel}
       bg="gray.950"
       color="whiteAlpha.900"
-      h={isPopout ? '100dvh' : 'calc(100dvh - 8.5rem)'}
-      minH="560px"
-      className="ac-enterprise-module"
+      h={{ base: '100%', md: isPopout ? '100dvh' : 'calc(100dvh - 8.5rem)' }}
+      minH={{ base: 0, md: "560px" }}
+      className="ac-enterprise-module ac-bonnie-workspace"
     >
       <BonnieSidebar
         width={panel1Width}
@@ -661,8 +662,8 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
                     storageKey={tenantId ? `bonnie_chat_ws_${tenantId}` : undefined}
                     externalPrompt={externalPrompt}
                     onExternalPromptConsumed={() => setExternalPrompt(null)}
-                    placeholder="State a business objective… Use @customer @invoice @project · / for commands"
-                    introMessage="I'm Bonnie — your Alphaclone Systems Chief Operating Officer. State a business objective and I'll plan, coordinate specialist agents, request approval when needed, and keep chasing until the work is done."
+                    placeholder="Message Bonnie…"
+                    introMessage="Hi Bonnie. What would you like to work on?"
                     onSend={handleBonnieMessage}
                     onStreamSend={handleBonnieStream}
                     onResolveApproval={handleResolveApproval}

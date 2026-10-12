@@ -49,6 +49,8 @@ async function deepSeekCompletion(
   const client = new OpenAI({
     apiKey,
     baseURL: 'https://api.deepseek.com',
+    timeout: 45_000,
+    maxRetries: 0,
   });
 
   const response = await client.chat.completions.create({
@@ -155,6 +157,8 @@ export async function streamDeepSeek(
     const client = new OpenAI({
       apiKey,
       baseURL: 'https://api.deepseek.com',
+    timeout: 45_000,
+    maxRetries: 0,
     });
     const stream = await client.chat.completions.create({
       model,

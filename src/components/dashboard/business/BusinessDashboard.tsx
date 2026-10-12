@@ -1530,7 +1530,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                             routeKey={route}
                             className={`w-full min-w-0 ${WORKSPACE.canvas.maxWidth} mx-auto ${
                                 ENTERPRISE_FULL_BLEED_TABS.has(route)
-                                    ? 'h-full min-h-0 max-md:pb-[calc(4.25rem+min(env(safe-area-inset-bottom,0px),20px))]'
+                                    ? 'h-full min-h-0'
                                     : 'min-h-full'
                             }`}
                         >
@@ -1541,7 +1541,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                     <div
                                         key={vRoute}
                                         data-module-route={vRoute}
-                                        className={isCurrent ? 'w-full min-h-full' : 'hidden'}
+                                        data-module-layout={isEnterpriseFullBleedTab(vRoute) ? "pane" : "page"}
+                                        className={isCurrent ? isEnterpriseFullBleedTab(vRoute) ? 'w-full h-full min-h-0 flex flex-col' : 'w-full min-h-full' : 'hidden'}
                                         aria-hidden={!isCurrent}
                                     >
                                         {wrapRouteInHub(vRoute, renderBusinessContent(vRoute))}
@@ -1549,7 +1550,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                 );
                             })}
                             {!PRIMARY_PERSISTENT_ROUTES.has(route) && (
-                                <div data-module-route={route} className="w-full min-h-full">
+                                <div data-module-route={route} data-module-layout={isEnterpriseFullBleedTab(route) ? "pane" : "page"} className={isEnterpriseFullBleedTab(route) ? "w-full h-full min-h-0 flex flex-col" : "w-full min-h-full"}>
                                     {moduleContent}
                                 </div>
                             )}
