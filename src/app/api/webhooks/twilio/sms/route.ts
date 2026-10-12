@@ -117,7 +117,11 @@ export async function POST(req: NextRequest) {
       metadata: { twilio: true },
     });
     await recordInboundOutreachReply({ admin, tenantId: integration.tenant_id, channel: 'sms', sender: from, text: body, provider: 'twilio', providerEventId: sid || null })
-      .catch((replyError) => console.error('[twilio-sms] outreach reply capture failed', replyError));
+  .then(async (reply) => {
+                if (!reply.matched || !reply.sourceType || !reply.sourceId) return;
+                const { resolveChasesForDomainEvent } = await import('@/lib/chaser/chaseEventBridge');
+                await resolveChasesForDomainEvent({ tenantId: integration.tenant_id, eventType: 'communication.reply_received', entityType: reply.sourceType, entityId: reply.sourceId, outcome: 'replied' });
+            }).catch((replyError) => console.error('[twilio-sms] outreach reply capture failed', replyError));
 
     return NextResponse.json({ success: true, optOut: isStopKeyword });
   } catch {
