@@ -17,12 +17,11 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
         }
 
         const { tenantId, reason } = parsed.data;
-        await requireTenantAccess(tenantId);
-        const admin = createAdminSupabaseClientOrThrow();
+        const { user, admin } = await requireTenantAccess(tenantId, req);
 
         const { data: invoice, error: fetchError } = await admin
             .from('business_invoices')
-            .select('id,status,tenant_id,invoice_number')
+            .select('id,status,tenant_id,invoice_number,amount_paid')
             .eq('id', id)
             .eq('tenant_id', tenantId)
             .single();
@@ -31,6 +30,12 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
         }
         if (invoice.status === 'void') {
             return NextResponse.json({ error: 'Invoice is already voided', code: 'ALREADY_VOID' }, { status: 409 });
+        }
+        if (Number(invoice.amount_paid || 0) > 0 || invoice.status === 'paid') {
+            return NextResponse.json({
+                error: 'Cannot void an invoice with recorded payments. Process a refund or credit note first.',
+                code: 'CANNOT_VOID_PAID_INVOICE'
+            }, { status: 409 });
         }
 
         const { error } = await admin
@@ -45,6 +50,17 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
             .eq('tenant_id', tenantId);
 
         if (error) throw error;
+
+        await admin.from('audit_logs').insert({
+            action: 'invoice_voided',
+            resource_type: 'invoice',
+            resource_id: id,
+            tenant_id: tenantId,
+            user_id: user?.id || null,
+            metadata: { invoice_number: invoice.invoice_number, reason },
+            created_at: new Date().toISOString(),
+        }).catch((err) => console.error('[void-route] audit log error', err));
+
         return NextResponse.json({ success: true, invoiceId: id, status: 'void' });
     } catch (error) {
         return routeErrorResponse(error, 'Failed to void invoice', req);

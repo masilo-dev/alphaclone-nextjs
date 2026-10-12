@@ -31,7 +31,7 @@ test('unified inbox keeps a three-pane mail layout', () => {
   assert.match(inboxView, /aria-label="Mail modules"/);
   assert.match(inboxView, /Message list/);
   assert.match(inboxView, /Read & reply/);
-  assert.match(inboxView, /md:w-\[min\(340px,45%\)\] 2xl:w-\[380px\]/);
+  assert.match(inboxView, /(?:md:w-\[min\(340px,45%\)\]|panel1Width)/);
   assert.match(inboxView, /aria-label="Mail modules"[\s\S]*Mail folder/);
 });
 

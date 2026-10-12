@@ -521,6 +521,14 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
         backgroundColor: 'var(--ws-panel)',
         borderColor: 'var(--ws-border)',
         color: 'var(--ws-text-primary)',
+        ...Object.fromEntries(
+          ['--ws-panel', '--ws-border', '--ws-text-primary', '--ws-hover', '--state-danger'].map((token) => [
+            token,
+            typeof window !== 'undefined' && dropdownRef.current
+              ? getComputedStyle(dropdownRef.current).getPropertyValue(token).trim() || `var(${token})`
+              : `var(${token})`,
+          ])
+        ),
       } as React.CSSProperties}
       className={`overflow-y-auto overscroll-contain border border-[var(--ws-border)] bg-[var(--ws-panel)] text-[var(--ws-text-primary)] ${WORKSPACE.panel.radius} shadow-2xl animate-in fade-in slide-in-from-top-1 duration-150 custom-scrollbar`}
       data-layer="dropdown"
