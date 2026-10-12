@@ -2,12 +2,16 @@ import { randomUUID } from 'node:crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { sanitizeForAudit } from '@/lib/email/sanitizeEmailExecutionEvidence';
 
-type StoredOperation = { action_id: string; final_status: string; sanitized_output?: Record<string, unknown> };
+/** Claims older than this (5 min) in 'running' or 'unknown_execution_state' are considered abandoned. */
+const STALE_CLAIM_EXPIRY_MS = 5 * 60 * 1000;
+
+type StoredOperation = { action_id: string; final_status: string; sanitized_output?: Record<string, unknown>; created_at?: string };
 export interface EmailOperationStore {
   claim(actionId: string): Promise<boolean>;
   read(): Promise<StoredOperation | null>;
   save(actionId: string, status: string, output: Record<string, unknown>): Promise<void>;
   reconcile(): Promise<Record<string, unknown> | null>;
+  expireStale(actionId: string): Promise<boolean>;
 }
 
 /** Preserve every recipient; generic audit snapshots deliberately truncate arrays. */
@@ -32,7 +36,7 @@ export function emailOperationStore(tenantId: string, tool: string, key: string,
       return true;
     },
     async read() {
-      const { data, error } = await db.from('mcp_action_receipts').select('action_id, final_status, sanitized_output')
+      const { data, error } = await db.from('mcp_action_receipts').select('action_id, final_status, sanitized_output, created_at')
         .eq('tenant_id', tenantId).eq('tool', tool).eq('idempotency_key', key).maybeSingle();
       if (error) throw new Error(`EMAIL_OPERATION_LOOKUP_FAILED: ${error.message}`);
       return data;
@@ -57,6 +61,14 @@ export function emailOperationStore(tenantId: string, tool: string, key: string,
         sender: data.metadata?.sender, deliveryStatus: data.failed_at || data.bounced_at ? 'failed' : data.delivered_at ? 'delivered' : 'provider_accepted',
         deliveredAt: data.delivered_at || null, tried: [], reconciled: true };
     },
+    /** Delete an abandoned claim so the next attempt can proceed. Returns true if a row was removed. */
+    async expireStale(actionId) {
+      const { data, error } = await db.from('mcp_action_receipts').delete()
+        .eq('tenant_id', tenantId).eq('tool', tool).eq('idempotency_key', key).eq('action_id', actionId)
+        .select('action_id');
+      if (error) return false; // swallow — caller will fall through to OUTCOME_UNKNOWN
+      return Array.isArray(data) && data.length > 0;
+    },
   };
 }
 
@@ -76,6 +88,15 @@ export async function runEmailOperation<T extends Record<string, unknown>>(param
       return { ...reconciled, idempotent_replay: true } as unknown as T;
     }
     if (['running', 'unknown_execution_state'].includes(existing.final_status)) {
+      // Auto-expire abandoned claims older than 5 minutes when reconciliation found no provider acceptance
+      const claimAge = existing.created_at ? Date.now() - new Date(existing.created_at).getTime() : Infinity;
+      if (claimAge > STALE_CLAIM_EXPIRY_MS) {
+        const expired = await params.store.expireStale(existing.action_id);
+        if (expired) {
+          // Claim cleared — retry by recursing (will create a fresh claim)
+          return runEmailOperation(params);
+        }
+      }
       return { ...existing.sanitized_output, success: false, status: 'unknown', deliveryStatus: 'unknown',
         code: 'OUTCOME_UNKNOWN', error: 'Reconcile the original operation before retrying; no new send was made.',
         action_id: existing.action_id, idempotent_replay: true } as unknown as T;

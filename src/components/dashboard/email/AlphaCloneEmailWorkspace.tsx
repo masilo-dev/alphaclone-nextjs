@@ -186,6 +186,9 @@ export default function AlphaCloneEmailWorkspace() {
   // Provider state
   const [providerOptions, setProviderOptions] = useState<Array<{ id: DeliveryEmailProvider; label: string; connected: boolean }>>([]);
   const [workspaceDefault, setWorkspaceDefault] = useState<DeliveryEmailProvider>('auto');
+  // Hydration guard: prevents SSR/CSR mismatch on dynamic <select> options (React Error #418)
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => { setHasMounted(true); }, []);
   const connectedProviders = providerOptions
     .filter((p) => p.connected)
     .map((p) => ({ name: p.label, status: 'Connected', email: '', primary: p.id === workspaceDefault }));
@@ -705,18 +708,26 @@ export default function AlphaCloneEmailWorkspace() {
               }}
               className="bg-transparent text-[var(--ws-text-secondary)] font-medium outline-none cursor-pointer pr-1"
             >
-              <option value="auto" className="bg-[var(--ws-canvas)] text-[var(--ws-text-primary)]">
-                {providerOptions.filter((p) => p.connected).length > 0
-                  ? `All Mailboxes (${providerOptions.filter((p) => p.connected).length} connected)`
-                  : 'Mailbox: Auto-routed'}
-              </option>
-              {providerOptions
-                .filter((p) => p.connected)
-                .map((p) => (
-                  <option key={p.id} value={p.id} className="bg-[var(--ws-canvas)] text-[var(--ws-text-primary)]">
-                    {p.label}
+              {hasMounted ? (
+                <>
+                  <option value="auto" className="bg-[var(--ws-canvas)] text-[var(--ws-text-primary)]">
+                    {providerOptions.filter((p) => p.connected).length > 0
+                      ? `All Mailboxes (${providerOptions.filter((p) => p.connected).length} connected)`
+                      : 'Mailbox: Auto-routed'}
                   </option>
-                ))}
+                  {providerOptions
+                    .filter((p) => p.connected)
+                    .map((p) => (
+                      <option key={p.id} value={p.id} className="bg-[var(--ws-canvas)] text-[var(--ws-text-primary)]">
+                        {p.label}
+                      </option>
+                    ))}
+                </>
+              ) : (
+                <option value="auto" className="bg-[var(--ws-canvas)] text-[var(--ws-text-primary)]">
+                  Mailbox: Auto-routed
+                </option>
+              )}
             </select>
           </div>
 
