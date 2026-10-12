@@ -85,11 +85,23 @@ export async function POST(request: NextRequest) {
         ...payload,
         args: { ...currentArgs, ...editedArgs },
       };
-      // Persist the merged payload before executing
+
+      const mergedArgs = (payload.args || {}) as Record<string, unknown>;
+      const { computeOutboundContentHash } = await import('@/lib/email/approvalContentHash');
+      const updatedHash = computeOutboundContentHash({
+        to: String(mergedArgs.to || mergedArgs.recipient || ''),
+        subject: String(mergedArgs.subject || ''),
+        body: String(mergedArgs.body || mergedArgs.content || mergedArgs.message || ''),
+        sender: String(mergedArgs.from || mergedArgs.sender || ''),
+        channel: String(mergedArgs.channel || existing.delivery_channel || 'email'),
+      });
+
+      // Persist the merged payload with updated content hash before executing
       await admin
         .from('autonomous_runner_approvals')
         .update({
           payload,
+          content_hash: updatedHash,
           edit_history: editHistory,
           updated_at: new Date().toISOString(),
         })

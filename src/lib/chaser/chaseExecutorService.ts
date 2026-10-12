@@ -85,6 +85,14 @@ async function createInternalOwnerTask(chase: ChaseInstanceRow, title: string, d
 
 async function queueApprovalForChase(chase: ChaseInstanceRow, draft: Record<string, unknown>) {
   const admin = createSupabaseAdminClient();
+  const { computeOutboundContentHash } = await import('@/lib/email/approvalContentHash');
+  const contentHash = computeOutboundContentHash({
+    to: String(draft.to || draft.recipient || ''),
+    subject: String(draft.subject || ''),
+    body: String(draft.body || draft.content || ''),
+    channel: String(draft.channel || 'email'),
+  });
+
   const { data, error } = await admin
     .from('autonomous_runner_approvals')
     .insert({
@@ -93,6 +101,8 @@ async function queueApprovalForChase(chase: ChaseInstanceRow, draft: Record<stri
       risk_level: 'medium',
       status: 'pending',
       reason: `Chase approval for ${chase.policy_key}`,
+      content_hash: contentHash,
+      delivery_channel: String(draft.channel || 'email'),
       payload: {
         source: 'universal_chaser',
         chase_id: chase.id,

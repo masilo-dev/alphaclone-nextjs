@@ -4,8 +4,12 @@ import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
 const addSchema = z.object({
   workspaceId: z.string().uuid(),
-  candidateIds: z.array(z.string().uuid()).min(1).max(500),
-});
+  candidateIds: z.array(z.string().uuid()).max(500).optional(),
+  contactIds: z.array(z.string().uuid()).max(500).optional(),
+}).refine(
+  (data) => (data.candidateIds && data.candidateIds.length > 0) || (data.contactIds && data.contactIds.length > 0),
+  { message: 'Either candidateIds or contactIds must be provided' }
+);
 
 export async function POST(
   req: NextRequest,
@@ -26,24 +30,48 @@ export async function POST(
     if (listError) throw listError;
     if (!list) return NextResponse.json({ error: 'List not found' }, { status: 404 });
 
-    const rows = input.candidateIds.map((candidateId) => ({
-      workspace_id: input.workspaceId,
-      created_by: user.id,
-      list_id: listId,
-      candidate_id: candidateId,
-      added_by: user.id,
-    }));
+    const rows: Array<Record<string, unknown>> = [];
 
-    const { data: existing, error: existingError } = await admin
-      .from('lead_list_members')
-      .select('candidate_id')
-      .eq('list_id', listId)
-      .in('candidate_id', input.candidateIds);
+    for (const candidateId of input.candidateIds || []) {
+      rows.push({
+        workspace_id: input.workspaceId,
+        created_by: user.id,
+        list_id: listId,
+        candidate_id: candidateId,
+        added_by: user.id,
+      });
+    }
 
-    if (existingError) throw existingError;
+    for (const contactId of input.contactIds || []) {
+      rows.push({
+        workspace_id: input.workspaceId,
+        created_by: user.id,
+        list_id: listId,
+        contact_id: contactId,
+        added_by: user.id,
+      });
+    }
 
-    const existingIds = new Set((existing || []).map((row: { candidate_id: string | null }) => row.candidate_id).filter(Boolean));
-    const newRows = rows.filter((row) => !existingIds.has(row.candidate_id));
+    const candidateIds = input.candidateIds || [];
+    const contactIds = input.contactIds || [];
+
+    const [{ data: existingCandidates }, { data: existingContacts }] = await Promise.all([
+      candidateIds.length > 0
+        ? admin.from('lead_list_members').select('candidate_id').eq('list_id', listId).in('candidate_id', candidateIds)
+        : Promise.resolve({ data: [] }),
+      contactIds.length > 0
+        ? admin.from('lead_list_members').select('contact_id').eq('list_id', listId).in('contact_id', contactIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const existingCandidateSet = new Set((existingCandidates || []).map((r: { candidate_id: string | null }) => r.candidate_id).filter(Boolean));
+    const existingContactSet = new Set((existingContacts || []).map((r: { contact_id: string | null }) => r.contact_id).filter(Boolean));
+
+    const newRows = rows.filter((row) => {
+      if (row.candidate_id && existingCandidateSet.has(row.candidate_id as string)) return false;
+      if (row.contact_id && existingContactSet.has(row.contact_id as string)) return false;
+      return true;
+    });
 
     if (newRows.length > 0) {
       const { error: insertError } = await admin.from('lead_list_members').insert(newRows);

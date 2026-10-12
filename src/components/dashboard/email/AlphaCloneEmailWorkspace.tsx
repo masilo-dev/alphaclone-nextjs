@@ -691,10 +691,33 @@ export default function AlphaCloneEmailWorkspace() {
 
         {/* Connected Status & User Profile */}
         <div className="flex min-w-max items-center gap-3">
-          {/* Accounts status badge */}
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] type-caption">
+          {/* Connected Mailbox Switcher */}
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] type-caption">
             <div className="w-2 h-2 rounded-full bg-[var(--success-500)] animate-pulse" />
-            <span className="text-[var(--ws-text-secondary)] font-medium">Outlook + Zoho Synced</span>
+            <select
+              aria-label="Connected Mailbox"
+              value={workspaceDefault}
+              onChange={(e) => {
+                const val = e.target.value as DeliveryEmailProvider;
+                setWorkspaceDefault(val);
+                setComposeProvider(val);
+                toast.success(`Mailbox context: ${val === 'auto' ? 'Auto-routed' : val.toUpperCase()}`);
+              }}
+              className="bg-transparent text-[var(--ws-text-secondary)] font-medium outline-none cursor-pointer pr-1"
+            >
+              <option value="auto" className="bg-[var(--ws-canvas)] text-[var(--ws-text-primary)]">
+                {providerOptions.filter((p) => p.connected).length > 0
+                  ? `All Mailboxes (${providerOptions.filter((p) => p.connected).length} connected)`
+                  : 'Mailbox: Auto-routed'}
+              </option>
+              {providerOptions
+                .filter((p) => p.connected)
+                .map((p) => (
+                  <option key={p.id} value={p.id} className="bg-[var(--ws-canvas)] text-[var(--ws-text-primary)]">
+                    {p.label}
+                  </option>
+                ))}
+            </select>
           </div>
 
           <button

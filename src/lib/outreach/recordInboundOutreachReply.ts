@@ -62,8 +62,24 @@ export async function recordInboundOutreachReply(options: { admin: any; tenantId
       const { data: deal, error: dealError } = await options.admin.from('deals').insert({ tenant_id: options.tenantId, name: `${sourceName} — outreach opportunity`, value: 0, currency: 'USD', stage: 'qualification', owner_id: ownerId, source: 'outreach', metadata: { lead_id: enrollment.lead_id || null, contact_id: enrollment.contact_id || null, client_id: enrollment.client_id || null, outreach_event_id: event?.id || null, sequence_id: enrollment.sequence_id } }).select('id').single();
       if (dealError) throw dealError;
       dealId = deal.id;
-      await options.admin.from('revenue_lifecycle_links').insert({ tenant_id: options.tenantId, source_type: sourceType, source_id: sourceId, target_type: 'deal', target_id: dealId, relationship: 'converted_to', metadata: { outreach_event_id: event?.id || null } });
     }
   }
+
+  // Cross-module synchronization: resolve any active Universal Chasers targeting this lead or contact
+  if (sourceType && sourceId) {
+    try {
+      const { resolveChasesForDomainEvent } = await import('@/lib/chaser/chaseEventBridge');
+      await resolveChasesForDomainEvent({
+        tenantId: options.tenantId,
+        eventType: 'communication.reply_received',
+        entityType: sourceType,
+        entityId: sourceId,
+        outcome: 'replied',
+      });
+    } catch (chaseErr) {
+      console.warn('[recordInboundOutreachReply] Universal Chaser auto-resolve skipped:', chaseErr);
+    }
+  }
+
   return { matched: true, classification, eventType, dealId };
 }
