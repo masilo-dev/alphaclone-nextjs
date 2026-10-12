@@ -1031,7 +1031,7 @@ html.dark .ac-dashboard-root .text-white,
 html.dark .ac-business-root .text-white,
 html:not(.light) .ac-dashboard-root .text-white,
 html:not(.light) .ac-business-root .text-white {
-  color: var(--text-inverse, #ffffff) !important;
+  color: var(--ws-text-primary, #F2F2F3) !important;
 }
 
 /* text-slate-100 / text-slate-200 → near-white (primary body) */

@@ -1,5 +1,6 @@
 'use client';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 import React from 'react';
 
 type SocialAuthButtonsProps = {
@@ -20,6 +21,7 @@ export default function SocialAuthButtons({
   onLoadingChange,
   className = '',
 }: SocialAuthButtonsProps) {
+  const { t } = useLanguage();
   const runOAuth = async (provider: 'google' | 'linkedin' | 'facebook') => {
     onLoadingChange?.(true);
     onError('');
@@ -53,8 +55,8 @@ export default function SocialAuthButtons({
       <div className="flex items-stretch gap-2">
         <button
           type="button"
-          aria-label="Continue with Google"
-          title="Continue with Google"
+          aria-label={t("Continue with Google")}
+          title={t("Continue with Google")}
           onClick={() => runOAuth('google')}
           disabled={isLoading || disabled}
           className={`${btnClass} bg-white hover:bg-gray-50 text-[var(--ws-text-muted)] border-gray-300`}
@@ -70,8 +72,8 @@ export default function SocialAuthButtons({
 
         <button
           type="button"
-          aria-label="Continue with LinkedIn"
-          title="Continue with LinkedIn"
+          aria-label={t("Continue with LinkedIn")}
+          title={t("Continue with LinkedIn")}
           onClick={() => runOAuth('linkedin')}
           disabled={isLoading || disabled}
           className={`${btnClass} bg-[var(--logo-linkedin)] hover:bg-[var(--logo-linkedin-hover)] text-white border-[var(--logo-linkedin)]`}
@@ -84,8 +86,8 @@ export default function SocialAuthButtons({
 
         <button
           type="button"
-          aria-label="Continue with Facebook"
-          title="Continue with Facebook"
+          aria-label={t("Continue with Facebook")}
+          title={t("Continue with Facebook")}
           onClick={() => runOAuth('facebook')}
           disabled={isLoading || disabled}
           className={`${btnClass} bg-[var(--logo-facebook)] hover:bg-[var(--logo-facebook-hover)] text-white border-[var(--logo-facebook)]`}

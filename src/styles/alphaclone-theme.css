@@ -411,3 +411,18 @@ html.dark .ac-auth-card {
   border-color: var(--ws-border);
   box-shadow: var(--ws-card-shadow);
 }
+
+/* Sign-in presentation only: existing authentication controls and handlers remain intact. */
+.ac-signin-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 100dvh; background: #fff; }
+.ac-signin-form { align-self: center; justify-self: center; margin: 40px 24px; max-width: 390px; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: #fff !important; color: #171923; color-scheme: light; --color-bg-primary: #fff; --color-text-primary: #171923; --color-text-secondary: #525866; --color-border-primary: #d5d9e0; --ws-text-muted: #626977; }
+.ac-signin-form h1 { font-size: 24px; }
+.ac-signin-form input { color: #171923 !important; background: #fff !important; border-color: #d5d9e0 !important; }
+.ac-signin-brand { position: relative; display: flex; align-items: center; padding: clamp(32px, 6vw, 96px); background: #162d4c; color: #fff; overflow: hidden; }
+.ac-signin-brand::before { content: ''; position: absolute; width: 620px; height: 620px; border: 1px solid #ffffff20; border-radius: 50%; right: -220px; top: 8%; box-shadow: 0 0 0 80px #ffffff06, 0 0 0 160px #ffffff04; pointer-events: none; }
+.ac-signin-brand-content { position: relative; max-width: 420px; }
+.ac-signin-eyebrow { font-size: 13px; letter-spacing: .06em; margin-bottom: 20px; color: #9fdbdf; }
+.ac-signin-brand h2 { font-size: clamp(28px, 3vw, 44px); line-height: 1.15; font-weight: 600; margin-bottom: 20px; color: #fff !important; }
+.ac-signin-brand p { color: #d4dfed; }
+.ac-signin-brand a { display: inline-flex; margin-top: 24px; padding: 10px 16px; border: 1px solid #ffffff66; border-radius: 6px; color: #fff; }
+@media (max-width: 767px) { .ac-signin-layout { display: flex; flex-direction: column; padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); } .ac-signin-form { margin: auto; padding: 20px 0 !important; } .ac-signin-brand { display: none; } }
+.ac-signin-form { --text-primary: #171923; --text-secondary: #525866; --text-muted: #626977; --ws-text-primary: #171923; --ws-text-secondary: #525866; --surface-primary: #fff; --surface-secondary: #f6f7f9; --ws-panel: #fff; --ws-surface-secondary: #f6f7f9; --ws-border: #d5d9e0; }

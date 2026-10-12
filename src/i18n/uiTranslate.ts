@@ -1,3 +1,4 @@
+import { workspaceCopy } from './workspaceCopy';
 import type { SupportedLanguage } from './languages';
 import { marketingHomeTranslate } from './marketingHome';
 import { marketingContactTranslate } from './marketingContact';
@@ -2709,6 +2710,8 @@ const PL: Record<string, string> = {
 
 export function uiTranslate(lang: SupportedLanguage, text: string): string {
     if (!text || lang === 'en') return text;
+    const workspace = workspaceCopy(lang, text.trim());
+    if (workspace) return workspace;
     const table = lang === 'es' ? ES : PL;
     if (table[text]) return table[text];
     const trimmed = text.trim();

@@ -4,6 +4,7 @@ import { Input as AlphaCloneInput } from '@/components/ui/input';
 import { Select as AlphaCloneSelect } from '@/components/ui/select';
 import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ArrowLeft, FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages, Scale, Send, MessageSquare, Sparkles, Trash2, CheckSquare, Square, PenTool, Upload } from 'lucide-react';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
@@ -169,6 +170,7 @@ const PAYMENT_OPTIONS = [
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'ZAR', 'NGN', 'GHS'];
 
 const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab }) => {
+    const { t } = useLanguage();
     const router = useRouter();
     const relationship = useRelationship();
     const searchParams = useSearchParams();
@@ -1203,11 +1205,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4 sm:mb-5">
                 <div className="min-w-0">
-                    <h1 className="text-xl sm:text-2xl font-bold text-white">Contracts & Agreements</h1>
-                    <p className="text-[var(--ws-text-muted)] type-card-description sm:text-sm mt-1 leading-relaxed">Create, import, review, approve, and send agreements from one workspace.</p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-white">{t("Contracts & Agreements")}</h1>
+                    <p className="text-[var(--ws-text-muted)] type-card-description sm:text-sm mt-1 leading-relaxed">{t("Create, import, review, approve, and send agreements from one workspace.")}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto flex-wrap">
-                    <HelpDisclosure title="Contract Lifecycle Guide" label="Contracts guide">
+                    <HelpDisclosure title={t("Contract Lifecycle Guide")} label={t("Contracts guide")}>
                         <div className="pt-2">
                             <OperationalWorkflowStrip moduleId="contracts" userRole={user.role} />
                         </div>
@@ -1217,8 +1219,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                         onClick={() => setActiveView('new')}
                         className={`flex-1 sm:flex-none h-8 px-3 rounded-full type-ui font-bold transition-all ${activeView === 'new' ? 'bg-teal-600 text-white shadow-sm' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
                     >
-                        New Contract
-                    </button>
+                        {t("New Contract")}</button>
                     <input
                         ref={contractFileInputRef}
                         type="file"
@@ -1242,37 +1243,33 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                         onClick={() => setActiveView('list')}
                         className={`flex-1 sm:flex-none h-8 px-3 rounded-full type-ui font-bold transition-all ${activeView === 'list' ? 'bg-teal-600 text-white shadow-sm' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
                     >
-                        Saved ({savedContracts.length})
+                        {t("Saved (")}{savedContracts.length})
                     </button>
                     <button
                         type="button"
                         onClick={() => setActiveView('templates')}
                         className={`flex-1 sm:flex-none h-8 px-3 rounded-full type-ui font-bold transition-all ${activeView === 'templates' ? 'bg-teal-600 text-white shadow-sm' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
                     >
-                        Templates
-                    </button>
+                        {t("Templates")}</button>
                     <button
                         type="button"
                         onClick={() => setActiveView('alerts')}
                         className={`flex-1 sm:flex-none h-8 px-3 rounded-full type-ui font-bold transition-all ${activeView === 'alerts' ? 'bg-teal-600 text-white shadow-sm' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
                     >
-                        Renewal Alerts
-                    </button>
+                        {t("Renewal Alerts")}</button>
                     <button
                         type="button"
                         onClick={() => setActiveView('lawyer')}
                         className={`flex-1 sm:flex-none h-8 px-3 rounded-full type-ui font-bold transition-all ${activeView === 'lawyer' ? 'bg-teal-600 text-white shadow-sm' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
                     >
-                        AI Lawyer
-                    </button>
+                        {t("AI Lawyer")}</button>
                     <button
                         type="button"
                         onClick={() => setSignatureModalOpen(true)}
                         className="flex-1 sm:flex-none h-8 px-3 rounded-full type-ui font-bold bg-teal-500/20 text-[var(--brand-blue-300)] border border-teal-500/30 hover:bg-teal-500/30 transition-all flex items-center justify-center gap-1.5"
-                        title="Your saved signature and signer details, reused on every contract"
+                        title={t("Your saved signature and signer details, reused on every contract")}
                     >
-                        <PenTool className="w-3 h-3" /> My signature
-                    </button>
+                        <PenTool className="w-3 h-3" /> {t("My signature")}</button>
                 </div>
             </div>
 
@@ -1337,59 +1334,55 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                             <div className="flex-1 min-w-0">
                                 <label className="block type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)] mb-1.5">
-                                    Search
-                                </label>
+                                    {t("Search")}</label>
                                 <AlphaCloneInput
                                     className={inputCls}
                                     value={listQuery}
                                     onChange={(e) => setListQuery(e.target.value)}
-                                    placeholder="Search by title, client, email, status…"
+                                    placeholder={t("Search by title, client, email, status…")}
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-2 sm:flex sm:items-end sm:justify-end sm:gap-3">
                                 <div>
                                     <label className="block type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)] mb-1.5">
-                                        Status
-                                    </label>
+                                        {t("Status")}</label>
                                     <AlphaCloneSelect
                                         className={inputCls}
                                         value={listStatusFilter}
                                         onChange={(e) => setListStatusFilter(e.target.value as any)}
                                     >
-                                        <option value="all">All</option>
-                                        <option value="draft">Draft</option>
-                                        <option value="needs_approval">Needs approval</option>
-                                        <option value="awaiting_signature">Awaiting signature</option>
-                                        <option value="active">Active</option>
-                                        <option value="expiring">Expiring</option>
-                                        <option value="archived">Archived</option>
+                                        <option value="all">{t("All")}</option>
+                                        <option value="draft">{t("Draft")}</option>
+                                        <option value="needs_approval">{t("Needs approval")}</option>
+                                        <option value="awaiting_signature">{t("Awaiting signature")}</option>
+                                        <option value="active">{t("Active")}</option>
+                                        <option value="expiring">{t("Expiring")}</option>
+                                        <option value="archived">{t("Archived")}</option>
                                     </AlphaCloneSelect>
                                 </div>
                                 <div>
                                     <label className="block type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)] mb-1.5">
-                                        Sort
-                                    </label>
+                                        {t("Sort")}</label>
                                     <AlphaCloneSelect
                                         className={inputCls}
                                         value={listSort}
                                         onChange={(e) => setListSort(e.target.value as any)}
                                     >
-                                        <option value="newest">Newest</option>
-                                        <option value="oldest">Oldest</option>
-                                        <option value="title_asc">Title A–Z</option>
-                                        <option value="title_desc">Title Z–A</option>
-                                        <option value="value_desc">Value high–low</option>
-                                        <option value="value_asc">Value low–high</option>
+                                        <option value="newest">{t("Newest")}</option>
+                                        <option value="oldest">{t("Oldest")}</option>
+                                        <option value="title_asc">{t("Title A–Z")}</option>
+                                        <option value="title_desc">{t("Title Z–A")}</option>
+                                        <option value="value_desc">{t("Value high–low")}</option>
+                                        <option value="value_asc">{t("Value low–high")}</option>
                                     </AlphaCloneSelect>
                                 </div>
                             </div>
                         </div>
                         <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <p className="type-card-description text-[var(--ws-text-muted)]">
-                                Tip: select drafts to delete. Signed contracts remain for compliance.
-                            </p>
+                                {t("Tip: select drafts to delete. Signed contracts remain for compliance.")}</p>
                             <p className="type-card-description text-[var(--ws-text-muted)]">
-                                Showing <span className="text-[var(--ws-text-secondary)] font-semibold">{listContracts.length}</span> of{' '}
+                                {t("Showing")}<span className="text-[var(--ws-text-secondary)] font-semibold">{listContracts.length}</span> {t("of")}{' '}
                                 <span className="text-[var(--ws-text-secondary)] font-semibold">{savedContracts.length}</span>
                             </p>
                         </div>
@@ -1422,14 +1415,13 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                     ) : listContracts.length === 0 ? (
                         <div className="text-center py-14 sm:py-16 text-[var(--ws-text-muted)] type-caption px-4">
                             <FileText className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-3 opacity-30" />
-                            <p>No contracts match your filters.</p>
+                            <p>{t("No contracts match your filters.")}</p>
                             <button
                                 type="button"
                                 onClick={() => { setListQuery(''); setListStatusFilter('all'); setListSort('newest'); }}
                                 className="mt-4 inline-flex items-center justify-center px-4 py-2 rounded-full bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] type-ui font-bold border border-white/5"
                             >
-                                Reset filters
-                            </button>
+                                {t("Reset filters")}</button>
                         </div>
                     ) : listContracts.map((c: any) => {
                         const statusBucket = contractStatusBucket(c.lifecycle_status || c.status);
@@ -1551,11 +1543,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                             </span>
                                         </div>
                                         <p className="type-card-description sm:text-sm text-[var(--ws-text-muted)]">
-                                            Value: <span className="text-[var(--ws-text-secondary)] font-medium">{c.currency || 'USD'} {c.value ? (typeof c.value === 'number' ? c.value : parseFloat(c.value as any) || 0).toLocaleString() : '0'}</span>
+                                            {t("Value:")}<span className="text-[var(--ws-text-secondary)] font-medium">{c.currency || 'USD'} {c.value ? (typeof c.value === 'number' ? c.value : parseFloat(c.value as any) || 0).toLocaleString() : '0'}</span>
                                             <span className="mx-1.5">·</span>
-                                            Created: <span className="text-[var(--ws-text-secondary)]">{c.created_at ? format(new Date(c.created_at), 'MMM d, yyyy') : 'Recent'}</span>
+                                            {t("Created:")}<span className="text-[var(--ws-text-secondary)]">{c.created_at ? format(new Date(c.created_at), 'MMM d, yyyy') : 'Recent'}</span>
                                             <span className="mx-1.5">·</span>
-                                            Expiry: <span className="text-[var(--ws-text-muted)] font-bold uppercase tracking-widest type-caption">Expires {getExpiry()}</span>
+                                            {t("Expiry:")}<span className="text-[var(--ws-text-muted)] font-bold uppercase tracking-widest type-caption">{t("Expires")}{getExpiry()}</span>
                                             {(() => {
                                                 const contact = resolveContractClientContact(c);
                                                 if (!contact.email && contact.name === 'the client') return null;
@@ -1573,7 +1565,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                     </div>
                                 </div>
                                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                                <button type="button" onClick={() => setLifecycleContractId(c.id)} className="w-full sm:w-auto justify-center px-3.5 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-full type-ui font-bold transition-all flex items-center gap-1.5 shrink-0 border border-white/5 hover:border-white/10"><Scale className="w-3.5 h-3.5 text-violet-300" /> Obligations</button>
+                                <button type="button" onClick={() => setLifecycleContractId(c.id)} className="w-full sm:w-auto justify-center px-3.5 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-full type-ui font-bold transition-all flex items-center gap-1.5 shrink-0 border border-white/5 hover:border-white/10"><Scale className="w-3.5 h-3.5 text-violet-300" /> {t("Obligations")}</button>
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -1616,8 +1608,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                     }}
                                     className="w-full sm:w-auto justify-center px-3.5 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-full type-ui font-bold transition-all flex items-center gap-1.5 shrink-0 border border-white/5 hover:border-white/10"
                                 >
-                                    <Eye className="w-3.5 h-3.5 text-teal-400" /> View
-                                </button>
+                                    <Eye className="w-3.5 h-3.5 text-teal-400" /> {t("View")}</button>
                                 {c.status !== 'fully_signed' && c.status !== 'rejected' ? (
                                     <button
                                         type="button"
@@ -1655,28 +1646,28 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                             <div className={sectionCls}>
                                 <div className="flex items-center gap-3 mb-2">
                                     <Building2 className="w-5 h-5 text-teal-400" />
-                                    <h2 className="text-base font-bold text-white">Service Provider (You)</h2>
+                                    <h2 className="text-base font-bold text-white">{t("Service Provider (You)")}</h2>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className={labelCls}>Full Legal Name / Company Name *</label>
-                                        <AlphaCloneInput className={inputCls} value={form.providerName} onChange={e => set('providerName', e.target.value)} placeholder="e.g. Acme Solutions Ltd." />
+                                        <label className={labelCls}>{t("Full Legal Name / Company Name *")}</label>
+                                        <AlphaCloneInput className={inputCls} value={form.providerName} onChange={e => set('providerName', e.target.value)} placeholder={t("e.g. Acme Solutions Ltd.")} />
                                     </div>
                                     <div>
-                                        <label className={labelCls}>Email Address</label>
-                                        <AlphaCloneInput className={inputCls} value={form.providerEmail} onChange={e => set('providerEmail', e.target.value)} placeholder="you@company.com" />
+                                        <label className={labelCls}>{t("Email Address")}</label>
+                                        <AlphaCloneInput className={inputCls} value={form.providerEmail} onChange={e => set('providerEmail', e.target.value)} placeholder={t("you@company.com")} />
                                     </div>
                                     <div>
-                                        <label className={labelCls}>Business Address</label>
-                                        <AlphaCloneInput className={inputCls} value={form.providerAddress} onChange={e => set('providerAddress', e.target.value)} placeholder="123 Business Ave, City, State" />
+                                        <label className={labelCls}>{t("Business Address")}</label>
+                                        <AlphaCloneInput className={inputCls} value={form.providerAddress} onChange={e => set('providerAddress', e.target.value)} placeholder={t("123 Business Ave, City, State")} />
                                     </div>
                                     <div>
-                                        <label className={labelCls}>Phone Number</label>
+                                        <label className={labelCls}>{t("Phone Number")}</label>
                                         <AlphaCloneInput className={inputCls} value={form.providerPhone} onChange={e => set('providerPhone', e.target.value)} placeholder="+1 (555) 000-0000" />
                                     </div>
                                     <div className="md:col-span-2">
-                                        <label className={labelCls}>Business Registration Number (optional)</label>
-                                        <AlphaCloneInput className={inputCls} value={form.providerRegistration} onChange={e => set('providerRegistration', e.target.value)} placeholder="e.g. LLC-123456 or Company No. 12345678" />
+                                        <label className={labelCls}>{t("Business Registration Number (optional)")}</label>
+                                        <AlphaCloneInput className={inputCls} value={form.providerRegistration} onChange={e => set('providerRegistration', e.target.value)} placeholder={t("e.g. LLC-123456 or Company No. 12345678")} />
                                     </div>
                                 </div>
                             </div>
@@ -1685,37 +1676,37 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                             <div className={sectionCls}>
                                 <div className="flex items-center gap-3 mb-2">
                                     <User className="w-5 h-5 text-purple-400" />
-                                    <h2 className="text-base font-bold text-white">Client Information</h2>
+                                    <h2 className="text-base font-bold text-white">{t("Client Information")}</h2>
                                 </div>
                                 {clients.length > 0 && (
                                     <div>
-                                        <label className={labelCls}>Select from CRM (optional)</label>
+                                        <label className={labelCls}>{t("Select from CRM (optional)")}</label>
                                         <AlphaCloneSelect className={inputCls} value={form.clientId} onChange={e => set('clientId', e.target.value)}>
-                                            <option value="">— Select a client —</option>
+                                            <option value="">{t("— Select a client —")}</option>
                                             {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                         </AlphaCloneSelect>
                                     </div>
                                 )}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className={labelCls}>Client Full Name *</label>
-                                        <AlphaCloneInput className={inputCls} value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder="e.g. Jonathan Williams" />
+                                        <label className={labelCls}>{t("Client Full Name *")}</label>
+                                        <AlphaCloneInput className={inputCls} value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder={t("e.g. Jonathan Williams")} />
                                     </div>
                                     <div>
-                                        <label className={labelCls}>Company / Organization</label>
-                                        <AlphaCloneInput className={inputCls} value={form.clientCompany} onChange={e => set('clientCompany', e.target.value)} placeholder="e.g. Williams Enterprises Inc." />
+                                        <label className={labelCls}>{t("Company / Organization")}</label>
+                                        <AlphaCloneInput className={inputCls} value={form.clientCompany} onChange={e => set('clientCompany', e.target.value)} placeholder={t("e.g. Williams Enterprises Inc.")} />
                                     </div>
                                     <div>
-                                        <label className={labelCls}>Email Address</label>
-                                        <AlphaCloneInput className={inputCls} value={form.clientEmail} onChange={e => set('clientEmail', e.target.value)} placeholder="client@email.com" />
+                                        <label className={labelCls}>{t("Email Address")}</label>
+                                        <AlphaCloneInput className={inputCls} value={form.clientEmail} onChange={e => set('clientEmail', e.target.value)} placeholder={t("client@email.com")} />
                                     </div>
                                     <div>
-                                        <label className={labelCls}>Phone Number</label>
+                                        <label className={labelCls}>{t("Phone Number")}</label>
                                         <AlphaCloneInput className={inputCls} value={form.clientPhone} onChange={e => set('clientPhone', e.target.value)} placeholder="+1 (555) 000-0000" />
                                     </div>
                                     <div className="md:col-span-2">
-                                        <label className={labelCls}>Client Address</label>
-                                        <AlphaCloneInput className={inputCls} value={form.clientAddress} onChange={e => set('clientAddress', e.target.value)} placeholder="456 Client Street, City, State, ZIP" />
+                                        <label className={labelCls}>{t("Client Address")}</label>
+                                        <AlphaCloneInput className={inputCls} value={form.clientAddress} onChange={e => set('clientAddress', e.target.value)} placeholder={t("456 Client Street, City, State, ZIP")} />
                                     </div>
                                 </div>
                             </div>
@@ -1724,29 +1715,28 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                             <div className={sectionCls}>
                                 <div className="flex items-center gap-3 mb-2">
                                     <Briefcase className="w-5 h-5 text-blue-400" />
-                                    <h2 className="text-base font-bold text-white">Project Details</h2>
+                                    <h2 className="text-base font-bold text-white">{t("Project Details")}</h2>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className={labelCls}>Project Name *</label>
-                                        <AlphaCloneInput className={inputCls} value={form.projectName} onChange={e => set('projectName', e.target.value)} placeholder="e.g. E-Commerce Platform Redesign" />
+                                        <label className={labelCls}>{t("Project Name *")}</label>
+                                        <AlphaCloneInput className={inputCls} value={form.projectName} onChange={e => set('projectName', e.target.value)} placeholder={t("e.g. E-Commerce Platform Redesign")} />
                                     </div>
                                     <div>
-                                        <label className={labelCls}>Project type</label>
+                                        <label className={labelCls}>{t("Project type")}</label>
                                         <p className="text-[var(--ws-text-muted)] type-card-description mb-2 leading-relaxed">
-                                            Options come from the universal service catalog (50+ lines of business). Categories you enable under Settings → Business Profile are listed first.
-                                        </p>
+                                            {t("Options come from the universal service catalog (50+ lines of business). Categories you enable under Settings → Business Profile are listed first.")}</p>
                                         <AlphaCloneSelect className={inputCls} value={form.projectType} onChange={e => set('projectType', e.target.value)}>
                                             {projectTypeOptions.map(t => <option key={t} value={t}>{t}</option>)}
                                         </AlphaCloneSelect>
                                     </div>
                                     <div className="md:col-span-2">
-                                        <label className={labelCls}>Scope of Work *</label>
-                                        <AlphaCloneTextarea className={`${inputCls} min-h-[100px] resize-y`} value={form.projectScope} onChange={e => set('projectScope', e.target.value)} placeholder="Describe what you will do in detail. E.g. Design and develop a full-stack e-commerce platform with product catalog, shopping cart, Stripe payments, admin dashboard, and mobile-responsive design." />
+                                        <label className={labelCls}>{t("Scope of Work *")}</label>
+                                        <AlphaCloneTextarea className={`${inputCls} min-h-[100px] resize-y`} value={form.projectScope} onChange={e => set('projectScope', e.target.value)} placeholder={t("Describe what you will do in detail. E.g. Design and develop a full-stack e-commerce platform with product catalog, shopping cart, Stripe payments, admin dashboard, and mobile-responsive design.")} />
                                     </div>
                                     <div className="md:col-span-2">
-                                        <label className={labelCls}>Deliverables</label>
-                                        <AlphaCloneTextarea className={`${inputCls} min-h-[80px] resize-y`} value={form.deliverables} onChange={e => set('deliverables', e.target.value)} placeholder="List specific deliverables. E.g. Fully functional web app, source code, deployment, 30-day support, documentation." />
+                                        <label className={labelCls}>{t("Deliverables")}</label>
+                                        <AlphaCloneTextarea className={`${inputCls} min-h-[80px] resize-y`} value={form.deliverables} onChange={e => set('deliverables', e.target.value)} placeholder={t("List specific deliverables. E.g. Fully functional web app, source code, deployment, 30-day support, documentation.")} />
                                     </div>
                                 </div>
                             </div>
@@ -1755,25 +1745,25 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                             <div className={sectionCls}>
                                 <div className="flex items-center gap-3 mb-2">
                                     <DollarSign className="w-5 h-5 text-green-400" />
-                                    <h2 className="text-base font-bold text-white">Financial Terms</h2>
+                                    <h2 className="text-base font-bold text-white">{t("Financial Terms")}</h2>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
-                                        <label className={labelCls}>Total Contract Value *</label>
+                                        <label className={labelCls}>{t("Total Contract Value *")}</label>
                                         <AlphaCloneInput className={inputCls} type="number" value={form.totalAmount} onChange={e => set('totalAmount', e.target.value)} placeholder="10000" />
                                     </div>
                                     <div>
-                                        <label className={labelCls}>Currency</label>
+                                        <label className={labelCls}>{t("Currency")}</label>
                                         <AlphaCloneSelect className={inputCls} value={form.currency} onChange={e => set('currency', e.target.value)}>
                                             {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
                                         </AlphaCloneSelect>
                                     </div>
                                     <div>
-                                        <label className={labelCls}>Deposit %</label>
+                                        <label className={labelCls}>{t("Deposit %")}</label>
                                         <AlphaCloneInput className={inputCls} type="number" min="0" max="100" value={form.depositPercent} onChange={e => set('depositPercent', e.target.value)} placeholder="50" />
                                     </div>
                                     <div className="md:col-span-3">
-                                        <label className={labelCls}>Payment Schedule</label>
+                                        <label className={labelCls}>{t("Payment Schedule")}</label>
                                         <AlphaCloneSelect className={inputCls} value={form.paymentSchedule} onChange={e => set('paymentSchedule', e.target.value)}>
                                             {PAYMENT_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
                                         </AlphaCloneSelect>
@@ -1785,14 +1775,13 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                             <div className={sectionCls}>
                                 <div className="flex items-center gap-3 mb-2">
                                     <Languages className="w-5 h-5 text-cyan-400" />
-                                    <h2 className="text-base font-bold text-white">Contract language & length</h2>
+                                    <h2 className="text-base font-bold text-white">{t("Contract language & length")}</h2>
                                 </div>
                                 <p className="text-[var(--ws-text-muted)] type-card-description leading-relaxed mb-4">
-                                    The AI writes the full contract text in the language you select. PDF downloads use fixed print margins and fonts, so the number of PDF pages often differs from what you see on screen (for example, a long on-screen draft may become more pages in PDF).
-                                </p>
+                                    {t("The AI writes the full contract text in the language you select. PDF downloads use fixed print margins and fonts, so the number of PDF pages often differs from what you see on screen (for example, a long on-screen draft may become more pages in PDF).")}</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className={labelCls}>Output language</label>
+                                        <label className={labelCls}>{t("Output language")}</label>
                                         <AlphaCloneSelect
                                             className={inputCls}
                                             value={form.outputLanguage}
@@ -1804,7 +1793,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                         </AlphaCloneSelect>
                                     </div>
                                     <div className="md:col-span-2">
-                                        <label className={labelCls}>Target length (AI)</label>
+                                        <label className={labelCls}>{t("Target length (AI)")}</label>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                             {CONTRACT_LENGTH_OPTIONS.map(opt => (
                                                 <label
@@ -1837,16 +1826,16 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                             <div className={sectionCls}>
                                 <div className="flex items-center gap-3 mb-2">
                                     <Calendar className="w-5 h-5 text-orange-400" />
-                                    <h2 className="text-base font-bold text-white">Timeline & Legal</h2>
+                                    <h2 className="text-base font-bold text-white">{t("Timeline & Legal")}</h2>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className={labelCls}>Start Date</label>
-                                        <AlphaCloneInput className={inputCls} value={form.startDate} onChange={e => set('startDate', e.target.value)} placeholder="e.g. March 1, 2026" />
+                                        <label className={labelCls}>{t("Start Date")}</label>
+                                        <AlphaCloneInput className={inputCls} value={form.startDate} onChange={e => set('startDate', e.target.value)} placeholder={t("e.g. March 1, 2026")} />
                                     </div>
                                     <div>
-                                        <label className={labelCls}>Estimated Completion Date</label>
-                                        <AlphaCloneInput className={inputCls} value={form.endDate} onChange={e => set('endDate', e.target.value)} placeholder="e.g. June 1, 2026" />
+                                        <label className={labelCls}>{t("Estimated Completion Date")}</label>
+                                        <AlphaCloneInput className={inputCls} value={form.endDate} onChange={e => set('endDate', e.target.value)} placeholder={t("e.g. June 1, 2026")} />
                                     </div>
                                     <JurisdictionFields
                                         jurisdiction={form.jurisdiction}
@@ -1856,8 +1845,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                         hint="Required — the contract cannot be sent for signature without a governing law. Saved to your signer profile for next time."
                                     />
                                     <div className="md:col-span-2">
-                                        <label className={labelCls}>Additional Terms (optional)</label>
-                                        <AlphaCloneTextarea className={`${inputCls} min-h-[80px] resize-y`} value={form.additionalTerms} onChange={e => set('additionalTerms', e.target.value)} placeholder="Any special clauses, NDA requirements, exclusivity terms, etc." />
+                                        <label className={labelCls}>{t("Additional Terms (optional)")}</label>
+                                        <AlphaCloneTextarea className={`${inputCls} min-h-[80px] resize-y`} value={form.additionalTerms} onChange={e => set('additionalTerms', e.target.value)} placeholder={t("Any special clauses, NDA requirements, exclusivity terms, etc.")} />
                                     </div>
                                 </div>
                             </div>
@@ -1870,12 +1859,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                     className="flex-1 py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white font-bold text-base rounded-2xl transition-all shadow-lg shadow-teal-900/30 flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     {isGenerating ? (
-                                        <><Loader2 className="w-5 h-5 animate-spin" /> Generating contract...</>
+                                        <><Loader2 className="w-5 h-5 animate-spin" /> {t("Generating contract...")}</>
                                     ) : (
                                         <>
                                             <Bot className="w-5 h-5" />
-                                            Generate contract
-                                            ({CONTRACT_LENGTH_OPTIONS.find(o => o.id === form.contractLength)?.label ?? 'Custom'}
+                                            {t("Generate contract (")}{CONTRACT_LENGTH_OPTIONS.find(o => o.id === form.contractLength)?.label ?? 'Custom'}
                                             {form.outputLanguage !== 'en' ? ` · ${OUTPUT_LANGUAGES.find(l => l.code === form.outputLanguage)?.label ?? form.outputLanguage}` : ''})
                                         </>
                                     )}
@@ -1887,9 +1875,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                     className="py-4 px-6 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] border border-[var(--ws-border)] text-white font-bold text-base rounded-2xl transition-all flex items-center justify-center gap-2.5 disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     {isSaving ? (
-                                        <><Loader2 className="w-5 h-5 animate-spin" /> Saving…</>
+                                        <><Loader2 className="w-5 h-5 animate-spin" /> {t("Saving…")}</>
                                     ) : (
-                                        <><Save className="w-5 h-5 text-teal-400" /> Save as draft</>
+                                        <><Save className="w-5 h-5 text-teal-400" /> {t("Save as draft")}</>
                                     )}
                                 </button>
                             </div>
@@ -1909,13 +1897,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                             setStep('form');
                                         }}
                                         className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[var(--ws-surface-secondary)] px-3 type-ui font-bold text-[var(--ws-text-secondary)] transition-all hover:bg-[var(--ws-surface-tertiary)] hover:text-white"
-                                        title="Return to saved contracts list"
+                                        title={t("Return to saved contracts list")}
                                     >
-                                        <ArrowLeft className="w-3.5 h-3.5" /> Back to Contracts
-                                    </button>
+                                        <ArrowLeft className="w-3.5 h-3.5" /> {t("Back to Contracts")}</button>
                                     <button onClick={() => setStep('form')} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[var(--ws-surface-secondary)] px-3 type-ui font-bold text-[var(--ws-text-secondary)] transition-all hover:bg-[var(--ws-surface-tertiary)] hover:text-white">
-                                        <RotateCcw className="w-3.5 h-3.5" /> Edit Parameters
-                                    </button>
+                                        <RotateCcw className="w-3.5 h-3.5" /> {t("Edit Parameters")}</button>
                                     {!isSigned && (
                                         <button
                                             onClick={() => setIsEditing(!isEditing)}
@@ -1928,11 +1914,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                     {(isSigned || step === 'saved') && (
                                         <>
                                             <button onClick={handlePrint} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[var(--ws-surface-secondary)] px-3 type-ui font-bold text-[var(--ws-text-secondary)] transition-all hover:bg-[var(--ws-surface-tertiary)] hover:text-white">
-                                                <Printer className="w-3.5 h-3.5" /> Print / PDF
-                                            </button>
+                                                <Printer className="w-3.5 h-3.5" /> {t("Print / PDF")}</button>
                                             <button onClick={() => openSendContractModal()} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[var(--ws-surface-secondary)] px-3 type-ui font-bold text-[var(--ws-text-secondary)] transition-all hover:bg-[var(--ws-surface-tertiary)] hover:text-white">
-                                                <FileText className="w-3.5 h-3.5" /> Send Contract
-                                            </button>
+                                                <FileText className="w-3.5 h-3.5" /> {t("Send Contract")}</button>
                                         </>
                                     )}
                                     {step !== 'saved' && (
@@ -1943,13 +1927,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                             className="inline-flex h-8 items-center gap-1.5 rounded-full bg-teal-600 px-3 type-ui font-bold text-white transition-all hover:bg-teal-500 disabled:opacity-60 disabled:cursor-not-allowed"
                                         >
                                             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                                            Save Contract
-                                        </button>
+                                            {t("Save Contract")}</button>
                                     )}
                                 </div>
                                 <button onClick={() => { setStep('form'); setGeneratedContract(''); setContractId(''); setIsSigned(false); setSignatureName(''); setSignatureData(''); setIsEditing(false); setPreviewTab('document'); setDocumentTheme('executive'); }} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[var(--ws-surface-secondary)] px-3 type-ui font-bold text-[var(--ws-text-muted)] transition-all hover:bg-[var(--ws-surface-tertiary)] hover:text-white">
-                                    <RotateCcw className="w-3.5 h-3.5" /> New Contract
-                                </button>
+                                    <RotateCcw className="w-3.5 h-3.5" /> {t("New Contract")}</button>
                             </div>
 
                             {/* Tab Selection */}
@@ -1959,21 +1941,18 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                         onClick={() => setPreviewTab('document')}
                                         className={`h-8 px-3 rounded-full type-ui font-bold transition-all ${previewTab === 'document' ? 'bg-[var(--ws-surface-secondary)] text-white shadow-sm' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
                                     >
-                                        Contract Document
-                                    </button>
+                                        {t("Contract Document")}</button>
                                     <button
                                         onClick={() => setPreviewTab('audit')}
                                         className={`h-8 px-3 rounded-full type-ui font-bold transition-all ${previewTab === 'audit' ? 'bg-[var(--ws-surface-secondary)] text-white shadow-sm' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
                                     >
-                                        Audit Trail & Compliance
-                                    </button>
+                                        {t("Audit Trail & Compliance")}</button>
                                     <button
                                         type="button"
                                         onClick={() => setLifecycleContractId(contractId)}
                                         className="h-8 px-3 rounded-full type-ui font-bold text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]"
                                     >
-                                        Obligations & reminders
-                                    </button>
+                                        {t("Obligations & reminders")}</button>
                                 </div>
                             )}
 
@@ -1993,8 +1972,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                         >
                                             <Loader2 className="w-5 h-5 text-teal-400 animate-spin flex-shrink-0" />
                                             <div>
-                                                <p className="text-white font-semibold type-card-description">Drafting your contract…</p>
-                                                <p className="text-[var(--ws-text-muted)] type-card-description">The text below is still being written. Signing and saving unlock as soon as it finishes.</p>
+                                                <p className="text-white font-semibold type-card-description">{t("Drafting your contract…")}</p>
+                                                <p className="text-[var(--ws-text-muted)] type-card-description">{t("The text below is still being written. Signing and saving unlock as soon as it finishes.")}</p>
                                             </div>
                                         </div>
                                     )}
@@ -2007,7 +1986,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                             <CheckCircle className="w-5 h-5 text-teal-400" />
                                         </div>
                                         <div>
-                                            <h3 className="text-white font-bold text-base">Sign to Proceed</h3>
+                                            <h3 className="text-white font-bold text-base">{t("Sign to Proceed")}</h3>
                                             <p className="text-[var(--ws-text-muted)] type-card-description">
                                                 {signerProfile.signature
                                                     ? 'Apply your saved signature with one click, or draw a new one.'
@@ -2038,8 +2017,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                 <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4 flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
                                     <div>
-                                        <p className="text-green-300 font-semibold type-card-description">Signed by <span className="font-serif italic">{signatureName}</span> on {signatureDate}</p>
-                                        <p className="text-green-400/70 type-card-description">You can now save or print this contract.</p>
+                                        <p className="text-green-300 font-semibold type-card-description">{t("Signed by")}<span className="font-serif italic">{signatureName}</span> {t("on")}{signatureDate}</p>
+                                        <p className="text-green-400/70 type-card-description">{t("You can now save or print this contract.")}</p>
                                     </div>
                                 </div>
                             )}
@@ -2161,18 +2140,16 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                     <div className="lg:col-span-1 flex flex-col gap-4">
                         <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 flex flex-col gap-3">
                             <h2 className="type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)] flex items-center gap-1.5">
-                                <Scale className="w-4 h-4 text-teal-400" /> Contract Context
-                            </h2>
+                                <Scale className="w-4 h-4 text-teal-400" /> {t("Contract Context")}</h2>
                             <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
-                                Select a contract from your account to ask questions or draft modifications for that specific document.
-                            </p>
+                                {t("Select a contract from your account to ask questions or draft modifications for that specific document.")}</p>
                             
                             <AlphaCloneSelect
                                 value={selectedContractIdForChat}
                                 onChange={(e) => setSelectedContractIdForChat(e.target.value)}
                                 className="w-full px-3 py-2 transition-colors"
                             >
-                                <option value="">No context (General AI Lawyer)</option>
+                                <option value="">{t("No context (General AI Lawyer)")}</option>
                                 {savedContracts.map((c) => (
                                     <option key={c.id} value={c.id}>
                                         {c.title || 'Untitled Contract'}
@@ -2183,11 +2160,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                             {selectedContractIdForChat && (
                                 <div className="type-ui text-teal-400/80 bg-teal-950/40 border border-teal-900/30 rounded-lg p-2 flex items-center gap-1.5">
                                     <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                                    <span>AI will reference selected contract content</span>
+                                    <span>{t("AI will reference selected contract content")}</span>
                                 </div>
                             )}
 
-                            <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mt-2">Client from CRM</label>
+                            <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mt-2">{t("Client from CRM")}</label>
                             <AlphaCloneSelect
                                 value={selectedClientIdForLawyer}
                                 onChange={(e) => {
@@ -2208,7 +2185,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                 }}
                                 className="w-full px-3 py-2 transition-colors"
                             >
-                                <option value="">Who is the client? (select from CRM)</option>
+                                <option value="">{t("Who is the client? (select from CRM)")}</option>
                                 {clients.map((c) => (
                                     <option key={c.id} value={c.id}>
                                         {c.name}{c.customFields?.company ? ` — ${c.customFields.company}` : ''}
@@ -2219,11 +2196,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
 
                         <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 flex flex-col gap-2.5">
                             <h2 className="type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)] flex items-center gap-1.5">
-                                <Sparkles className="w-4 h-4 text-teal-400" /> Quick Actions
-                            </h2>
+                                <Sparkles className="w-4 h-4 text-teal-400" /> {t("Quick Actions")}</h2>
                             <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed mb-1">
-                                Click any pre-set query to consult the lawyer instantly.
-                            </p>
+                                {t("Click any pre-set query to consult the lawyer instantly.")}</p>
                             
                             {[
                                 { label: 'Explain Indemnity Clause', query: 'Explain the purpose and implications of an indemnity clause in simple terms.' },
@@ -2253,9 +2228,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                 <div className="w-2.5 h-2.5 rounded-full bg-teal-500 animate-pulse" />
                                 <div>
                                     <h3 className="type-ui font-bold text-white flex items-center gap-1.5">
-                                        <Bot className="w-4 h-4 text-teal-400" /> AI Legal Assistant
-                                    </h3>
-                                    <p className="type-card-description text-[var(--ws-text-muted)]">Virtual legal expert powered by AI</p>
+                                        <Bot className="w-4 h-4 text-teal-400" /> {t("AI Legal Assistant")}</h3>
+                                    <p className="type-card-description text-[var(--ws-text-muted)]">{t("Virtual legal expert powered by AI")}</p>
                                 </div>
                             </div>
                             
@@ -2266,8 +2240,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                 ])}
                                 className="type-caption text-[var(--ws-text-muted)] hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-[var(--ws-surface-secondary)] transition-colors"
                             >
-                                Clear Chat
-                            </button>
+                                {t("Clear Chat")}</button>
                         </div>
 
                         {/* Message list */}
@@ -2320,8 +2293,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                                             }}
                                                             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] border border-[var(--ws-border)]/50 type-caption font-bold text-[var(--ws-text-secondary)] hover:text-white uppercase transition-all duration-150"
                                                         >
-                                                            <Edit3 className="w-3.5 h-3.5" /> Open in Editor
-                                                        </button>
+                                                            <Edit3 className="w-3.5 h-3.5" /> {t("Open in Editor")}</button>
                                                         <button
                                                             type="button"
                                                             disabled={isSavingLawyerPdf}
@@ -2329,8 +2301,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                                             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-teal-600/20 hover:bg-teal-600 border border-teal-500/30 hover:border-teal-400 type-caption font-bold text-teal-400 hover:text-white uppercase transition-all duration-150 disabled:opacity-50"
                                                         >
                                                             {isSavingLawyerPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
-                                                            Save & Generate PDF
-                                                        </button>
+                                                            {t("Save & Generate PDF")}</button>
                                                     </div>
                                                 )}
                                             </>
@@ -2389,31 +2360,28 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                             </h3>
                             {resendForSignature ? (
                                 <p className="type-card-description text-[var(--warning-text,var(--warning-500))]/90 mt-1.5">
-                                    The recipient will get an urgent subject line explaining their project cannot proceed until the contract is signed.
-                                </p>
+                                    {t("The recipient will get an urgent subject line explaining their project cannot proceed until the contract is signed.")}</p>
                             ) : (
                                 <p className="type-card-description text-[var(--ws-text-muted)] mt-1.5">
-                                    Send the signing link with a clear subject and message. The entire form is scrollable.
-                                </p>
+                                    {t("Send the signing link with a clear subject and message. The entire form is scrollable.")}</p>
                             )}
                         </div>
 
                         <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4">
                             <div>
-                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">Recipient Email</label>
+                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">{t("Recipient Email")}</label>
                                 <AlphaCloneInput
                                     className={inputCls}
                                     value={sendForm.recipientEmail}
                                     onChange={(e) => setSendForm(prev => ({ ...prev, recipientEmail: e.target.value }))}
-                                    placeholder="client@example.com"
+                                    placeholder={t("client@example.com")}
                                 />
                                 <p className="type-card-description text-[var(--ws-text-muted)] mt-1.5">
-                                    Auto-filled from the client this contract is for
-                                    {sendForm.recipientEmail ? ` (${sendForm.recipientEmail})` : ' — add their email on the client record if empty'}.
+                                    {t("Auto-filled from the client this contract is for")}{sendForm.recipientEmail ? ` (${sendForm.recipientEmail})` : ' — add their email on the client record if empty'}.
                                 </p>
                             </div>
                             <div>
-                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">Subject</label>
+                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">{t("Subject")}</label>
                                 <AlphaCloneInput
                                     className={inputCls}
                                     value={sendForm.subject}
@@ -2421,22 +2389,21 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                 />
                             </div>
                             <div>
-                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">Service provider copy (optional)</label>
+                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">{t("Service provider copy (optional)")}</label>
                                 <AlphaCloneInput
                                     type="email"
                                     className={inputCls}
                                     value={sendForm.providerCopyEmail}
                                     onChange={(e) => setSendForm(prev => ({ ...prev, providerCopyEmail: e.target.value }))}
-                                    placeholder="your-email@company.com"
+                                    placeholder={t("your-email@company.com")}
                                 />
-                                <p className="type-card-description text-[var(--ws-text-muted)] mt-1.5">The client receives the signing link. This address receives a delivery copy without signer access.</p>
+                                <p className="type-card-description text-[var(--ws-text-muted)] mt-1.5">{t("The client receives the signing link. This address receives a delivery copy without signer access.")}</p>
                             </div>
                             {sendNeedsGoverningLaw && (
                                 <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3" data-testid="send-governing-law">
-                                    <p className="type-card-description text-amber-200 font-semibold">This contract has no governing law recorded yet.</p>
+                                    <p className="type-card-description text-amber-200 font-semibold">{t("This contract has no governing law recorded yet.")}</p>
                                     <p className="type-card-description text-[var(--ws-text-muted)]">
-                                        It cannot be sent for signature without one. Pick it here and it will be recorded on the contract before sending.
-                                    </p>
+                                        {t("It cannot be sent for signature without one. Pick it here and it will be recorded on the contract before sending.")}</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <JurisdictionFields
                                             jurisdiction={sendForm.jurisdiction}
@@ -2448,7 +2415,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                 </div>
                             )}
                             <div>
-                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">Send via</label>
+                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">{t("Send via")}</label>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                     {[
                                         { value: 'auto', label: 'Auto', icon: '🔄' },
@@ -2475,21 +2442,20 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                 </div>
                                 {sendForm.provider !== 'auto' && (
                                     <p className="type-card-description text-[var(--ws-text-muted)] mt-1.5">
-                                        Will attempt <span className="text-teal-400 font-medium">{sendForm.provider}</span> first, then fall back to other configured services if unavailable.
-                                    </p>
+                                        {t("Will attempt")}<span className="text-teal-400 font-medium">{sendForm.provider}</span> {t("first, then fall back to other configured services if unavailable.")}</p>
                                 )}
                             </div>
                             <div>
-                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">AI Instructions (What to write)</label>
+                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">{t("AI Instructions (What to write)")}</label>
                                 <AlphaCloneTextarea
                                     className={`${inputCls} min-h-[110px]`}
                                     value={aiSendInstructions}
                                     onChange={(e) => setAiSendInstructions(e.target.value)}
-                                    placeholder="Example: Write a friendly follow-up, mention delivery timeline and ask them to sign by Friday."
+                                    placeholder={t("Example: Write a friendly follow-up, mention delivery timeline and ask them to sign by Friday.")}
                                 />
                             </div>
                             <div>
-                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">Message</label>
+                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">{t("Message")}</label>
                                 <AlphaCloneTextarea
                                     className={`${inputCls} min-h-[180px]`}
                                     value={sendForm.message}
@@ -2513,8 +2479,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                     onClick={() => setShowSendModal(false)}
                                     className="px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-xl type-ui w-full sm:w-auto"
                                 >
-                                    Cancel
-                                </button>
+                                    {t("Cancel")}</button>
                                 <button
                                     type="button"
                                     onClick={handleSendContract}

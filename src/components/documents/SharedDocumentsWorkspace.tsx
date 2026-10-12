@@ -71,6 +71,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const { t } = useLanguage();
+  const statusLabel = (value?: string) => t(value ? value.replace(/_/g, ' ').replace(/^./, letter => letter.toUpperCase()) : 'Not requested');
   const [documents, setDocuments] = useState<DocumentRow[]>([]);
   const [settings, setSettings] = useState<WorkspaceSettings | null>(null);
   const [total, setTotal] = useState(0);
@@ -299,50 +300,49 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
               {t('Brand identity and retention defaults used by Document OS and the shared catalog.')}
             </p>
             {loading ? (
-              <p className="mt-6 type-card-description text-[var(--ws-text-muted)]">Loading settings…</p>
+              <p className="mt-6 type-card-description text-[var(--ws-text-muted)]">{t("Loading settings…")}</p>
             ) : (
               <dl className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">Legal business name</dt>
+                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">{t("Legal business name")}</dt>
                   <dd className="mt-1 type-ui text-white">
                     {settings?.brand?.legal_business_name || 'Not configured'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">Trading name</dt>
+                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">{t("Trading name")}</dt>
                   <dd className="mt-1 type-ui text-white">
                     {settings?.brand?.trading_name || '—'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">Business email</dt>
+                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">{t("Business email")}</dt>
                   <dd className="mt-1 type-ui text-white">
                     {settings?.brand?.business_email || '—'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">Jurisdiction</dt>
+                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">{t("Jurisdiction")}</dt>
                   <dd className="mt-1 type-ui text-white">
                     {settings?.brand?.jurisdiction || '—'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">Default currency</dt>
+                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">{t("Default currency")}</dt>
                   <dd className="mt-1 type-ui text-white">
                     {settings?.brand?.default_currency || 'USD'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">Default confidentiality</dt>
+                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">{t("Default confidentiality")}</dt>
                   <dd className="mt-1 type-ui text-white">
                     {settings?.default_confidentiality || 'internal'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">Retention default</dt>
+                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">{t("Retention default")}</dt>
                   <dd className="mt-1 type-ui text-white">
-                    {settings?.retention_default_days || 2555} days
-                  </dd>
+                    {settings?.retention_default_days || 2555} {t("days")}</dd>
                 </div>
               </dl>
             )}
@@ -372,7 +372,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
               </button>
               <button
                 onClick={() => setGrid(true)}
-                aria-label="Grid view"
+                aria-label={t("Grid view")}
                 aria-pressed={grid}
                 className="min-h-11 min-w-11 rounded-lg border border-[var(--ws-border)] p-3 text-[var(--ws-text-secondary)]"
               >
@@ -386,8 +386,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                 className="ac-workspace-panel flex flex-wrap items-end gap-3 rounded-xl p-4"
               >
                 <label className="min-w-[240px] flex-1 type-label text-[var(--ws-text-secondary)]">
-                  Document name
-                  <AlphaCloneInput
+                  {t("Document name")}<AlphaCloneInput
                     autoFocus
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -398,12 +397,11 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                 </label>
                 <button className="min-h-11 rounded-lg bg-teal-600 px-4 font-semibold text-white">
                   <Plus className="mr-2 inline h-4 w-4" />
-                  Create draft
-                </button>
+                  {t("Create draft")}</button>
                 <button
                   type="button"
                   onClick={() => setCreating(false)}
-                  aria-label="Cancel create document"
+                  aria-label={t("Cancel create document")}
                   className="min-h-11 min-w-11 rounded-lg border border-[var(--ws-border)] p-3 text-[var(--ws-text-secondary)]"
                 >
                   <X className="h-4 w-4" />
@@ -412,7 +410,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
             )}
 
             {loading ? (
-              <div className="space-y-2" aria-label="Loading documents">
+              <div className="space-y-2" aria-label={t("Loading documents")}>
                 {[1, 2, 3, 4].map((i) => (
                   <div key={i} className="h-16 animate-pulse rounded-lg bg-white/5" />
                 ))}
@@ -424,13 +422,12 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
               >
                 <p>{error}</p>
                 <button onClick={load} className="mt-3 underline">
-                  Try again
-                </button>
+                  {t("Try again")}</button>
               </div>
             ) : documents.length === 0 ? (
               <div className="ac-workspace-panel rounded-xl p-10 text-center">
                 <Upload className="mx-auto h-8 w-8 text-[var(--ws-text-muted)]" />
-                <h2 className="mt-3 font-semibold text-white">No documents found</h2>
+                <h2 className="mt-3 font-semibold text-white">{t("No documents found")}</h2>
                 <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
                   {activeSection
                     ? `${t('No records in')} ${t(sectionLabel).toLowerCase()} ${t('yet')}.`
@@ -444,11 +441,11 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                     <FileText className="h-7 w-7 text-teal-400" />
                     <h2 className="mt-3 truncate font-semibold text-white">{d.name}</h2>
                     <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
-                      {d.document_type || 'General file'} · v{d.version || 1}
+                      {d.document_type || 'General file'} {t("· v")}{d.version || 1}
                       {d.source === 'doc_os' ? ' · Doc OS' : ''}
                     </p>
                     <span className="mt-3 inline-block rounded-full bg-white/5 px-2 py-1 type-caption text-[var(--ws-text-secondary)]">
-                      {d.status}
+                      {statusLabel(d.status)}
                     </span>
                   </article>
                 ))}
@@ -482,15 +479,14 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                           {d.name}
                           {d.source === 'doc_os' ? (
                             <span className="ml-2 rounded bg-violet-500/10 px-1.5 py-0.5 type-caption uppercase text-violet-300">
-                              Doc OS
-                            </span>
+                              {t("Doc OS")}</span>
                           ) : null}
                         </td>
                         <td className="p-3">{d.document_type || 'General file'}</td>
-                        <td className="p-3">{d.status}</td>
-                        <td className="p-3">v{d.version || 1}</td>
-                        <td className="p-3">{d.approval_status || 'Not requested'}</td>
-                        <td className="p-3">{d.signature_status || 'Not requested'}</td>
+                        <td className="p-3">{statusLabel(d.status)}</td>
+                        <td className="p-3">{t("v")}{d.version || 1}</td>
+                        <td className="p-3">{statusLabel(d.approval_status)}</td>
+                        <td className="p-3">{statusLabel(d.signature_status)}</td>
                         <td className="p-3">{bytes(d.size_bytes)}</td>
                         <td className="p-3">{new Date(d.updated_at).toLocaleDateString()}</td>
                       </tr>
@@ -500,7 +496,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
               </div>
             )}
             <p className="type-card-description text-[var(--ws-text-muted)]">
-              {total} tenant-scoped document{total === 1 ? '' : 's'}
+              {total} {t("tenant-scoped document")}{total === 1 ? '' : 's'}
             </p>
           </>
         )}
@@ -511,13 +507,13 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
           <section
             role="dialog"
             aria-modal="true"
-            aria-label="Document details"
+            aria-label={t("Document details")}
             onClick={(event) => event.stopPropagation()}
             className="h-full w-full max-w-2xl overflow-y-auto border-l border-[var(--ws-border)] bg-[var(--ws-canvas)] p-5 shadow-2xl"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
-                <p className="type-caption font-black uppercase tracking-wider text-[var(--brand-blue-300)]">Document details</p>
+                <p className="type-caption font-black uppercase tracking-wider text-[var(--brand-blue-300)]">{t("Document details")}</p>
                 <h2 className="mt-1 text-xl font-semibold text-white truncate">
                   {selectedDocument?.document?.title || selectedDocument?.document?.name || (detailError ? 'Document unavailable' : 'Loading document…')}
                 </h2>
@@ -530,10 +526,9 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                     rel="noreferrer"
                     className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 type-caption font-bold text-white hover:bg-teal-500"
                   >
-                    <Download className="h-4 w-4" /> Download
-                  </a>
+                    <Download className="h-4 w-4" /> {t("Download")}</a>
                 ) : null}
-                <button type="button" onClick={closeDocument} className="min-h-11 min-w-11 rounded-lg border border-[var(--ws-border)] p-3 text-[var(--ws-text-secondary)]" aria-label="Close document details">
+                <button type="button" onClick={closeDocument} className="min-h-11 min-w-11 rounded-lg border border-[var(--ws-border)] p-3 text-[var(--ws-text-secondary)]" aria-label={t("Close document details")}>
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -543,8 +538,8 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
             ) : detailError ? (
               <div className="p-4" role="alert">
                 <p>{detailError}</p>
-                <button type="button" className="mt-3 min-h-11 px-4" onClick={() => setDetailAttempt((n) => n + 1)}>Retry document</button>
-                <button type="button" className="mt-3 min-h-11 px-4" onClick={closeDocument}>Back to documents</button>
+                <button type="button" className="mt-3 min-h-11 px-4" onClick={() => setDetailAttempt((n) => n + 1)}>{t("Retry document")}</button>
+                <button type="button" className="mt-3 min-h-11 px-4" onClick={closeDocument}>{t("Back to documents")}</button>
               </div>
             ) : selectedDocument ? (
               <div className="mt-6 space-y-5">
@@ -558,28 +553,28 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                   </div>
                 ) : null}
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-[var(--ws-text-muted)]">Status</p><p className="mt-1 font-semibold text-white">{selectedDocument.document?.status || '—'}</p></div>
-                  <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-[var(--ws-text-muted)]">Approval</p><p className="mt-1 font-semibold text-white">{selectedDocument.document?.approval_status || 'Not requested'}</p></div>
-                  <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-[var(--ws-text-muted)]">Signature</p><p className="mt-1 font-semibold text-white">{selectedDocument.document?.signature_status || 'Not requested'}</p></div>
+                  <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-[var(--ws-text-muted)]">{t("Status")}</p><p className="mt-1 font-semibold text-white">{statusLabel(selectedDocument.document?.status)}</p></div>
+                  <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-[var(--ws-text-muted)]">{t("Approval")}</p><p className="mt-1 font-semibold text-white">{statusLabel(selectedDocument.document?.approval_status)}</p></div>
+                  <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-[var(--ws-text-muted)]">{t("Signature")}</p><p className="mt-1 font-semibold text-white">{statusLabel(selectedDocument.document?.signature_status)}</p></div>
                 </div>
                 <section className="ac-workspace-panel rounded-xl p-4">
-                  <h3 className="font-semibold text-white">Document intelligence</h3>
-                  <p className="mt-2 type-card-description text-[var(--ws-text-secondary)]">{selectedDocument.document?.summary || 'No summary has been generated yet.'}</p>
+                  <h3 className="font-semibold text-white">{t("Document intelligence")}</h3>
+                  <p className="mt-2 type-card-description text-[var(--ws-text-secondary)]">{selectedDocument.document?.summary || t('No summary has been generated yet.')}</p>
                   <div className="mt-4 space-y-2">
                     {(selectedDocument.findings || []).length ? (selectedDocument.findings || []).slice(0, 20).map((finding: any) => (
                       <div key={finding.id} className="rounded-lg border border-[var(--ws-border)] bg-white/[0.02] p-3">
                         <p className="type-ui font-semibold text-white">{finding.title || finding.finding_type || 'Finding'}</p>
                         <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">{finding.summary || finding.description || finding.content || 'Review this finding in the document.'}</p>
                       </div>
-                    )) : <p className="type-card-description text-[var(--ws-text-muted)]">No intelligence findings yet.</p>}
+                    )) : <p className="type-card-description text-[var(--ws-text-muted)]">{t("No intelligence findings yet.")}</p>}
                   </div>
                 </section>
                 <section className="ac-workspace-panel rounded-xl p-4">
-                  <h3 className="font-semibold text-white">Relationships</h3>
-                  <p className="mt-2 type-card-description text-[var(--ws-text-muted)]">{(selectedDocument.relationships || []).length} linked client, project, contract, invoice, or other workspace record(s).</p>
+                  <h3 className="font-semibold text-white">{t("Relationships")}</h3>
+                  <p className="mt-2 type-card-description text-[var(--ws-text-muted)]">{(selectedDocument.relationships || []).length} {t("linked client, project, contract, invoice, or other workspace record(s).")}</p>
                 </section>
                 <section className="ac-workspace-panel rounded-xl p-4">
-                  <h3 className="font-semibold text-white">Recent activity</h3>
+                  <h3 className="font-semibold text-white">{t("Recent activity")}</h3>
                   <div className="mt-3 space-y-2">
                     {(selectedDocument.activity || []).slice(0, 10).map((activity: any) => (
                       <div key={activity.id} className="flex items-start justify-between gap-3 border-b border-[var(--ws-border)] py-2 last:border-0">

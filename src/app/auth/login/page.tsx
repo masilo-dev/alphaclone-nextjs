@@ -3,6 +3,7 @@
 // Force Next.js to not statically cache this page in production
 export const dynamic = 'force-dynamic';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Input, Button } from '@/components/ui/UIComponents';
@@ -30,6 +31,7 @@ export default function LoginPage() {
 }
 
 function LoginContent() {
+    const { t } = useLanguage();
     const { isPWA } = usePWA();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -463,14 +465,13 @@ function LoginContent() {
                     <div className="w-20 h-20 bg-[color-mix(in_srgb,var(--brand-teal)_12%,transparent)] rounded-full flex items-center justify-center mx-auto mb-6">
                         <Shield className="w-10 h-10 text-[var(--brand-teal)]" />
                     </div>
-                    <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-2">Two-Factor Authentication</h1>
+                    <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-2">{t("Two-Factor Authentication")}</h1>
                     <p className="text-[var(--color-text-secondary)] mb-8 type-card-description">
-                        Enter the 6-digit verification code from your authenticator app to continue.
-                    </p>
+                        {t("Enter the 6-digit verification code from your authenticator app to continue.")}</p>
 
                     <div className="mb-6 text-left">
                         <Input
-                            label="Verification Code"
+                            label={t("Verification Code")}
                             type="text"
                             value={mfaCode}
                             onChange={(e) => setMfaCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
@@ -492,8 +493,7 @@ function LoginContent() {
                         isLoading={isLoading}
                         className="w-full h-11 text-base font-semibold bg-[var(--interactive-primary)] text-white hover:opacity-90 rounded-xl shadow-sm"
                     >
-                        Verify Identity
-                    </Button>
+                        {t("Verify Identity")}</Button>
 
                     <button
                         onClick={async () => {
@@ -505,16 +505,15 @@ function LoginContent() {
                         }}
                         className="mt-6 type-ui text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors"
                     >
-                        Back to Login
-                    </button>
+                        {t("Back to Login")}</button>
                 </div>
             </main>
         );
     }
 
     return (
-        <main className="ac-auth-canvas min-h-[100dvh] flex flex-col items-center justify-start sm:justify-center p-3 py-3 relative overflow-x-hidden">
-            <div className="ac-auth-card w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain p-4 sm:p-5 relative z-10 flex-shrink-0 my-auto">
+        <main className="ac-auth-canvas ac-signin-layout min-h-[100dvh] relative overflow-x-hidden">
+            <div className="ac-auth-card ac-signin-form w-full max-w-md p-4 sm:p-5 relative z-10 my-auto">
                 <div className="mb-3 text-center">
                     {isPWA ? (
                         <div className="mx-auto mb-2 flex justify-center inline-block">
@@ -539,11 +538,11 @@ function LoginContent() {
                             />
                         </Link>
                     )}
-                    <h1 className="text-base font-bold text-[var(--color-text-primary)] mb-0.5">AlphaClone Systems</h1>
+                    <h1 className="text-base font-bold text-[var(--color-text-primary)] mb-0.5">{t("AlphaClone Systems")}</h1>
                     <p className="text-[var(--color-text-secondary)] type-card-description mb-2">
                         {isRegistering
-                            ? '14-day free trial · workspace ready in seconds'
-                            : 'Sign in to your business workspace'}
+                            ? t("14-day free trial · workspace ready in seconds")
+                            : t("Sign in to your business workspace")}
                     </p>
                     <div className="flex justify-center my-1">
                         <PublicStatusPill />
@@ -565,7 +564,7 @@ function LoginContent() {
                         <div className="w-full border-t border-[var(--color-border-primary)]" />
                     </div>
                     <div className="relative flex justify-center type-caption uppercase tracking-wide">
-                        <span className="bg-[var(--color-bg-primary)] px-2 text-[var(--ws-text-muted)]">Or use email</span>
+                        <span className="bg-[var(--color-bg-primary)] px-2 text-[var(--ws-text-muted)]">{t("Or use email")}</span>
                     </div>
                 </div>
 
@@ -573,37 +572,37 @@ function LoginContent() {
                     {isRegistering && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <Input
-                                label="Full Name"
+                                label={t("Full Name")}
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="John Doe"
+                                placeholder={t("John Doe")}
                                 required={isRegistering}
                             />
                             <Input
-                                label="Business Name"
+                                label={t("Business Name")}
                                 value={businessName}
                                 onChange={(e) => setBusinessName(e.target.value)}
-                                placeholder="Optional"
+                                placeholder={t("Optional")}
                             />
                         </div>
                     )}
 
                     <Input
-                        label="Email Address"
+                        label={t("Email Address")}
                         type="email"
                         value={email}
                         onChange={(e) => {
                             setEmail(e.target.value);
                             if (passwordResetSentTo) setPasswordResetSentTo('');
                         }}
-                        placeholder="name@company.com"
+                        placeholder={t("name@company.com")}
                         required
                         autoComplete="email"
                     />
 
                     <div>
                         <div className="mb-1 flex items-center justify-between gap-2">
-                            <label htmlFor="login-password" className="type-label font-medium text-[var(--color-text-secondary)]">Password</label>
+                            <label htmlFor="login-password" className="type-label font-medium text-[var(--color-text-secondary)]">{t("Password")}</label>
                             {!isRegistering && (
                                 <button
                                     type="button"
@@ -627,8 +626,7 @@ function LoginContent() {
                                     }}
                                     className="type-ui font-semibold text-[var(--brand-teal)] hover:text-[var(--brand-blue-700)] transition-colors"
                                 >
-                                    Forgot password?
-                                </button>
+                                    {t("Forgot password?")}</button>
                             )}
                         </div>
                         <div className="relative">
@@ -656,7 +654,7 @@ function LoginContent() {
 
                     {!isRegistering && passwordResetSentTo && (
                         <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg p-2 text-[var(--brand-teal)] type-caption">
-                            Reset link sent to <span className="font-semibold">{passwordResetSentTo}</span>.
+                            {t("Reset link sent to")}<span className="font-semibold">{passwordResetSentTo}</span>.
                         </div>
                     )}
 
@@ -664,20 +662,16 @@ function LoginContent() {
                         <div className="flex flex-wrap gap-x-2 gap-y-0.5 py-0.5">
                             <div className={`flex items-center gap-1 type-ui ${password.length >= 12 ? 'text-[var(--brand-teal)]' : 'text-[var(--ws-text-muted)]'}`}>
                                 <div className={`w-1 h-1 rounded-full ${password.length >= 12 ? 'bg-[var(--brand-teal)]' : 'bg-[var(--color-border-primary)]'}`} />
-                                12+ chars
-                            </div>
+                                {t("12+ chars")}</div>
                             <div className={`flex items-center gap-1 type-ui ${/[A-Z]/.test(password) ? 'text-[var(--brand-teal)]' : 'text-[var(--ws-text-muted)]'}`}>
                                 <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-[var(--brand-teal)]' : 'bg-[var(--color-border-primary)]'}`} />
-                                Upper
-                            </div>
+                                {t("Upper")}</div>
                             <div className={`flex items-center gap-1 type-ui ${/[0-9]/.test(password) ? 'text-[var(--brand-teal)]' : 'text-[var(--ws-text-muted)]'}`}>
                                 <div className={`w-1 h-1 rounded-full ${/[0-9]/.test(password) ? 'bg-[var(--brand-teal)]' : 'bg-[var(--color-border-primary)]'}`} />
-                                Number
-                            </div>
+                                {t("Number")}</div>
                             <div className={`flex items-center gap-1 type-ui ${/[^A-Za-z0-9]/.test(password) ? 'text-[var(--brand-teal)]' : 'text-[var(--ws-text-muted)]'}`}>
                                 <div className={`w-1 h-1 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-[var(--brand-teal)]' : 'bg-[var(--color-border-primary)]'}`} />
-                                Special
-                            </div>
+                                {t("Special")}</div>
                         </div>
                     )}
 
@@ -691,10 +685,10 @@ function LoginContent() {
                                     className="mt-0.5 accent-teal-500"
                                 />
                                 <span>
-                                    I agree to the{' '}
-                                    <Link href="/terms-of-service" target="_blank" className="text-[var(--brand-teal)] hover:text-[var(--brand-blue-700)] underline">Terms</Link>
-                                    {' '}and{' '}
-                                    <Link href="/privacy-policy" target="_blank" className="text-[var(--brand-teal)] hover:text-[var(--brand-blue-700)] underline">Privacy Policy</Link>.
+                                    {t("I agree to the")}{' '}
+                                    <Link href="/terms-of-service" target="_blank" className="text-[var(--brand-teal)] hover:text-[var(--brand-blue-700)] underline">{t("Terms")}</Link>
+                                    {' '}{t("and")}{' '}
+                                    <Link href="/privacy-policy" target="_blank" className="text-[var(--brand-teal)] hover:text-[var(--brand-blue-700)] underline">{t("Privacy Policy")}</Link>.
                                 </span>
                             </label>
                             <label className="flex items-start gap-2 cursor-pointer">
@@ -704,21 +698,21 @@ function LoginContent() {
                                     onChange={(e) => setMarketingOptIn(e.target.checked)}
                                     className="mt-0.5 accent-teal-500"
                                 />
-                                <span>Send me product updates (optional).</span>
+                                <span>{t("Send me product updates (optional).")}</span>
                             </label>
                         </div>
                     )}
 
                     {isRegistering && isEuLikeRegistration && (
                         <div className="space-y-1.5 rounded-lg border border-[var(--color-border-primary)] bg-[var(--color-bg-secondary)] p-2 type-ui text-[var(--color-text-secondary)]">
-                            <p className="font-semibold text-[var(--brand-teal)] uppercase tracking-wide type-caption">EU / UK consent</p>
+                            <p className="font-semibold text-[var(--brand-teal)] uppercase tracking-wide type-caption">{t("EU / UK consent")}</p>
                             <label className="flex items-start gap-2 cursor-pointer">
                                 <input type="checkbox" checked={euConsent} onChange={(e) => setEuConsent(e.target.checked)} className="mt-0.5 accent-teal-500" />
-                                <span>I consent to data processing per the Privacy Policy.</span>
+                                <span>{t("I consent to data processing per the Privacy Policy.")}</span>
                             </label>
                             <label className="flex items-start gap-2 cursor-pointer">
                                 <input type="checkbox" checked={ageConfirmed} onChange={(e) => setAgeConfirmed(e.target.checked)} className="mt-0.5 accent-teal-500" />
-                                <span>I am 16 years of age or older.</span>
+                                <span>{t("I am 16 years of age or older.")}</span>
                             </label>
                         </div>
                     )}
@@ -750,12 +744,12 @@ function LoginContent() {
                             />
                             {turnstileError && (
                                 <div role="alert" className="type-card-description text-amber-400 text-center">
-                                    <p>Security check unavailable. Please try the check again.</p>
+                                    <p>{t("Security check unavailable. Please try the check again.")}</p>
                                     <button type="button" className="mt-2 underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" onClick={() => {
                                         setTurnstileToken('');
                                         setTurnstileError(false);
                                         setTurnstileNonce((nonce) => nonce + 1);
-                                    }}>Retry security check</button>
+                                    }}>{t("Retry security check")}</button>
                                 </div>
                             )}
                         </div>
@@ -767,7 +761,7 @@ function LoginContent() {
                         isLoading={isLoading}
                         disabled={turnstileEnabled && (!turnstileToken || turnstileError)}
                     >
-                        {isRegistering ? 'Create Account with Email' : 'Sign In with Email'}
+                        {isRegistering ? t("Create Account with Email") : t("Sign In with Email")}
                     </Button>
                 </form>
 
@@ -785,22 +779,27 @@ function LoginContent() {
                     >
                         {isRegistering ? (
                             <>
-                                <LogIn className="w-4 h-4" /> Already have an account? Sign In
-                            </>
+                                <LogIn className="w-4 h-4" /> {t("Already have an account? Sign In")}</>
                         ) : (
                             <>
-                                <UserPlus className="w-4 h-4" /> Don't have an account? Start Free Trial
-                            </>
+                                <UserPlus className="w-4 h-4" /> {t("Don't have an account? Start Free Trial")}</>
                         )}
                     </button>
                     {!registrationOpen && policyLoaded && (
-                        <p className="type-card-description text-amber-400">Account registration is temporarily closed.</p>
+                        <p className="type-card-description text-amber-400">{t("Account registration is temporarily closed.")}</p>
                     )}
                     <p className="type-caption text-[var(--ws-text-muted)] dark:text-slate-600 uppercase tracking-wider">
-                        Secured by AlphaClone 256-bit Encryption
-                    </p>
+                        {t("Secured by AlphaClone 256-bit Encryption")}</p>
                 </div>
             </div>
+            <aside className="ac-signin-brand" aria-label={t("AlphaClone Systems")}>
+              <div className="ac-signin-brand-content">
+                <p className="ac-signin-eyebrow">{t("AlphaClone Systems")}</p>
+                <h2>{t('Your business. One workspace.')}</h2>
+                <p>{t('Manage clients, projects, documents and communication in one place.')}</p>
+                <Link href="/">{t('Explore AlphaClone')}</Link>
+              </div>
+            </aside>
         </main>
     );
 }
