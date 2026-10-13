@@ -84,28 +84,25 @@ export function validateContract(input: ContractValidationInput): DocumentValida
     });
   }
 
-  // Inconsistent client emails
-  const emails = Array.from(text.matchAll(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi)).map((m) =>
-    m[0].toLowerCase()
-  );
+  // A contract has several parties: supplier/notice emails are not client identities.
+  // Only explicitly labelled client email fields can establish a conflicting identity.
+  const plain = text.replace(/<\/(?:p|div|tr|li)>|<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ');
+  const emails = Array.from(plain.matchAll(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi)).map((m) => m[0].toLowerCase());
   if (input.clientEmail) {
-    const expected = input.clientEmail.toLowerCase();
-    const others = emails.filter((e) => e !== expected);
-    if (others.length > 0 && emails.includes(expected)) {
-      findings.push({
-        id: 'inconsistent-client-email',
-        severity: 'critical',
-        message: `Client email inconsistency: expected ${expected}, also found ${others.slice(0, 3).join(', ')}`,
-        field: 'client_email',
-      });
+    const expected = input.clientEmail.trim().toLowerCase();
+    const clientFields = Array.from(plain.matchAll(/\b(?:client|customer|buyer)\s*(?:'s\s*)?(?:e-?mail|email\s+address)\s*[:=–-]?\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi)).map((m) => m[1].toLowerCase());
+    const conflicts = [...new Set(clientFields.filter((email) => email !== expected))];
+    if (conflicts.length) {
+      findings.push({ id: 'inconsistent-client-email', severity: 'critical',
+        message: `Client email inconsistency: expected ${expected}, client email field contains ${conflicts.join(', ')}`,
+        field: 'client_email', evidence: { expected, client_fields: clientFields } });
+    } else if (emails.length && !emails.includes(expected)) {
+      findings.push({ id: 'client-email-not-in-body', severity: 'warning',
+        message: 'The saved client email does not appear in the contract body; verify the client contact details.', field: 'client_email' });
     }
   } else if (new Set(emails).size > 2) {
-    findings.push({
-      id: 'multiple-client-emails',
-      severity: 'warning',
-      message: 'Multiple distinct emails appear in the contract; verify client identity.',
-      field: 'client_email',
-    });
+    findings.push({ id: 'multiple-client-emails', severity: 'warning',
+      message: 'Multiple distinct emails appear in the contract; verify client identity.', field: 'client_email' });
   }
 
   if (input.clientName && text && !text.toLowerCase().includes(input.clientName.toLowerCase())) {

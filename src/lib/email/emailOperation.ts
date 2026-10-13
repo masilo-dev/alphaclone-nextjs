@@ -17,17 +17,30 @@ function safeOutput(output: Record<string, unknown>) {
   ]));
 }
 
-export function emailOperationStore(tenantId: string, tool: string, key: string, approvalEvidence?: { userId: string; recipientHash: string; approvalFingerprint: string; senderRevision: string }): EmailOperationStore {
+export function emailOperationStore(tenantId: string, tool: string, key: string, approvalEvidence?: { userId: string; recipientHash: string; approvalFingerprint: string; senderRevision: string; messageScopeHash?: string }): EmailOperationStore {
   const db = createSupabaseAdminClient();
   return {
     async claim(actionId) {
       const { error } = await db.from('mcp_action_receipts').insert({
         tenant_id: tenantId, tool, idempotency_key: key, action_id: actionId,
-        ...(approvalEvidence ? { user_id: approvalEvidence.userId, sanitized_input: { recipient_hash: approvalEvidence.recipientHash, approval_fingerprint: approvalEvidence.approvalFingerprint, sender_revision: approvalEvidence.senderRevision, approved_at: new Date().toISOString() } } : {}),
+        ...(approvalEvidence ? { user_id: approvalEvidence.userId, sanitized_input: { recipient_hash: approvalEvidence.recipientHash, approval_fingerprint: approvalEvidence.approvalFingerprint, sender_revision: approvalEvidence.senderRevision, message_scope_hash: approvalEvidence.messageScopeHash, approved_at: new Date().toISOString() } } : {}),
         final_status: 'running', success: false, entity_type: tool === 'email_batch' ? 'bulk_email' : 'email_message',
         sanitized_output: { status: 'executing', action_id: actionId },
       });
-      if (error?.code === '23505') return false;
+      if (error?.code === '23505') {
+        // A corrected sender connection can retry a proven failure, atomically.
+        // Unknown/accepted operations are never reclaimed, even after settings change.
+        if (tool !== 'ui_outreach_send' || !approvalEvidence) return false;
+        const retried = await db.from('mcp_action_receipts').update({ action_id: actionId,
+          final_status: 'running', success: false,
+          sanitized_input: { recipient_hash: approvalEvidence.recipientHash, approval_fingerprint: approvalEvidence.approvalFingerprint,
+            sender_revision: approvalEvidence.senderRevision, message_scope_hash: approvalEvidence.messageScopeHash, approved_at: new Date().toISOString() },
+          sanitized_output: { status: 'executing', action_id: actionId, retry_after_sender_change: true },
+        }).eq('tenant_id', tenantId).eq('tool', tool).eq('idempotency_key', key).eq('final_status', 'failed')
+          .neq('sanitized_input->>sender_revision', approvalEvidence.senderRevision).select('action_id');
+        if (retried.error) throw new Error('EMAIL_OPERATION_RETRY_CLAIM_FAILED');
+        return Boolean(retried.data?.length);
+      }
       if (error) throw new Error(`EMAIL_OPERATION_PERSIST_FAILED: ${error.message}`);
       return true;
     },
@@ -41,7 +54,7 @@ export function emailOperationStore(tenantId: string, tool: string, key: string,
       const { error } = await db.from('mcp_action_receipts').update({
         final_status: status, success: !['failed', 'unknown_execution_state', 'running'].includes(status),
         sanitized_output: safeOutput(output), provider: output.provider || null,
-        provider_reference: output.emailId || null,
+        provider_reference: output.emailId || output.messageId || null,
       }).eq('tenant_id', tenantId).eq('tool', tool).eq('idempotency_key', key).eq('action_id', actionId);
       if (error) throw new Error(`EMAIL_OPERATION_UPDATE_FAILED: ${error.message}`);
     },
@@ -51,7 +64,22 @@ export function emailOperationStore(tenantId: string, tool: string, key: string,
         .select('id, provider_account_id, provider_message_id, provider_accepted_at, delivered_at, failed_at, bounced_at, delivery_status, metadata')
         .eq('tenant_id', tenantId).eq('idempotency_key', key).limit(1).maybeSingle();
       if (error) throw new Error(`EMAIL_RECONCILIATION_LOOKUP_FAILED: ${error.message}`);
-      if (!data?.provider_accepted_at) return null;
+      if (!data?.provider_accepted_at) {
+        // Older/native outreach can have acceptance in the durable receipt or exact outreach log.
+        if (tool !== 'ui_outreach_send') return null;
+        const own = await db.from('mcp_action_receipts').select('sanitized_output')
+          .eq('tenant_id', tenantId).eq('tool', tool).eq('idempotency_key', key).maybeSingle();
+        if (own.error) throw new Error('EMAIL_RECONCILIATION_LOOKUP_FAILED');
+        const output = own.data?.sanitized_output;
+        if (output?.success === true && ['provider_accepted', 'delivered'].includes(output.deliveryStatus)) return output;
+        if (!output?.logId) return null;
+        const log = await db.from('lead_outreach_log').select('id, status, provider, provider_message_id, sent_at')
+          .eq('tenant_id', tenantId).eq('id', output.logId).maybeSingle();
+        if (log.error) throw new Error('EMAIL_RECONCILIATION_LOOKUP_FAILED');
+        if (!log.data?.sent_at || !['sent', 'delivered', 'opened', 'clicked'].includes(log.data.status)) return null;
+        return { success: true, deliveryStatus: log.data.status === 'delivered' ? 'delivered' : 'provider_accepted',
+          logId: log.data.id, messageId: log.data.provider_message_id, provider: log.data.provider, reconciled: true };
+      }
       return { success: !data.failed_at && !data.bounced_at, emailId: data.provider_message_id, canonicalMessageId: data.id,
         providerAccountId: data.provider_account_id, provider: data.metadata?.provider,
         sender: data.metadata?.sender, deliveryStatus: data.failed_at || data.bounced_at ? 'failed' : data.delivered_at ? 'delivered' : 'provider_accepted',
@@ -70,7 +98,8 @@ export async function runEmailOperation<T extends Record<string, unknown>>(param
   if (!await params.store.claim(actionId)) {
     const existing = await params.store.read();
     if (!existing) throw new Error('EMAIL_OPERATION_CLAIM_NOT_FOUND');
-    const providerEvidence = await params.store.reconcile();
+    const providerEvidence = existing.sanitized_output?.success === true && ['provider_accepted', 'delivered'].includes(String(existing.sanitized_output.deliveryStatus))
+      ? existing.sanitized_output : await params.store.reconcile();
     const reconciled: Record<string, unknown> | null = providerEvidence ? { ...providerEvidence, logId: existing.sanitized_output?.logId, operationId: existing.sanitized_output?.operationId } : null;
     if (reconciled) {
       await params.store.save(existing.action_id, reconciled.deliveryStatus === 'failed' ? 'failed' : reconciled.deliveryStatus === 'delivered' ? 'delivered' : 'provider_accepted', reconciled);
@@ -95,6 +124,11 @@ export async function runEmailOperation<T extends Record<string, unknown>>(param
   } catch (error) {
     // A process/persistence failure may follow acceptance. Never release the claim.
     const previous = await params.store.read().catch(() => null);
+    const accepted = previous?.sanitized_output;
+    if (accepted?.success === true && ['provider_accepted', 'delivered'].includes(String(accepted.deliveryStatus))) {
+      await params.store.save(actionId, String(accepted.deliveryStatus), accepted).catch(() => undefined);
+      return { ...accepted, warnings: ['post_send_work_interrupted'], httpStatus: 200 } as unknown as T;
+    }
     const output = { ...previous?.sanitized_output, success: false, status: 'unknown', deliveryStatus: 'unknown', code: 'OUTCOME_UNKNOWN',
       error: 'Email execution interrupted. Reconciliation is required before another send.', action_id: actionId };
     await params.store.save(actionId, 'unknown_execution_state', output).catch(() => undefined);

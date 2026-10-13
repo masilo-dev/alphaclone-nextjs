@@ -113,7 +113,7 @@ const tenantId = '10000000-0000-4000-8000-000000000001', userId = '20000000-0000
 const run = load('src/lib/email/emailOperation.ts').runEmailOperation;
 function memoryStore(evidenceInput) {
   let row, evidence;
-  return { async claim(id) { if (row) return false; row = { action_id: id, final_status: 'running', sanitized_input: evidenceInput ? { recipient_hash: evidenceInput.recipientHash } : {} }; return true; },
+  return { async claim(id) { if (row) return false; row = { action_id: id, final_status: 'running', sanitized_input: evidenceInput ? { recipient_hash: evidenceInput.recipientHash, message_scope_hash: evidenceInput.messageScopeHash } : {} }; return true; },
     async read() { return row; }, async save(id, status, output) { row = { ...row, action_id: id, final_status: status, sanitized_output: output }; },
     async reconcile() { return evidence || null; }, setEvidence(value) { evidence = value; } };
 }
@@ -128,7 +128,7 @@ function outreachFixture(sendImpl = async () => ({})) {
         if (s.filters['sanitized_input->>recipient_hash'] &&
           (row.sanitized_input.recipient_hash !== s.filters['sanitized_input->>recipient_hash'] || !['running', 'unknown_execution_state'].includes(row.final_status))) continue;
         if (s.filters.idempotency_key && key !== s.filters.idempotency_key) continue;
-        found.push(row);
+        found.push({ ...row, idempotency_key: key });
       }
       return { data: s.filters.idempotency_key ? found[0] || null : found, error: null };
     }
@@ -378,4 +378,72 @@ test('invoice lifecycle route uses guarded command, accepts approved invoice and
     if (allowed) { assert.equal(body.run_id, 'test-run'); assert.match(body.message, /no email has been confirmed/); }
     else { assert.equal(body.code, 'APPROVAL_REQUIRED'); assert.equal(body.success, undefined); }
   }
+});
+
+const documents = load('src/lib/documents/documentValidationEngine.ts');
+test('supplier and notice addresses do not conflict with the client identity', () => {
+  const r = documents.validateContract({ text: '<p>Client email: Client@Example.com</p><p>Supplier email: bonnie@company.example</p><p>Legal notices: legal@company.example</p>', clientEmail: ' client@example.com ', jurisdiction: 'Poland', hasSignatureBlock: true });
+  assert.equal(r.can_send, true);
+  assert.equal(r.findings.some(f => f.id === 'inconsistent-client-email'), false);
+});
+test('explicit client email mismatch still blocks even when expected address appears elsewhere', () => {
+  for (const text of ['Client email: wrong@example.com', '<p>Client email: <a>wrong@example.com</a></p><p>Supplier: right@example.com</p>']) {
+    const r = documents.validateContract({ text, clientEmail: 'right@example.com', jurisdiction: 'Poland', hasSignatureBlock: true });
+    assert.equal(r.can_send, false);
+    assert.ok(r.findings.some(f => f.id === 'inconsistent-client-email'));
+  }
+});
+test('unlabelled third party email is advisory, not a forged client mismatch', () => {
+  const r = documents.validateContract({ text: 'Contact legal@example.com', clientEmail: 'client@example.com', jurisdiction: 'Poland', hasSignatureBlock: true });
+  assert.equal(r.can_send, true);
+});
+test('unknown email does not freeze an unrelated conversation with the same recipient', async () => {
+  const f = outreachFixture(async () => { throw new Error('ECONNRESET'); });
+  const issue = async payload => (await f.module.POST(f.request(payload, { 'x-outreach-phase': 'approve' }))).json();
+  const first = await issue(f.payload);
+  await f.module.POST(f.request(f.payload, { 'x-outreach-approval': first.approvalToken }));
+  const other = { ...f.payload, subject: 'Separate project question' };
+  const second = await issue(other);
+  await f.module.POST(f.request(other, { 'x-outreach-approval': second.approvalToken }));
+  assert.equal(f.sends, 2);
+  const edited = { ...f.payload, body: 'Changed retry body' };
+  const third = await issue(edited);
+  const blocked = await f.module.POST(f.request(edited, { 'x-outreach-approval': third.approvalToken }));
+  assert.equal(blocked.status, 409); assert.equal(f.sends, 2);
+});
+test('an accepted checkpoint survives downstream failure without another provider call', async () => {
+  const store = memoryStore(); let sends = 0;
+  const execute = async (_id, checkpoint) => { sends++; await checkpoint({ success: true, deliveryStatus: 'provider_accepted', messageId: 'native-1' }); throw new Error('CRM unavailable after send'); };
+  const first = await run({ store, execute });
+  const retry = await run({ store, execute });
+  assert.equal(first.deliveryStatus, 'provider_accepted'); assert.equal(retry.deliveryStatus, 'provider_accepted'); assert.equal(sends, 1);
+});
+
+test('definite pre-send/provider rejection is a failure, not an unconfirmed send', async () => {
+  const f = outreachFixture(async () => { throw Object.assign(new Error('sender verification unavailable'), { deliveryStatus: 'failed', sendAttempted: false }); });
+  const issued = await (await f.module.POST(f.request(f.payload, { 'x-outreach-phase': 'approve' }))).json();
+  const response = await f.module.POST(f.request(f.payload, { 'x-outreach-approval': issued.approvalToken }));
+  const result = await response.json();
+  assert.notEqual(result.code, 'OUTCOME_UNKNOWN');
+  assert.equal(f.stores.get(issued.operationId) ? (await f.stores.get(issued.operationId).read()).final_status : null, 'failed');
+});
+test('corrected sender retries only a failed receipt and only one worker reclaims it', async () => {
+  let record = { final_status: 'failed', sender_revision: 'old' }, sends = 0;
+  const admin = { from() {
+    const filters = {}; let op = 'insert', payload;
+    const q = { insert() { return q; }, update(p) { op = 'update'; payload = p; return q; }, eq(k,v) { filters[k] = v; return q; }, neq(k,v) { filters['neq:'+k] = v; return q; }, select() { return q; },
+      then(resolve, reject) { const result = op === 'insert' ? { error: { code: '23505' } } :
+        record.final_status === filters.final_status && record.sender_revision !== filters['neq:sanitized_input->>sender_revision']
+          ? (record = { ...record, ...payload, sender_revision: payload.sanitized_input.sender_revision }, sends++, { data: [{ action_id: payload.action_id }], error: null }) : { data: [], error: null };
+        return Promise.resolve(result).then(resolve,reject); } };
+    return q;
+  } };
+  const ops = load('src/lib/email/emailOperation.ts', { '@/lib/supabase-admin': { createSupabaseAdminClient: () => admin } });
+  const store = ops.emailOperationStore(tenantId, 'ui_outreach_send', 'key', { userId, recipientHash: 'r', approvalFingerprint: 'a', senderRevision: 'new' });
+  const result = await Promise.all([store.claim('one'), store.claim('two')]);
+  assert.equal(result.filter(Boolean).length, 1); assert.equal(sends, 1);
+  record = { final_status: 'unknown_execution_state', sender_revision: 'old' };
+  assert.equal(await store.claim('three'), false);
+  record = { final_status: 'provider_accepted', sender_revision: 'old' };
+  assert.equal(await store.claim('four'), false);
 });

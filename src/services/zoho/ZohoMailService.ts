@@ -358,7 +358,10 @@ export class ZohoMailService extends ZohoService {
         references?: string;
         attachments?: Array<{ filename: string; content: string; contentType?: string }>;
     }) {
-        const { base } = await this.getMailBase();
+        // These lookups/validations cannot send mail. Their failure must not strand a send claim.
+        let base: string, toAddress: string, subject: string, uploadedAttachments: Awaited<ReturnType<ZohoMailService['uploadMailAttachments']>>;
+        try {
+        ({ base } = await this.getMailBase());
         const validAddresses = await this.getSenderAddresses();
         
         if (!validAddresses.length) throw new Error('EMAIL_SENDER_VERIFICATION_FAILED: Zoho sender identities are unavailable');
@@ -367,17 +370,20 @@ export class ZohoMailService extends ZohoService {
         }
         if (!params.fromAddress) params.fromAddress = validAddresses[0];
 
-        const subject = normalizeEmailSubject(params.subject);
+        subject = normalizeEmailSubject(params.subject);
         if (!subject) {
             throw new Error('Email subject is required.');
         }
         const recipientParts = params.toAddress.split(',').map((value) => extractEmailAddress(value));
-        const toAddress = [...new Set(recipientParts)].join(',');
+        toAddress = [...new Set(recipientParts)].join(',');
         if (!recipientParts.length || recipientParts.some((value) => !value.includes('@'))) {
             throw new Error('Recipient email address is invalid.');
         }
 
-        const uploadedAttachments = await this.uploadMailAttachments(params.attachments);
+        uploadedAttachments = await this.uploadMailAttachments(params.attachments);
+        } catch (error) {
+            throw Object.assign(error instanceof Error ? error : new Error('Zoho pre-send checks failed'), { deliveryStatus: 'failed', sendAttempted: false });
+        }
         const result = await this.callZohoAPI(`${base}/messages`, {
             method: 'POST',
             body: JSON.stringify({

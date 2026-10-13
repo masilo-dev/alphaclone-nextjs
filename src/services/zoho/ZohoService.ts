@@ -390,7 +390,7 @@ export class ZohoService {
         // Zoho may return an application failure in an HTTP 200 response.
         const code = Number(payload?.status?.code || 200);
         if (code >= 400 || payload?.error || payload?.status?.status === 'failure') {
-            throw new ZohoAPIError(code >= 400 ? code : 502, `Zoho API rejected operation: ${JSON.stringify(payload.status || payload.error)}`);
+            throw Object.assign(new ZohoAPIError(code >= 400 ? code : 502, `Zoho API rejected operation: ${JSON.stringify(payload.status || payload.error)}`), { providerRejected: true, deliveryStatus: 'failed' });
         }
         return payload;
     }
