@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     const [eventsResult, logsResult, webhookResult, contactsResult, leadsResult] = await Promise.all([
       admin
         .from('outreach_events')
-        .select('id,tenant_id,sequence_id,campaign_id,contact_id,lead_id,channel,event_type,provider,variant,metadata,occurred_at,created_at')
+        .select('id,tenant_id,sequence_id,campaign_id,contact_id,lead_id,channel,event_type,provider,variant,metadata,occurred_at')
         .eq('tenant_id', tenantId)
         .gte('occurred_at', since)
         .order('occurred_at', { ascending: false })
