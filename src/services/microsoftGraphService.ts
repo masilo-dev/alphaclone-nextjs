@@ -20,6 +20,7 @@ async function graphRequest<T = any>(
     path.startsWith('http') ? path : `${MICROSOFT_GRAPH_BASE_URL}${path}`,
     {
       method: options.method || 'GET',
+      signal: AbortSignal.timeout(options.method && options.method !== 'GET' ? 30_000 : 15_000),
       headers: {
         Authorization: `Bearer ${accessToken}`,
         ...(options.body instanceof Blob ? {} : { 'Content-Type': 'application/json' }),
