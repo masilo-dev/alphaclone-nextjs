@@ -69,7 +69,7 @@ export function ModulePageLayout({
         </div>
       ) : null}
       {stats && !isInstalledMobileCompanion ? <section className="flex-shrink-0">{stats}</section> : null}
-      <section className={cn('flex-1 min-h-0', scrollContent && 'overflow-y-auto overscroll-contain')}>
+      <section className={cn('flex-1 min-h-0', scrollContent ? 'overflow-y-auto overscroll-contain' : 'flex flex-col overflow-hidden')}>
         {children}
       </section>
     </div>
