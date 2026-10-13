@@ -18,8 +18,8 @@ const STEPS = [
   },
   {
     letter: 'C',
-    title: 'Watch the scrape',
-    body: 'Live free public data on the map panel.',
+    title: 'See search results',
+    body: 'See businesses found from public sources.',
     Icon: CircleDot,
   },
   {
@@ -51,7 +51,7 @@ export default function LeadFinderBeginnerGuide() {
           <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">Beginner path · A → E</p>
           {!open ? (
             <p className="type-card-description text-[var(--ws-text-muted)] truncate">
-              Niche → location → scrape → qualify → CRM
+              Business type → location → results → select → save
             </p>
           ) : null}
         </div>

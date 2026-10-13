@@ -670,7 +670,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [tourRunId, setTourRunId] = useState(0);
   const requestProductTour = useCallback(() => {
     setShowOnboarding(false);
-    if (activeTab !== "/dashboard" && activeTab !== "overview" && activeTab !== "dashboard") {
+    if (activeTab !== "/dashboard" && activeTab !== "overview" && activeTab !== "dashboard" && !document.querySelector('[data-tour="lead-finder-overview"]')) {
       setActiveTab("/dashboard");
       window.setTimeout(() => {
         setTourRunId((id) => id + 1);

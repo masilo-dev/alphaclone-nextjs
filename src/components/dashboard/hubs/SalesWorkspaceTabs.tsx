@@ -38,8 +38,8 @@ export const SALES_PRIMARY_TABS: SalesWorkspaceTab[] = [
 
 /** Secondary tools — accessible via More menu */
 export const SALES_SECONDARY_TABS: SalesWorkspaceTab[] = [
-  { label: 'Workspace', href: '/dashboard/crm/workspace', icon: Workflow },
-  { label: 'Console', href: '/dashboard/crm/console', icon: MessageCircle },
+  { label: 'Customers', href: '/dashboard/crm/workspace', icon: Workflow },
+  { label: 'Advanced tools', href: '/dashboard/crm/console', icon: MessageCircle },
   { label: 'Reports', href: '/dashboard/crm/reports', icon: FileText },
   { label: 'Lead Finder', shortLabel: 'Finder', href: '/dashboard/leads/finder', icon: Search },
   { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },

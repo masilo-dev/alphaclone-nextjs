@@ -22,7 +22,7 @@ interface MoneyHubProps {
 export default function MoneyHub({ children }: MoneyHubProps) {
   return (
     <HubShell
-      title="Money Hub"
+      title="Money"
       description="Billing, cash movement, and financial oversight"
       tabs={MONEY_TABS}
       dataTour="money-hub"

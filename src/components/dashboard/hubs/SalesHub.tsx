@@ -12,7 +12,7 @@ interface SalesHubProps {
 export default function SalesHub({ children }: SalesHubProps) {
   return (
     <HubShell
-      title="CRM & Sales"
+      title="Customers & Sales"
       description="Relationships, leads, and deals moving toward close"
       tabs={SALES_WORKSPACE_TABS}
       moduleId="crm"

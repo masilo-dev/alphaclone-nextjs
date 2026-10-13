@@ -43,6 +43,7 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
     const [queueing, setQueueing] = useState(false);
 
     const uniqueIds = useMemo(() => [...new Set(selectedIds)], [selectedIds]);
+    const selectionKey = `${recipientSource}:${[...uniqueIds].sort().join(',')}`;
     const capExceeded = uniqueIds.length > MAX_BATCH_RECIPIENTS;
 
     useEffect(() => {
@@ -50,11 +51,12 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
         setStep('configure');
         setReviewedRecipients([]);
         setExcludedRecipients([]);
-    }, [isOpen, recipientSource, selectedIds]);
+    }, [isOpen, selectionKey]);
 
     const handleReview = async () => {
-        if (!uniqueIds.length || capExceeded) return;
+        if (!uniqueIds.length || capExceeded || reviewing) return;
         setReviewing(true);
+        try {
         const result = await leadService.previewBatchOutreach({
             leadIds: uniqueIds,
             source: recipientSource,
@@ -69,12 +71,18 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
         setReviewedRecipients(result.recipients || []);
         setExcludedRecipients(result.excluded || []);
         setStep('review');
+        } catch {
+            toast.error('Recipients could not be reviewed. Check your connection and retry.');
+        } finally {
+            setReviewing(false);
+        }
     };
 
     const handleQueue = async () => {
-        if (!reviewedRecipients.length) return;
+        if (!reviewedRecipients.length || queueing) return;
 
         setQueueing(true);
+        try {
         const result = await leadService.sendBatchOutreach({
             leadIds: uniqueIds,
             tone,
@@ -96,6 +104,11 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
         );
         onSuccess();
         onClose();
+        } catch {
+            toast.error('The queue request could not be confirmed. Check Business activity before retrying.');
+        } finally {
+            setQueueing(false);
+        }
     };
 
     if (!isOpen) return null;
@@ -184,7 +197,7 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                         <Button
                             onClick={handleReview}
                             isLoading={reviewing}
-                            disabled={!uniqueIds.length || capExceeded}
+                            disabled={!uniqueIds.length || capExceeded || reviewing}
                             className="flex w-full items-center justify-center gap-3 rounded-2xl bg-teal-600 py-4 text-lg font-black uppercase tracking-widest text-[var(--text-inverse)] shadow-xl shadow-teal-500/20 hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <Eye className="h-6 w-6" />

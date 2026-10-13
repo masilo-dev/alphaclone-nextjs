@@ -757,7 +757,8 @@ function LoginContent() {
 
                     <Button
                         type="submit"
-                        className="w-full min-h-11 type-ui font-semibold bg-[var(--interactive-primary)] text-white hover:opacity-90 rounded-xl shadow-sm"
+                        variant="primary"
+                        className="w-full min-h-11 type-ui font-semibold bg-[var(--interactive-primary)] text-[var(--text-inverse)] hover:opacity-90 rounded-xl shadow-sm"
                         isLoading={isLoading}
                         disabled={turnstileEnabled && (!turnstileToken || turnstileError)}
                     >

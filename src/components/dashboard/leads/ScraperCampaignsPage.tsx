@@ -4,7 +4,7 @@ import { Input as AlphaCloneInput } from '@/components/ui/input';
 import { Select as AlphaCloneSelect } from '@/components/ui/select';
 
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
 import {
@@ -17,6 +17,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { propagation } from '@/lib/behavioral/propagationBridge';
 import LeadFinderMapPanel from '@/components/dashboard/leads/LeadFinderMapPanel';
 import LeadFinderChat from '@/components/dashboard/leads/LeadFinderChat';
+import { normalizeLeadFinderSettings, type LeadFinderSettings } from '@/lib/lead-finder/searchPreferences';
 import ResearchEngineWorkspace from '@/components/dashboard/leads/ResearchEngineWorkspace';
 
 type SearchRecord = {
@@ -48,13 +49,6 @@ type LeadList = {
   created_at: string;
 };
 
-type LeadFinderSettings = {
-  defaultResultLimit: number;
-  requireEmail: boolean;
-  requireWebsite: boolean;
-  defaultSources: string[];
-};
-
 const SETTINGS_KEY = 'lead_finder_workspace_settings';
 
 function readLeadFinderSettings(workspaceId: string): LeadFinderSettings {
@@ -66,7 +60,7 @@ function readLeadFinderSettings(workspaceId: string): LeadFinderSettings {
     if (!raw) {
       return { defaultResultLimit: 50, requireEmail: false, requireWebsite: false, defaultSources: ['apify', 'openstreetmap', 'website'] };
     }
-    return JSON.parse(raw) as LeadFinderSettings;
+    return normalizeLeadFinderSettings(JSON.parse(raw));
   } catch {
     return { defaultResultLimit: 50, requireEmail: false, requireWebsite: false, defaultSources: ['apify', 'openstreetmap', 'website'] };
   }
@@ -74,7 +68,12 @@ function readLeadFinderSettings(workspaceId: string): LeadFinderSettings {
 
 function writeLeadFinderSettings(workspaceId: string, settings: LeadFinderSettings) {
   if (typeof window === 'undefined') return;
-  window.localStorage.setItem(`${SETTINGS_KEY}:${workspaceId}`, JSON.stringify(settings));
+  try {
+    window.localStorage.setItem(`${SETTINGS_KEY}:${workspaceId}`, JSON.stringify(settings));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 const nav = ['Discover', 'Assistant', 'Results', 'Research', 'Lists', 'Outreach', 'Activity', 'Settings'] as const;
@@ -109,6 +108,10 @@ export default function ScraperCampaignsPage() {
   const [selectedSearch, setSelectedSearch] = useState<SearchRecord | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [reviewingCandidateId, setReviewingCandidateId] = useState<string | null>(null);
+  const [resultsError, setResultsError] = useState<string | null>(null);
+  const selectionKey = `${tenant?.id || ''}:${selectedSearch?.id || ''}`;
+  const selectionKeyRef = useRef(selectionKey);
+  selectionKeyRef.current = selectionKey;
   const [lists, setLists] = useState<LeadList[]>([]);
   const [listsLoading, setListsLoading] = useState(false);
   const [creatingList, setCreatingList] = useState(false);
@@ -124,33 +127,56 @@ export default function ScraperCampaignsPage() {
     keywords: '', location: '', country: '', city: '', region: '', industry: '',
     searchType: 'businesses_by_location', resultLimit: 50, website: false, email: false,
     phone: false, social: false, filterNoWebsite: false, sources: ['apify', 'openstreetmap', 'website'],
-    excludedKeywords: '', excludedDomains: '', excludedLocations: '', radiusKm: 25,
+    excludedKeywords: '', excludedDomains: '', excludedLocations: '',
   });
   // The safe tenant hook exposes tenant identity, not membership role. The API
   // remains the source of truth for review authorization and returns a clear
   // error when a member lacks permission.
   const canReviewCandidates = true;
 
+  const workspaceRef = useRef(tenant?.id);
+  workspaceRef.current = tenant?.id;
+  useEffect(() => {
+    setSearches([]);
+    setSelectedSearch(null);
+    setCandidates([]);
+    setLists([]);
+  }, [tenant?.id]);
+
   const loadSearches = useCallback(async () => {
     if (!tenant?.id) return;
+    try {
     const res = await fetch(`/api/leads/searches?workspaceId=${encodeURIComponent(tenant.id)}`);
     const body = await res.json();
-    if (!res.ok) { toast.error(body.error || 'Could not load searches'); return; }
+    if (workspaceRef.current !== tenant.id) return;
+    if (!res.ok) { setAvailabilityNotice(body.error || 'Could not load searches'); return; }
     setAvailable(body.available !== false);
     setAvailabilityNotice(body.notice || null);
     const rows = body.searches || [];
     setSearches(rows);
     setSelectedSearch(current => current ? rows.find((row: SearchRecord) => row.id === current.id) || current : rows[0] || null);
+    } catch {
+      if (workspaceRef.current === tenant.id) setAvailabilityNotice('Search history could not be loaded. Check your connection and try again.');
+    }
   }, [tenant?.id]);
 
   const loadResults = useCallback(async () => {
     if (!tenant?.id || !selectedSearch?.id) return;
-    const res = await fetch(`/api/leads/searches/${selectedSearch.id}/results?workspaceId=${encodeURIComponent(tenant.id)}&limit=100`);
-    const body = await res.json();
-    if (!res.ok) { toast.error(body.error || 'Could not load results'); return; }
-    setCandidates((body.candidates || []).map((row: Candidate & { latitude?: number; longitude?: number }) => ({
-      ...row, lat: row.latitude, lng: row.longitude,
-    })));
+    const requestKey = `${tenant.id}:${selectedSearch.id}`;
+    try {
+      const res = await fetch(`/api/leads/searches/${selectedSearch.id}/results?workspaceId=${encodeURIComponent(tenant.id)}&limit=500`);
+      const body = await res.json();
+      if (selectionKeyRef.current !== requestKey) return;
+      if (!res.ok) throw new Error(body.error || 'Could not load results');
+      setResultsError(body.available === false ? body.notice || 'Results are not available yet. Try again shortly.' : null);
+      setCandidates((body.candidates || []).map((row: Candidate & { latitude?: number; longitude?: number }) => ({
+        ...row, lat: row.latitude, lng: row.longitude,
+      })));
+    } catch (error) {
+      if (selectionKeyRef.current === requestKey) {
+        setResultsError(error instanceof Error ? error.message : 'Results could not be loaded. Check your connection and try again.');
+      }
+    }
   }, [tenant?.id, selectedSearch?.id]);
 
   const loadLists = useCallback(async () => {
@@ -159,8 +185,11 @@ export default function ScraperCampaignsPage() {
     try {
       const res = await fetch(`/api/leads/lists?workspaceId=${encodeURIComponent(tenant.id)}`);
       const body = await res.json();
+      if (workspaceRef.current !== tenant.id) return;
       if (res.ok) setLists(body.lists || []);
       else toast.error(body?.error || 'Could not load lead lists');
+    } catch {
+      toast.error('Lead lists could not be loaded. Check your connection and try again.');
     } finally {
       setListsLoading(false);
     }
@@ -182,10 +211,14 @@ export default function ScraperCampaignsPage() {
   useEffect(() => { if (active === 'Lists') void loadLists(); }, [active, loadLists]);
 
   useEffect(() => { void loadSearches(); }, [loadSearches]);
-  useEffect(() => { void loadResults(); }, [loadResults]);
+  useEffect(() => {
+    setCandidates([]);
+    setResultsError(null);
+    void loadResults();
+  }, [loadResults]);
   useEffect(() => {
     const activeSearch = searches.some(s => ['queued', 'running'].includes(s.status));
-    if (!activeSearch && !selectedSearch?.discovered_count) return;
+    if (!activeSearch) return;
     const timer = window.setInterval(() => {
       void loadSearches();
       void loadResults();
@@ -199,6 +232,14 @@ export default function ScraperCampaignsPage() {
       toast.error('Add business keywords or a location.');
       return;
     }
+    if (!Number.isInteger(form.resultLimit) || form.resultLimit < 1 || form.resultLimit > 500) {
+      toast.error('Choose a result limit between 1 and 500.');
+      return;
+    }
+    if (!form.sources.length) {
+      toast.error('Select at least one search source.');
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch('/api/leads/searches', {
@@ -210,6 +251,7 @@ export default function ScraperCampaignsPage() {
           query: form.keywords,
           businessKeywords: form.keywords ? [form.keywords] : [],
           searchType: form.searchType,
+          resultLimit: form.resultLimit,
           industry: form.industry,
           location: form.location,
           city: form.city,
@@ -321,8 +363,9 @@ export default function ScraperCampaignsPage() {
 
   const saveFinderSettings = (next: LeadFinderSettings) => {
     if (!tenant?.id) return;
+    next = normalizeLeadFinderSettings(next);
     setFinderSettings(next);
-    writeLeadFinderSettings(tenant.id, next);
+    const persisted = writeLeadFinderSettings(tenant.id, next);
     setForm((current) => ({
       ...current,
       resultLimit: next.defaultResultLimit,
@@ -330,7 +373,8 @@ export default function ScraperCampaignsPage() {
       website: next.requireWebsite,
       sources: next.defaultSources,
     }));
-    toast.success('Lead Finder defaults saved for this workspace');
+    if (persisted) toast.success('Lead Finder defaults saved for this workspace');
+    else toast('Defaults applied for this session. Your browser could not save them.');
   };
 
   const metrics = useMemo(() => {
@@ -359,7 +403,7 @@ export default function ScraperCampaignsPage() {
   }, [selectedSearch, candidates]);
 
   return (
-    <section className="min-h-full bg-[var(--ws-bg)] text-[var(--ws-text-primary)]" aria-labelledby="lead-finder-title">
+    <section data-tour="lead-finder-overview" className="min-h-full bg-[var(--ws-bg)] text-[var(--ws-text-primary)]" aria-labelledby="lead-finder-title">
       <div className="mx-auto w-full max-w-[1600px] px-3 py-4 sm:px-5 lg:px-7">
         <header className="flex flex-col gap-4 border-b border-[var(--ws-border)] pb-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -373,6 +417,7 @@ export default function ScraperCampaignsPage() {
           </div>
         </header>
 
+        {available && availabilityNotice ? <div role="status" className="mt-3 rounded-md border border-[var(--ws-border)] p-3"><p>{availabilityNotice}</p><button type="button" className={buttonClass} onClick={() => void loadSearches()}>Retry search history</button></div> : null}
         {!tenant?.id ? (
           <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
             <p className="type-card-description font-semibold text-amber-200">Choose or create a workspace before finding leads.</p>
@@ -411,14 +456,14 @@ export default function ScraperCampaignsPage() {
           </div>
         ) : null}
 
-        <nav className="my-4 flex gap-1 overflow-x-auto border-b border-[var(--ws-border)]" aria-label="Lead Finder sections">
+        <nav className="my-4 flex gap-1 overflow-x-auto border-b border-[var(--ws-border)]" data-tour="lead-finder-sections" aria-label="Lead Finder sections">
           {nav.map(item => <button key={item} onClick={() => setActive(item)} aria-current={active === item ? 'page' : undefined}
             className={`min-h-11 shrink-0 border-b-2 px-3 type-caption font-medium ${active === item ? 'border-teal-400 text-teal-400' : 'border-transparent text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]'}`}>{item}</button>)}
         </nav>
 
         {active === 'Discover' && (
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <form onSubmit={createSearch} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 sm:p-6">
+            <form data-tour="lead-finder-search" onSubmit={createSearch} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 sm:p-6">
               <div className="mb-5 flex items-start justify-between gap-4">
                 <div><h2 className="text-lg font-semibold">What businesses should we find?</h2><p className="type-caption text-[var(--ws-text-secondary)]">Only permitted public sources are searched. Free sources have responsible quotas.</p></div>
                 <Sparkles className="text-teal-400" aria-hidden="true"/>
@@ -467,7 +512,6 @@ export default function ScraperCampaignsPage() {
                 <label className="type-label">Excluded keywords<AlphaCloneInput className={`${fieldClass} mt-1`} value={form.excludedKeywords} onChange={e=>setForm({...form,excludedKeywords:e.target.value})} placeholder="comma separated"/></label>
                 <label className="type-label">Excluded domains<AlphaCloneInput className={`${fieldClass} mt-1`} value={form.excludedDomains} onChange={e=>setForm({...form,excludedDomains:e.target.value})} placeholder="comma separated"/></label>
                 <label className="type-label">Result limit<AlphaCloneInput type="number" min={1} max={500} className={`${fieldClass} mt-1`} value={form.resultLimit} onChange={e=>setForm({...form,resultLimit:Number(e.target.value)})}/></label>
-                <label className="type-label">Radius (km)<AlphaCloneInput type="number" min={1} max={200} className={`${fieldClass} mt-1`} value={form.radiusKm} onChange={e=>setForm({...form,radiusKm:Number(e.target.value)})}/></label>
               </div>}
               <div className="mt-6 flex flex-col-reverse gap-3 border-t border-[var(--ws-border)] pt-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="type-caption text-[var(--ws-text-secondary)]">Only businesses with a public phone or email are saved. Duplicate companies in this workspace are skipped.</p>
@@ -477,7 +521,7 @@ export default function ScraperCampaignsPage() {
             <aside className="space-y-4">
               <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4">
                 <h2 className="font-semibold">Search presets</h2><p className="mb-3 type-caption text-[var(--ws-text-secondary)]">Suggestions only—results always come from live public sources.</p>
-                <div className="space-y-1">{presets.map(([label,keywords,location]) => <button key={label} onClick={()=>setForm({...form,keywords,location})} className="flex min-h-11 w-full items-center justify-between rounded-xl px-3 text-left type-ui hover:bg-[var(--ws-hover)]"><span>{label}</span><ArrowRight size={14}/></button>)}</div>
+                <div className="space-y-1">{presets.map(([label,keywords,location]) => <button key={label} onClick={()=>setForm(current => ({...current, keywords, location, filterNoWebsite: /no[- ]website/i.test(label), website: /no[- ]website/i.test(label) ? false : current.website, email: /public email/i.test(label) ? true : current.email}))} className="flex min-h-11 w-full items-center justify-between rounded-xl px-3 text-left type-ui hover:bg-[var(--ws-hover)]"><span>{label}</span><ArrowRight size={14}/></button>)}</div>
               </div>
               <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4">
                 <div className="flex items-center gap-2"><Database size={17} className="text-teal-400"/><h2 className="font-semibold">Public-source policy</h2></div>
@@ -497,6 +541,7 @@ export default function ScraperCampaignsPage() {
           </div>
         )}
 
+        {active === 'Results' && resultsError ? <div role="alert" className="mb-3 rounded-md border border-[var(--ws-border)] bg-[var(--ws-panel)] p-3"><p>{resultsError}</p><button type="button" className={buttonClass} onClick={() => void loadResults()}>Retry results</button></div> : null}
         {active === 'Results' && <ResultsPanel searches={searches} selected={selectedSearch} setSelected={setSelectedSearch} candidates={candidates} metrics={metrics} reviewingCandidateId={reviewingCandidateId} onReview={reviewCandidate} canReview={canReviewCandidates} />}
         {active === 'Activity' && <HistoryPanel searches={searches} onOpen={s=>{setSelectedSearch(s);setActive('Results')}} />}
         {active === 'Lists' && (
@@ -583,9 +628,27 @@ function ResultsPanel({ searches, selected, setSelected, candidates, metrics, re
           {c.website ? (<><span>·</span><a href={c.website} target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:underline">{c.website.replace(/^https?:\/\//i, '').replace(/\/$/, '').slice(0, 24)}</a></>) : null}
           {c.google_maps_url ? (<><span>·</span><a href={c.google_maps_url} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:underline">Maps</a></>) : null}
         </div>
-      </td><td className="px-4 py-3">{[c.city,c.country].filter(Boolean).join(', ')||'—'}</td><td className="px-4 py-3">{c.public_email||c.public_phone||'No public contact'}</td><td className="px-4 py-3"><div className="font-semibold text-[var(--brand-blue-300)]">{c.qualification ? `${c.qualification.master_score} · ${c.qualification.grade} · ${c.qualification.priority_band}` : 'Qualifying…'}</div><div className="max-w-xs type-caption text-[var(--ws-text-secondary)]">{c.qualification?.recommended_offer?.primary_offer ? <span className="font-semibold text-teal-300">{c.qualification.recommended_offer.primary_offer}: </span> : null}{c.qualification?.why_now || c.qualification?.qualification_reason || 'Evidence is being assessed.'}</div></td><td className="px-4 py-3 capitalize">{c.review_status}</td><td className="px-4 py-3"><div className="flex items-center justify-end gap-2"><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'accepted'} onClick={() => onReview(c, 'accepted')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-teal-500/30 px-2 type-caption font-semibold text-[var(--brand-blue-300)] hover:bg-teal-500/10 disabled:cursor-not-allowed disabled:opacity-50"><Check size={14}/>{reviewingCandidateId === c.id ? 'Saving…' : c.review_status === 'accepted' ? 'In CRM' : 'Accept'}</button><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'rejected'} onClick={() => onReview(c, 'rejected')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-rose-500/30 px-2 type-caption font-semibold text-[var(--error-text,var(--error-500))] hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"><X size={14}/>Reject</button></div></td></tr>)}</tbody></table></div>
-      <div className="divide-y divide-[var(--ws-border)] md:hidden">{candidates.map(c=><article key={c.id} className="p-4"><div className="flex justify-between gap-3"><div><div className="flex flex-wrap items-center gap-1.5"><h3 className="font-semibold">{c.business_name}</h3>{!c.website && <span className="rounded bg-teal-500/10 px-1 py-0.5 text-[10px] font-semibold text-teal-300">🎯 No Website</span>}{c.is_social_first && <span className="rounded bg-purple-500/10 px-1 py-0.5 text-[10px] font-semibold text-purple-300">📱 Social-First</span>}</div><p className="type-caption text-[var(--ws-text-secondary)]">{[c.industry,c.city].filter(Boolean).join(' · ')}</p></div><span className="type-caption font-semibold text-teal-400">{c.fit_score} fit</span></div><p className="mt-3 type-caption">{c.public_email||c.public_phone||'No public contact found'}</p>{c.qualification?.recommended_offer?.primary_offer ? <p className="mt-1 text-xs text-teal-300">💡 {c.qualification.recommended_offer.primary_offer}</p> : null}</article>)}</div>
+      </td><td className="px-4 py-3">{[c.city,c.country].filter(Boolean).join(', ')||'—'}</td><td className="px-4 py-3">{c.public_email||c.public_phone||'No public contact'}</td><td className="px-4 py-3"><div className="font-semibold text-[var(--brand-blue-300)]">{c.qualification ? `${c.qualification.master_score} · ${c.qualification.grade} · ${c.qualification.priority_band}` : 'Qualifying…'}</div><div className="max-w-xs type-caption text-[var(--ws-text-secondary)]">{c.qualification?.recommended_offer?.primary_offer ? <span className="font-semibold text-teal-300">{c.qualification.recommended_offer.primary_offer}: </span> : null}{c.qualification?.why_now || c.qualification?.qualification_reason || 'Evidence is being assessed.'}</div></td><td className="px-4 py-3 capitalize">{c.review_status}</td><td className="px-4 py-3"><CandidateReviewActions candidate={c} reviewingCandidateId={reviewingCandidateId} onReview={onReview} canReview={canReview} /></td></tr>)}</tbody></table></div>
+      <div className="divide-y divide-[var(--ws-border)] md:hidden">{candidates.map(c=><article key={c.id} className="p-4"><div className="flex justify-between gap-3"><div><div className="flex flex-wrap items-center gap-1.5"><h3 className="font-semibold">{c.business_name}</h3>{!c.website && <span className="rounded bg-teal-500/10 px-1 py-0.5 text-[10px] font-semibold text-teal-300">🎯 No Website</span>}{c.is_social_first && <span className="rounded bg-purple-500/10 px-1 py-0.5 text-[10px] font-semibold text-purple-300">📱 Social-First</span>}</div><p className="type-caption text-[var(--ws-text-secondary)]">{[c.industry,c.city].filter(Boolean).join(' · ')}</p></div><span className="type-caption font-semibold text-teal-400">{c.fit_score} fit</span></div><p className="mt-3 type-caption">{c.public_email||c.public_phone||'No public contact found'}</p>{c.qualification?.recommended_offer?.primary_offer ? <p className="mt-1 text-xs text-teal-300">💡 {c.qualification.recommended_offer.primary_offer}</p> : null}<CandidateReviewActions candidate={c} reviewingCandidateId={reviewingCandidateId} onReview={onReview} canReview={canReview} /></article>)}</div>
     </div> : <ModuleEmpty section="Results"/>}
+  </div>;
+}
+
+function CandidateReviewActions({ candidate, reviewingCandidateId, onReview, canReview }: {
+  candidate: Candidate;
+  reviewingCandidateId: string | null;
+  onReview: (candidate: Candidate, decision: 'accepted' | 'rejected') => void;
+  canReview: boolean;
+}) {
+  const saved = ['accepted', 'synced', 'contacted'].includes(candidate.review_status);
+  const busy = reviewingCandidateId !== null;
+  return <div className="mt-2 flex flex-wrap items-center gap-2">
+    <button type="button" disabled={!canReview || busy || saved} onClick={() => onReview(candidate, 'accepted')} className={`${buttonClass} border border-[var(--ws-border)] text-[var(--info-text)]`}>
+      <Check size={14} aria-hidden />{reviewingCandidateId === candidate.id ? 'Saving…' : saved ? 'In CRM' : 'Save to CRM'}
+    </button>
+    <button type="button" disabled={!canReview || busy || saved || candidate.review_status === 'rejected'} onClick={() => onReview(candidate, 'rejected')} className={`${buttonClass} border border-[var(--ws-border)] text-[var(--error-text)]`}>
+      <X size={14} aria-hidden />Reject
+    </button>
   </div>;
 }
 

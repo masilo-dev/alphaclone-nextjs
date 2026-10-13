@@ -1,5 +1,6 @@
 'use client';
 
+import { parseWorkflowConfig, workflowConfigError } from '@/lib/ui/workflowConfig';
 import { Input as AlphaCloneInput } from '@/components/ui/input';
 import { Select as AlphaCloneSelect } from '@/components/ui/select';
 
@@ -223,6 +224,8 @@ export default function WorkflowDashboard() {
     const [activeTab, setActiveTab] = useState<'workflows' | 'log'>('workflows');
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({ ...EMPTY_FORM });
+    const [actionDrafts, setActionDrafts] = useState<Record<number, string>>({});
+    const invalidActionConfig = Object.values(actionDrafts).some(text => workflowConfigError(text));
     const [saving, setSaving] = useState(false);
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [seeding, setSeeding] = useState(false);
@@ -297,23 +300,32 @@ export default function WorkflowDashboard() {
     };
 
     const handleSave = async () => {
-        if (!tenant?.id || !form.name || !form.trigger_type) return toast.error('Name and trigger required');
+        if (!tenant?.id || !form.name.trim() || !form.trigger_type) return toast.error('Add a name and choose when this automation should start.');
+        if (saving || invalidActionConfig) return toast.error('Correct the highlighted action settings before saving.');
         if (form.actions.length === 0) return toast.error('Add at least one action');
         setSaving(true);
-        const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/workflows`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+        try {
+        const payload = { ...form, actions: form.actions.map((action, index) => ({ ...action, config: actionDrafts[index] === undefined ? action.config : parseWorkflowConfig(actionDrafts[index]) })) };
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/workflows`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const result = await response.json().catch(() => ({}));
         if (!response.ok) { toast.error(result.error || 'Workflow could not be created'); } else {
             toast.success('Workflow created (activate to enable)');
             setShowForm(false);
             setForm({ ...EMPTY_FORM });
+            setActionDrafts({});
             loadData();
         }
-        setSaving(false);
+        } catch {
+            toast.error('The automation could not be saved. Check your connection and try again.');
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleTestRun = async (wf: WorkflowDef) => {
-        const toastId = toast.loading('Running test...');
-        if (!tenant?.id) return;
+        if (!tenant?.id) return toast.error('Choose a workspace before testing an automation.');
+        const toastId = toast.loading('Previewing automation...');
+        try {
         const res = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/workflows`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -324,7 +336,10 @@ export default function WorkflowDashboard() {
         });
         const result = await res.json().catch(() => ({}));
         if (!res.ok) { toast.error(result.error || 'Dry run failed', { id: toastId }); return; }
-        toast.success(result.conditionsMet ? `Dry run passed: ${result.actions?.length || 0} action(s) previewed` : 'Dry run complete: conditions did not match', { id: toastId });
+        toast.success(result.conditionsMet ? `Preview passed: ${result.actions?.length || 0} action(s) checked` : 'Preview complete: the sample did not match your filters', { id: toastId });
+        } catch {
+            toast.error('Preview could not be loaded. Check your connection and try again.', { id: toastId });
+        }
     };
 
     const addCondition = () => setForm(f => ({
@@ -389,8 +404,8 @@ export default function WorkflowDashboard() {
             <div className="flex gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
                 <Info className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
                 <div className="type-caption text-blue-300 space-y-1">
-                    <p className="font-semibold">AlphaClone is your orchestration layer — no n8n/Zapier needed.</p>
-                    <p className="text-blue-400">Every event (lead, SMS, form, ingestion) flows through this engine → conditions are evaluated → actions execute automatically.</p>
+                    <p className="font-semibold">Automate a repeatable task</p>
+                    <p className="text-blue-400">Choose what starts the workflow, add what should happen, and preview it before activation.</p>
                 </div>
             </div>
 
@@ -412,6 +427,15 @@ export default function WorkflowDashboard() {
                         <button onClick={() => setShowForm(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"><X className="w-4 h-4" /></button>
                     </div>
 
+                    <label className="block text-sm text-[var(--ws-text-secondary)]">Start with a template (optional)
+                      <AlphaCloneSelect defaultValue="" className="mt-1 w-full" onChange={event => {
+                        const template = DEFAULT_WORKFLOWS[Number(event.target.value)];
+                        if (event.target.value === '' || !template) return;
+                        setForm(structuredClone(template));
+                        setActionDrafts({});
+                      }}><option value="">Choose a template or build your own</option>{DEFAULT_WORKFLOWS.map((template, index) => <option key={template.name} value={index}>{template.name}</option>)}</AlphaCloneSelect>
+                    </label>
+                    <p className="text-sm text-[var(--ws-text-secondary)]">New workflows are saved inactive. Review and test before enabling them.</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Name *</label>
@@ -420,7 +444,7 @@ export default function WorkflowDashboard() {
                                 className="w-full px-3 py-2" />
                         </div>
                         <div>
-                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Trigger *</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">When should it start? *</label>
                             <AlphaCloneSelect value={form.trigger_type} onChange={e => setForm(f => ({ ...f, trigger_type: e.target.value as TriggerType }))}
                                 className="w-full px-3 py-2">
                                 {Object.entries(TRIGGER_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -431,7 +455,7 @@ export default function WorkflowDashboard() {
                     {/* Conditions */}
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Conditions (ALL must match)</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Only when these filters match (optional)</label>
                             <button onClick={addCondition} className="type-ui text-teal-400 hover:text-[var(--brand-blue-300)] flex items-center gap-1">
                                 <Plus className="w-3 h-3" /> Add Condition
                             </button>
@@ -459,7 +483,7 @@ export default function WorkflowDashboard() {
                     {/* Actions */}
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Actions *</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">What should happen? *</label>
                             <button onClick={addAction} className="type-ui text-teal-400 hover:text-[var(--brand-blue-300)] flex items-center gap-1">
                                 <Plus className="w-3 h-3" /> Add Action
                             </button>
@@ -470,19 +494,15 @@ export default function WorkflowDashboard() {
                                     className="px-2 py-1.5">
                                     {Object.entries(ACTION_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                                 </AlphaCloneSelect>
-                                <AlphaCloneInput
-                                    value={JSON.stringify(a.config)}
-                                    onChange={e => { try { const cfg = JSON.parse(e.target.value); setForm(f => { const acts = [...f.actions]; acts[i] = { ...acts[i], config: cfg }; return { ...f, actions: acts }; }); } catch { } }}
-                                    placeholder='{"message":"{{contact_name}} signed up"}'
-                                    className="flex-1 px-3 py-1.5 font-mono" />
-                                <button onClick={() => setForm(f => ({ ...f, actions: f.actions.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-[var(--error-text,var(--error-500))]"><X className="w-3.5 h-3.5" /></button>
+                                <WorkflowSettingsEditor index={i} type={a.type} text={actionDrafts[i] ?? JSON.stringify(a.config, null, 2)} onChange={text => setActionDrafts(current => ({ ...current, [i]: text }))} />
+                                <button aria-label="Remove action" onClick={() => { setForm(f => ({ ...f, actions: f.actions.filter((_, j) => j !== i) })); setActionDrafts(current => Object.fromEntries(Object.entries(current).filter(([key]) => Number(key) !== i).map(([key, value]) => [Number(key) > i ? Number(key) - 1 : Number(key), value]))); }} className="text-red-400 hover:text-[var(--error-text,var(--error-500))]"><X className="w-3.5 h-3.5" /></button>
                             </div>
                         ))}
                         <p className="type-card-description text-slate-600 mt-1">Use <code className="text-teal-400">{'{{field_name}}'}</code> to insert event data into messages</p>
                     </div>
 
                     <div className="flex gap-3">
-                        <button onClick={handleSave} disabled={saving}
+                        <button onClick={handleSave} disabled={saving || invalidActionConfig}
                             className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:opacity-50 text-[var(--text-inverse)] rounded-xl font-semibold type-ui">
                             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                             {saving ? 'Saving...' : 'Create Workflow'}
@@ -621,4 +641,25 @@ export default function WorkflowDashboard() {
             )}
         </div>
     );
+}
+
+const ACTION_FIELDS: Record<string, Array<[string, string]>> = {
+  create_task: [['title', 'Task title']],
+  notify_user: [['title', 'Notification title'], ['message', 'Message']],
+  send_email: [['to', 'Recipient email'], ['subject', 'Subject'], ['body', 'Message']],
+  send_sms: [['to', 'Recipient phone'], ['message', 'Message']],
+};
+function WorkflowSettingsEditor({ index, type, text, onChange }: { index: number; type: string; text: string; onChange: (text: string) => void }) {
+  const error = workflowConfigError(text);
+  const config = error ? {} : parseWorkflowConfig(text);
+  const fields = ACTION_FIELDS[type] || [];
+  return <div className="min-w-0 flex-1 space-y-2">
+    {!error && fields.map(([field, label]) => <label key={field} className="block text-sm text-[var(--ws-text-secondary)]">{label}<AlphaCloneInput value={String(config[field] || '')} onChange={event => onChange(JSON.stringify({ ...config, [field]: event.target.value }, null, 2))} className="mt-1 w-full" /></label>)}
+    <details open={!fields.length || Boolean(error)} className="rounded-md border border-[var(--ws-border)] p-2">
+      <summary className="cursor-pointer text-sm text-[var(--ws-text-secondary)]">Advanced action settings</summary>
+      <label className="text-xs text-[var(--ws-text-secondary)]" htmlFor={`workflow-action-${index}`}>JSON settings</label>
+      <textarea id={`workflow-action-${index}`} rows={3} value={text} onChange={event => onChange(event.target.value)} aria-invalid={Boolean(error)} aria-describedby={`workflow-action-error-${index}`} className="w-full rounded-md border border-[var(--ws-border)] bg-[var(--ws-panel)] p-2 font-mono text-sm text-[var(--ws-text-primary)]" />
+      <p id={`workflow-action-error-${index}`} role={error ? 'alert' : undefined} className="text-xs text-[var(--error-text)]">{error}</p>
+    </details>
+  </div>;
 }

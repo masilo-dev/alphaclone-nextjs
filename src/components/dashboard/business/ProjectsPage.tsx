@@ -213,7 +213,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
     const handleSaveProject = useCallback(async (projectData: Partial<BusinessProject>) => {
         if (!currentTenant) {
-            toast.error("System Error: No active tenant context found. Please refresh.");
+            toast.error("Your workspace could not be loaded. Refresh the page and try again.");
             return;
         }
 
@@ -353,7 +353,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             <div className="shrink-0 space-y-2 sm:space-y-4 px-3 py-2 sm:px-5 sm:py-5 md:px-8 md:pt-6 md:pb-3">
             <PlatformExecutionWelcome userId={user.id} surface="projects" />
             <div className="flex justify-end">
-              <HelpDisclosure title="Projects Execution Guide" label="Projects guide">
+              <HelpDisclosure title="How to manage projects" label="Projects guide">
                 <div className="space-y-3 pt-2">
                   <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
                   <ExecutionDecisionGuide

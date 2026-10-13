@@ -426,3 +426,10 @@ html.dark .ac-auth-card {
 .ac-signin-brand a { display: inline-flex; margin-top: 24px; padding: 10px 16px; border: 1px solid #ffffff66; border-radius: 6px; color: #fff; }
 @media (max-width: 767px) { .ac-signin-layout { display: flex; flex-direction: column; padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); } .ac-signin-form { margin: auto; padding: 20px 0 !important; } .ac-signin-brand { display: none; } }
 .ac-signin-form { --text-primary: #171923; --text-secondary: #525866; --text-muted: #626977; --ws-text-primary: #171923; --ws-text-secondary: #525866; --surface-primary: #fff; --surface-secondary: #f6f7f9; --ws-panel: #fff; --ws-surface-secondary: #f6f7f9; --ws-border: #d5d9e0; }
+
+/* Sign-in is always a light surface, even when the saved app theme is dark. */
+.ac-signin-form {
+  --text-inverse: var(--color-white);
+  --interactive-primary: var(--brand-navy);
+  --interactive-primary-hover: var(--brand-violet-700);
+}

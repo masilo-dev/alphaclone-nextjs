@@ -12,7 +12,7 @@ import HubShell from './HubShell';
 const CHANNELS_TABS = [
   { label: 'Tickets', href: '/dashboard/business/tickets', icon: CheckSquare },
   { label: 'Team chat', href: '/dashboard/business/messages', icon: MessageSquare },
-  { label: 'Mail', href: '/dashboard/mail', icon: Mail },
+  { label: 'Email', href: '/dashboard/mail', icon: Mail },
   { label: 'WhatsApp', href: '/dashboard/business/whatsapp', icon: MessageCircle },
 ];
 
@@ -23,7 +23,7 @@ interface ChannelsHubProps {
 export default function ChannelsHub({ children }: ChannelsHubProps) {
   return (
     <HubShell
-      title="Email & Outreach"
+      title="Communication"
       description="Tickets, team messages, email, and messaging"
       tabs={CHANNELS_TABS}
       moduleId="email"

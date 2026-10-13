@@ -1,23 +1,23 @@
 /* One global product theme, including portaled menus and client workspaces. */
 html.light[data-ac-surface="app"], html[data-theme="light"][data-ac-surface="app"] {
-  --app-bg: #f6f7f9;
+  --app-bg: #ffffff;
   --background-app: var(--app-bg);
   --background: var(--app-bg);
   --dashboard-bg: var(--app-bg);
   --sidebar-bg: #ffffff;
   --surface-1: #ffffff;
-  --surface-2: #f1f3f5;
-  --surface-3: #e9edf1;
+  --surface-2: #f7f7f8;
+  --surface-3: #eeeeef;
   --surface-primary: var(--surface-1);
   --surface-secondary: var(--surface-2);
   --surface-tertiary: var(--surface-3);
   --surface-elevated: var(--surface-1);
-  --text-primary: #182230;
-  --text-secondary: #475467;
-  --text-muted: #596579;
+  --text-primary: #1f1f23;
+  --text-secondary: #45454b;
+  --text-muted: #626269;
   --foreground: var(--text-primary);
-  --border-default: #d5dbe3;
-  --border-strong: #b8c2cf;
+  --border-default: #dedee2;
+  --border-strong: #b7b7be;
   --ws-canvas: var(--app-bg);
   --ws-sidebar: var(--sidebar-bg);
   --ws-toolbar: var(--surface-1);
@@ -32,7 +32,7 @@ html.light[data-ac-surface="app"], html[data-theme="light"][data-ac-surface="app
   --ws-border: var(--border-default);
   --ws-border-strong: var(--border-strong);
   --ws-hover: var(--surface-2);
-  --ws-active: #e7f3f2;
+  --ws-active: #eef3fa;
   --ac-v3-surface-canvas: var(--app-bg);
   --ac-v3-surface-content: var(--surface-1);
   --ac-v3-surface-elevated: var(--surface-1);
@@ -60,3 +60,120 @@ html.light[data-ac-surface="app"] :is(.text-red-300, .text-red-400, .text-rose-3
 :root { --ws-scroll-bottom-clearance: max(1rem, env(safe-area-inset-bottom)); }
 .ac-scroll-pane { min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
 [data-module="tasks"] [data-testid="tasks-scroll-list"], .ac-email-reader-scroll { padding-bottom: var(--ws-scroll-bottom-clearance); }
+
+/* Cloudflare-inspired light workspace. Repeat inherited tokens at shell and
+   sidebar boundaries: older globals redeclare dark values on these nodes.
+   Keep this after the global and product styles; portals inherit from html. */
+html.light[data-ac-surface="app"] :is(.ac-dashboard-root, .ac-business-root, .ac-workspace-sidebar) {
+  --ws-sidebar: var(--sidebar-bg);
+  --ws-canvas: var(--app-bg);
+  --ws-toolbar: var(--surface-1);
+  --ws-panel: var(--surface-1);
+  --ws-panel-hover: var(--surface-2);
+  --ws-surface: var(--surface-1);
+  --ws-surface-primary: var(--surface-1);
+  --ws-surface-secondary: var(--surface-2);
+  --ws-surface-tertiary: var(--surface-3);
+  --ws-border: var(--border-default);
+  --ws-border-strong: var(--border-strong);
+  --ws-hover: var(--surface-2);
+  --ws-active: #eef3fa;
+  --ws-text-primary: var(--text-primary);
+  --ws-text-secondary: var(--text-secondary);
+  --ws-text-tertiary: var(--text-muted);
+  --ws-text-muted: var(--text-muted);
+  --ws-text-disabled: #76767e;
+  --ws-card-shadow: none;
+  --ws-card-shadow-hover: none;
+  --info-text: #175cd3;
+  --success-text: #067647;
+  --warning-text: #854a0e;
+  --error-text: #b42318;
+}
+html.light[data-ac-surface="app"] {
+  color-scheme: light;
+  --interactive-primary: #175cd3;
+  --interactive-primary-hover: #154eae;
+  --text-inverse: #ffffff;
+  --background-subtle: var(--surface-2);
+  --surface-hover: var(--surface-2);
+  --border-subtle: #e9e9ec;
+  --dashboard-surface: var(--surface-1);
+  --dashboard-surface-2: var(--surface-2);
+  --dashboard-surface-strong: var(--surface-1);
+  --dashboard-surface-soft: var(--surface-2);
+  --dashboard-border: var(--border-default);
+  --header-bg: var(--surface-1);
+  --dashboard-text: var(--text-primary);
+  --dashboard-text-muted: var(--text-muted);
+  --color-ac-dashboard-bg: var(--app-bg);
+  --color-ac-dashboard-surface: var(--surface-1);
+  --color-ac-dashboard-surface-2: var(--surface-2);
+  --color-ac-dashboard-text: var(--text-primary);
+  --color-ac-dashboard-text-muted: var(--text-muted);
+  --ws-card-shadow: none;
+  --ws-card-shadow-hover: none;
+  --ws-radius: 0.375rem;
+  --ws-radius-lg: 0.5rem;
+  --ws-overlay-backdrop: rgb(15 23 42 / 40%);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 5%);
+}
+html.light[data-ac-surface="app"] .ac-workspace-sidebar {
+  background: var(--sidebar-bg);
+  color: var(--text-secondary);
+  border-color: var(--border-default);
+}
+html.light[data-ac-surface="app"] .ac-workspace-sidebar :is(.ac-workspace-nav-item, .ac-workspace-nav-subitem):hover {
+  background: var(--ws-hover);
+  color: var(--text-primary);
+}
+html.light[data-ac-surface="app"] .ac-workspace-sidebar :is(.ac-workspace-nav-item--active, .ac-workspace-nav-subitem--active, [aria-current="page"]) {
+  background: var(--ws-active);
+  color: var(--info-text);
+}
+html.light[data-ac-surface="app"] :is(.ac-workspace-panel, .ac-workspace-toolbar, .ac-dashboard-header, .ac-business-header) {
+  background: var(--surface-1);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+  box-shadow: none;
+}
+html.light[data-ac-surface="app"] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="submit"]):not([type="button"]), textarea, select) {
+  background-color: var(--surface-1);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  color-scheme: light;
+}
+html.light[data-ac-surface="app"] :is(input, textarea)::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+html.light[data-ac-surface="app"] :is(.ac-v3-sheet, .ac-v3-popover, [role="dialog"], [role="menu"], [role="listbox"]) {
+  --ws-panel: var(--surface-1);
+  --ws-text-primary: var(--text-primary);
+  --ws-text-secondary: var(--text-secondary);
+  background-color: var(--surface-1);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+html.light[data-ac-surface="app"] .ac-module-bonnie-action {
+  color: #245b94 !important;
+  background: #eef3fa !important;
+  border-color: #cbd9ea !important;
+  box-shadow: none;
+}
+html.light[data-ac-surface="app"] .ac-module-bonnie-action:is(:hover, :focus-visible) {
+  color: #184775 !important;
+  background: #e1eaf6 !important;
+  border-color: #a6bedb !important;
+}
+
+html.light[data-ac-surface="app"] :is(.ac-dashboard-root, .ac-business-root) :is([data-state="active"], a[aria-current="page"]) {
+  background: var(--ws-active) !important;
+  color: var(--info-text) !important;
+  border-color: var(--border-default) !important;
+  box-shadow: none;
+}
+html.light[data-ac-surface="app"] :is(.ac-dashboard-root, .ac-business-root) thead {
+  background: var(--surface-2);
+  color: var(--text-secondary);
+}

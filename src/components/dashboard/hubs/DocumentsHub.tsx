@@ -7,9 +7,9 @@ import HubShell from './HubShell';
 const DOCUMENTS_TABS = [
   { label: 'All documents', href: '/dashboard/business/documents', icon: FileText },
   { label: 'Contracts', href: '/dashboard/business/contracts', icon: ShieldCheck },
-  { label: 'Proposals', href: '/dashboard/business/quotes', icon: FileText },
+  { label: 'Quotes', href: '/dashboard/business/quotes', icon: FileText },
   { label: 'Invoices', href: '/dashboard/business/billing', icon: Layers },
-  { label: 'Client docs', href: '/dashboard/business/vault', icon: ShieldCheck },
+  { label: 'Secure files', href: '/dashboard/business/vault', icon: ShieldCheck },
 ];
 
 interface DocumentsHubProps {

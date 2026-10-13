@@ -39,13 +39,14 @@ export default function EmailProviderSelector({
 
   const visible = options.filter((p) => p.id === 'auto' || p.connected);
 
-  if (visible.length <= 1) return null;
+  if (!visible.length) return <p role="status" className="text-sm text-[var(--ws-text-secondary)]">Connect an email account to choose a sender.</p>;
 
   return (
     <div className={compact ? 'space-y-1.5' : 'space-y-2'}>
       <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black tracking-widest block px-0.5">
         Send via
       </label>
+      {!visible.some(provider => provider.id === value) ? <p role="status" className="text-sm text-[var(--warning-text)]">The previously selected sender is not connected. Choose an available sender.</p> : null}
       <div className={`flex flex-wrap gap-2 ${compact ? '' : 'pb-1'}`}>
         {visible.map((provider) => {
           const selected = value === provider.id;
@@ -55,13 +56,14 @@ export default function EmailProviderSelector({
               key={provider.id}
               type="button"
               disabled={isDisabled}
+              aria-pressed={selected}
               onClick={() => !isDisabled && onChange(provider.id)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl type-caption font-black uppercase tracking-wide border transition-all ${
+              className={`inline-flex min-h-11 items-center gap-1.5 px-3 py-1.5 rounded-xl type-caption font-medium border transition-all ${
                 selected
                   ? 'bg-teal-600/20 border-teal-500/40 text-[var(--brand-blue-300)]'
                   : isDisabled
                     ? 'border-white/5 text-slate-600 cursor-not-allowed opacity-50'
-                    : 'border-white/10 text-[var(--ws-text-muted)] hover:text-white hover:border-white/20'
+                    : 'border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]'
               }`}
             >
               {provider.native && <Mail className="w-3 h-3" />}
@@ -77,7 +79,7 @@ export default function EmailProviderSelector({
         })}
       </div>
       <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
-        Marketing campaigns use Zoho natively. This choice applies to replies, invoices, and document email.
+        Choose the connected account for replies, invoices, and document email. Campaign delivery is configured separately.
       </p>
     </div>
   );

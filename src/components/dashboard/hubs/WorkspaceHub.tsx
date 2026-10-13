@@ -5,9 +5,9 @@ import { Globe, Zap, BookOpen, Settings, Bot, Clock } from 'lucide-react';
 import HubShell from './HubShell';
 
 const WORKSPACE_TABS = [
-  { label: 'Marketplace', href: '/dashboard/marketplace', icon: Globe },
+  { label: 'Integrations', href: '/dashboard/marketplace', icon: Globe },
   { label: 'Workflows', href: '/dashboard/business/workflows', icon: Zap },
-  { label: 'Jobs & Queue', href: '/dashboard/jobs', icon: Clock },
+  { label: 'Background activity', href: '/dashboard/jobs', icon: Clock },
   { label: 'Platform guide', href: '/dashboard/help', icon: BookOpen },
   { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
   { label: 'Zoho CRM', href: '/dashboard/zoho/crm', icon: Bot },
@@ -20,7 +20,7 @@ interface WorkspaceHubProps {
 export default function WorkspaceHub({ children }: WorkspaceHubProps) {
   return (
     <HubShell
-      title="Settings & Nexus"
+      title="Settings & Integrations"
       description="Integrations, automations, and system settings"
       tabs={WORKSPACE_TABS}
       moduleId="nexus"

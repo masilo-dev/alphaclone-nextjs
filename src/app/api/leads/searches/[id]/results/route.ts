@@ -18,7 +18,7 @@ export async function GET(req: NextRequest, context: Context) {
     const { id } = await context.params; const p = req.nextUrl.searchParams;
     const workspaceId = p.get('workspaceId'); if (!workspaceId) return NextResponse.json({ error: 'workspaceId is required' }, { status: 400 });
     const { admin } = await requireTenantAccess(workspaceId, req);
-    const limit = Math.min(100, Math.max(1, Number(p.get('limit') || 50)));
+    const limit = Math.min(500, Math.max(1, Number(p.get('limit') || 50)));
     const { data: search, error: searchError } = await admin.from('lead_searches')
       .select('requirements').eq('workspace_id', workspaceId).eq('id', id).single();
     if (searchError) throw searchError;

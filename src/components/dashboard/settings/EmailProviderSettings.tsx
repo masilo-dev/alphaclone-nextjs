@@ -23,14 +23,16 @@ export default function EmailProviderSettings() {
   const [saving, setSaving] = useState(false);
   const [defaultProvider, setDefaultProvider] = useState<DeliveryEmailProvider>('auto');
   const [autoReplyMode, setAutoReplyMode] = useState<EmailAutoReplyMode>('draft_only');
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [providers, setProviders] = useState<
     Array<{ id: DeliveryEmailProvider; label: string; connected: boolean; native?: boolean; campaigns?: boolean }>
   >([]);
 
   const load = useCallback(async () => {
-    if (!currentTenant?.id) return;
+    if (!currentTenant?.id) { setLoading(false); return; }
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await fetch(`/api/settings/email-provider?tenantId=${currentTenant.id}`);
       const data = await res.json();
@@ -39,7 +41,7 @@ export default function EmailProviderSettings() {
       setAutoReplyMode(normalizeEmailAutoReplyMode(data.autoReplyMode));
       setProviders(data.connectedProviders || []);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load email settings');
+      setLoadError(err instanceof Error ? err.message : 'Email settings could not be loaded.');
     } finally {
       setLoading(false);
     }
@@ -50,7 +52,11 @@ export default function EmailProviderSettings() {
   }, [load]);
 
   const handleSave = async () => {
-    if (!currentTenant?.id) return;
+    if (!currentTenant?.id || saving) return;
+    if (defaultProvider !== 'auto' && !providers.some(provider => provider.id === defaultProvider && provider.connected)) {
+      toast.error('Choose a connected email account or Auto before saving.');
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch('/api/settings/email-provider', {
@@ -81,6 +87,9 @@ export default function EmailProviderSettings() {
     );
   }
 
+  if (!currentTenant?.id) return <p role="status">Choose a workspace to configure email.</p>;
+  if (loadError) return <div role="alert" className="rounded-md border border-[var(--ws-border)] p-4"><p>{loadError}</p><button type="button" onClick={() => void load()} className="mt-2 min-h-11 rounded-md border border-[var(--ws-border)] px-3">Retry email settings</button></div>;
+
   const zohoConnected = providers.some((p) => p.id === 'zoho' && p.connected);
 
   return (
@@ -89,9 +98,9 @@ export default function EmailProviderSettings() {
         <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-4 flex gap-3">
           <Mail className="w-5 h-5 text-teal-400 shrink-0 mt-0.5" />
           <div>
-            <p className="type-card-description font-bold text-[var(--brand-blue-300)]">Zoho is your native stack</p>
+            <p className="type-card-description font-bold text-[var(--brand-blue-300)]">Zoho is connected</p>
             <p className="type-card-description text-[var(--ws-text-muted)] mt-1 leading-relaxed">
-              Inbox, CRM sync, and <strong className="text-[var(--ws-text-secondary)]">Campaigns</strong> run through Zoho when connected.
+              Use your connected Zoho account for email. Campaign delivery is configured separately.
               Pick below which provider delivers one-to-one email — or leave on Auto to prefer Zoho when available.
             </p>
             <Link href="/dashboard/business/campaigns" className="type-ui text-teal-400 font-semibold mt-2 inline-block hover:underline">

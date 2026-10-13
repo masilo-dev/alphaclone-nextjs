@@ -100,6 +100,13 @@ export function WorkspaceSwitcher({
     return () => document.removeEventListener('keydown', onEscape);
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const selected = menuRef.current?.querySelector<HTMLButtonElement>('[aria-selected="true"]');
+    const first = menuRef.current?.querySelector<HTMLButtonElement>('[role="option"]');
+    (selected || first)?.focus();
+  }, [open]);
+
   return (
     <div ref={dropdownRef} className={cn('relative inline-flex items-center', className)}>
       {moduleName ? (
@@ -111,9 +118,10 @@ export function WorkspaceSwitcher({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
+        aria-label={`Switch section: ${currentLabel}`}
         aria-expanded={open}
         aria-haspopup="listbox"
-        className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg font-bold text-base md:text-lg text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] transition-colors"
+        className="inline-flex items-center gap-1.5 min-h-11 py-1 px-2.5 rounded-lg font-semibold text-sm text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] transition-colors"
       >
         <span>{currentLabel}</span>
         <ChevronDown
@@ -130,17 +138,27 @@ export function WorkspaceSwitcher({
           ref={menuRef}
           role="listbox"
           aria-label={`${moduleName || 'Workspace'} sections`}
+          onKeyDown={(event) => {
+            const options = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="option"]'));
+            const index = options.indexOf(document.activeElement as HTMLButtonElement);
+            let next: number | undefined;
+            if (event.key === 'ArrowDown') next = (index + 1) % options.length;
+            if (event.key === 'ArrowUp') next = (index - 1 + options.length) % options.length;
+            if (event.key === 'Home') next = 0;
+            if (event.key === 'End') next = options.length - 1;
+            if (next !== undefined && options.length > 0) {
+              event.preventDefault();
+              options[next]?.focus();
+            }
+          }}
           style={menuPosition}
           className="ac-layer-menu rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] py-1.5 shadow-xl"
         >
           {options.map((option) => {
             const isSelected = Boolean(
-              option.label.toLowerCase() === currentLabel.toLowerCase() ||
-              (currentHref && (
-                resolveCanonicalPath(currentHref) === resolveCanonicalPath(option.href) ||
-                currentHref === option.href ||
-                currentHref.startsWith(option.href)
-              ))
+              currentHref
+                ? resolveCanonicalPath(currentHref) === resolveCanonicalPath(option.href)
+                : option.label.toLowerCase() === currentLabel.toLowerCase()
             );
 
             return (
@@ -154,7 +172,7 @@ export function WorkspaceSwitcher({
                   router.push(option.href);
                 }}
                 className={cn(
-                  'w-full flex items-center justify-between px-3.5 py-2 text-left text-sm transition-colors',
+                  'w-full min-h-11 flex items-center justify-between px-3.5 py-2 text-left text-sm transition-colors',
                   isSelected
                     ? 'bg-[var(--ws-hover)] font-semibold text-[var(--ws-text-primary)]'
                     : 'text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]'

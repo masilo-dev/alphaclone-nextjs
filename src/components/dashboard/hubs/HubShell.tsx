@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
+import { TaskGuide } from '../common/TaskGuide';
 import ModuleJumpSelect from '../common/ModuleJumpSelect';
 import { BonnieModulePageShell } from '../bonnie/BonnieModulePageShell';
 import { WORKSPACE, MODULE_IDENTITY, type ModuleId } from '@/constants/design';
@@ -12,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { HUB_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ChevronDown, Info } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Info } from 'lucide-react';
 import { useDeviceExperience } from '@/hooks/useDeviceExperience';
 import { WorkspaceSwitcher } from '@/components/ui/workspace/WorkspaceSwitcher';
 import { resolveCanonicalPath } from '@/lib/dashboard/canonicalRoutes';
@@ -103,13 +104,16 @@ export default function HubShell({
     canonicalPath === canonicalFirstTab ||
     (moduleId ? canonicalPath === `/dashboard/${moduleId}` : false);
 
-  const activeTab = tabs.find((tab) => {
+  const activeTab = [...tabs].sort((a, b) => resolveCanonicalPath(b.href).length - resolveCanonicalPath(a.href).length).find((tab) => {
     const canonicalTab = resolveCanonicalPath(tab.href);
     return (
       canonicalPath === canonicalTab ||
       (canonicalTab !== '/dashboard' && (canonicalPath.startsWith(`${canonicalTab}/`) || canonicalPath.startsWith(`${canonicalTab}?`)))
     );
   }) || tabs[0];
+
+  const primaryTabs = tabs.slice(0, 6);
+  const secondaryTabs = tabs.slice(6);
 
   return (
     <div
@@ -128,6 +132,11 @@ export default function HubShell({
         {...(dataTour ? { 'data-tour': dataTour } : {})}
       >
         <div className="flex items-center gap-2.5">
+          {!isOverview && tabs[0] ? (
+            <Link href={tabs[0].href} aria-label={t(`Back to ${title}`)} title={t(`Back to ${title}`)} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+              <ArrowLeft className="h-4 w-4" aria-hidden />
+            </Link>
+          ) : null}
           {ModuleIcon ? (
             <span
               className="inline-flex h-8 w-8 items-center justify-center rounded-[9px] shrink-0"
@@ -184,8 +193,8 @@ export default function HubShell({
           </div>
         </div>
 
-        {/* On overview pages, show the complete module sections tablist. On focused sub-workspaces, tabs are cleanly in the switcher dropdown */}
-        {isOverview && (
+        {/* Keep sections discoverable while working; overflow stays in More sections. */}
+        {(
           <ModuleJumpSelect
             options={tabs.map((tab) => ({ label: t(tab.label), href: tab.href }))}
             currentHref={pathname || undefined}
@@ -195,24 +204,21 @@ export default function HubShell({
           />
         )}
 
-        {isOverview && !isInstalledMobileCompanion ? (
+        {!isInstalledMobileCompanion ? (
           <div
             className="flex gap-0 overflow-x-auto ios-scroll mt-1 -mx-1 px-1"
-            role="tablist"
+            role="navigation"
             aria-label={`${t(title)} · ${t('Sections')}`}
           >
-            {tabs.map((tab) => {
-              const canonicalTab = resolveCanonicalPath(tab.href);
-              const isActive =
-                canonicalPath === canonicalTab ||
-                (canonicalTab !== '/dashboard' && (canonicalPath.startsWith(`${canonicalTab}/`) || canonicalPath.startsWith(`${canonicalTab}?`)));
+            {primaryTabs.map((tab) => {
+              const isActive = tab.href === activeTab?.href;
               const Icon = tab.icon;
               return (
                 <Link
                   key={tab.href}
                   href={tab.href}
-                  role="tab"
-                  aria-selected={isActive}
+
+                  aria-current={isActive ? 'page' : undefined}
                   className={cn(
                     WORKSPACE.tab.base,
                     'flex-shrink-0 whitespace-nowrap relative',
@@ -229,6 +235,14 @@ export default function HubShell({
                 </Link>
               );
             })}
+            {secondaryTabs.length > 0 ? (
+              <WorkspaceSwitcher
+                currentLabel={secondaryTabs.some((tab) => tab.href === activeTab?.href) ? t(activeTab.label) : t('More sections')}
+                options={secondaryTabs.map((tab) => ({ label: t(tab.label), href: tab.href }))}
+                currentHref={pathname || undefined}
+                className="shrink-0"
+              />
+            ) : null}
           </div>
         ) : null}
 
@@ -245,6 +259,7 @@ export default function HubShell({
         ) : null}
       </div>
 
+      <TaskGuide />
       <div
         className={cn(
           'flex-1 min-h-0 ac-native-workspace',

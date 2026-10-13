@@ -70,6 +70,7 @@ function resetWindowScroll(): void {
 function cleanupTourArtifacts(): void {
     if (typeof document === 'undefined') return;
     document.documentElement.removeAttribute('data-product-tour-active');
+    document.querySelectorAll('[data-ac-tour-anchor]').forEach(el => el.removeAttribute('data-ac-tour-anchor'));
     document.querySelectorAll('#react-joyride-portal, .react-joyride__overlay, .__floater, [data-test-id="overlay"], .react-joyride__spotlight').forEach((el) => {
         try {
             el.remove();
@@ -140,10 +141,17 @@ const ProductTour: React.FC<ProductTourProps> = ({
   }, [pathname, isOpen, run]);
 
     const steps = useMemo<Step[]>(() => {
+        if (/^\/dashboard\/(?:leads\/(?:finder|campaigns)|scraper-leads|sales-agent)(?:\/|$)/.test(pathname || '')) {
+            return [
+                { target: '[data-tour="lead-finder-overview"]', title: t('Find businesses'), content: t('Search for a business type and location. Review results before saving a business to CRM.'), placement: 'center', disableBeacon: true },
+                { target: '[data-tour="lead-finder-search"]', title: t('Set your search'), content: t('Enter keywords and a location. Choose required contact details, then start the search. Advanced options include a result limit and exclusions.'), placement: 'bottom', disableBeacon: true },
+                { target: '[data-tour="lead-finder-sections"]', title: t('Review and organize'), content: t('Open Results to inspect businesses and use Save to CRM. Lists organize accepted leads. Outreach is a separate workflow where you review recipients and approve sending.'), placement: 'bottom', disableBeacon: true },
+            ];
+        }
         const adminSteps: Step[] = [
             {
-                target: '[data-tour="dashboard-overview"], [data-tour="business-home"], [data-tour="navigation"]',
-                title: t('Command Center'),
+                target: '[data-tour="dashboard-overview"], [data-tour="business-home"]',
+                title: t('Home'),
                 content: t('Welcome to your Command Center! Here you can see real-time stats about your business.'),
                 placement: 'center',
                 disableBeacon: true,
@@ -155,25 +163,25 @@ const ProductTour: React.FC<ProductTourProps> = ({
                 placement: 'right',
             },
             {
-                target: '[data-tour="messages"], [data-tour="navigation"]',
+                target: '[data-tour="messages"]',
                 title: t('Client Messages'),
                 content: t('Communicate with clients instantly. Messages sync in real-time across all devices.'),
                 placement: 'bottom',
             },
             {
-                target: '[data-tour="projects"], [data-tour="navigation"]',
+                target: '[data-tour="projects"]',
                 title: t('Project Delivery'),
                 content: t('Manage all client projects from here. Track progress, update stages, and collaborate.'),
                 placement: 'bottom',
             },
             {
-                target: '[data-tour="analytics"], [data-tour="navigation"]',
+                target: '[data-tour="analytics"]',
                 title: t('Analytics & Insights'),
                 content: t('View detailed analytics and insights. Track revenue, project performance, and team productivity.'),
                 placement: 'bottom',
             },
             {
-                target: '[data-tour="global-search"], [data-tour="navigation"]',
+                target: '[data-tour="global-search"]',
                 title: t('Global Search'),
                 content: t('Press ⌘K (or Ctrl+K) to quickly search across projects, messages, and clients.'),
                 placement: 'bottom',
@@ -182,26 +190,26 @@ const ProductTour: React.FC<ProductTourProps> = ({
 
         const clientSteps: Step[] = [
             {
-                target: '[data-tour="dashboard-overview"], [data-tour="navigation"]',
+                target: '[data-tour="dashboard-overview"]',
                 title: t('Client Workspace'),
                 content: t('Welcome to your dashboard! Track your projects and communicate with your team here.'),
                 placement: 'center',
                 disableBeacon: true,
             },
             {
-                target: '[data-tour="my-projects"], [data-tour="projects"], [data-tour="navigation"]',
+                target: '[data-tour="my-projects"], [data-tour="projects"]',
                 title: t('Your Projects'),
                 content: t('View all your active projects. See progress, milestones, and updates in real-time.'),
                 placement: 'bottom',
             },
             {
-                target: '[data-tour="messages"], [data-tour="navigation"]',
+                target: '[data-tour="messages"]',
                 title: t('Team Chat'),
-                content: t('Message your project team anytime. Get instant responses and stay in the loop.'),
+                content: t('Message your project team anytime. Check replies and keep project conversations in one place.'),
                 placement: 'bottom',
             },
             {
-                target: '[data-tour="submit-request"], [data-tour="navigation"]',
+                target: '[data-tour="submit-request"]',
                 title: t('Submit Request'),
                 content: t('Submit new project requests here. Describe what you need and we\'ll get started.'),
                 placement: 'bottom',
@@ -210,56 +218,56 @@ const ProductTour: React.FC<ProductTourProps> = ({
 
         const tenantAdminSteps: Step[] = [
             {
-                target: '[data-tour="os-home"], [data-tour="business-home"], [data-tour="navigation"]',
+                target: '[data-tour="os-home"], [data-tour="business-home"]',
                 title: t('Welcome to AlphaClone'),
                 content: t('AlphaClone Systems is your platform for execution — sales, delivery, billing, and ops in one place.'),
                 placement: 'center',
                 disableBeacon: true,
             },
             {
-                target: '[data-tour="os-home"], [data-tour="business-home"], [data-tour="navigation"]',
-                title: t('Command Center'),
-                content: t('Your command center surfaces KPIs, attention items, and modules so you know what to execute today.'),
+                target: '[data-tour="os-home"], [data-tour="business-home"]',
+                title: t('Home'),
+                content: t('Start with items that need attention, then open the section for the task you want to complete.'),
                 placement: 'bottom',
             },
             {
-                target: '[data-tour="business-setup-checklist"], [data-tour="business-home"], [data-tour="navigation"]',
+                target: '[data-tour="business-setup-checklist"], [data-tour="business-home"]',
                 title: t('Setup Checklist'),
-                content: t('Use Getting started to complete your business profile, add a client, and create a project. Completed steps stay completed.'),
+                content: t('Choose the highlighted Start here action. Add your business details, then a customer and project. You can return to this checklist later.'),
                 placement: 'bottom',
             },
             {
                 target: '[data-tour="navigation"], [data-tour="mobile-nav"]',
-                title: t('Hub Navigation'),
-                content: t('Navigation is organized by hub — Sales, Marketing, Money, Insights, and Documents — matching the tabs inside each area.'),
+                title: t('Find your tools'),
+                content: t('Use Customers for customer records, Sales for leads and deals, Marketing for campaigns and posts, Money for invoices, and Work for projects and tasks.'),
                 placement: 'right',
             },
             {
-                target: '[data-tour="money-hub-nav"], [data-tour="navigation"]',
+                target: '[data-tour="money-hub-nav"]',
                 title: t('Money Hub'),
-                content: t('Money Hub groups billing, invoices, accounting, expenses, and cash flow. Open it to manage revenue end-to-end.'),
+                content: t('Open Money to create invoices, review payments, and record expenses.'),
                 placement: 'right',
             },
             {
-                target: '[data-tour="global-search"], [data-tour="navigation"]',
+                target: '[data-tour="global-search"]',
                 title: t('Quick Commands'),
                 content: t('Press ⌘K or Ctrl+K to search projects, clients, and messages. Press / to open the command palette.'),
                 placement: 'bottom',
             },
             {
-                target: '[data-tour="business-notifications"], [data-tour="navigation"]',
+                target: '[data-tour="business-notifications"]',
                 title: t('Notifications'),
                 content: t('Notifications appear here for tickets, form submissions, and team alerts.'),
                 placement: 'bottom',
             },
             {
-                target: '[data-tour="bonnie-widget"], [data-tour="navigation"]',
+                target: '[data-tour="bonnie-widget"]',
                 title: t('Bonnie AI Operator'),
-                content: t('Bonnie is your AI operator — approve actions, run automations, and get a morning brief from this floating assistant.'),
+                content: t('Describe the task you need help with. Review the proposed action and its details before approving it.'),
                 placement: 'left',
             },
             {
-                target: '[data-tour="projects-center"], [data-tour="projects"], [data-tour="business-home"], [data-tour="navigation"]',
+                target: '[data-tour="projects-center"], [data-tour="projects"], [data-tour="business-home"]',
                 title: t('Projects & Delivery'),
                 content: t('Projects is where delivery happens — stages, blockers, tasks, and client visibility in one workspace.'),
                 placement: 'bottom',
@@ -268,14 +276,14 @@ const ProductTour: React.FC<ProductTourProps> = ({
 
         const platformOwnerSteps: Step[] = [
             {
-                target: '[data-tour="platform-owner-home"], [data-tour="navigation"]',
+                target: '[data-tour="platform-owner-home"]',
                 title: t('Platform Command'),
                 content: t('AlphaClone Systems is the platform for execution — oversee every tenant and service from here.'),
                 placement: 'center',
                 disableBeacon: true,
             },
             {
-                target: '[data-tour="platform-owner-home"], [data-tour="navigation"]',
+                target: '[data-tour="platform-owner-home"]',
                 title: t('Platform Health'),
                 content: t('Your command center shows platform health, tenant activity, missing keys, and ops signals.'),
                 placement: 'center',
@@ -287,25 +295,25 @@ const ProductTour: React.FC<ProductTourProps> = ({
                 placement: 'right',
             },
             {
-                target: '[data-tour="global-search"], [data-tour="navigation"]',
+                target: '[data-tour="global-search"]',
                 title: t('Global Search'),
                 content: t('Press ⌘K or Ctrl+K to search tenants, users, and records across the platform.'),
                 placement: 'bottom',
             },
             {
-                target: '[data-tour="business-notifications"], [data-tour="navigation"]',
+                target: '[data-tour="business-notifications"]',
                 title: t('Ops Notifications'),
                 content: t('Notifications surface tickets, approvals, and platform alerts here.'),
                 placement: 'bottom',
             },
             {
-                target: '[data-tour="bonnie-widget"], [data-tour="navigation"]',
+                target: '[data-tour="bonnie-widget"]',
                 title: t('Bonnie AI Operator'),
                 content: t('Bonnie is your AI operator — run platform checks, approvals, and automations from this assistant.'),
                 placement: 'left',
             },
             {
-                target: '[data-tour="projects-center"], [data-tour="projects"], [data-tour="platform-owner-home"], [data-tour="navigation"]',
+                target: '[data-tour="projects-center"], [data-tour="projects"], [data-tour="platform-owner-home"]',
                 title: t('Tenant Delivery'),
                 content: t('Projects is where tenant delivery happens — stages, blockers, tasks, and client portals.'),
                 placement: 'bottom',
@@ -319,7 +327,7 @@ const ProductTour: React.FC<ProductTourProps> = ({
               : userRole === 'admin'
                 ? adminSteps
                 : clientSteps;
-    }, [userRole, t]);
+    }, [userRole, pathname, t]);
 
 
     useEffect(() => {
@@ -337,12 +345,18 @@ const ProductTour: React.FC<ProductTourProps> = ({
         const checkAndStartTour = () => {
             // Keep CSS string selectors (not Element refs). Passing live HTMLElements
             // breaks after React re-renders and makes Joyride appear to "do nothing".
-            const available: Step[] = steps.flatMap((step) => {
+            const available: Step[] = steps.flatMap((step, anchorIndex) => {
                 if (typeof step.target !== 'string') return [{ ...step, disableBeacon: true }];
-                const el = Array.from(document.querySelectorAll<HTMLElement>(step.target)).find(isVisibleAnchor);
+                const el = step.target.split(',').map(selector => selector.trim())
+                    .flatMap(selector => Array.from(document.querySelectorAll<HTMLElement>(selector)))
+                    .find(isVisibleAnchor);
                 if (!el) return [];
+                // Bind Joyride to the visible instance, including when mobile and
+                // desktop versions share the same original data-tour selector.
+                el.setAttribute('data-ac-tour-anchor', `tour-${anchorIndex}`);
+                const target = `[data-ac-tour-anchor="tour-${anchorIndex}"]`;
                 const placement = isOversizedAnchor(el) ? 'center' : step.placement;
-                return [{ ...step, target: step.target, placement, disableBeacon: true }];
+                return [{ ...step, target, placement, disableBeacon: true }];
             });
 
             if (available.length > 0) {
@@ -403,7 +417,7 @@ const ProductTour: React.FC<ProductTourProps> = ({
             console.warn(`[ProductTour] Target not found for step index ${index}, advancing safely`);
             const nextIndex = index + 1;
             if (nextIndex >= mountedSteps.length) {
-                completeTour(false);
+                completeTour(true);
             } else {
                 setStepIndex(nextIndex);
             }

@@ -115,7 +115,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Customers', href: '/dashboard/crm/workspace', icon: Users },
       { label: 'Contacts', href: '/dashboard/contacts', icon: Users },
-      { label: 'Accounts', href: '/dashboard/crm/accounts', icon: Users },
+      { label: 'Companies', href: '/dashboard/crm/accounts', icon: Users },
       { label: 'Tickets', href: '/dashboard/business/tickets', icon: CheckSquare },
     ],
   },
@@ -188,13 +188,13 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   },
 
   {
-    label: 'Knowledge',
+    label: 'Documents',
     href: '#',
     icon: FolderOpen,
     subItems: [
       { label: 'Documents', href: '/dashboard/business/documents', icon: FileText },
       { label: 'Contracts', href: '/dashboard/business/contracts', icon: ShieldCheck },
-      { label: 'Vault', href: '/dashboard/business/vault', icon: ShieldCheck },
+      { label: 'Secure files', href: '/dashboard/business/vault', icon: ShieldCheck },
     ],
   },
 

@@ -100,13 +100,13 @@ export const CANONICAL_ROUTES: CanonicalRouteDefinition[] = [
   },
   {
     path: '/dashboard/crm/workspace',
-    title: 'CRM workspace',
+    title: 'Customers',
     section: 'sales',
     roles: ['admin', 'tenant_admin', 'staff'],
     permissions: ['crm:read'],
     aliases: ['/dashboard/workspace'],
     mobileSupported: true,
-    breadcrumb: ['Sales', 'Workspace'],
+    breadcrumb: ['Customers'],
   },
   {
     path: '/dashboard/crm/follow-ups',

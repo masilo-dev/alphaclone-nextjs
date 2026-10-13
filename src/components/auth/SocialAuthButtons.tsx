@@ -76,7 +76,7 @@ export default function SocialAuthButtons({
           title={t("Continue with LinkedIn")}
           onClick={() => runOAuth('linkedin')}
           disabled={isLoading || disabled}
-          className={`${btnClass} bg-[var(--logo-linkedin)] hover:bg-[var(--logo-linkedin-hover)] text-white border-[var(--logo-linkedin)]`}
+          className={`${btnClass} bg-[var(--logo-linkedin)] hover:bg-[var(--logo-linkedin-hover)] text-[var(--color-white)] border-[var(--logo-linkedin)]`}
         >
           <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.03-1.84-3.03-1.85 0-2.13 1.45-2.13 2.94v5.66H9.36V9h3.42v1.56h.05c.48-.9 1.64-1.84 3.37-1.84 3.6 0 4.26 2.37 4.26 5.46v6.27zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z" />
@@ -90,7 +90,7 @@ export default function SocialAuthButtons({
           title={t("Continue with Facebook")}
           onClick={() => runOAuth('facebook')}
           disabled={isLoading || disabled}
-          className={`${btnClass} bg-[var(--logo-facebook)] hover:bg-[var(--logo-facebook-hover)] text-white border-[var(--logo-facebook)]`}
+          className={`${btnClass} bg-[var(--logo-facebook)] hover:bg-[var(--logo-facebook-hover)] text-[var(--color-white)] border-[var(--logo-facebook)]`}
         >
           <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07C0 18.1 4.39 23.09 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.79-4.7 4.54-4.7 1.31 0 2.69.24 2.69.24v2.97h-1.52c-1.5 0-1.96.93-1.96 1.89v2.26h3.34l-.53 3.49h-2.81V24C19.61 23.09 24 18.1 24 12.07z" />

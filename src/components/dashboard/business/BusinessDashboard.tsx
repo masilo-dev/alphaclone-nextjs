@@ -389,7 +389,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const [tourRunId, setTourRunId] = useState(0);
     const requestProductTour = React.useCallback(() => {
         setShowOnboarding(false);
-        if (route !== '/dashboard') {
+        if (route !== '/dashboard' && !document.querySelector('[data-tour="lead-finder-overview"]')) {
             setActiveTab('/dashboard');
             window.setTimeout(() => {
                 setTourRunId((id) => id + 1);
