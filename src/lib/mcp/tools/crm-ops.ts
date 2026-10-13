@@ -662,7 +662,7 @@ defineConnectorTool({
     const { limit, offset } = normalizePagination(args);
     let query = supabase
       .from('companies')
-      .select('id, tenant_id, name, domain, website, industry, lifecycle_stage, employee_count, updated_at', {
+      .select('id, tenant_id, name, website, industry, stage, company_size, updated_at', {
         count: 'exact',
       })
       .eq('tenant_id', args.tenant_id)
@@ -671,7 +671,7 @@ defineConnectorTool({
 
     if (args.search) {
       const q = args.search.replace(/[%_]/g, '');
-      query = query.or(`name.ilike.%${q}%,domain.ilike.%${q}%,website.ilike.%${q}%,industry.ilike.%${q}%`);
+      query = query.or(`name.ilike.%${q}%,website.ilike.%${q}%,industry.ilike.%${q}%`);
     }
 
     const { data, error, count } = await query;
