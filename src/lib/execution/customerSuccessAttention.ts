@@ -19,7 +19,7 @@ export async function deriveCustomerSuccessActions(
       .select('id, name, status, updated_at')
       .eq('tenant_id', tenantId)
       .lt('updated_at', fourteenDaysAgo)
-      .not('status', 'in', '("Completed","Cancelled","completed","cancelled")')
+      .not('status', 'in', '("Completed","Declined","done","cancelled")')
       .limit(10),
     admin
       .from('business_invoices')
