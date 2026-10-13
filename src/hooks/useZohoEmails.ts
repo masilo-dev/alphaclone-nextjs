@@ -66,6 +66,7 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
   const [loading, setLoading] = useState(enabled);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const folderCatalog = useRef<{ tenantId?: string; rows: ZohoFolderRow[] }>({ rows: [] });
   const bodyCache = useRef<Map<string, string>>(new Map());
   const folderMessagesCache = useRef<Map<string, { data: UnifiedInboxMessage[]; timestamp: number }>>(new Map());
 
@@ -77,7 +78,7 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
   const checkConnected = useCallback(async () => {
     try {
       if (!tenantId) return false;
-      const res = await fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' });
+      const res = await fetch(`/api/auth/zoho/status?mode=connection&tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' });
       const data = await res.json().catch(() => ({}));
       return res.ok && data.isConnected === true;
     } catch {
@@ -89,7 +90,7 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
     async (url: string, retried = false): Promise<Response> => {
       if (!tenantId) throw new Error('Select a workspace to use Zoho Mail.');
       const target = `${url}${url.includes('?') ? '&' : '?'}tenantId=${encodeURIComponent(tenantId)}`;
-      const res = await fetch(target, { credentials: 'include' });
+      const res = await fetch(target, { credentials: 'include', signal: AbortSignal.timeout(20_000) });
       if ((res.status === 401 || res.status === 403) && !retried) {
         const refreshed = await refreshZohoTokenIfNeeded(true, tenantId);
         if (refreshed) return fetchZoho(url, true);
@@ -99,6 +100,8 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
     [tenantId]
   );
 
+  const requestVersion = useRef(0);
+  const currentScope = useRef(''); currentScope.current = `${tenantId}:${enabled}:${folder}`;
   const refresh = useCallback(
     async (retried = false, forceRefresh = false) => {
       if (!enabled) return;
@@ -111,28 +114,20 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
         return;
       }
 
+      const version = ++requestVersion.current;
+      const scope = currentScope.current;
+      const isCurrent = () => version === requestVersion.current && scope === currentScope.current;
       setLoading(true);
       setError(null);
       try {
-        if (!retried) {
-          await refreshZohoTokenIfNeeded(false, tenantId);
-        }
-
-        const isConnected = await checkConnected();
-        setConnected(isConnected);
-        if (!isConnected) {
-          setEmails([]);
-          setFolders([]);
-          return;
-        }
-
-        const foldersRes = await fetchZoho('/api/zoho/mail?action=folders');
-        const foldersData = await foldersRes.json().catch(() => []);
-        if (!foldersRes.ok) {
-          throw new Error(foldersData.error || 'Failed to load Zoho folders');
-        }
+        const knownFolders = folderCatalog.current.tenantId === tenantId ? folderCatalog.current.rows : [];
+        const foldersRes = knownFolders.length ? null : await fetchZoho('/api/zoho/mail?action=folders');
+        const foldersData = foldersRes ? await foldersRes.json().catch(() => []) : knownFolders;
+        if (foldersRes && !foldersRes.ok) throw new Error(foldersData.error || 'Failed to load Zoho folders');
 
         const folderRows = Array.isArray(foldersData) ? (foldersData as ZohoFolderRow[]) : [];
+        if (!isCurrent()) return;
+        folderCatalog.current = { tenantId, rows: folderRows };
         setFolders(folderRows);
 
         const folderId = resolveFolderId(folderRows, folder);
@@ -146,9 +141,12 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
 
         const rows = Array.isArray(msgData) ? msgData : [];
         const mapped = rows.map((row) => mapZohoMessage(row as Record<string, unknown>, folderId));
+        if (!isCurrent()) return;
         folderMessagesCache.current.set(cacheKey, { data: mapped, timestamp: Date.now() });
+        setConnected(true);
         setEmails(mapped);
       } catch (refreshError) {
+        if (!isCurrent()) return;
         const raw =
           refreshError instanceof Error ? refreshError.message : 'Failed to load Zoho mail';
 
@@ -167,11 +165,13 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
         );
         setEmails([]);
       } finally {
-        setLoading(false);
+        if (isCurrent()) setLoading(false);
       }
     },
     [checkConnected, folder, limit, enabled, fetchZoho, tenantId]
   );
+
+  useEffect(() => { setEmails([]); setFolders([]); setConnected(false); }, [tenantId]);
 
   useEffect(() => {
     if (enabled) void refresh();
@@ -191,7 +191,8 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
   const loadMessageBody = useCallback(
     async (message: UnifiedInboxMessage): Promise<string> => {
       if (message.body) return message.body;
-      const cached = bodyCache.current.get(message.id);
+      const bodyKey = `${tenantId}:${message.id}`;
+      const cached = bodyCache.current.get(bodyKey);
       if (cached) return cached;
 
       const folderId = message.zohoFolderId || activeFolderId;
@@ -203,13 +204,13 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
         throw new Error(data.error || 'Failed to load message');
       }
       const content = String(data.content || data.snippet || '');
-      bodyCache.current.set(message.id, content);
+      bodyCache.current.set(bodyKey, content);
       setEmails((prev) =>
         prev.map((m) => (m.id === message.id ? { ...m, body: content } : m))
       );
       return content;
     },
-    [activeFolderId, fetchZoho]
+    [activeFolderId, fetchZoho, tenantId]
   );
 
   return {
