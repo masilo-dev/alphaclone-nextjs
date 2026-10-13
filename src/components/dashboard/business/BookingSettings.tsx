@@ -6,7 +6,6 @@ import { tenantService } from '@/services/tenancy/TenantService';
 import { Tenant, TenantSettings } from '@/services/tenancy/types';
 import { Settings, Copy, Plus, X, ExternalLink, Globe, Calendar } from 'lucide-react';
 import { Card, Button } from '@/components/ui/UIComponents';
-import { PLATFORM_BOOKING_URL } from '@/constants';
 
 async function syncBookingTypesToDb(
     tenantId: string,
@@ -27,21 +26,20 @@ interface BookingSettingsProps {
 }
 
 export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpdate, onClose }) => {
-    const [settings, setSettings] = useState<NonNullable<TenantSettings['booking']>>(tenant.settings.booking || {
-        enabled: false,
-        slug: tenant.slug,
+    const [settings, setSettings] = useState<NonNullable<TenantSettings['booking']>>({
+        enabled: true,
         availability: {
             days: [1, 2, 3, 4, 5], // Mon-Fri
             hours: { start: '09:00', end: '17:00' },
             timezone: 'UTC' // Default
         },
-        meetingTypes: [
-            { id: '30min', name: '30 Min Meeting', duration: 30, price: 0 }
-        ],
         // Default Logic Settings
         bufferTime: 15,
         minNotice: 4,
-        futureLimit: 60
+        futureLimit: 60,
+        ...(tenant.settings.booking || {}),
+        slug: tenant.settings.booking?.slug || tenant.slug,
+        meetingTypes: tenant.settings.booking?.meetingTypes?.length ? tenant.settings.booking.meetingTypes : [{ id: 'discovery-call', name: 'Discovery Call', duration: 30, price: 0 }],
     });
 
     const [saving, setSaving] = useState(false);
@@ -114,29 +112,6 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
 
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 sm:space-y-10 overscroll-contain">
-                    {/* Platform Cal.com — for talking to Bonnie / sales */}
-                    <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex items-start gap-4">
-                            <div className="p-2 bg-purple-500/20 rounded-lg shrink-0">
-                                <Calendar className="w-5 h-5 text-purple-400" />
-                            </div>
-                            <div>
-                                <h3 className="type-ui font-bold text-purple-200">Platform booking (Cal.com)</h3>
-                                <p className="type-card-description text-purple-400/80 leading-relaxed">
-                                    For prospects who want to talk to you directly. Native booking below is for your clients booking your services.
-                                </p>
-                            </div>
-                        </div>
-                        <a
-                            href={PLATFORM_BOOKING_URL}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-100 type-caption font-bold uppercase tracking-wider shrink-0"
-                        >
-                            <ExternalLink className="w-4 h-4" /> Open Cal.com
-                        </a>
-                    </div>
-
                     <div>
                         {/* 1. Main Toggle & Link */}
                         <div className="space-y-6">

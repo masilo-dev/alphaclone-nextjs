@@ -23,6 +23,7 @@ import { toast } from 'react-hot-toast';
 import type * as pdfjsLibType from 'pdfjs-dist';
 import { googleDriveService } from '../../services/googleDriveService';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { jsPDF } from 'jspdf';
 
 // PDFJS is loaded dynamically when needed to prevent Next.js client-side Webpack errors
@@ -57,6 +58,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     userName,
     onDownload
 }) => {
+    const { t } = useLanguage();
     const [annotations, setAnnotations] = useState<Annotation[]>(initialAnnotations);
     const [tool, setTool] = useState<'select' | 'note' | 'redact' | 'text' | 'signature'>('select');
     const [isFullscreen, setIsFullscreen] = useState(false);
@@ -65,6 +67,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     const [pdf, setPdf] = useState<pdfjsLibType.PDFDocumentProxy | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [renderScale, setRenderScale] = useState(1.5);
+    const [loadError, setLoadError] = useState(false);
+    const [loadAttempt, setLoadAttempt] = useState(0);
     const { user } = useAuth();
     const [isSavingToDrive, setIsSavingToDrive] = useState(false);
 
@@ -78,6 +82,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         const loadPdf = async () => {
             if (!url) return;
             setIsLoading(true);
+            setLoadError(false);
+            setPdf(null);
             try {
                 // @ts-ignore - Dynamic import of PDF.js
                 const pdfjsModule = await import('pdfjs-dist/build/pdf.mjs');
@@ -103,7 +109,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                 setNumPages(pdfDoc.numPages);
             } catch (error) {
                 console.error('PDF Library Load Error:', error);
-                if (isMounted) toast.error('Failed to initialize document viewer');
+                if (isMounted) setLoadError(true);
             } finally {
                 if (isMounted) setIsLoading(false);
             }
@@ -114,7 +120,24 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         return () => {
             isMounted = false;
         };
-    }, [url]);
+    }, [url, loadAttempt]);
+
+    // Fit pages to the available phone width; desktop keeps its existing zoom.
+    useEffect(() => {
+        if (!pdf || !containerRef.current) return;
+        let cancelled = false;
+        const container = containerRef.current;
+        let pageWidth = 0;
+        const fit = () => {
+            if (!cancelled && pageWidth && container.clientWidth < 640) {
+                setRenderScale(Math.max(0.2, (container.clientWidth - 32) / pageWidth));
+            }
+        };
+        const observer = new ResizeObserver(fit);
+        observer.observe(container);
+        void pdf.getPage(1).then(page => { pageWidth = page.getViewport({ scale: 1 }).width; fit(); });
+        return () => { cancelled = true; observer.disconnect(); };
+    }, [pdf]);
 
     const handlePageClick = (e: React.MouseEvent, pageNumber: number) => {
         if (tool === 'select' || !pageRefs.current[pageNumber]) return;
@@ -189,9 +212,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     };
 
     return (
-        <div className={`relative flex flex-col bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden ${isFullscreen ? 'fixed inset-0 z-[60] m-0 rounded-none' : 'h-[750px] shadow-2xl'}`}>
+        <div className={`relative flex flex-col bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden ${isFullscreen ? 'fixed inset-0 z-[60] m-0 rounded-none' : 'h-[75dvh] sm:h-[750px] shadow-2xl'}`}>
             {/* Toolbar */}
-            <div className="flex items-center justify-between p-3 sm:p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)] shrink-0">
+            <div className="flex flex-wrap items-center justify-between gap-2 p-3 sm:p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)] shrink-0">
                 <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
                     <Button size="sm" variant={tool === 'select' ? 'primary' : 'ghost'} onClick={() => setTool('select')} className="w-10 h-10 p-0 shrink-0">
                         <MousePointer2 className="w-4 h-4" />
@@ -251,6 +274,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                     <div className="h-full flex flex-col items-center justify-center gap-4 text-[var(--ws-text-muted)]">
                         <Loader2 className="w-10 h-10 animate-spin text-teal-400" />
                         <p className="type-card-description font-medium animate-pulse">Initializing Secure PDF Canvas...</p>
+                    </div>
+                ) : loadError ? (
+                    <div role="alert" className="p-4 text-[var(--ws-text-primary)]">
+                        <p>{t('Document could not be loaded')}</p>
+                        <button className="min-h-11 px-4" onClick={() => setLoadAttempt(n => n + 1)}>{t('Retry document')}</button>
+                        {onDownload && <button className="min-h-11 px-4" onClick={onDownload}>{t('Download')}</button>}
                     </div>
                 ) : (
                     <div className="flex flex-col items-center gap-0 pb-20 max-w-full mx-auto bg-white" id="editor-pdf-content">

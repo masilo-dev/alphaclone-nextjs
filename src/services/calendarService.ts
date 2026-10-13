@@ -132,7 +132,7 @@ export const calendarService = {
         ]);
 
         // Map Calendar Events
-        const events: CalendarEvent[] = (eventsRes.data || []).map((e: any) => ({
+        const events: CalendarEvent[] = (eventsRes.data || []).filter((e: any) => !['canceled', 'cancelled', 'missed', 'no_show'].includes(e.metadata?.calendly_status || e.metadata?.provider_status || e.metadata?.status)).map((e: any) => ({
             ...e,
             type: e.type || 'meeting',
             start_time: e.start_time,
@@ -472,7 +472,7 @@ export const calendarService = {
                     event: '*',
                     schema: 'public',
                     table: 'calendar_events',
-                    filter: `user_id=eq.${userId} AND tenant_id=eq.${tenantService.getCurrentTenantId()}`,
+                    filter: `tenant_id=eq.${tenantService.getCurrentTenantId()}`,
                 },
                 (payload: RealtimePostgresChangesPayload<CalendarEvent>) => {
                     callback(payload.new as CalendarEvent);

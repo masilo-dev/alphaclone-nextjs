@@ -1,5 +1,7 @@
 "use client";
 
+import { SavedFilePreview } from '@/components/documents/SavedFilePreview';
+import { documentPreviewUrl } from '@/lib/documents/previewSource';
 import { Select as AlphaCloneSelect } from '@/components/ui/select';
 
 
@@ -104,7 +106,6 @@ function parseVaultDocument(row: Record<string, unknown>): VaultDocument {
   const securityLevel = String(metadata.security_level || "confidential");
   const category = String(metadata.category || row.document_type || "Agreement");
   const storagePath = String(row.storage_path || "");
-  const bucket = String(metadata.storage_bucket || "uploads");
   const tags = Array.isArray(metadata.tags) ? (metadata.tags as string[]) : [];
   return {
     id: String(row.id),
@@ -126,7 +127,7 @@ function parseVaultDocument(row: Record<string, unknown>): VaultDocument {
     is_encrypted: tags.includes("encrypted") || Boolean(metadata.encrypted),
     created_at: String(row.created_at || new Date().toISOString()),
     proxiedUrl: storagePath
-      ? fileUploadService.getProxiedUrl(bucket, storagePath, String(row.tenant_id || ""))
+      ? documentPreviewUrl({ storage_path: storagePath, metadata }, String(row.tenant_id || "")) || undefined
       : undefined,
   };
 }
@@ -924,11 +925,7 @@ export default function DocumentVaultTab() {
             </div>
             <div className="grid min-h-[70dvh] flex-1 gap-3 xl:grid-cols-[minmax(0,1fr)_22rem]">
               {selectedDocument.proxiedUrl ? (
-                <iframe
-                  src={selectedDocument.proxiedUrl}
-                  title={`Preview ${selectedDocument.name}`}
-                  className="min-h-[70dvh] h-full w-full rounded-xl border border-[var(--ws-border)] bg-white"
-                />
+                <SavedFilePreview url={selectedDocument.proxiedUrl} mimeType={selectedDocument.mime_type || undefined} title={selectedDocument.name} />
               ) : (
                 <div className="flex min-h-[40dvh] items-center justify-center rounded-xl border border-dashed border-[var(--ws-border)] type-ui text-[var(--ws-text-muted)]">
                   This record has no previewable file URL.

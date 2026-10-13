@@ -36,9 +36,20 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
     const query = new URLSearchParams({ singleEvents: 'true', orderBy: 'startTime', maxResults: '250' });
     query.set('timeMin', input.get('timeMin') || new Date().toISOString());
     if (input.get('timeMax')) query.set('timeMax', input.get('timeMax')!);
-    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${query}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-    const payload = await googleResponse(response);
-    return NextResponse.json({ connected: true, events: payload.items || [] });
+    const events: Record<string, unknown>[] = [];
+    const seen = new Set<string>();
+    for (let page = 0; page < 100; page++) {
+      const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${query}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(15_000),
+      });
+      const payload = await googleResponse(response);
+      events.push(...(payload.items || []));
+      if (!payload.nextPageToken) return NextResponse.json({ connected: true, events });
+      if (seen.has(payload.nextPageToken)) throw new Error('Google Calendar pagination did not advance');
+      seen.add(payload.nextPageToken);
+      query.set('pageToken', payload.nextPageToken);
+    }
+    throw new Error('Google Calendar sync is incomplete; pagination limit reached');
   } catch (error) { return routeErrorResponse(error, 'Google Calendar events could not be loaded', req); }
 }
 

@@ -3,7 +3,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 
-type BookingAutomationContext = {
+export type BookingAutomationContext = {
   tenantId: string;
   bookingId: string;
   bookingTypeName: string;
@@ -140,7 +140,7 @@ export async function enqueueBookingAutomationJobs(
           rule_name: rule.name,
         },
       },
-      { onConflict: 'idempotency_key', ignoreDuplicates: false }
+      { onConflict: 'idempotency_key', ignoreDuplicates: true }
     );
 
     if (insertError) {
@@ -154,14 +154,16 @@ export async function enqueueBookingAutomationJobs(
   return { queued, skipped };
 }
 
-export async function processDueBookingAutomationJobs(supabase: SupabaseClient, limit = 50) {
-  const { data: jobs, error } = await supabase
+export async function processDueBookingAutomationJobs(supabase: SupabaseClient, limit = 50, scope?: { tenantId: string; bookingId: string }) {
+  let query = supabase
     .from('booking_automation_jobs')
     .select('id, tenant_id, recipient_email, subject, body_html, attempts')
     .eq('status', 'pending')
     .lte('scheduled_for', new Date().toISOString())
     .order('scheduled_for', { ascending: true })
     .limit(Math.min(Math.max(limit, 1), 100));
+  if (scope) query = query.eq('tenant_id', scope.tenantId).eq('booking_id', scope.bookingId);
+  const { data: jobs, error } = await query;
 
   if (error) throw error;
 
@@ -169,11 +171,13 @@ export async function processDueBookingAutomationJobs(supabase: SupabaseClient, 
   let failed = 0;
 
   for (const job of jobs || []) {
-    await supabase
+    const claimed = await supabase
       .from('booking_automation_jobs')
       .update({ status: 'sending', attempts: Number(job.attempts || 0) + 1, updated_at: new Date().toISOString() })
       .eq('id', job.id)
-      .eq('status', 'pending');
+      .eq('status', 'pending').select('id').maybeSingle();
+    if (claimed.error) throw claimed.error;
+    if (!claimed.data) continue;
 
     const result = await sendEmailServer({
       tenantId: String(job.tenant_id),
@@ -181,6 +185,9 @@ export async function processDueBookingAutomationJobs(supabase: SupabaseClient, 
       subject: String(job.subject),
       html: String(job.body_html),
       templateName: 'bookingAutomation',
+      category: 'booking_calendar',
+      relatedRecord: { type: 'booking', id: scope?.bookingId || String(job.id) },
+      idempotencyKey: `booking-notification:${job.id}`,
       isPlatformNotification: true,
     });
 

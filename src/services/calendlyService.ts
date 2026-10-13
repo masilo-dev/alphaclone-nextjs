@@ -162,53 +162,20 @@ export const calendlyService = {
         const tenantId = tenantIdParam || tenantService.getCurrentTenantId();
         if (!tenantId) throw new Error('No active workspace');
 
-        const events = await this.getScheduledEvents(undefined, tenantId);
-
-        let syncedCount = 0;
-
-        for (const event of events) {
-            // Check if we already have this event by its URI
-            const { data: existing } = await supabase
-                .from('calendar_events')
-                .select('id')
-                .eq('metadata->>calendly_event_uri', event.uri)
-                .maybeSingle(); // Changed from .single() to be safer
-
-            if (!existing) {
-                // We need the invitee details to get the name/email
-                let desc = event.name;
-                const eventUuid = event.uri.split('/').pop();
-
-                try {
-                    const inviteesData = await this.fetchCalendly(`/scheduled_events/${eventUuid}/invitees`, {}, tenantId);
-                    const invitee = inviteesData.collection?.[0];
-                    if (invitee) {
-                        desc = `Calendly meeting with ${invitee.name || invitee.email}`;
-                    }
-                } catch (e) {
-                    console.warn('Could not fetch invitee details for event', eventUuid);
-                }
-
-                await calendarService.createEvent({
-                    user_id: userId,
-                    title: `Calendly: ${event.name}`,
-                    description: desc,
-                    start_time: event.start_time,
-                    end_time: event.end_time,
-                    type: 'meeting',
-                    location: event.location?.location || 'Calendly Video Link',
-                    is_all_day: false,
-                    reminder_minutes: 15,
-                    metadata: {
-                        calendly_event_uri: event.uri,
-                        calendly_status: event.status
-                    }
-                }, true); // forceCreate to bypass conflicts intentionally for imports
-
-                syncedCount++;
-            }
+        if (typeof window === 'undefined') {
+            const config = await this.getConfig(tenantId);
+            if (!config?.accessToken || !config.calendlyUserUri) throw new Error('Calendly OAuth is not connected');
+            const { pullAndSyncCalendlyEvents } = await import('@/lib/calendly/syncToNative');
+            const result = await pullAndSyncCalendlyEvents(tenantId, userId, config as import('@/lib/calendly/syncToNative').CalendlyTenantConfig);
+            return result.syncedCount;
         }
+        const response = await fetch('/api/calendly/sync', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tenantId }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Calendly sync failed');
+        return result.syncedCount;
 
-        return syncedCount;
     }
 };

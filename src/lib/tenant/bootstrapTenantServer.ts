@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { publicAppUrl } from '@/lib/config/public-origin';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 function sanitizeSlug(input: string, fallback: string): string {
@@ -23,8 +24,8 @@ async function uniqueSlug(admin: SupabaseClient, slugBase: string): Promise<stri
   return `${slugBase}-${Date.now().toString(36)}`;
 }
 
-async function ensureNativeBookingDefaults(admin: SupabaseClient, tenantId: string, slug: string) {
-  const publicUrl = `https://alphaclonesystems.com/book/${slug}`;
+export async function ensureNativeBookingDefaults(admin: SupabaseClient, tenantId: string, slug: string) {
+  const publicUrl = publicAppUrl(`/book/${encodeURIComponent(slug)}`);
 
   const { data: tenant } = await admin
     .from('tenants')
@@ -45,6 +46,7 @@ async function ensureNativeBookingDefaults(admin: SupabaseClient, tenantId: stri
       ...(settings.booking?.availability || {}),
     },
     ...(settings.booking || {}),
+    slug,
   };
 
   await admin
@@ -132,22 +134,14 @@ async function ensureNativeBookingDefaults(admin: SupabaseClient, tenantId: stri
     },
   ];
 
-  for (const rule of defaultRules) {
-    const { data: existingRule, error: lookupError } = await admin
-      .from('booking_automation_rules')
-      .select('id')
-      .eq('tenant_id', tenantId)
-      .eq('name', rule.name)
-      .limit(1)
-      .maybeSingle();
-
-    if (lookupError) {
-      console.warn('[tenant/bootstrap] Booking automation defaults skipped:', lookupError.message);
-      break;
-    }
-    if (!existingRule?.id) {
-      await admin.from('booking_automation_rules').insert({ tenant_id: tenantId, ...rule });
-    }
+  const { data: existingRules, error: rulesError } = await admin.from('booking_automation_rules')
+    .select('id, name').eq('tenant_id', tenantId);
+  if (rulesError) throw rulesError;
+  const names = new Set((existingRules || []).map((rule: any) => rule.name));
+  const missingRules = defaultRules.filter(rule => !names.has(rule.name));
+  if (missingRules.length) {
+    const { error } = await admin.from('booking_automation_rules').insert(missingRules.map(rule => ({ tenant_id: tenantId, ...rule })));
+    if (error) throw error;
   }
 }
 
@@ -220,7 +214,7 @@ export async function bootstrapTenantForUser(
         .select('slug, booking_slug')
         .eq('id', existingId)
         .maybeSingle();
-      if (existingTenant?.slug && !existingTenant?.booking_slug) {
+      if (existingTenant?.slug) {
         await ensureNativeBookingDefaults(admin, existingId, String(existingTenant.slug));
       }
       return { tenantId: existingId, created: false };

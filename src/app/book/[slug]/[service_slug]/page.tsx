@@ -12,10 +12,9 @@ import {
     Clock, ChevronLeft, ChevronRight, Globe,
     CheckCircle2, AlertCircle, Calendar, User, ArrowLeft, Phone, Mail
 } from 'lucide-react';
-import { Tenant } from '@/services/tenancy/types';
+import type { PublicBookingTenant as Tenant } from '@/actions/booking';
 import { bookingService, BookingSlot } from '@/services/bookingService';
 import toast from 'react-hot-toast';
-import CalendlyEmbed from '@/components/booking/CalendlyEmbed';
 import TurnstileWidget from '@/components/security/TurnstileWidget';
 import Image from 'next/image';
 
@@ -285,16 +284,7 @@ export default function BookingPage() {
                     {/* RIGHT PANEL: Interaction Area */}
                     <div className="lg:col-span-8">
                         <div className="bg-white dark:bg-[var(--ws-panel)] border border-slate-200 dark:border-[var(--ws-border)] rounded-3xl p-6 md:p-8 shadow-2xl shadow-slate-200/50 dark:shadow-none min-h-[500px]">
-                            {(tenant.settings as any)?.calendly?.enabled && (tenant.settings as any)?.calendly?.eventUrl ? (
-                                <CalendlyEmbed
-                                    url={(tenant.settings as any).calendly.eventUrl}
-                                    branding={{
-                                        primaryColor: tenant.settings.branding?.primaryColor,
-                                        backgroundColor: 'var(--ws-canvas)'
-                                    }}
-                                />
-                            ) : (
-                                <>
+                            <>
                                     {/* STEP: DATE & TIME */}
                                     {step === 'date' && (
                                         <div className="flex flex-col md:flex-row gap-8 h-full">
@@ -476,8 +466,7 @@ export default function BookingPage() {
                                             </form>
                                         </div>
                                     )}
-                                </>
-                            )}
+                            </>
 
                         </div>
                     </div>

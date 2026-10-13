@@ -19,6 +19,7 @@ import { googleDriveService } from '../../services/googleDriveService';
 import { useAuth } from '../../contexts/AuthContext';
 import mammoth from 'mammoth';
 import { fileUploadService } from '../../services/fileUploadService';
+import { documentPreviewUrl } from '@/lib/documents/previewSource';
 import { DocumentViewer } from '../contracts/DocumentViewer';
 import { useTenant } from '../../contexts/TenantContext';
 import { User } from '../../types';
@@ -72,6 +73,7 @@ interface HubFile {
     deleted_at: string | null;
     entity_type?: string;
     annotations?: any[];
+    tags?: string[];
 }
 
 type DocumentActivityItem = {
@@ -128,6 +130,9 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     const relationship = useRelationship();
     const { confirm } = useConfirmDialog();
     const [files, setFiles] = useState<HubFile[]>([]);
+    const fileOpenEpoch = useRef(0);
+    const [fileOpenError, setFileOpenError] = useState(false);
+    const [fileOpening, setFileOpening] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -433,7 +438,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         const toastId = toast.loading('Saving to Google Drive...');
         try {
             // Use proxied URL to hide Supabase origin
-            const downloadUrl = fileUploadService.getProxiedUrl('uploads', file.storage_path, currentTenant?.id);
+            const downloadUrl = documentPreviewUrl(file, currentTenant?.id || '') || '';
 
             if (!downloadUrl) {
                 throw new Error('Could not generate download URL');
@@ -457,11 +462,18 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     };
 
     const handleOpenFile = async (file: HubFile) => {
+        const epoch = ++fileOpenEpoch.current;
+        setFileOpenError(false);
+        setFileOpening(true);
+        if (fileUrl?.startsWith('blob:')) URL.revokeObjectURL(fileUrl);
         setSelectedFile(file);
+        setFileUrl(null);
+        setEditorContent('');
+        setViewMode('viewer');
 
         try {
             // Use proxied URL instead of direct Supabase download
-            const proxiedUrl = fileUploadService.getProxiedUrl('uploads', file.storage_path, currentTenant?.id);
+            const proxiedUrl = documentPreviewUrl(file, currentTenant?.id || '') || '';
             const response = await fetch(proxiedUrl);
 
             if (!response.ok) {
@@ -469,6 +481,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
             }
 
             const data = await response.blob();
+            if (epoch !== fileOpenEpoch.current) return;
 
             const isPdf = file.file_type === 'application/pdf';
             const isWord = file.file_type.includes('word') || file.file_type.includes('officedocument');
@@ -486,17 +499,23 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                 // Use mammoth to convert docx to HTML
                 const arrayBuffer = await data.arrayBuffer();
                 const result = await mammoth.convertToHtml({ arrayBuffer });
+                if (epoch !== fileOpenEpoch.current) return;
                 setEditorContent(result.value);
                 setViewMode('editor');
                 toast('Word document opened in editor mode.', { icon: '📄' });
             } else {
                 const text = await data.text();
+                if (epoch !== fileOpenEpoch.current) return;
                 setEditorContent(text);
                 setViewMode('editor');
             }
         } catch (error) {
+            if (epoch !== fileOpenEpoch.current) return;
             console.error('Error opening file:', error);
+            setFileOpenError(true);
             toast.error('Failed to open document');
+        } finally {
+            if (epoch === fileOpenEpoch.current) setFileOpening(false);
         }
     };
 
@@ -607,7 +626,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 
         try {
             // Use proxied URL instead of direct Supabase download
-            const proxiedUrl = fileUploadService.getProxiedUrl('uploads', file.storage_path, currentTenant?.id);
+            const proxiedUrl = documentPreviewUrl(file, currentTenant?.id || '') || '';
             const response = await fetch(proxiedUrl);
 
             if (!response.ok) {
@@ -971,7 +990,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     // ── VIEWER / EDITOR MODE ──────────────────────────────────────────────────
     if (viewMode !== 'list' && selectedFile) {
         const isPdf = selectedFile.file_type === 'application/pdf';
-        const printTarget = fileUrl || (selectedFile.storage_path ? fileUploadService.getProxiedUrl('uploads', selectedFile.storage_path, currentTenant?.id) : '');
+        const printTarget = fileUrl || (selectedFile.storage_path ? documentPreviewUrl(selectedFile, currentTenant?.id || '') || '' : '');
         const viewerDescription = `${getFileLabel(selectedFile.file_type)} · ${formatBytes(selectedFile.file_size)} · ${format(new Date(selectedFile.created_at), 'MMM d, yyyy')}`;
         return (
             <div className="fixed inset-0 ac-layer-overlay flex flex-col bg-[var(--ws-canvas)] animate-in fade-in duration-200">
@@ -979,7 +998,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                     moduleLabel="Deliver"
                     title={selectedFile.original_filename}
                     description={viewerDescription}
-                    onBack={() => { setViewMode('list'); setSelectedFile(null); setFileUrl(null); setActivityOpen(false); }}
+                    onBack={() => { fileOpenEpoch.current++; if (fileUrl?.startsWith('blob:')) URL.revokeObjectURL(fileUrl); setViewMode('list'); setSelectedFile(null); setFileUrl(null); setActivityOpen(false); }}
                     primaryAction={
                         viewMode === 'editor'
                             ? {
@@ -1056,7 +1075,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                     <button
                                         key={f.id}
                                         type="button"
-                                        onClick={() => setSelectedFile(f)}
+                                        onClick={() => void handleOpenFile(f)}
                                         className="type-ui px-2 py-1 rounded-lg border border-white/10 text-[var(--ws-text-secondary)] hover:border-teal-500/40 hover:text-[var(--brand-blue-300)]"
                                     >
                                         {f.original_filename} ·{' '}
@@ -1083,7 +1102,14 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-hidden bg-[var(--ws-canvas)]">
-                    {isPdf && fileUrl ? (
+                    {fileOpening ? (
+                        <div role="status" className="p-4 text-[var(--ws-text-primary)]">Loading document…</div>
+                    ) : fileOpenError ? (
+                        <div role="alert" className="p-4 text-[var(--ws-text-primary)]">
+                            <p>Document could not be loaded.</p>
+                            <button className="min-h-11 px-4" onClick={() => void handleOpenFile(selectedFile)}>Retry</button>
+                        </div>
+                    ) : isPdf && fileUrl ? (
                         <div className="h-full document-viewer-container">
                             <DocumentViewer
                                 url={fileUrl}
@@ -1474,7 +1500,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                     : [
                                         { label: 'Open', icon: <Edit3 className="w-4 h-4" aria-hidden="true" />, onClick: () => handleOpenFile(file) },
                                         { label: 'Download', icon: <Download className="w-4 h-4" aria-hidden="true" />, onClick: () => handleDownload(file) },
-                                        { label: 'Print', icon: <Printer className="w-4 h-4" aria-hidden="true" />, onClick: () => handlePrint(fileUploadService.getProxiedUrl('uploads', file.storage_path, currentTenant?.id)) },
+                                        { label: 'Print', icon: <Printer className="w-4 h-4" aria-hidden="true" />, onClick: () => handlePrint(documentPreviewUrl(file, currentTenant?.id || '') || '') },
                                         { label: 'Email', icon: <Mail className="w-4 h-4" aria-hidden="true" />, onClick: () => openEmailModal(file) },
                                         { label: 'Save to Drive', icon: <Share2 className="w-4 h-4" aria-hidden="true" />, onClick: () => handleSaveToDrive(file) },
                                         { label: 'Move to trash', icon: <Trash2 className="w-4 h-4" aria-hidden="true" />, onClick: () => handleSoftDelete(file.id), destructive: true },
@@ -1569,7 +1595,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                                             </button>
                                                             <button
                                                                 type="button"
-                                                                onClick={() => handlePrint(fileUploadService.getProxiedUrl('uploads', file.storage_path, currentTenant?.id))}
+                                                                onClick={() => handlePrint(documentPreviewUrl(file, currentTenant?.id || '') || '')}
                                                                 className={cn(
                                                                     WORKSPACE.action.secondary,
                                                                     ENTERPRISE.touchTarget,

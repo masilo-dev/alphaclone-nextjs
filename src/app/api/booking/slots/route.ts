@@ -181,8 +181,8 @@ export async function GET(req: NextRequest) {
             await Promise.all([
                 supabaseAdmin
                     .from('calendar_events')
-                    .select('start_time, end_time')
-                    .eq('user_id', hostId)
+                    .select('start_time, end_time, metadata')
+                    .eq('tenant_id', tenantId).eq('user_id', hostId)
                     .or(`and(start_time.lte.${dayEnd.toISOString()},end_time.gte.${dayStart.toISOString()})`),
                 supabaseAdmin
                     .from('bookings')
@@ -193,7 +193,7 @@ export async function GET(req: NextRequest) {
                 supabaseAdmin
                     .from('video_calls')
                     .select('scheduled_at, duration_limit_minutes')
-                    .eq('host_id', hostId)
+                    .eq('tenant_id', tenantId).eq('host_id', hostId)
                     .eq('status', 'scheduled')
                     .or(`and(scheduled_at.lte.${dayEnd.toISOString()},scheduled_at.gte.${dayStart.toISOString()})`),
             ]);
@@ -203,7 +203,7 @@ export async function GET(req: NextRequest) {
         }
 
         const blockedRanges: Array<{ start: number; end: number }> = [
-            ...(events || []).map((event: { start_time: string; end_time: string }) => ({
+            ...(events || []).filter((event: any) => !['canceled','cancelled','missed','no_show'].includes(event.metadata?.status || event.metadata?.calendly_status || event.metadata?.provider_status)).map((event: { start_time: string; end_time: string }) => ({
                 start: new Date(event.start_time).getTime(),
                 end: new Date(event.end_time).getTime(),
             })),

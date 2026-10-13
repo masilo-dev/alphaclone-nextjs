@@ -27,7 +27,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 });
         }
 
-        return NextResponse.json({ events: events || [] });
+        return NextResponse.json({ events: (events || []).filter((event: any) => !['canceled', 'cancelled', 'missed'].includes(event.metadata?.calendly_status)) });
 
     } catch (err) {
         console.error('API /calendly/scheduled-events Error:', err);

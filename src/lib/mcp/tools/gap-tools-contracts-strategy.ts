@@ -4,6 +4,7 @@
  */
 import { z } from 'zod';
 import { registerTool } from '@/lib/mcp/tool-registry';
+import { getCalendlyConfig } from '@/services/calendly/calendlyIntegrationService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 const tid = z.string().describe('AlphaClone Workspace ID');
@@ -72,8 +73,12 @@ registerTool('gap-calendar', {
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' } } },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const { data } = await supabase.from('integrations').select('status, metadata').eq('tenant_id', args.tenant_id).eq('provider', 'calendly').single();
-    if (!data) return { content: [{ type: 'text', text: JSON.stringify({ status: 'requires_oauth', message: 'Calendly integration not connected.' }) }] };
-    return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+    const config = await getCalendlyConfig(supabase, args.tenant_id);
+    return { content: [{ type: 'text', text: JSON.stringify({
+      status: config ? 'connected' : 'requires_oauth', connected: Boolean(config),
+      message: config ? 'Calendly OAuth is connected.' : 'Calendly OAuth is not connected.',
+      webhookConfigured: Boolean(config?.webhookSubscriptionUri),
+      expiresAt: config?.expiresAt || null,
+    }) }] };
   },
 });

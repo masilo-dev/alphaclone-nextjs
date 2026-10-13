@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { confirmNativeBooking } from '@/lib/booking/confirmNativeBooking';
+import { publicAppUrl } from '@/lib/config/public-origin';
+import { acquireCronLock } from '@/lib/cron/distributedLock';
 import { microsoftServerService } from '@/services/server/microsoftServerService';
 import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
 import { isTurnstileEnforced, readClientIp, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
@@ -21,7 +23,6 @@ export async function POST(req: Request) {
             client_phone,
             client_notes,
             time_zone,
-            booking_type_name,
         } = body;
 
         const limited = await rateLimitMiddleware(
@@ -52,10 +53,18 @@ export async function POST(req: Request) {
         // 1b. Fetch Plan and Enforce Limits
         const { data: tenantData } = await supabase
             .from('tenants')
-            .select('subscription_plan')
+            .select('id,name,slug,settings,subscription_plan')
             .eq('id', tenant_id)
             .single();
 
+        if (!tenantData || tenantData.settings?.booking?.enabled !== true) return NextResponse.json({ error: 'This booking page is not available' }, { status: 404 });
+        const { data: meetingType, error: typeError } = await supabase.from('booking_types')
+            .select('id,name,duration').eq('tenant_id', tenant_id).eq('id', booking_type_id).eq('is_active', true).maybeSingle();
+        if (typeError || !meetingType) return NextResponse.json({ error: 'Meeting type not available for this business' }, { status: 404 });
+        const booking_type_name = meetingType.name;
+        const startMs = Date.parse(start_time), endMs = Date.parse(end_time);
+        if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs || endMs - startMs !== meetingType.duration * 60_000)
+            return NextResponse.json({ error: 'Invalid booking time or duration' }, { status: 400 });
         const plan = tenantData?.subscription_plan || 'free';
         const { PLAN_PRICING } = await import('@/services/tenancy/types');
         const planFeatures = PLAN_PRICING[plan as keyof typeof PLAN_PRICING]?.features;
@@ -68,16 +77,33 @@ export async function POST(req: Request) {
         // We need a host for the video call.
         const { data: users, error: userError } = await supabase
             .from('tenant_users')
-            .select('user_id')
-            .eq('tenant_id', tenant_id)
-            .limit(1);
+            .select('user_id,role')
+            .eq('tenant_id', tenant_id);
 
         if (userError || !users?.length) {
             console.error('No host found for tenant:', tenant_id, userError);
             return NextResponse.json({ error: 'Configuration Error: Tenant has no active hosts.' }, { status: 500 });
         }
-        const host_id = users[0].user_id;
+        const host_id = (users.find((user: any) => ['owner', 'admin', 'tenant_admin'].includes(user.role)) || users[0]).user_id;
         const microsoftConnection = await microsoftServerService.getConnection(host_id).catch(() => null);
+
+        const lock = await acquireCronLock(`native-booking-slot:${tenant_id}:${host_id}`, 120);
+        if (!lock.acquired) return NextResponse.json({ error: 'Booking is being updated. Please try again.' }, { status: 409 });
+        try {
+        const { data: prior, error: priorError } = await supabase.from('bookings').select('id,video_call_id,status')
+            .eq('tenant_id', tenant_id).eq('client_email', client_email).eq('start_time', start_time).eq('booking_type_id', booking_type_id)
+            .not('status', 'in', '(cancelled,canceled,no_show)').maybeSingle();
+        if (priorError) throw priorError;
+        if (prior) {
+            const roomUrl = prior.video_call_id ? publicAppUrl(`/meet/${prior.video_call_id}`) : '';
+            const notifications = await confirmNativeBooking(supabase, tenantData.slug, {
+                tenantId: tenant_id, bookingId: prior.id, bookingTypeName: booking_type_name,
+                clientName: client_name, clientEmail: client_email, clientNotes: client_notes,
+                startTime: start_time, endTime: end_time, timeZone: time_zone,
+                meetingUrl: roomUrl, hostUserId: host_id, source: 'native',
+            });
+            return NextResponse.json({ success: true, booking: prior, roomUrl, notifications });
+        }
 
         // 2b. Conflict Check (Harden against Race Conditions)
         const requestedStart = new Date(start_time);
@@ -85,13 +111,13 @@ export async function POST(req: Request) {
 
         const { data: overlapping, error: conflictError } = await supabase
             .from('calendar_events')
-            .select('id')
-            .eq('user_id', host_id)
+            .select('id,metadata')
+            .eq('tenant_id', tenant_id).eq('user_id', host_id)
             .or(`and(start_time.lt.${requestedEnd.toISOString()},end_time.gt.${requestedStart.toISOString()})`)
             .limit(1);
 
         if (conflictError) throw new Error('Failed to verify slot availability');
-        if (overlapping && overlapping.length > 0) {
+        if (overlapping?.some((event: any) => !['cancelled','canceled','missed','no_show'].includes(event.metadata?.status || event.metadata?.calendly_status || event.metadata?.provider_status))) {
             return NextResponse.json({ error: 'This slot was just taken. Please select another time.' }, { status: 409 });
         }
 
@@ -159,8 +185,6 @@ export async function POST(req: Request) {
 
         // 3b. Base URL for the masked meeting link (filled in after we have the
         // video_calls UUID, since /meet/[id] resolves a UUID — not the Daily room name).
-        const host = req.headers.get('host') || 'localhost:3000';
-        const protocol = host.includes('localhost') ? 'http' : 'https';
 
         // 4. Insert Video Call
         let videoCallId = null;
@@ -168,12 +192,15 @@ export async function POST(req: Request) {
             const { data: vCall, error: vError } = await supabase
                 .from('video_calls')
                 .insert({
+                    tenant_id,
                     room_id: roomId,
                     daily_room_url: dailyRoomUrl,
                     daily_room_name: roomId,
                     host_id: host_id,
                     title: `Meeting with ${client_name}`,
                     status: 'scheduled',
+                    scheduled_at: start_time,
+                    duration_limit_minutes: meetingType.duration,
                     // Public so the booked client can join from the email link without an account.
                     is_public: true,
                     video_provider: meetingProvider,
@@ -195,10 +222,11 @@ export async function POST(req: Request) {
         let microsoftEventId: string | null = null;
         // The client-facing meeting link MUST point at the video_calls UUID so /meet/[id]
         // resolves the room (a Daily room name would be misread as a tenant slug → "Business not found").
-        const maskedUrl = videoCallId ? `${protocol}://${host}/meet/${videoCallId}` : '';
+        const maskedUrl = videoCallId ? publicAppUrl(`/meet/${videoCallId}`) : '';
 
         // 4.5 NATIVE CRM INTEGRATION (Lead, Calendar Event, Task)
         let leadId = null;
+        let calendarEventId: string | null = null;
         try {
             // Check if Lead exists
             const { data: lead } = await supabase
@@ -237,14 +265,15 @@ export async function POST(req: Request) {
                 start_time,
                 end_time,
                 type: 'meeting',
-                video_room_id: roomId,
+                video_room_id: videoCallId,
                 related_to_lead: leadId,
                 is_all_day: false,
                 reminder_minutes: 15,
                 metadata: providerMetadata.provider === 'teams'
                     ? { microsoft_event_id: providerMetadata.microsoft_event_id }
                     : { jitsi_url: dailyRoomUrl }
-            });
+            }).select('id').single();
+            calendarEventId = calendarInsert.data?.id || null;
             if (calendarInsert.error) throw calendarInsert.error;
 
             microsoftEventId = typeof providerMetadata.microsoft_event_id === 'string'
@@ -283,6 +312,7 @@ export async function POST(req: Request) {
                 time_zone,
                 status: 'confirmed',
                 video_call_id: videoCallId,
+                calendar_event_id: calendarEventId,
                 metadata: {
                     meeting_provider: providerMetadata.provider,
                     room_url: dailyRoomUrl,
@@ -297,109 +327,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Failed to save booking' }, { status: 500 });
         }
 
-        // 6. Send Email
-        if (tenant_id) {
-            const dateStr = new Date(start_time).toLocaleString('en-US', {
-                timeZone: time_zone || 'UTC',
-                dateStyle: 'full',
-                timeStyle: 'short'
-            });
+        // Durable, tenant-scoped confirmations for both host and customer.
+        const notifications = await confirmNativeBooking(supabase, tenantData.slug, {
+            tenantId: tenant_id, bookingId: booking.id, bookingTypeName: booking_type_name,
+            clientName: client_name, clientEmail: client_email, clientNotes: client_notes,
+            startTime: start_time, endTime: end_time, timeZone: time_zone,
+            meetingUrl: maskedUrl, hostUserId: host_id, source: 'native',
+        });
 
-            const emailResult = await sendEmailServer({
-                tenantId: tenant_id,
-                to: client_email,
-                subject: `Confirmation: ${booking_type_name || 'Meeting'} on ${dateStr}`,
-                templateName: 'bookingConfirmation',
-                html: `
-                    <!DOCTYPE html>
-                    <html>
-                    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: var(--ws-canvas); margin: 0; padding: 40px 20px;">
-                        <div style="max-width: 600px; margin: 0 auto; background-color: var(--ws-panel); border-radius: 20px; overflow: hidden; border: 1px solid var(--ws-surface-tertiary); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
-
-                            <!-- Header -->
-                            <div style="background: linear-gradient(135deg, var(--brand-blue-500) 0%, var(--brand-blue-700) 100%); padding: 40px; text-align: center;">
-                                <h1 style="color: var(--color-white); margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">Meeting Confirmed</h1>
-                            </div>
-
-                            <!-- Content -->
-                            <div style="padding: 40px;">
-                                <p style="color: var(--ws-border); font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
-                                    Hi <strong>${client_name}</strong>,<br><br>
-                                    Your session for <strong>${booking_type_name || 'Meeting'}</strong> has been successfully scheduled. We are looking forward to speaking with you.
-                                </p>
-
-                                <!-- Details Card -->
-                                <div style="background-color: var(--ws-canvas); border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 1px solid var(--ws-surface-tertiary);">
-                                    <div style="margin-bottom: 20px;">
-                                        <p style="color: var(--ws-text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin: 0 0 5px 0;">DATE & TIME</p>
-                                        <p style="color: var(--ws-surface-secondary); font-size: 18px; font-weight: 600; margin: 0;">${dateStr}</p>
-                                        ${time_zone ? `<p style="color: var(--ws-text-muted); font-size: 13px; margin: 4px 0 0 0;">(${time_zone})</p>` : ''}
-                                    </div>
-                                    <div>
-                                         <p style="color: var(--ws-text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin: 0 0 5px 0;">VIDEO LINK</p>
-                                         <p style="color: var(--brand-blue-400); font-size: 14px; margin: 0; word-break: break-all;">${maskedUrl}</p>
-                                    </div>
-                                </div>
-
-                                <!-- CTA -->
-                                ${maskedUrl ? `
-                                    <div style="text-align: center;">
-                                        <a href="${maskedUrl}" style="background-color: var(--brand-blue-500); color: var(--color-white); padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block; transition: background-color 0.2s; box-shadow: 0 10px 15px -3px rgba(20, 184, 166, 0.3);">
-                                            Join Video Call
-                                        </a>
-                                        <p style="color: var(--ws-text-muted); font-size: 13px; margin-top: 20px;">
-                                            Please click the button above at the scheduled time to join.
-                                        </p>
-                                    </div>
-                                ` : ''}
-                            </div>
-
-                            <!-- Footer -->
-                            <div style="background-color: var(--brand-violet-950); padding: 30px; text-align: center; border-top: 1px solid var(--ws-surface-tertiary);">
-                                <p style="color: var(--ws-text-muted); font-size: 12px; margin: 0;">
-                                    © ${new Date().getFullYear()} AlphaClone Systems. All rights reserved.
-                                </p>
-                            </div>
-                        </div>
-                    </body>
-                    </html>
-                 `
-            });
-            if (!emailResult.success) {
-                console.error('Booking confirmation email failed:', emailResult.error);
-            }
-
-            // Notify host + follow-up task so the owner sees the booking off-platform too
-            try {
-                const { data: hostProfile } = await supabase
-                    .from('profiles')
-                    .select('email, name')
-                    .eq('id', host_id)
-                    .maybeSingle();
-
-                if (hostProfile?.email) {
-                    await sendEmailServer({
-                        tenantId: tenant_id,
-                        to: hostProfile.email,
-                        subject: `New booking: ${client_name} — ${booking_type_name || 'Meeting'}`,
-                        html: `
-                            <div style="font-family:sans-serif;padding:20px;color:var(--text-primary);">
-                                <h2 style="color:var(--brand-blue-600);">New client booking</h2>
-                                <p><strong>${client_name}</strong> (${client_email}) booked <strong>${booking_type_name || 'Meeting'}</strong>.</p>
-                                <p><strong>When:</strong> ${dateStr}</p>
-                                ${maskedUrl ? `<p><a href="${maskedUrl}" style="display:inline-block;padding:10px 20px;background:var(--brand-blue-600);color:var(--color-white);text-decoration:none;border-radius:6px;">Join meeting</a></p>` : ''}
-                                ${client_notes ? `<p><strong>Notes:</strong> ${client_notes}</p>` : ''}
-                            </div>
-                        `,
-                        isPlatformNotification: true,
-                    });
-                }
-            } catch (hostEmailErr) {
-                console.error('Host booking notification failed:', hostEmailErr);
-            }
-        }
-
-        return NextResponse.json({ success: true, booking, roomUrl: maskedUrl });
+        return NextResponse.json({ success: true, booking, roomUrl: maskedUrl, notifications });
+        } finally { await lock.release(); }
     } catch (err: any) {
         console.error('Booking API Error:', err);
         return clientErrorResponse(err, { request: req, scope: 'booking/create' });

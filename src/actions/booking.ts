@@ -1,6 +1,6 @@
 'use server'
 
-import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { Tenant } from '@/services/tenancy/types'
 
 // Define the BookingType interface here directly or import it if you move it to a shared file.
@@ -15,13 +15,29 @@ export interface BookingType {
     currency: string;
 }
 
-export async function fetchBookingData(slug: string, serviceSlug: string): Promise<{ tenant: Tenant; service: BookingType }> {
-    const supabase = await createSupabaseServerClient();
+export type PublicBookingTenant = Pick<Tenant, 'id' | 'name' | 'slug' | 'logo_url' | 'settings'>;
+
+function publicTenant(tenant: any): PublicBookingTenant {
+    const booking = tenant.settings?.booking || {};
+    const branding = tenant.settings?.branding || {};
+    if (booking.enabled !== true) throw new Error('Online booking is not available for this business');
+    return {
+        id: tenant.id, name: tenant.name, slug: tenant.slug, logo_url: tenant.logo_url,
+        settings: {
+            branding: { logo: branding.logo || tenant.logo_url, primaryColor: branding.primaryColor || tenant.brand_color_primary, secondaryColor: branding.secondaryColor },
+            booking: { enabled: true, slug: tenant.slug, availability: booking.availability,
+                minNotice: booking.minNotice, bufferTime: booking.bufferTime, futureLimit: booking.futureLimit, meetingTypes: [] },
+        },
+    };
+}
+
+export async function fetchBookingData(slug: string, serviceSlug: string): Promise<{ tenant: PublicBookingTenant; service: BookingType }> {
+    const supabase = createSupabaseAdminClient();
 
     // 1. Fetch Tenant
     const { data: tenant, error: tenantError } = await supabase
         .from('tenants')
-        .select('*')
+        .select('id,name,slug,logo_url,brand_color_primary,settings')
         .eq('slug', slug)
         .single();
 
@@ -33,9 +49,10 @@ export async function fetchBookingData(slug: string, serviceSlug: string): Promi
     // 2. Fetch Booking Type
     const { data: service, error: serviceError } = await supabase
         .from('booking_types')
-        .select('*')
+        .select('id,slug,name,description,duration,price,currency')
         .eq('tenant_id', tenant.id)
         .eq('slug', serviceSlug)
+        .eq('is_active', true)
         .single();
 
     if (serviceError || !service) {
@@ -43,16 +60,16 @@ export async function fetchBookingData(slug: string, serviceSlug: string): Promi
         throw new Error('Service not found');
     }
 
-    return { tenant: tenant as Tenant, service: service as BookingType };
+    return { tenant: publicTenant(tenant), service: service as BookingType };
 }
 
-export async function fetchTenantBookingPage(slug: string): Promise<{ tenant: Tenant; services: BookingType[] }> {
-    const supabase = await createSupabaseServerClient();
+export async function fetchTenantBookingPage(slug: string): Promise<{ tenant: PublicBookingTenant; services: BookingType[] }> {
+    const supabase = createSupabaseAdminClient();
 
     // 1. Fetch Tenant
     const { data: tenant, error: tenantError } = await supabase
         .from('tenants')
-        .select('*')
+        .select('id,name,slug,logo_url,brand_color_primary,settings')
         .eq('slug', slug)
         .single();
 
@@ -64,7 +81,7 @@ export async function fetchTenantBookingPage(slug: string): Promise<{ tenant: Te
     // 2. Fetch All Booking Types for Tenant
     const { data: services, error: servicesError } = await supabase
         .from('booking_types')
-        .select('*')
+        .select('id,slug,name,description,duration,price,currency')
         .eq('tenant_id', tenant.id)
         .eq('is_active', true);
 
@@ -73,5 +90,5 @@ export async function fetchTenantBookingPage(slug: string): Promise<{ tenant: Te
         throw new Error('Failed to load services');
     }
 
-    return { tenant: tenant as Tenant, services: (services || []) as BookingType[] };
+    return { tenant: publicTenant(tenant), services: (services || []) as BookingType[] };
 }

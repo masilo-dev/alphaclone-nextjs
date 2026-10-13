@@ -36,9 +36,10 @@ export function isCoreIntegrationForHealth(key: string): boolean {
   return CORE_INTEGRATIONS_FOR_HEALTH.some((name) => name === normalized);
 }
 
-/** Booking is satisfied by Cal.com OR Calendly — neither is required alone. */
+/** Native white-label booking is sufficient; external providers are optional. */
 export function hasBookingIntegration(connectedTypes: Set<string>): boolean {
   return (
+    connectedTypes.has('native_booking') ||
     connectedTypes.has('calcom') ||
     connectedTypes.has('cal.com') ||
     connectedTypes.has('calendly')

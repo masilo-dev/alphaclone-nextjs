@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { acquireCronLock } from '@/lib/cron/distributedLock';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { enqueueBookingAutomationJobs } from '@/lib/booking/bookingAutomation';
 
@@ -22,6 +23,7 @@ export type NativeBookingInput = {
   providerEventTypeId?: string | null;
   meetingUrl?: string | null;
   metadata?: Record<string, unknown>;
+  notify?: boolean;
 };
 
 function safeStatus(status: NativeBookingInput['status']) {
@@ -47,7 +49,15 @@ export async function resolveTenantHostUser(
   return host?.user_id ? String(host.user_id) : null;
 }
 
-export async function upsertNativeBookingFromProvider(
+export async function upsertNativeBookingFromProvider(supabase: SupabaseClient, input: NativeBookingInput) {
+  const identity = input.providerBookingId || `${input.clientEmail}:${input.startTime}`;
+  const lock = await acquireCronLock(`native-booking:${input.tenantId}:${input.source}:${identity}`, 120);
+  if (!lock.acquired) throw new Error('Booking is already syncing; retry shortly');
+  try { return await persistNativeBookingFromProvider(supabase, input); }
+  finally { await lock.release(); }
+}
+
+async function persistNativeBookingFromProvider(
   supabase: SupabaseClient,
   input: NativeBookingInput
 ) {
@@ -60,6 +70,22 @@ export async function upsertNativeBookingFromProvider(
     provider_event_type_id: input.providerEventTypeId || null,
     meeting_url: input.meetingUrl || null,
   };
+
+  let bookingQuery = supabase
+    .from('bookings')
+    .select('id, calendar_event_id, metadata')
+    .eq('tenant_id', input.tenantId);
+
+  if (input.providerBookingId) {
+    bookingQuery = bookingQuery.filter('metadata->>provider_booking_id', 'eq', input.providerBookingId).filter('metadata->>source', 'eq', input.source);
+  } else {
+    bookingQuery = bookingQuery
+      .eq('client_email', input.clientEmail)
+      .eq('start_time', input.startTime);
+  }
+
+  const { data: existingBooking, error: bookingLookupError } = await bookingQuery.maybeSingle();
+  if (bookingLookupError) throw bookingLookupError;
 
   let leadId: string | null = null;
   const { data: existingLead } = await supabase
@@ -91,11 +117,9 @@ export async function upsertNativeBookingFromProvider(
     if (newLead?.id) leadId = String(newLead.id);
   }
 
-  let calendarEventId: string | null = null;
+  let calendarEventId: string | null = existingBooking?.calendar_event_id || null;
   if (hostUserId) {
-    const { data: event } = await supabase
-      .from('calendar_events')
-      .insert({
+    const eventPayload = {
         tenant_id: input.tenantId,
         user_id: hostUserId,
         title: `Booking: ${input.bookingTypeName || 'Meeting'} with ${input.clientName}`,
@@ -106,13 +130,15 @@ export async function upsertNativeBookingFromProvider(
         related_to_lead: leadId,
         is_all_day: false,
         reminder_minutes: 15,
-        metadata: providerMetadata,
-      })
-      .select('id')
-      .maybeSingle();
-    if (event?.id) calendarEventId = String(event.id);
+        metadata: { ...providerMetadata, provider_status: status },
+      };
+    const eventResult = calendarEventId
+      ? await supabase.from('calendar_events').update(eventPayload).eq('tenant_id', input.tenantId).eq('id', calendarEventId).select('id').single()
+      : await supabase.from('calendar_events').insert(eventPayload).select('id').single();
+    if (eventResult.error) throw eventResult.error;
+    if (eventResult.data?.id) calendarEventId = String(eventResult.data.id);
 
-    await supabase.from('tasks').insert({
+    if (!existingBooking && status === 'confirmed' && input.notify !== false) await supabase.from('tasks').insert({
       tenant_id: input.tenantId,
       assigned_to: hostUserId,
       title: `Prepare for meeting with ${input.clientName}`,
@@ -124,20 +150,6 @@ export async function upsertNativeBookingFromProvider(
     });
   }
 
-  let bookingQuery = supabase
-    .from('bookings')
-    .select('id')
-    .eq('tenant_id', input.tenantId);
-
-  if (input.providerBookingId) {
-    bookingQuery = bookingQuery.filter('metadata->>provider_booking_id', 'eq', input.providerBookingId);
-  } else {
-    bookingQuery = bookingQuery
-      .eq('client_email', input.clientEmail)
-      .eq('start_time', input.startTime);
-  }
-
-  const { data: existingBooking } = await bookingQuery.maybeSingle();
   const bookingPayload = {
     tenant_id: input.tenantId,
     booking_type_id: input.bookingTypeId || null,
@@ -154,12 +166,17 @@ export async function upsertNativeBookingFromProvider(
   };
 
   const bookingResult = existingBooking?.id
-    ? await supabase.from('bookings').update(bookingPayload).eq('id', existingBooking.id).select('*').single()
+    ? await supabase.from('bookings').update(bookingPayload).eq('tenant_id', input.tenantId).eq('id', existingBooking.id).select('*').single()
     : await supabase.from('bookings').insert(bookingPayload).select('*').single();
 
   if (bookingResult.error) throw bookingResult.error;
 
-  await enqueueBookingAutomationJobs(supabase, {
+  if (status === 'cancelled' || status === 'no_show') {
+    const cancelledJobs = await supabase.from('booking_automation_jobs').update({ status: 'cancelled' })
+      .eq('tenant_id', input.tenantId).eq('booking_id', bookingResult.data.id).eq('status', 'pending');
+    if (cancelledJobs.error) throw cancelledJobs.error;
+  }
+  if (!existingBooking && status === 'confirmed' && input.notify !== false) await enqueueBookingAutomationJobs(supabase, {
     tenantId: input.tenantId,
     bookingId: String(bookingResult.data.id),
     bookingTypeName: input.bookingTypeName || 'Meeting',

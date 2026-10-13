@@ -1,7 +1,7 @@
 import { Input as AlphaCloneInput } from '@/components/ui/input';
 import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 import { Select as AlphaCloneSelect } from '@/components/ui/select';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { User, Project } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -120,7 +120,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeFilters, setActiveFilters] = useState<Set<CalendarEvent['source']>>(
-        new Set(['event', 'task', 'project', 'deal', 'lead', 'booking'])
+        new Set(['event', 'task', 'project', 'deal', 'lead', 'booking', 'google'])
     );
     const [isGoogleConnected, setIsGoogleConnected] = useState(false);
 
@@ -131,9 +131,14 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
         }
     }, [searchParams]);
 
+    const loadEpoch = useRef(0);
+    const syncInFlight = useRef(false);
+    const lastSync = useRef<{ tenantId: string; at: number } | null>(null);
+    const [syncError, setSyncError] = useState<string | null>(null);
+    const [googleError, setGoogleError] = useState<string | null>(null);
     const loadAllEvents = useCallback(async () => {
         if (!currentTenant) return;
-        setLoading(true);
+        const epoch = ++loadEpoch.current;
 
         const unified: CalendarEvent[] = [];
 
@@ -160,7 +165,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                     .from('bookings')
                     .select('*')
                     .eq('tenant_id', currentTenant.id)
-                    .neq('status', 'canceled'),
+                    .not('status', 'in', '(canceled,cancelled,missed)'),
                 supabase
                     .from('calendar_events')
                     .select('*')
@@ -168,9 +173,11 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                     .not('metadata->>calendly_event_uri', 'is', null)
             ]) as [any, any];
 
+            if (bookingRes.error || syncedRes.error) throw bookingRes.error || syncedRes.error;
+            const bookedUris = new Set((bookingRes.data || []).map((b: any) => b.metadata?.calendly_event_uri).filter(Boolean));
             const allBookings = [
                 ...(bookingRes.data || []),
-                ...(syncedRes.data || []).map((event: any) => ({
+                ...(syncedRes.data || []).filter((event: any) => !bookedUris.has(event.metadata?.calendly_event_uri) && !['canceled', 'cancelled', 'missed'].includes(event.metadata?.calendly_status)).map((event: any) => ({
                     id: event.id,
                     client_name: event.title,
                     start_time: event.start_time,
@@ -273,8 +280,8 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
         // 6. Google Calendar events
         try {
             if (currentTenant?.id) {
-                const { connected, events: googleEvents } = await googleCalendarService.listEvents(currentTenant.id);
-                setIsGoogleConnected(connected);
+                const { connected, events: googleEvents } = await googleCalendarService.listEvents(currentTenant.id, { timeMin: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString(), timeMax: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1).toISOString() });
+                if (epoch === loadEpoch.current) { setIsGoogleConnected(connected); setGoogleError(null); }
                 googleEvents.forEach((ge: GoogleCalendarEvent) => {
                     unified.push({
                         id: `google-${ge.id}`,
@@ -287,11 +294,12 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                     });
                 });
             } else setIsGoogleConnected(false);
-        } catch (_) { /* silent */ }
+        } catch (error) { if (epoch === loadEpoch.current) setGoogleError(error instanceof Error ? error.message : 'Google Calendar could not be refreshed'); }
 
+        if (epoch !== loadEpoch.current) return;
         setAllEvents(unified);
         setLoading(false);
-    }, [currentTenant, user.id, user.role]);
+    }, [currentTenant, user.id, user.role, currentDate]);
 
     const [editingEvent, setEditingEvent] = useState<BusinessEvent | null>(null);
 
@@ -345,9 +353,51 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     }, [currentTenant, user.id, loadAllEvents]);
 
     useEffect(() => {
-        if (currentTenant) {
-            loadAllEvents();
-        }
+        if (!currentTenant) return;
+        let disposed = false;
+        const refresh = async () => {
+            if (disposed || document.visibilityState === 'hidden' || syncInFlight.current) return;
+            syncInFlight.current = true;
+            try {
+                if (['admin', 'tenant_admin', 'super_admin', 'business_dashboard'].includes(user.role) &&
+                    (!lastSync.current || lastSync.current.tenantId !== currentTenant.id || Date.now() - lastSync.current.at >= 120_000)) {
+                    const cal = (currentTenant.settings as any)?.calendly;
+                    const endpoints: string[] = [];
+                    if (cal?.enabled && !cal.isManual && cal.calendlyUserUri) endpoints.push('/api/calendly/sync');
+                    const results = await Promise.allSettled(endpoints.map(async endpoint => {
+                        const response = await fetch(endpoint, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ tenantId: currentTenant.id }), signal: AbortSignal.timeout(60_000),
+                        });
+                        const result = await response.json();
+                        if (!response.ok) throw new Error(result.error || 'Calendar sync failed. Check the connection in Settings.');
+                    }));
+                    const failures = results.filter((result): result is PromiseRejectedResult => result.status === 'rejected');
+                    if (failures.length) throw new Error(failures.map(result => result.reason?.message || 'Calendar sync failed').join('; '));
+                    lastSync.current = { tenantId: currentTenant.id, at: Date.now() };
+                    if (!disposed) setSyncError(null);
+                }
+            } catch (error) {
+                if (!disposed) setSyncError(error instanceof Error ? error.message : 'Calendar sync failed');
+            } finally {
+                syncInFlight.current = false;
+                if (!disposed) void loadAllEvents();
+            }
+        };
+        // Show stored events immediately; provider reconciliation runs in the background.
+        void loadAllEvents();
+        void refresh();
+        const timer = window.setInterval(() => void refresh(), 60_000);
+        const onVisible = () => { if (document.visibilityState === 'visible') void refresh(); };
+        window.addEventListener('focus', onVisible);
+        document.addEventListener('visibilitychange', onVisible);
+        return () => {
+            disposed = true;
+            loadEpoch.current++;
+            window.clearInterval(timer);
+            window.removeEventListener('focus', onVisible);
+            document.removeEventListener('visibilitychange', onVisible);
+        };
     }, [currentTenant, loadAllEvents]);
 
     const handleGoogleConnect = () => {
@@ -414,11 +464,12 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
 
     const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentDate);
 
-    const isCalendlyConnected = !!(currentTenant as any)?.settings?.calendly?.enabled;
+    const isCalendlyConnected = !!(currentTenant as any)?.settings?.calendly?.enabled && !(currentTenant as any)?.settings?.calendly?.isManual;
 
     if (loading) {
         return (
             <div className="space-y-4 ac-scroll-full ac-enterprise-module" data-module="calendar">
+                {(syncError || googleError) && <p role="alert" className="rounded-lg border border-amber-500/30 p-3 text-[var(--ws-text-primary)]">{[syncError, googleError].filter(Boolean).join('; ')}</p>}
                 <SubNavigation
                     moduleId="calendar"
                     items={getModuleSubnav('calendar')}
@@ -436,6 +487,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
 
     return (
         <div className="space-y-4 ac-scroll-full ac-enterprise-module" data-module="calendar">
+            {(syncError || googleError) && <p role="alert" className="rounded-lg border border-amber-500/30 p-3 text-[var(--ws-text-primary)]">{[syncError, googleError].filter(Boolean).join('; ')}</p>}
             <SubNavigation
                 moduleId="calendar"
                 items={getModuleSubnav('calendar')}

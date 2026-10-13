@@ -56,7 +56,7 @@ describe('calendar shows dated workspace work', () => {
   it('puts leads and deals on the business calendar, sorted A–Z on each day', () => {
     const source = read('../../src/components/dashboard/business/CalendarPage.tsx');
     assert.match(source, /source: 'lead'/);
-    assert.match(source, /new Set\(\['event', 'task', 'project', 'deal', 'lead', 'booking'\]\)/);
+    assert.match(source, /new Set\(\['event', 'task', 'project', 'deal', 'lead', 'booking', 'google'\]\)/);
     assert.match(source, /localeCompare/);
     assert.match(source, /isFinishedProject/);
   });

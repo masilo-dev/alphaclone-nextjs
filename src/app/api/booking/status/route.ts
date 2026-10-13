@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAuthenticatedUser, requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 import { ENV } from '@/config/env';
 
 function getSupabaseAdmin() {
@@ -11,6 +12,7 @@ function getSupabaseAdmin() {
 
 export async function POST(req: NextRequest) {
     try {
+        await requireAuthenticatedUser(req);
         const body = await req.json();
         const { bookingId, status, newStartTime, newEndTime, reason, tenantId } = body;
 
@@ -31,7 +33,9 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
         }
 
-        const effectiveTenantId = tenantId || existing.tenant_id;
+        if (tenantId && tenantId !== existing.tenant_id) return NextResponse.json({ error: 'Booking does not belong to this workspace' }, { status: 403 });
+        await requireTenantRole(existing.tenant_id, ['owner', 'admin', 'tenant_admin', 'super_admin'], req);
+        const effectiveTenantId = existing.tenant_id;
         const currentMeta = existing.metadata || {};
 
         const updates: Record<string, any> = {
@@ -80,7 +84,7 @@ export async function POST(req: NextRequest) {
         const { data: updatedBooking, error: updateErr } = await supabase
             .from('bookings')
             .update(updates)
-            .eq('id', bookingId)
+            .eq('tenant_id', effectiveTenantId).eq('id', bookingId)
             .select('*')
             .single();
 
@@ -89,18 +93,33 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Failed to update booking status' }, { status: 500 });
         }
 
-        // 3. Update associated calendar event if exists
-        if (existing.video_call_id || existing.id) {
-            const calUpdates: Record<string, any> = {};
-            if (newStartTime) calUpdates.start_time = newStartTime;
-            if (newEndTime) calUpdates.end_time = newEndTime;
+        if (updates.status === 'cancelled' || updates.status === 'no_show') {
+            const { error } = await supabase.from('booking_automation_jobs').update({ status: 'cancelled' })
+                .eq('tenant_id', effectiveTenantId).eq('booking_id', bookingId).eq('status', 'pending');
+            if (error) throw error;
+        }
 
-            if (Object.keys(calUpdates).length > 0) {
-                await supabase
-                    .from('calendar_events')
-                    .update(calUpdates)
-                    .or(`video_room_id.eq.${existing.video_call_id},id.eq.${existing.id}`);
-            }
+        // Update the same tenant-owned calendar/video records, retaining provider metadata.
+        let eventQuery = supabase.from('calendar_events').select('id,metadata').eq('tenant_id', effectiveTenantId);
+        if (existing.calendar_event_id) eventQuery = eventQuery.eq('id', existing.calendar_event_id);
+        else if (existing.video_call_id) eventQuery = eventQuery.eq('video_room_id', existing.video_call_id);
+        else eventQuery = eventQuery.eq('id', existing.id);
+        const { data: events, error: eventError } = await eventQuery;
+        if (eventError) throw eventError;
+        for (const event of events || []) {
+            const { error } = await supabase.from('calendar_events').update({
+                ...(newStartTime ? { start_time: newStartTime } : {}),
+                ...(newEndTime ? { end_time: newEndTime } : {}),
+                metadata: { ...event.metadata, status: updates.status || existing.status },
+            }).eq('tenant_id', effectiveTenantId).eq('id', event.id);
+            if (error) throw error;
+        }
+        if (existing.video_call_id) {
+            const { error } = await supabase.from('video_calls').update({
+                ...(newStartTime ? { scheduled_at: newStartTime } : {}),
+                ...(updates.status === 'cancelled' ? { status: 'cancelled' } : {}),
+            }).eq('tenant_id', effectiveTenantId).eq('id', existing.video_call_id);
+            if (error) throw error;
         }
 
         // 4. Create Notification
@@ -124,6 +143,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, booking: updatedBooking });
     } catch (err: any) {
         console.error('[BookingStatusAPI] Exception:', err);
-        return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+        return routeErrorResponse(err, 'Booking could not be updated', req);
     }
 }

@@ -12,6 +12,10 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { fileUploadService } from '@/services/fileUploadService';
 import { PageHeader } from '@/components/dashboard/responsive/PageHeader';
 import toast from 'react-hot-toast';
+import { documentPreviewUrl } from '@/lib/documents/previewSource';
+import { SavedFilePreview } from './SavedFilePreview';
+import { renderCorporateDocumentHtml } from '@/lib/document-os/corporateRenderer';
+import { emptyBrandProfile } from '@/lib/document-os/brandProfile';
 
 type DocumentRow = {
   id: string;
@@ -229,6 +233,23 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
   };
 
   const sectionLabel = NAV.find(([, key]) => key === activeSection)?.[0] || 'Overview';
+  const previewUrl = selectedDocument?.document && currentTenant?.id ? documentPreviewUrl(selectedDocument.document, currentTenant.id) : null;
+  const generatedPreview = useMemo(() => {
+    const doc = selectedDocument?.document;
+    const data = doc?.metadata?.structured_data;
+    if (previewUrl || !data || typeof data !== 'object') return null;
+    const brand = { ...emptyBrandProfile(currentTenant?.id || ''), legal_business_name: currentTenant?.name || '' };
+    return renderCorporateDocumentHtml({
+      documentType: doc.document_type, brand, title: doc.title || doc.name,
+      documentNumber: doc.metadata.document_number || '', version: doc.version || 1,
+      status: doc.status, clientName: data.client_legal_name || data.client_name,
+      clientEmail: data.client_email, clientAddress: data.client_address,
+      issueDate: data.issue_date, dueDate: data.due_date, currency: data.currency,
+      clauses: data.clauses, sections: data.sections,
+      invoice: Array.isArray(data.line_items) ? data : undefined,
+      notes: data.notes || data.scope || data.summary,
+    });
+  }, [selectedDocument, previewUrl, currentTenant?.id, currentTenant?.name]);
   const showDocumentList = activeSection !== 'settings';
 
   return (
@@ -519,9 +540,9 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                 </h2>
               </div>
               <div className="flex items-center gap-2">
-                {selectedDocument?.document?.storage_path ? (
+                {previewUrl ? (
                   <a
-                    href={fileUploadService.getProxiedUrl('uploads', selectedDocument.document.storage_path, currentTenant?.id)}
+                    href={previewUrl!}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 type-caption font-bold text-white hover:bg-teal-500"
@@ -543,15 +564,8 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
               </div>
             ) : selectedDocument ? (
               <div className="mt-6 space-y-5">
-                {selectedDocument.document?.storage_path ? (
-                  <div className="h-96 w-full overflow-hidden rounded-xl border border-[var(--ws-border)] bg-white">
-                    <iframe
-                      src={fileUploadService.getProxiedUrl('uploads', selectedDocument.document.storage_path, currentTenant?.id)}
-                      title={`Preview ${selectedDocument.document.title || selectedDocument.document.name}`}
-                      className="h-full w-full"
-                    />
-                  </div>
-                ) : null}
+                {previewUrl ? <SavedFilePreview url={previewUrl} mimeType={selectedDocument.document.mime_type} title={selectedDocument.document.title || selectedDocument.document.name} /> : null}
+                {generatedPreview ? <iframe title={t('Document preview')} srcDoc={generatedPreview} sandbox="" className="h-[75dvh] w-full rounded-xl bg-white" /> : null}
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-[var(--ws-text-muted)]">{t("Status")}</p><p className="mt-1 font-semibold text-white">{statusLabel(selectedDocument.document?.status)}</p></div>
                   <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-[var(--ws-text-muted)]">{t("Approval")}</p><p className="mt-1 font-semibold text-white">{statusLabel(selectedDocument.document?.approval_status)}</p></div>

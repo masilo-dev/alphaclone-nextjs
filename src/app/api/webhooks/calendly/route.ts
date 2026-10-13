@@ -68,7 +68,7 @@ export async function POST(req: Request) {
             await handleInviteeCreated(payload.payload, supabaseAdmin);
         } else if (payload.event === 'invitee.canceled') {
             await handleInviteeCanceled(payload.payload, supabaseAdmin);
-        } else if (payload.event === 'invitee.no_show.created') {
+        } else if (payload.event === 'invitee_no_show.created') {
             await handleInviteeCanceled({ ...payload.payload, status: 'missed' }, supabaseAdmin);
         } else if (payload.event === 'meeting_recap.created') {
             await handleMeetingRecap(payload.payload, supabaseAdmin);

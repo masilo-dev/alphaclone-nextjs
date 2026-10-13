@@ -479,6 +479,12 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
     .signature-block { page-break-inside: avoid; break-inside: avoid; }
     table thead { display: table-header-group; }
     tr { page-break-inside: avoid; break-inside: avoid; }
+    @media screen and (max-width: 600px) {
+      .content { padding: 16px 12px; overflow-wrap: anywhere; }
+      .meta { grid-template-columns: 1fr; gap: 12px; }
+      table.doc-table { display: block; overflow-x: auto; }
+      table.doc-table th, table.doc-table td { padding: 6px !important; }
+    }
     @media print {
       body { background: #fff !important; }
       .content { padding: 0 !important; max-width: 100% !important; }

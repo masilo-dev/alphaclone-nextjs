@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { defineConnectorTool, tenantIdField } from '@/lib/mcp/connector';
+import { getCalendlyConfig } from '@/services/calendly/calendlyIntegrationService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import {
   CORE_INTEGRATIONS_FOR_HEALTH,
@@ -106,16 +107,13 @@ defineConnectorTool({
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const { rows } = await tenantHasIntegration(supabase, args.tenant_id, [
-      'google_calendar',
-      'google-calendar',
-    ]);
+    const { data: rows, error } = await supabase.from('google_calendar_tokens')
+      .select('user_id, expires_at, last_synced_at').eq('tenant_id', args.tenant_id);
+    if (error) throw error;
     return {
-      name: 'Google Calendar',
-      key: 'google_calendar',
-      status: rows.length ? 'connected' : 'missing',
-      connected: rows.length > 0,
-      details: { integration_rows: rows },
+      name: 'Google Calendar', key: 'google_calendar',
+      status: rows?.length ? 'connected' : 'missing', connected: Boolean(rows?.length),
+      details: { connected_accounts: rows?.length || 0 },
     } satisfies IntegrationHealth;
   },
 });
@@ -221,14 +219,11 @@ defineConnectorTool({
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const { rows } = await tenantHasIntegration(supabase, args.tenant_id, ['calendly']);
+    const config = await getCalendlyConfig(supabase, args.tenant_id);
     return {
-      name: 'Calendly',
-      key: 'calendly',
-      optional: true,
-      status: rows.length ? 'connected' : 'missing',
-      connected: rows.length > 0,
-      details: { integration_rows: rows },
+      name: 'Calendly', key: 'calendly', optional: true,
+      status: config ? 'connected' : 'missing', connected: Boolean(config),
+      details: { webhook_configured: Boolean(config?.webhookSubscriptionUri), expires_at: config?.expiresAt || null },
     } satisfies IntegrationHealth & { optional: boolean };
   },
 });

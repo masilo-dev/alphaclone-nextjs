@@ -1,4 +1,7 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { acquireCronLock } from '@/lib/cron/distributedLock';
+import { fetchCalendlyScheduledEvents } from './scheduledEventFeed';
+import { getCalendlyConfig } from '@/services/calendly/calendlyIntegrationService';
 import { ENV } from '@/config/env';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 
@@ -30,6 +33,7 @@ type UpsertInput = {
   status?: 'confirmed' | 'canceled' | 'missed';
   notes?: string | null;
   extraMetadata?: Record<string, unknown>;
+  notifyHost?: boolean;
 };
 
 export async function refreshCalendlyToken(
@@ -73,53 +77,72 @@ export function resolveCalendlyUserUriFromPayload(payload: Record<string, unknow
 
 export async function findTenantByCalendlyUserUri(userUri: string): Promise<{ tenantId: string; config: CalendlyTenantConfig } | null> {
   const supabase = createSupabaseAdminClient();
-  const { data: tenants } = await supabase.from('tenants').select('id, settings');
-  for (const t of tenants || []) {
-    const cal = t.settings?.calendly;
-    if (cal?.calendlyUserUri === userUri && cal?.accessToken) {
-      return { tenantId: t.id, config: cal as CalendlyTenantConfig };
-    }
-  }
+  const { data: tenants, error } = await supabase.from('tenants').select('id, settings')
+    .filter('settings->calendly->>calendlyUserUri', 'eq', userUri);
+  if (error) throw error;
+  // One provider user must not ambiguously route a webhook to an arbitrary tenant.
+  const candidates = (tenants || []).filter(t => t.settings?.calendly?.enabled);
+  if (candidates.length !== 1) return null;
+  const config = await getCalendlyConfig(supabase, candidates[0].id);
+  if (config) return { tenantId: candidates[0].id, config };
+
   return null;
 }
 
+async function checked<T extends { error: unknown }>(query: PromiseLike<T>): Promise<T> {
+  const result = await query;
+  if (result.error) throw result.error;
+  return result;
+}
+
 export async function upsertCalendlyEvent(input: UpsertInput): Promise<void> {
+  if (!input.eventUri.startsWith('https://api.calendly.com/scheduled_events/')) throw new Error('Missing Calendly event identity');
+  const lock = await acquireCronLock(`calendly-event:${input.tenantId}:${input.eventUri}`, 120);
+  if (!lock.acquired) throw new Error('Calendly event is already syncing; retry shortly');
+  try { await persistCalendlyEvent(input); } finally { await lock.release(); }
+}
+
+async function persistCalendlyEvent(input: UpsertInput): Promise<void> {
   const supabase = createSupabaseAdminClient();
   const status = input.status || 'confirmed';
   const title = input.inviteeName
     ? `Calendly: ${input.inviteeName}`
     : `Calendly: ${input.eventName}`;
 
-  const { data: existingBooking } = await supabase
+  const { data: existingBooking } = await checked(supabase
     .from('bookings')
-    .select('id, metadata')
+    .select('id, metadata, client_name, client_email')
     .eq('tenant_id', input.tenantId)
     .filter('metadata->>calendly_event_uri', 'eq', input.eventUri)
-    .maybeSingle();
+    .maybeSingle());
 
   let bookingId = existingBooking?.id as string | undefined;
 
   if (status === 'canceled' || status === 'missed') {
     if (bookingId) {
-      await supabase.from('bookings').update({ status }).eq('id', bookingId);
+      await checked(supabase.from('bookings').update({ status }).eq('tenant_id', input.tenantId).eq('id', bookingId));
     }
-    await supabase
+    await checked(supabase
       .from('video_calls')
       .update({ status: status === 'canceled' ? 'cancelled' : 'missed' })
       .eq('tenant_id', input.tenantId)
-      .filter('metadata->>calendly_event_uri', 'eq', input.eventUri);
-    await supabase
-      .from('calendar_events')
-      .update({ metadata: { calendly_status: status } })
-      .eq('tenant_id', input.tenantId)
-      .filter('metadata->>calendly_event_uri', 'eq', input.eventUri);
+      .filter('metadata->>calendly_event_uri', 'eq', input.eventUri));
+    // Preserve provider identity and other metadata, so retries still match this row.
+    const { data: rows, error } = await checked(supabase.from('calendar_events').select('id, metadata')
+      .eq('tenant_id', input.tenantId).filter('metadata->>calendly_event_uri', 'eq', input.eventUri));
+    if (error) throw error;
+    for (const row of rows || []) {
+      const result = await checked(supabase.from('calendar_events').update({ metadata: { ...row.metadata, calendly_status: status } })
+        .eq('tenant_id', input.tenantId).eq('id', row.id));
+      if (result.error) throw result.error;
+    }
     return;
   }
 
   const bookingPayload = {
     tenant_id: input.tenantId,
-    client_name: input.inviteeName || 'Calendly Guest',
-    client_email: input.inviteeEmail || null,
+    client_name: input.inviteeName || existingBooking?.client_name || 'Calendly Guest',
+    client_email: input.inviteeEmail || existingBooking?.client_email || '',
     client_phone: input.inviteePhone || null,
     client_notes: input.notes,
     start_time: input.startTime,
@@ -134,19 +157,19 @@ export async function upsertCalendlyEvent(input: UpsertInput): Promise<void> {
 
   const isNewBooking = !bookingId;
   if (bookingId) {
-    await supabase.from('bookings').update(bookingPayload).eq('id', bookingId);
+    await checked(supabase.from('bookings').update(bookingPayload).eq('tenant_id', input.tenantId).eq('id', bookingId));
   } else {
-    const { data: created } = await supabase.from('bookings').insert(bookingPayload).select('id').single();
+    const { data: created } = await checked(supabase.from('bookings').insert(bookingPayload).select('id').single());
     bookingId = created?.id;
   }
 
-  if (isNewBooking && input.inviteeEmail) {
+  if (isNewBooking && input.notifyHost !== false && input.inviteeEmail) {
     try {
-      const { data: host } = await supabase
+      const { data: host } = await checked(supabase
         .from('profiles')
         .select('email')
         .eq('id', input.hostUserId)
-        .maybeSingle();
+        .maybeSingle());
       if (host?.email) {
         const when = new Date(input.startTime).toLocaleString('en-US', {
           dateStyle: 'full',
@@ -167,12 +190,12 @@ export async function upsertCalendlyEvent(input: UpsertInput): Promise<void> {
     }
   }
 
-  const { data: existingCall } = await supabase
+  const { data: existingCall } = await checked(supabase
     .from('video_calls')
     .select('id')
     .eq('tenant_id', input.tenantId)
     .filter('metadata->>calendly_event_uri', 'eq', input.eventUri)
-    .maybeSingle();
+    .maybeSingle());
 
   const callPayload = {
     tenant_id: input.tenantId,
@@ -190,17 +213,17 @@ export async function upsertCalendlyEvent(input: UpsertInput): Promise<void> {
   };
 
   if (existingCall?.id) {
-    await supabase.from('video_calls').update(callPayload).eq('id', existingCall.id);
+    await checked(supabase.from('video_calls').update(callPayload).eq('tenant_id', input.tenantId).eq('id', existingCall.id));
   } else {
-    await supabase.from('video_calls').insert(callPayload);
+    await checked(supabase.from('video_calls').insert(callPayload));
   }
 
-  const { data: existingCal } = await supabase
+  const { data: existingCal } = await checked(supabase
     .from('calendar_events')
     .select('id')
     .eq('tenant_id', input.tenantId)
     .filter('metadata->>calendly_event_uri', 'eq', input.eventUri)
-    .maybeSingle();
+    .maybeSingle());
 
   const calPayload = {
     tenant_id: input.tenantId,
@@ -222,11 +245,12 @@ export async function upsertCalendlyEvent(input: UpsertInput): Promise<void> {
   };
 
   if (existingCal?.id) {
-    await supabase.from('calendar_events').update(calPayload).eq('id', existingCal.id);
+    await checked(supabase.from('calendar_events').update(calPayload).eq('tenant_id', input.tenantId).eq('id', existingCal.id));
   } else {
-    await supabase.from('calendar_events').insert(calPayload);
+    await checked(supabase.from('calendar_events').insert(calPayload));
   }
 }
+
 
 export async function registerCalendlyWebhook(
   accessToken: string,
@@ -234,17 +258,15 @@ export async function registerCalendlyWebhook(
   callbackUrl: string,
   organizationUri?: string
 ): Promise<string | null> {
+  const signingKey = process.env.CALENDLY_WEBHOOK_SIGNING_KEY;
+  if (!signingKey) {
+    console.warn('[Calendly] Webhook signing key is missing; automatic polling remains available.');
+    return null;
+  }
   const bodyPayload: Record<string, unknown> = {
     url: callbackUrl,
-    events: [
-      'invitee.created',
-      'invitee.canceled',
-      'invitee_no_show.created',
-      'meeting_recap.created',
-      'contact.created',
-      'contact.updated',
-      'contact.deleted',
-    ],
+    signing_key: signingKey,
+    events: ['invitee.created', 'invitee.canceled'],
     user: calendlyUserUri,
     scope: 'user',
   };
@@ -278,20 +300,7 @@ export async function pullAndSyncCalendlyEvents(
   const hostUserId = (await resolveTenantHostUser(tenantId)) || userId;
   const minStartTime = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-  let allEvents: Array<Record<string, unknown>> = [];
-  let nextPage = `https://api.calendly.com/scheduled_events?user=${encodeURIComponent(refreshed.calendlyUserUri)}&min_start_time=${encodeURIComponent(minStartTime)}&status=active`;
-  let pages = 0;
-
-  while (nextPage && pages < 10) {
-    const response = await fetch(nextPage, {
-      headers: { Authorization: `Bearer ${refreshed.accessToken}`, 'Content-Type': 'application/json' },
-    });
-    if (!response.ok) break;
-    const data = await response.json();
-    allEvents = [...allEvents, ...(data.collection || [])];
-    nextPage = data.pagination?.next_page;
-    pages++;
-  }
+  const allEvents = await fetchCalendlyScheduledEvents(refreshed.accessToken, refreshed.calendlyUserUri, minStartTime);
 
   let syncedCount = 0;
   for (const event of allEvents) {
@@ -326,6 +335,8 @@ export async function pullAndSyncCalendlyEvents(
       hostUserId,
       eventUri,
       inviteeUri,
+      status: event.status === 'canceled' ? 'canceled' : 'confirmed',
+      notifyHost: false,
       eventName: String(event.name || 'Meeting'),
       inviteeName,
       inviteeEmail,
@@ -337,7 +348,7 @@ export async function pullAndSyncCalendlyEvents(
     syncedCount++;
   }
 
-  return { syncedCount, totalActive: allEvents.length };
+  return { syncedCount, totalActive: allEvents.filter(event => event.status !== 'canceled').length };
 }
 
 // ── Calendly Contacts API (May 2026) ──────────────────────────────────────────

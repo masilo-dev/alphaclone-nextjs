@@ -15,8 +15,8 @@ async function request(tenantId: string, init?: RequestInit, query = '') {
 }
 
 export const googleCalendarService = {
-  async listEvents(tenantId: string): Promise<{ connected: boolean; events: GoogleCalendarEvent[] }> {
-    const payload = await request(tenantId);
+  async listEvents(tenantId: string, range?: { timeMin: string; timeMax: string }): Promise<{ connected: boolean; events: GoogleCalendarEvent[] }> {
+    const payload = await request(tenantId, undefined, range ? `?${new URLSearchParams(range)}` : '');
     return { connected: Boolean(payload.connected), events: payload.events || [] };
   },
   async createEvent(tenantId: string, event: Partial<GoogleCalendarEvent>) {

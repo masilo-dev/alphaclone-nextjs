@@ -7606,8 +7606,8 @@ Return ONLY a JSON array of 60 objects:
             local_booking_url: booking.slug ? `${(process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/^https:\/\/www\./, 'https://')}/book/${booking.slug}` : null,
             integration_snapshot_generated_at: snapshot.generated_at,
             recommended: bookingReady
-              ? 'Run sync_calendly_events to import bookings into AlphaClone calendar.'
-              : 'Connect Cal.com or Calendly, or enable the native AlphaClone booking link in Meetings settings.',
+              ? (booking.enabled && booking.slug ? 'Share your business booking link; new bookings appear in your calendar automatically.' : 'Run sync_calendly_events for the optional Calendly connection.')
+              : 'Enable your business booking link in Meetings settings. No external booking account is required.',
           }, null, 2) }] };
           break;
         }

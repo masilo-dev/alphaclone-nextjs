@@ -10,6 +10,7 @@ import { format, isBefore, addMinutes } from 'date-fns'; // Added addMinutes
 import { Calendar as CalendarIcon, Video, MapPin, X, Clock, Users as UsersIcon, Loader2, CheckSquare, CreditCard, AlertTriangle, Sparkles, Briefcase, Target, TrendingUp } from 'lucide-react';
 import { Card, Button, Badge, Modal, Input } from '../ui/UIComponents';
 import { calendarService, CalendarEvent } from '../../services/calendarService';
+import { googleCalendarService } from '@/services/googleCalendarService';
 import { taskService } from '../../services/taskService'; // Added taskService
 import { User } from '../../types';
 import toast from 'react-hot-toast';
@@ -56,6 +57,8 @@ interface CalendarProps {
  */
 const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
     const { currentTenant } = useTenant();
+    const loadEpoch = useRef(0);
+    const [syncError, setSyncError] = useState<string | null>(null);
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showEventModal, setShowEventModal] = useState(false);
@@ -114,30 +117,85 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
     }, [isLoading]); // Re-run when loading finishes to ensure calendar is mounted
 
     useEffect(() => {
-        loadEvents();
-
-        // Subscribe to real-time updates
-        const subscription = calendarService.subscribeToEvents(user.id, () => {
-            loadEvents();
-        });
-
-        return () => {
-            calendarService.unsubscribe(subscription);
+        if (!currentTenant?.id) return;
+        let disposed = false;
+        let refreshing = false;
+        let lastSync = 0;
+        const refresh = async () => {
+            if (disposed || refreshing || document.visibilityState === 'hidden') return;
+            refreshing = true;
+            try {
+                if (['admin', 'tenant_admin', 'super_admin', 'business_dashboard'].includes(user.role) && Date.now() - lastSync >= 120_000) {
+                    const cal = (currentTenant.settings as any)?.calendly;
+                    const endpoints: string[] = [];
+                    if (cal?.enabled && !cal.isManual && cal.calendlyUserUri) endpoints.push('/api/calendly/sync');
+                    const results = await Promise.allSettled(endpoints.map(async endpoint => {
+                        const response = await fetch(endpoint, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ tenantId: currentTenant.id }), signal: AbortSignal.timeout(60_000),
+                        });
+                        const result = await response.json();
+                        if (!response.ok) throw new Error(result.error || 'Calendar sync failed');
+                    }));
+                    const failed = results.find(result => result.status === 'rejected');
+                    if (failed?.status === 'rejected') throw failed.reason;
+                    lastSync = Date.now();
+                    if (!disposed) setSyncError(null);
+                }
+            } catch (error) {
+                if (!disposed) setSyncError(error instanceof Error ? error.message : 'Calendar sync failed');
+            } finally { refreshing = false; if (!disposed) void loadEvents(); }
         };
-    }, [user.id]);
+        void loadEvents();
+        void refresh();
+        const subscription = calendarService.subscribeToEvents(user.id, () => { if (!disposed) void loadEvents(); });
+        const timer = window.setInterval(() => void refresh(), 60_000);
+        const onVisible = () => { if (document.visibilityState === 'visible') void refresh(); };
+        window.addEventListener('focus', onVisible);
+        document.addEventListener('visibilitychange', onVisible);
+        return () => {
+            disposed = true; loadEpoch.current++;
+            calendarService.unsubscribe(subscription);
+            window.clearInterval(timer);
+            window.removeEventListener('focus', onVisible);
+            document.removeEventListener('visibilitychange', onVisible);
+        };
+    }, [user.id, currentTenant?.id]);
 
     const loadEvents = async () => {
-        setIsLoading(true);
-        const { events: fetchedEvents, error } = await calendarService.getEvents(user.id);
+        const epoch = ++loadEpoch.current;
+        const range = calendarRef.current?.getApi().view;
+        let nativeEvents: CalendarEvent[] = [];
+        let error: unknown = null;
+        try {
+            const result = await calendarService.getEvents(user.id, range?.activeStart, range?.activeEnd);
+            nativeEvents = result.events || [];
+            error = result.error;
+        } catch (failure) { error = failure; }
+        const fetchedEvents = [...(nativeEvents || [])];
+        try {
+            if (currentTenant?.id) {
+                const google = await googleCalendarService.listEvents(currentTenant.id, range ? { timeMin: range.activeStart.toISOString(), timeMax: range.activeEnd.toISOString() } : undefined);
+                for (const event of google.events) fetchedEvents.push({
+                    id: `google_${event.id}`, user_id: user.id, title: event.summary || 'Google Calendar event',
+                    start_time: event.start.dateTime || event.start.date || '', end_time: event.end.dateTime || event.end.date || '',
+                    type: 'meeting', is_all_day: Boolean(event.start.date), reminder_minutes: 0,
+                    description: event.description, metadata: { external_provider: 'google', html_link: event.htmlLink },
+                    created_at: '', updated_at: '',
+                });
+            }
+        } catch (error) { if (epoch === loadEpoch.current) setSyncError(error instanceof Error ? error.message : 'Google Calendar refresh failed'); }
+        if (epoch !== loadEpoch.current) return;
+        if (error) setSyncError('Some calendar sources could not be loaded.');
 
-        if (!error && fetchedEvents) {
+        if (fetchedEvents) {
             setEvents(fetchedEvents);
 
             // Check for past uncompleted real calendar events
             const now = new Date();
             const unhandledPast = fetchedEvents.filter(e => {
                 // Only prompt for real calendar events, not tasks, invoices, etc.
-                if (e.id.startsWith('task_') || e.id.startsWith('inv_') || e.id.startsWith('contract_') || e.id.startsWith('project_') || e.id.startsWith('milestone_') || e.id.startsWith('lead_') || e.id.startsWith('deal_')) {
+                if (e.metadata?.external_provider || e.id.startsWith('task_') || e.id.startsWith('inv_') || e.id.startsWith('contract_') || e.id.startsWith('project_') || e.id.startsWith('milestone_') || e.id.startsWith('lead_') || e.id.startsWith('deal_')) {
                     return false;
                 }
                 const endTime = new Date(e.end_time);
@@ -157,7 +215,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         // Fetch AI suggestions
         const { tasks } = await taskService.getTasks({ assignedTo: user.id });
         const suggestions = strategicThinkerService.suggestTimeBlocks(tasks || [], fetchedEvents || []);
-        setSuggestedBlocks(suggestions);
+        if (epoch === loadEpoch.current) setSuggestedBlocks(suggestions);
     };
 
     // Check for overlapping events
@@ -473,6 +531,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             backgroundColor: getEventColor(event.type, event),
             borderColor: getEventColor(event.type, event),
             allDay: event.is_all_day,
+            editable: !event.metadata?.external_provider,
             textColor: CALENDAR_UI.textOnEvent,
             extendedProps: { ...event }
         }));
@@ -504,6 +563,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
     return (
         <div className="space-y-6 animate-fade-in">
+            {syncError && <p role="alert" className="p-3 text-[var(--ws-text-primary)]">{syncError}</p>}
             {/* Header */}
             {/* Header */}
             <div className="flex justify-between items-center">
@@ -687,6 +747,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                 `}</style>
                 <FullCalendar
                     ref={calendarRef}
+                    datesSet={() => { void loadEvents(); }}
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                     initialView={typeof window !== 'undefined' && window.innerWidth < 768 ? 'timeGridDay' : 'dayGridMonth'}
                     headerToolbar={{
@@ -915,6 +976,8 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                     >
                                         View {selectedEvent.type === 'task' ? 'Task' : 'Invoice'}
                                     </Button>
+                                ) : selectedEvent.metadata?.external_provider ? (
+                                    <span className="type-caption text-[var(--ws-text-muted)]">Managed in Google Calendar</span>
                                 ) : selectedEvent.metadata?.calendly_event_uri ? (
                                     <Button
                                         onClick={() => handleDeleteEvent(selectedEvent.id, true)}

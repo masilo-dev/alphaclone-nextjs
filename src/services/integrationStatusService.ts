@@ -1,3 +1,4 @@
+import { getCalendlyConfig } from '@/services/calendly/calendlyIntegrationService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import {
   CORE_INTEGRATIONS_FOR_HEALTH,
@@ -57,34 +58,26 @@ export async function getTenantIntegrationSnapshot(
       .map((r: { type?: string | null }) => normalizeIntegrationType(String(r.type || '')))
   );
 
-  const [{ data: gmailRows }, { data: calendlyRows }] = await Promise.all([
+  const [{ data: gmailRows }, calendlyConfig, { data: bookingTenant }] = await Promise.all([
     supabase
       .from('gmail_integrations')
       .select('id, email, is_active')
       .eq('tenant_id', tenantId)
       .eq('is_active', true)
       .limit(5),
-    (async () => {
-      try {
-        return await supabase
-          .from('calendly_integrations')
-          .select('id, is_active')
-          .eq('tenant_id', tenantId)
-          .eq('is_active', true)
-          .limit(5);
-      } catch {
-        return { data: null };
-      }
-    })(),
+    getCalendlyConfig(supabase, tenantId),
+    supabase.from('tenants').select('slug,settings').eq('id', tenantId).maybeSingle(),
   ]);
 
   if ((gmailRows || []).length > 0) {
     connectedTypes.add('gmail');
     connectedTypes.add('google_gmail');
   }
-  if ((calendlyRows || []).length > 0) {
+  if (Boolean(calendlyConfig)) {
     connectedTypes.add('calendly');
   }
+
+  if (bookingTenant?.settings?.booking?.enabled && bookingTenant.slug) connectedTypes.add('native_booking');
 
   const coreChecks: IntegrationStatusRow[] = CORE_INTEGRATIONS_FOR_HEALTH.map((key) => {
     let connected = connectedTypes.has(key);
@@ -119,11 +112,10 @@ export async function getTenantIntegrationSnapshot(
     if (key === 'calcom') {
       connected =
         connected ||
-        connectedTypes.has('cal_com') ||
-        envPresent('CAL_OAUTH_CLIENT_ID');
+        connectedTypes.has('cal_com');
     }
     if (key === 'calendly') {
-      connected = connected || (calendlyRows || []).length > 0;
+      connected = connected || Boolean(calendlyConfig);
     }
     return {
       key,
@@ -187,7 +179,7 @@ export function integrationAvailable(
       available: snapshot.overall.booking_ready,
       reason: snapshot.overall.booking_ready
         ? null
-        : 'Connect Cal.com or Calendly to use booking tools.',
+        : 'Enable your business booking page in Booking settings.',
     };
   }
   if (dependency === 'email_provider') {

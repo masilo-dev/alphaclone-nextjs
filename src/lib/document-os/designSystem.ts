@@ -170,5 +170,12 @@ export function designSystemCss(brand: DocumentBrandProfile): string {
       color: var(--doc-muted);
     }
     .doc-qr { width: 72px; height: 72px; }
+    @media screen and (max-width: 600px) {
+      body { overflow-wrap: anywhere; padding: 12px; }
+      .doc-header { flex-direction: column; gap: 12px; }
+      .doc-logo-wrap { max-width: 100%; }
+      table.doc-table { display: block; overflow-x: auto; }
+      table.doc-table th, table.doc-table td { padding: 6px; }
+    }
   `;
 }

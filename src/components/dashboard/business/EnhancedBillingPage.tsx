@@ -1,5 +1,6 @@
 'use client';
 
+import { SavedFilePreview } from '@/components/documents/SavedFilePreview';
 import React, { useState, useEffect, useMemo } from 'react';
 import { PaymentRailBanner } from '@/components/dashboard/payments/PaymentRailBanner';
 import { useBonnieDeepLinkFocus } from '@/hooks/useBonnieDeepLinkFocus';
@@ -1338,7 +1339,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                 <button onClick={() => setShowPDFPreview(null)} className="w-10 h-10 bg-[var(--ws-hover)] rounded-full flex items-center justify-center text-[var(--ws-text-primary)]" aria-label="Close preview"><X size={20} /></button>
                             </div>
                         </div>
-                        <iframe src={showPDFPreview} className="flex-1 w-full rounded-2xl border border-[var(--ws-border)] bg-white" title="Invoice Preview" />
+                        <div className="min-h-0 flex-1 overflow-auto"><SavedFilePreview url={showPDFPreview} mimeType="application/pdf" title="Invoice Preview" /></div>
                         <div className="mt-4 flex gap-2">
                             <button
                                 onClick={async () => {
