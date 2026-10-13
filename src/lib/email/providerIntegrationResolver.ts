@@ -1,3 +1,4 @@
+import { decryptIntegrationConfig } from '@/lib/integration/integrationTokenCrypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import type { EmailProvider } from '@/lib/email/providerSdk';
 import { resolveZohoSender } from '@/lib/email/providerSenderIdentity';
@@ -321,7 +322,7 @@ export async function resolveAllConnectedEmailProviders(params: {
       const account = await accountForIntegration(params.tenantId, provider, row);
       if (!account) continue;
       if (params.preferredUserId && row.user_id && row.user_id !== params.preferredUserId && account.account_type !== 'shared_mailbox') continue;
-      const secretConfig = resolveIntegrationSecret(provider, (row.config || {}) as Record<string, unknown>);
+      const secretConfig = resolveIntegrationSecret(provider, await decryptIntegrationConfig((row.config || {}) as Record<string, unknown>));
       if (!secretConfig) continue;
       const config: ResolvedEmailProviderConfig = {
         tenantId: params.tenantId,

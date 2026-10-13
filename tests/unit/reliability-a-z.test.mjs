@@ -465,3 +465,38 @@ test('Zoho with no provider sender remains a definite pre-send failure', async (
   const result = await (await f.module.POST(f.request(payload, { 'x-outreach-approval': issued.approvalToken }))).json();
   assert.equal(result.code, 'EMAIL_SENDER_NOT_VERIFIED'); assert.equal(f.sends, 0);
 });
+
+test('provider readiness checks the actual Brevo sender and keeps connection on rejection', async () => {
+  let checks = 0;
+  const readiness = load('src/lib/email/providerReadiness.ts', {
+    '@/lib/email/providerSenderIdentity': { assertBrevoSender: async (_key, sender) => { checks++; if (sender !== 'verified@example.com') throw Object.assign(new Error('Sender is not active on this account'), { code: 'EMAIL_SENDER_NOT_VERIFIED' }); } },
+  });
+  const base = { tenantId, provider: 'brevo', apiKey: 'mock-key' };
+  const ready = await readiness.checkEmailProviderReadiness({ ...base, fromEmail: 'verified@example.com' });
+  const rejected = await readiness.checkEmailProviderReadiness({ ...base, fromEmail: 'wrong@example.com' });
+  assert.equal(ready.ready, true); assert.equal(ready.verification_scope, 'provider_sender');
+  assert.equal(rejected.ready, false); assert.equal(rejected.connected, true); assert.equal(rejected.code, 'EMAIL_SENDER_NOT_VERIFIED');
+  assert.equal(checks, 2); assert.equal('apiKey' in ready, false);
+});
+test('provider readiness preserves connection during transient lookup failures and discovers Zoho mailbox', async () => {
+  const readiness = load('src/lib/email/providerReadiness.ts', {
+    '@/lib/email/providerSenderIdentity': { assertBrevoSender: async () => { throw new Error('timeout'); } },
+    '@/services/zoho/ZohoMailService': { ZohoMailService: class { async getSenderAddresses() { return ['zoho@example.com']; } } },
+  });
+  const brevo = await readiness.checkEmailProviderReadiness({ tenantId, provider: 'brevo', apiKey: 'mock', fromEmail: 'sender@example.com' });
+  const zoho = await readiness.checkEmailProviderReadiness({ tenantId, provider: 'zoho', apiKey: '', ownerUserId: userId });
+  assert.equal(brevo.connected, true); assert.equal(brevo.ready, false); assert.equal(brevo.code, 'EMAIL_SENDER_VERIFICATION_UNAVAILABLE');
+  assert.equal(zoho.ready, true); assert.equal(zoho.from_email, 'zoho@example.com');
+});
+
+test('encrypted saved email credentials are decrypted before provider resolution', async () => {
+  let decrypts = 0;
+  const admin = queryFixture(state => ({ error: null, data: state.table === 'integrations' ? [{ id: 'integration-brevo', tenant_id: tenantId, user_id: userId, type: 'brevo', config: { apiKey: 'encrypted-mock', fromEmail: 'sender@example.com' } }]
+    : state.table === 'email_provider_accounts' ? { id: 'account-brevo', owner_user_id: userId, account_type: 'user', email_address: 'sender@example.com' } : null }));
+  const resolver = load('src/lib/email/providerIntegrationResolver.ts', {
+    '@/lib/supabase-admin': { createSupabaseAdminClient: () => admin },
+    '@/lib/integration/integrationTokenCrypto': { decryptIntegrationConfig: async config => { decrypts++; return { ...config, apiKey: 'decrypted-mock' }; } },
+  });
+  const configs = await resolver.resolveAllConnectedEmailProviders({ tenantId, preferredUserId: userId, preferredProvider: 'brevo' });
+  assert.equal(decrypts, 1); assert.equal(configs[0].apiKey, 'decrypted-mock'); assert.equal(configs[0].providerAccountId, 'account-brevo');
+});

@@ -496,7 +496,7 @@ async function executeOutreach(request: Request, access: Awaited<ReturnType<type
       return NextResponse.json({ success: false, status: 'failed', error: 'No provider selected' }, { status: 500 });
     }
 
-    const providerFailures: Array<{ provider: OutreachProvider; error: string }> = [];
+    const providerFailures: Array<{ provider: OutreachProvider; error: string; code?: string }> = [];
     let sentProvider: OutreachProvider | null = null;
     let providerMessageId: string | null = null;
     let sentFromEmail = '';
@@ -582,6 +582,7 @@ async function executeOutreach(request: Request, access: Awaited<ReturnType<type
         providerFailures.push({
           provider: selectedProvider.provider,
           error: err instanceof Error ? err.message : 'Provider send failed',
+          code: failure.code,
         });
       }
     }
@@ -737,6 +738,10 @@ async function executeOutreach(request: Request, access: Awaited<ReturnType<type
         })
         .eq('id', logId);
     }
+
+    const senderFailure = providerFailures.find(failure => ['EMAIL_SENDER_NOT_VERIFIED', 'EMAIL_SENDER_VERIFICATION_UNAVAILABLE', 'EMAIL_CREDENTIAL_UNAVAILABLE'].includes(failure.code || ''));
+    if (senderFailure) return NextResponse.json({ success: false, status: 'failed', deliveryStatus: 'failed',
+      code: senderFailure.code, provider: senderFailure.provider, error: senderFailure.error, logId, trackingId }, { status: 422 });
 
     const classifiedFailures = providerFailures.map((entry) => ({
       ...entry,

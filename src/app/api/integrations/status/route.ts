@@ -1,3 +1,6 @@
+import { getIntegrationEncryptionSecret } from '@/lib/integration/integrationTokenCrypto';
+import { resolveAllConnectedEmailProviders } from '@/lib/email/providerIntegrationResolver';
+import { checkEmailProviderReadiness } from '@/lib/email/providerReadiness';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
@@ -10,7 +13,6 @@ import { getWhatsAppIntegrationWithToken } from '@/services/whatsapp/whatsappInt
 import { getInstagramIntegrationWithToken } from '@/services/instagram/instagramIntegrationService';
 import { getLinkedInIntegrationWithToken } from '@/services/linkedin/linkedinIntegrationService';
 import { getSlackIntegrationWithSecrets } from '@/services/slack/slackIntegrationService';
-import { getIntegrationEncryptionSecret } from '@/lib/integration/integrationTokenCrypto';
 
 export async function GET(req: NextRequest) {
   try {
@@ -907,113 +909,23 @@ async function checkResendIntegration(tenantId: string, supabase: any) {
   };
 }
 
-async function checkBrevoIntegration(tenantId: string, supabase: any) {
-  const { data: integration } = await supabase
-    .from('integrations')
-    .select('*')
-    .eq('tenant_id', tenantId)
-    .eq('type', 'brevo')
-    .eq('enabled', true)
-    .maybeSingle();
-
-  if (!integration) {
-    return {
-      status: 'not_connected',
-      percentage: 0,
-      issues: ['Brevo integration not connected'],
-      actions: ['Connect Brevo account'],
-      connected: false
-    };
-  }
-
-  const issues = [];
-  const actions = [];
-  let percentage = 0;
-  const config = integration.config || {};
-
-  if (!config.api_key && !config.apiKey) {
-    issues.push('API key missing');
-    actions.push('Reconnect Brevo to get API key');
-  } else {
-    percentage += 50;
-  }
-
-  if (!config.from_email && !config.fromEmail) {
-    issues.push('From email missing');
-    actions.push('Set default from email');
-  } else {
-    percentage += 50;
-  }
-
-  return {
-    status: percentage === 100 ? 'working' : 'needs_attention',
-    percentage,
-    issues,
-    actions,
-    connected: true,
-    lastChecked: new Date().toISOString()
-  };
+async function checkConnectedEmailIntegration(tenantId: string, supabase: any, userId: string, provider: 'brevo' | 'zoho') {
+  const row = await supabase.from('integrations').select('id').eq('tenant_id', tenantId).eq('user_id', userId).eq('type', provider).eq('enabled', true).maybeSingle();
+  if (row.error) throw row.error;
+  if (!row.data) return { status: 'not_connected', percentage: 0, issues: [`${provider} is not connected for this account`], actions: [`Connect ${provider}`], connected: false };
+  const configs = await resolveAllConnectedEmailProviders({ tenantId, preferredUserId: userId, preferredProvider: provider });
+  const config = configs.find(config => config.provider === provider && config.integrationId === row.data.id);
+  if (!config) return { status: 'needs_attention', percentage: 50, connected: true, issues: ['The saved connection could not resolve its email credential or provider account.'], actions: ['Review this provider connection'], lastChecked: new Date().toISOString() };
+  const result = await checkEmailProviderReadiness(config);
+  return { status: result.ready ? 'working' : 'needs_attention', percentage: result.ready ? 100 : 50,
+    connected: true, senderReady: result.ready, sender: result.from_email, verificationScope: result.verification_scope,
+    errorCode: result.code, issues: result.issue ? [result.issue] : [], actions: result.ready ? [] : ['Review the sender and provider permissions'], lastChecked: new Date().toISOString() };
 }
-
-async function checkZohoIntegration(_tenantId: string, supabase: any, userId: string) {
-  const { data: integration } = await supabase
-    .from('integrations')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('type', 'zoho')
-    .eq('enabled', true)
-    .maybeSingle();
-
-  if (!integration) {
-    return {
-      status: 'not_connected',
-      percentage: 0,
-      issues: ['Zoho integration not connected'],
-      actions: ['Connect Zoho account'],
-      connected: false
-    };
-  }
-
-  const config = integration.config || {};
-  const hasRefreshToken = Boolean(config.refreshToken);
-  const hasMailHost = Boolean(config.mailApiHost);
-  const hasAccountsServer = Boolean(config.accountsServer);
-  const issues = [];
-  const actions = [];
-  let percentage = 0;
-
-  if (hasRefreshToken) percentage += 30;
-  else {
-    issues.push('Refresh token missing');
-    actions.push('Reconnect Zoho account');
-  }
-
-  if (hasMailHost) percentage += 25;
-  else {
-    issues.push('Mail API host missing');
-    actions.push('Reconnect Zoho account');
-  }
-
-  if (hasAccountsServer) percentage += 25;
-  else {
-    issues.push('Accounts server missing');
-    actions.push('Reconnect Zoho account');
-  }
-
-  if (getIntegrationEncryptionSecret()) percentage += 20;
-  else {
-    issues.push('ZOHO_ENCRYPTION_SECRET / ENCRYPTION_SECRET not configured');
-    actions.push('Set encryption secret (32 chars)');
-  }
-
-  return {
-    status: percentage === 100 ? 'working' : 'needs_attention',
-    percentage,
-    issues,
-    actions,
-    connected: true,
-    lastChecked: new Date().toISOString()
-  };
+async function checkBrevoIntegration(tenantId: string, supabase: any, userId: string) {
+  return checkConnectedEmailIntegration(tenantId, supabase, userId, 'brevo');
+}
+async function checkZohoIntegration(tenantId: string, supabase: any, userId: string) {
+  return checkConnectedEmailIntegration(tenantId, supabase, userId, 'zoho');
 }
 
 async function checkMicrosoftIntegration(_tenantId: string, supabase: any, userId: string) {

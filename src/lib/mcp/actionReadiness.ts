@@ -1,3 +1,4 @@
+import { checkEmailProviderReadiness } from '@/lib/email/providerReadiness';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { resolveTenantRole } from '@/lib/mcp/connector/permissions';
 import { hasTool } from '@/lib/mcp/tool-registry';
@@ -64,10 +65,7 @@ export async function resolveMcpActionReadiness(input: {
     .filter(([, list]) => list.length > 1)
     .map(([provider]) => provider);
   const requiresIdentitySelection = ambiguousProviders.length > 0;
-  const emailIntegrations = connectedProviders.map((provider) => ({
-    provider: provider.provider,
-    from_email: provider.fromEmail || null,
-  }));
+  const emailIntegrations = await Promise.all(connectedProviders.map(checkEmailProviderReadiness));
   const verifiedSenders = (senderRes.data || []).filter((sender) => sender.is_verified !== false);
   const tools = {
     upload_social_media: hasTool('upload_social_media'),
@@ -94,9 +92,8 @@ export async function resolveMcpActionReadiness(input: {
   if (!canEmail) emailMissing.push('Workspace role lacks sales:write or marketing:write permission');
   if (!emailIntegrations.length) emailMissing.push('No active email provider integration is connected');
   const hasSenderIdentity =
-    verifiedSenders.length > 0 ||
-    connectedProviders.some((provider) => Boolean(provider.fromEmail));
-  if (!hasSenderIdentity) emailMissing.push('No verified/default sender address is configured');
+    emailIntegrations.some((provider) => provider.ready);
+  if (!hasSenderIdentity) emailMissing.push('No connected provider passed its sender readiness check');
 
   return {
     requested_action: input.action || 'all',
@@ -137,10 +134,7 @@ export async function resolveMcpActionReadiness(input: {
         emailMissing.length > 0
           ? 'Connect Zoho, Brevo, Outlook, or Gmail under Dashboard → Integrations, verify a sender address when required, then retry.'
           : 'Ready — call send_email with subject, to or recipient_name, and text/body.',
-      providers: emailIntegrations.map((integration) => ({
-        provider: integration.provider,
-        from_email: integration.from_email,
-      })),
+      providers: emailIntegrations,
       sender_addresses: verifiedSenders.map((sender) => ({
         sender_id: sender.id,
         provider: sender.provider,
