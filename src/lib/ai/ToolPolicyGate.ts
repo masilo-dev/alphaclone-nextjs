@@ -25,6 +25,7 @@ export type PolicyOutcome = 'allow' | 'queue_approval' | 'deny';
 
 export type PolicySourceAttribute =
   | 'mcp_connector_auto_allow'
+  | 'manual_user_approval'
   | 'tenant_autonomy'
   | 'default_allow'
   | 'approval_required'
@@ -226,6 +227,26 @@ export async function evaluateToolPolicy(params: {
     mcp_tool_tier: mcpTier,
   };
 
+  // UI source is assigned by authenticated server routes, never by tool args.
+  // A direct Send click is already human approval. Agent readiness controls
+  // unattended execution, not the owner's manual email/document delivery.
+  // Keep bulk, signing, deletion and money movement behind their own gates.
+  const manualDelivery =
+    source === 'ui' &&
+    !mcpToolRequiresApproval(toolName) &&
+    !isFinancialMoneyMovementTool(toolName) &&
+    (riskClass === 'send' || toolName.toLowerCase() === 'send_invoice');
+  if (manualDelivery) {
+    return {
+      outcome: 'allow',
+      riskClass,
+      reason: 'Authenticated manual Send action supplies human approval.',
+      sourcePolicy: 'manual_user_approval',
+      approvalState: 'approved',
+      policyAttributes: { ...policyAttributes, human_approval_source: 'authenticated_ui' },
+    };
+  }
+
   const admin = createSupabaseAdminClient();
 
   const [{ data: rulesRow }, aiState] = await Promise.all([
@@ -293,7 +314,9 @@ export async function evaluateToolPolicy(params: {
     source === 'mcp' &&
     (isFinancialMoneyMovementTool(toolName) ||
       mcpToolRequiresApproval(toolName) ||
-      (highRiskRequired && (riskClass === 'financial' || riskClass === 'bulk')));
+      (highRiskRequired &&
+        ((riskClass === 'financial' && toolName.toLowerCase() !== 'send_invoice') ||
+          riskClass === 'bulk')));
 
   if (source === 'mcp' && !mcpHighRiskQueue) {
     return {
