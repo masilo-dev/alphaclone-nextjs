@@ -58,10 +58,15 @@ test('cron, playbook and Bonnie sends still queue even with caller-supplied appr
   assert.equal(f.inserts(), 9);
 });
 
-test('connector invoice delivery is permitted while actual financial operations remain gated', async () => {
-  const f = fixture();
-  assert.equal((await f.evaluate('mcp', 'send_invoice')).outcome, 'allow');
-  assert.equal((await f.evaluate('mcp', 'send_contract')).outcome, 'allow');
-  assert.equal((await f.evaluate('mcp', 'transfer_funds')).outcome, 'queue_approval');
-  assert.equal((await f.evaluate('mcp', 'send_bulk_email')).outcome, 'queue_approval');
+test('authenticated MCP commands execute without a second approval in every agent mode', async () => {
+  for (const mode of ['observe', 'draft', 'act_with_approval', 'autonomous']) {
+    const f = fixture(mode);
+    for (const tool of ['send_email', 'send_invoice', 'send_contract', 'send_bulk_email', 'publish_social_post', 'sign_contract', 'transfer_funds']) {
+      const decision = await f.evaluate('mcp', tool);
+      assert.equal(decision.outcome, 'allow', `${mode}: ${tool}`);
+      assert.equal(decision.approvalState, 'approved');
+      assert.equal(decision.policyAttributes.human_approval_source, 'authenticated_mcp_command');
+    }
+    assert.equal(f.inserts(), 0);
+  }
 });

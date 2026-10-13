@@ -12,11 +12,9 @@ import {
 /**
  * ToolPolicyGate — EU AI Act Art. 14 human oversight + ISO 42001 A.4.
  *
- * High-risk tools (send / bulk / financial) queue for approval unless the
- * workspace is in autonomous mode (and readiness allows it). ChatGPT / Claude
- * MCP connectors auto-execute authenticated tool calls — the connector user
- * already issued the command. In-app Bonnie still goes through this gate so
- * send / bulk / financial actions can be approved in the Approval Center.
+ * Authenticated MCP commands supply human approval and execute directly.
+ * Manual UI delivery also supplies approval. Background Bonnie, playbooks
+ * and cron retain tenant mode, readiness and risk-based approval checks.
  */
 
 export type ToolRiskClass = 'read' | 'draft' | 'send' | 'bulk' | 'financial';
@@ -104,7 +102,7 @@ export const FINANCIAL_RECORD_KEEPING_TOOLS = new Set([
   'update_quote',
 ]);
 
-/** Capabilities that can move, refund, or transfer real funds — never MCP auto-allow. */
+/** Capabilities that can move, refund, or transfer real funds — gated for automated sources. */
 export const FINANCIAL_MONEY_MOVEMENT_TOOLS = new Set([
   'record_payment',
   'reconcile_payment',
@@ -227,6 +225,24 @@ export async function evaluateToolPolicy(params: {
     mcp_tool_tier: mcpTier,
   };
 
+  // The authenticated connector command is the user's execution approval.
+  // This source is assigned by the server, not accepted from tool arguments.
+  // Agent readiness applies to autonomous work, not direct MCP commands.
+  if (source === 'mcp') {
+    return {
+      outcome: 'allow',
+      riskClass,
+      reason: 'Authenticated MCP user command supplies human approval.',
+      sourcePolicy: 'mcp_connector_auto_allow',
+      approvalState: riskClass === 'read' ? 'none' : 'approved',
+      policyAttributes: {
+        ...policyAttributes,
+        mcp_connector_auto_allow: true,
+        human_approval_source: 'authenticated_mcp_command',
+      },
+    };
+  }
+
   // UI source is assigned by authenticated server routes, never by tool args.
   // A direct Send click is already human approval. Agent readiness controls
   // unattended execution, not the owner's manual email/document delivery.
@@ -301,37 +317,9 @@ export async function evaluateToolPolicy(params: {
       outcome: 'allow',
       riskClass,
       reason: 'Policy allows execution.',
-      sourcePolicy: source === 'mcp' ? 'mcp_connector_auto_allow' : 'default_allow',
+      sourcePolicy: 'default_allow',
       approvalState: 'none',
       policyAttributes,
-    };
-  }
-
-  // MCP connectors: evaluated above (mode, readiness, tenant rules). High-risk
-  // financial/bulk/HIGH_RISK_EXTERNAL_WRITE actions still queue when required;
-  // other MCP writes auto-allow with an explicit source attribute (not a silent bypass).
-  const mcpHighRiskQueue =
-    source === 'mcp' &&
-    (isFinancialMoneyMovementTool(toolName) ||
-      mcpToolRequiresApproval(toolName) ||
-      (highRiskRequired &&
-        ((riskClass === 'financial' && toolName.toLowerCase() !== 'send_invoice') ||
-          riskClass === 'bulk')));
-
-  if (source === 'mcp' && !mcpHighRiskQueue) {
-    return {
-      outcome: 'allow',
-      riskClass,
-      reason:
-        readinessReason ||
-        'MCP connector policy: authenticated user command allowed after full policy evaluation.',
-      sourcePolicy: 'mcp_connector_auto_allow',
-      approvalState: 'mcp_auto_allowed',
-      policyAttributes: {
-        ...policyAttributes,
-        mcp_connector_auto_allow: true,
-        readiness_reason: readinessReason || null,
-      },
     };
   }
 

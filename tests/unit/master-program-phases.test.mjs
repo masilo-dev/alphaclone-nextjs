@@ -116,7 +116,7 @@ test('cross-surface collision contract: shared domain write receipt lookup', asy
   assert.match(src, /findReceiptByIdempotency/);
 });
 
-test('financial money movement never MCP auto-allow', async () => {
+test('financial money movement remains classified for automated policy', async () => {
   const { isFinancialMoneyMovementTool } = await import('../../src/lib/ai/ToolPolicyGate.ts');
   assert.equal(isFinancialMoneyMovementTool('transfer_funds'), true);
   assert.equal(isFinancialMoneyMovementTool('send_email'), false);

@@ -12,7 +12,7 @@ test('domain external write is source-neutral (MCP adapter delegates)', async ()
   assert.equal(typeof gateway.executeMcpWrite, 'function');
 });
 
-test('financial money movement never MCP auto-allows', async () => {
+test('financial money movement remains classified for automated policy', async () => {
   const { isFinancialMoneyMovementTool } = await import('../../src/lib/ai/ToolPolicyGate.ts');
   assert.equal(isFinancialMoneyMovementTool('record_payment'), true);
   assert.equal(isFinancialMoneyMovementTool('create_invoice'), false);

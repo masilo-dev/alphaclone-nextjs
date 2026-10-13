@@ -4,12 +4,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-test('ToolPolicyGate evaluates MCP through full chain with explicit auto-allow attribute', async () => {
+test('ToolPolicyGate records authenticated MCP commands as human approval', async () => {
   const fs = await import('node:fs');
   const src = fs.readFileSync(new URL('../../src/lib/ai/ToolPolicyGate.ts', import.meta.url), 'utf8');
-  assert.doesNotMatch(src, /if \(source === 'mcp'\) \{\s*return \{\s*outcome: 'allow'/s);
+  assert.match(src, /human_approval_source: 'authenticated_mcp_command'/);
   assert.match(src, /mcp_connector_auto_allow/);
-  assert.match(src, /mcpHighRiskQueue/);
+  assert.doesNotMatch(src, /mcpHighRiskQueue/);
 });
 
 test('executeTool routes through toolExecutionGuard before handlers', async () => {
