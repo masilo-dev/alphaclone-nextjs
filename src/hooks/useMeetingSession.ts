@@ -49,8 +49,8 @@ function clearStoredMeetingSession(scopeKey: string): void {
 const JOINABLE_MEETING_STATUSES = new Set(['scheduled', 'active']);
 
 export function useMeetingSession(scopeKey = 'global') {
-    const [activeMeetingCallId, setActiveMeetingCallIdState] = useState<string | null>(() => readActiveMeetingCallId(scopeKey));
-    const [isMeetingMinimized, setIsMeetingMinimizedState] = useState<boolean>(() => readMinimizedPreference(scopeKey));
+    const [activeMeetingCallId, setActiveMeetingCallIdState] = useState<string | null>(null);
+    const [isMeetingMinimized, setIsMeetingMinimizedState] = useState<boolean>(false);
 
     const setActiveMeetingCallId = useCallback((callId: string | null) => {
         setActiveMeetingCallIdState(callId);

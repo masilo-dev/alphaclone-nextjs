@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import {
+  DEFAULT_PREFS,
   readPwaPreferences,
   writePwaPreferences,
   subscribePwaPreferences,
@@ -9,9 +10,12 @@ import {
 } from '@/lib/pwa/pwaPreferences';
 
 export function usePwaPreferences() {
-  const [prefs, setPrefs] = useState<PwaPreferences>(() => readPwaPreferences());
+  const [prefs, setPrefs] = useState<PwaPreferences>(() => ({ ...DEFAULT_PREFS, categories: { ...DEFAULT_PREFS.categories }, bottomNavModuleIds: [...DEFAULT_PREFS.bottomNavModuleIds] }));
 
-  useEffect(() => subscribePwaPreferences(() => setPrefs(readPwaPreferences())), []);
+  useEffect(() => {
+    setPrefs(readPwaPreferences());
+    return subscribePwaPreferences(() => setPrefs(readPwaPreferences()));
+  }, []);
 
   const updatePrefs = useCallback((patch: Partial<PwaPreferences>) => {
     const next = { ...readPwaPreferences(), ...patch };

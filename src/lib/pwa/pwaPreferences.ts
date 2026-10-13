@@ -15,7 +15,7 @@ export type PwaPreferences = {
 const STORAGE_KEY = 'alphaclone_pwa_prefs_v1';
 const PREF_EVENT = 'alphaclone-pwa-prefs-changed';
 
-const DEFAULT_PREFS: PwaPreferences = {
+export const DEFAULT_PREFS: PwaPreferences = {
   bottomNavModuleIds: ['home', 'crm', 'work', 'money', 'bonnie'],
   pushEnabled: true,
   categories: {
