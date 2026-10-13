@@ -354,7 +354,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
     }, [messages, activeLabel]);
 
     return (
-        <div className="flex flex-col min-h-[600px] w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl ac-scroll-full ac-enterprise-module shadow-2xl">
+        <div className="flex flex-col h-full min-h-0 w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl ac-enterprise-module shadow-2xl">
             {!isLoading && messages.length > 0 && (
                 <div className="p-3 border-b border-[var(--ws-border)] bg-[var(--ws-panel)] shrink-0">
                     <ModuleStatCards stats={mailStats} hub="outreach" />
@@ -442,7 +442,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                     ))}
                 </div>
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain custom-scrollbar p-2 space-y-1">
                     {isLoading ? (
                         Array.from({ length: 5 }).map((_, i) => (
                             <div key={i} className="p-4 rounded-xl border border-transparent bg-[var(--ws-panel)] animate-pulse h-24 mb-2" />
@@ -528,7 +528,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                         </div>
                         
                         {/* Compose Form */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900/10">
+                        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 space-y-4 custom-scrollbar bg-[var(--ws-panel)]">
                             <div className="flex flex-col gap-1.5">
                                 <div className="flex items-center justify-between gap-2">
                                     <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">To</label>
@@ -690,7 +690,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                         </AnimatePresence>
 
                         {/* Messages List */}
-                        <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-12 custom-scrollbar bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900/10">
+                        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-8 space-y-12 custom-scrollbar bg-[var(--ws-panel)]">
                             {isThreadLoading ? (
                                 <div className="flex flex-col items-center justify-center h-full gap-4">
                                     <div className="w-10 h-10 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
