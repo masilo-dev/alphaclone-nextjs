@@ -7,6 +7,7 @@ import "@/styles/alphaclone-theme.css";
 import "@/styles/marketing-system.css";
 import "@/styles/marketing-redesign.css";
 import "@/styles/accessibility.css";
+import "@/styles/workspace-light.css";
 import { marketingFontClassName } from "@/lib/marketingFonts";
 import { ProviderSwitcher } from "@/components/ProviderSwitcher";
 

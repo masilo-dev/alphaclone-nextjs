@@ -113,6 +113,7 @@ export const microsoftAuthService = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ force: options?.force === true }),
+        signal: AbortSignal.timeout(15_000),
       });
 
       const payload = await response.json().catch(() => ({}));
@@ -133,15 +134,11 @@ export const microsoftAuthService = {
   },
 
   async getValidAccessToken(options?: { force?: boolean }) {
-    const connection = await this.getConnection();
-    if (!connection) {
-      throw new Error('Microsoft 365 is not connected.');
-    }
-
     const response = await fetch('/api/auth/microsoft/access-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ force: options?.force === true }),
+      signal: AbortSignal.timeout(15_000),
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok || typeof payload?.accessToken !== 'string' || !payload.accessToken) {

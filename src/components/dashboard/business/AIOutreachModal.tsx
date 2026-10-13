@@ -27,6 +27,7 @@ import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { integrationsService, IntegrationConfig } from '../../../services/integrationsService';
+import { OutreachRecipientImport } from '@/components/dashboard/communication/OutreachRecipientImport';
 import { mapWithConcurrency } from '@/lib/concurrency/mapWithConcurrency';
 
 interface AIOutreachModalProps {
@@ -48,6 +49,8 @@ const EMPTY_SELECTION: string[] = [];
 
 const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, userId, initialSelectedLeads = EMPTY_SELECTION, recipientSource = 'leads' }) => {
     const { currentTenant } = useTenant();
+    const [activeRecipientSource, setActiveRecipientSource] = useState<'leads' | 'clients'>(recipientSource);
+    useEffect(() => { if (isOpen) setActiveRecipientSource(recipientSource); }, [isOpen, recipientSource]);
     const [leads, setLeads] = useState<Lead[]>([]);
     const [selectedLeads, setSelectedLeads] = useState<string[]>(initialSelectedLeads);
     const [loading, setLoading] = useState(false);
@@ -77,7 +80,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
             setLoadError('');
             try {
                 const params = new URLSearchParams({
-                    tenantId: currentTenant.id, source: recipientSource,
+                    tenantId: currentTenant.id, source: activeRecipientSource,
                     search: searchQuery, page: String(page),
                 });
                 if (page === 0 && initialSelectedLeads.length) params.set('ids', initialSelectedLeads.slice(0, 20).join(','));
@@ -94,7 +97,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
             }
         }, searchQuery ? 250 : 0);
         return () => { window.clearTimeout(timer); controller.abort(); };
-    }, [isOpen, currentTenant?.id, recipientSource, searchQuery, page, loadRetry, initialSelectedLeads]);
+    }, [isOpen, currentTenant?.id, activeRecipientSource, searchQuery, page, loadRetry, initialSelectedLeads]);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -102,7 +105,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
         setSelectedLeads(initialSelectedLeads.slice(0, 20));
     }, [isOpen, userId, initialSelectedLeads]);
 
-    useEffect(() => { setPage(0); }, [searchQuery, recipientSource, currentTenant?.id]);
+    useEffect(() => { setPage(0); }, [searchQuery, activeRecipientSource, currentTenant?.id]);
 
     const fetchAccountInfo = async () => {
         setFetchingAccount(true);
@@ -331,7 +334,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-[var(--ws-text-primary)] type-caption font-bold flex items-center gap-2 uppercase tracking-widest opacity-70">
                                 <Users className="w-3.5 h-3.5 text-teal-400" />
-                                Select Leads ({selectedLeads.length}/20)
+                                Select recipients ({selectedLeads.length}/20)
                             </h3>
                             <div className="flex gap-3">
                                 <button
@@ -350,13 +353,19 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                         </div>
                         <p className="-mt-4 mb-4 type-card-description leading-5 text-[var(--ws-text-muted)]">Maximum 20 leads per AI outreach batch. Select All chooses the first 20 matching leads so you can review a controlled batch before sending.</p>
 
+                        <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="Recipient source">
+                            {(['leads', 'clients'] as const).map(source => <button type="button" key={source} aria-pressed={activeRecipientSource === source}
+                                disabled={sending} onClick={() => { setActiveRecipientSource(source); setSelectedLeads([]); setLeads([]); setPage(0); }}
+                                className="ac-workspace-action-btn">{source === 'clients' ? 'Existing clients' : 'Leads'}</button>)}
+                        </div>
+                        {currentTenant?.id && <OutreachRecipientImport tenantId={currentTenant.id} onImported={() => { setActiveRecipientSource('leads'); setPage(0); setLoadRetry(value => value + 1); }} />}
                         <div className="relative mb-6">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
                             <AlphaCloneInput
                                 type="text"
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
-                                placeholder="Search leads by name or industry..."
+                                placeholder="Search recipients by name or email..."
                                 className="w-full py-3 pl-12 pr-4 transition-all"
                             />
                         </div>

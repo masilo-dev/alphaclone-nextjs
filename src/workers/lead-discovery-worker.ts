@@ -181,7 +181,7 @@ async function execute(job: Job) {
   let apifyReceipt: Awaited<ReturnType<typeof discoverBusinessesWithApify>> | null = null;
 
   const sources = (search.source_filters as string[] | undefined) || [];
-  const apifyAllowed = sources.includes('apify') || (!policy.freeOnly && policy.providers.apify === true) || isApifyConfigured();
+  const apifyAllowed = !policy.freeOnly && policy.providers.apify === true && (sources.length === 0 || sources.includes('apify'));
 
   // Primary Path: Use production Apify actor for real directory and places discovery
   if (apifyAllowed && isApifyConfigured()) {

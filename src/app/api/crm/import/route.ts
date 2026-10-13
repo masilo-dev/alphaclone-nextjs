@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { readRecipientWorkbook, normalizeRecipientRows } from '@/lib/import/recipientWorkbook';
+import { NextRequest, NextResponse, after } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
 import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 import { ImportJobService, type RawImportRecord } from '@/services/importJobService';
@@ -109,16 +110,13 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: 'No file provided' }, { status: 400 });
             }
 
+            if (file.size > 5 * 1024 * 1024) return NextResponse.json({ error: 'Maximum file size is 5 MB.' }, { status: 413 });
+            const isXlsx = file.name.toLowerCase().endsWith('.xlsx');
             const isCsv = file.type.includes('csv') || file.name.toLowerCase().endsWith('.csv');
-            if (!isCsv) {
-                return NextResponse.json(
-                    { error: 'Only CSV imports are supported. Please export as CSV and re-upload.' },
-                    { status: 400 }
-                );
-            }
-
+            if (!isCsv && !isXlsx) return NextResponse.json({ error: 'Upload Excel (.xlsx) or CSV.' }, { status: 400 });
             fileName = file.name;
-            records = parseCsv(await file.text());
+            records = isXlsx ? await readRecipientWorkbook(file) : parseCsv(await file.text());
+
         }
 
         if (!tenantId) {
@@ -130,6 +128,12 @@ export async function POST(req: NextRequest) {
 
         if (records.length === 0) {
             return NextResponse.json({ error: 'File is empty or contains no valid rows' }, { status: 400 });
+        }
+
+        if (records.length > 1000) return NextResponse.json({ error: 'Use up to 1,000 rows per import.' }, { status: 400 });
+        if (req.nextUrl.searchParams.get('preview') === 'true') {
+            const preview = normalizeRecipientRows(records as Record<string, string>[]);
+            return NextResponse.json({ ...preview, fileName }, { headers: { 'Cache-Control': 'private, no-store' } });
         }
 
         // Create durable background job
@@ -160,9 +164,12 @@ export async function POST(req: NextRequest) {
         }
 
         // Asynchronous background execution (fire and forget worker with monitoring)
-        ImportJobService.processJob(job.id, tenantId).catch((err) => {
-            console.error(`Background import job ${job.id} encountered error:`, err);
-            Sentry.captureException(err, { tags: { service: 'crm_import', jobId: job.id } });
+        after(async () => {
+            try { await ImportJobService.processJob(job.id, tenantId); }
+            catch (err) {
+                console.error(`Background import job ${job.id} encountered error:`, err);
+                Sentry.captureException(err, { tags: { service: 'crm_import', jobId: job.id } });
+            }
         });
 
         // Immediately respond with 202 Accepted and job tracking information

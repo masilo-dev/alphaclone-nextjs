@@ -1,3 +1,4 @@
+import { runLeadStep, type LeadStep } from '@/lib/scraper/freeLeadSearch';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import * as cheerio from 'cheerio';
@@ -590,93 +591,20 @@ export async function POST(request: Request) {
     const sourceErrors: Record<string, string> = {};
     const sourceCounts: Record<string, number>  = { osm: 0, here: 0, firecrawl: 0, browser: 0 };
 
-    // ── Step 1: All sources run in parallel ──────────────────────────────────
-    // OSM:         free, always runs
-    // HERE Maps:   runs when HERE_API_KEY is set (Vercel) → falls back to Foursquare
-    // Firecrawl:   runs when FIRECRAWL_API_KEY is set (Vercel) → falls back to DuckDuckGo
-    // Browser SERP: Browserbase (configured in Vercel), scrapes Bing results
-    try {
-      const hereKey      = process.env.HERE_API_KEY;
-      const firecrawlKey = process.env.FIRECRAWL_API_KEY;
-
-      const [osmRes, hereOrFsqRes, searchRes, browserRes] = await Promise.allSettled([
-        fetchOpenStreetMap(niche, location, LEADS_PER_SEARCH, radiusKm),
-        // HERE Maps when Vercel key present, Foursquare free tier as local fallback
-        hereKey && !hereKey.startsWith('your_')
-          ? fetchHERE(niche, location, LEADS_PER_SEARCH, radiusKm)
-          : fetchFoursquare(niche, location, LEADS_PER_SEARCH, radiusKm),
-        // Firecrawl when Vercel key present, DuckDuckGo HTML scrape as local fallback
-        firecrawlKey
-          ? import('@/services/firecrawlService').then(m => m.firecrawlService.searchLeads(`${niche} businesses in ${location} contact info`, LEADS_PER_SEARCH))
-          : fetchDuckDuckGoLeads(niche, location, LEADS_PER_SEARCH),
-        hasRemoteBrowserConfigured() ? fetchSerpLeadsViaBrowser(niche, location, LEADS_PER_SEARCH) : Promise.resolve([])
-      ]);
-
-      if (osmRes.status === 'fulfilled') {
-        const enriched = enrichWithContactFlag(osmRes.value);
-        results.push(...enriched);
-        sourceCounts.osm = enriched.length;
-        console.log(`[Scraper] OSM returned ${enriched.length} leads`);
-      } else {
-        const msg = osmRes.reason?.message || 'OSM failed';
-        console.warn('[Scraper] OSM failed:', msg);
-        sourceErrors.osm = msg;
-      }
-      if (hereOrFsqRes.status === 'fulfilled') {
-        const enriched = enrichWithContactFlag(hereOrFsqRes.value);
-        results.push(...enriched);
-        sourceCounts.here = enriched.length;
-        console.log(`[Scraper] ${hereKey ? 'HERE Maps' : 'Foursquare'} returned ${enriched.length} leads`);
-      } else {
-        const msg = hereOrFsqRes.reason?.message || 'Places search failed';
-        console.warn(`[Scraper] ${hereKey ? 'HERE Maps' : 'Foursquare'} failed:`, msg);
-        sourceErrors.here = msg;
-      }
-      if (searchRes.status === 'fulfilled') {
-        const enriched = enrichWithContactFlag(searchRes.value as any[]);
-        results.push(...enriched);
-        sourceCounts.firecrawl = enriched.length;
-        console.log(`[Scraper] ${firecrawlKey ? 'Firecrawl' : 'DuckDuckGo'} returned ${enriched.length} leads`);
-      } else {
-        const msg = searchRes.reason?.message || 'Web search failed';
-        console.warn(`[Scraper] ${firecrawlKey ? 'Firecrawl' : 'DuckDuckGo'} failed:`, msg);
-        sourceErrors.firecrawl = msg;
-      }
-      if (browserRes.status === 'fulfilled') {
-        const enriched = enrichWithContactFlag(browserRes.value);
-        results.push(...enriched);
-        sourceCounts.browser = enriched.length;
-        console.log(`[Scraper] Browser SERP returned ${enriched.length} leads`);
-      } else {
-        const msg = browserRes.reason?.message || 'Browser search failed';
-        console.warn('[Scraper] Browser SERP failed:', msg);
-        sourceErrors.browser = msg;
-      }
-    } catch (err: unknown) {
-      console.warn('[Scraper] Primary sources failed:', err);
-    }
-
-    // ── Step 2: Free Places fallback (Foursquare+OSM via freePlacesService) ─────
-    const needFallback = results.length < LEADS_PER_SEARCH;
-    if (needFallback && !isBudgetExceeded()) {
-      console.log(`[Scraper] After primary sources: ${results.length} leads — activating free places fallback…`);
-      try {
-        const want = LEADS_PER_SEARCH - results.length + 5;
-        const fallbackRows = await fetchFreePlacesFallback(niche, location, want, radiusKm).catch(() => []);
-
-        if (fallbackRows.length > 0) {
-          const existingNames = new Set(results.map(r => r.business_name.toLowerCase()));
-          const newRows = fallbackRows.filter(r => !existingNames.has(r.business_name.toLowerCase()));
-          const enriched = enrichWithContactFlag(newRows);
-          results.push(...enriched);
-          sourceCounts.osm += enriched.length;
-          console.log(`[Scraper] Free places fallback: ${enriched.length} unique leads`);
-        }
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.warn('[Scraper] Free places fallback failed:', msg);
-        sourceErrors.osm_fallback = msg;
-      }
+    // Interactive fallback and background jobs share the same discovery pipeline.
+    let step: LeadStep = 'init';
+    let partial: import('@/lib/scraper/freeLeadSearch').LeadResult[] = [];
+    let center: import('@/lib/scraper/freeGeoSources').GeoPoint | null = null;
+    for (let iteration = 0; iteration < 4; iteration++) {
+      const result = await runLeadStep({ step, niche, location, radiusKm, sortBy,
+        usePlaywright: false, partialResults: partial, sourceStats: sourceCounts,
+        sourceErrors, searchCenter: center, resultLimit: LEADS_PER_SEARCH });
+      Object.assign(sourceCounts, result.sourceStats);
+      Object.assign(sourceErrors, result.sourceErrors);
+      partial = result.partialResults; center = result.searchCenter;
+      if (result.nextStep === 'completed') { results.push(...result.finalResults as LeadResult[]); break; }
+      step = result.nextStep;
+      if (isBudgetExceeded()) { results.push(...partial as LeadResult[]); break; }
     }
 
     if (results.length === 0) {

@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const { accessToken, refreshed } = await refreshMicrosoftAccessToken(admin, user.id, {
       force: forceRefresh,
     });
-    const { connection: updatedConnection } = await getMicrosoftTokens(admin, user.id);
+    const updatedConnection = refreshed ? (await getMicrosoftTokens(admin, user.id)).connection : connection;
 
     return NextResponse.json({
       accessToken,

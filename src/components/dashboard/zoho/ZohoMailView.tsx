@@ -173,7 +173,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
         const verifyZohoMailReady = async () => {
             try {
                 if (!currentTenant?.id) return;
-                const res = await fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(currentTenant.id)}`, { credentials: 'include' });
+                const res = await fetch(`/api/auth/zoho/status?mode=connection&tenantId=${encodeURIComponent(currentTenant.id)}`, { credentials: 'include' });
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) return;
                 if (typeof data?.configuredRegion === 'string' && data.configuredRegion) setConfiguredRegion(data.configuredRegion);
@@ -477,7 +477,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 </button>
             </div>
 
-            <nav className="flex-1 overflow-y-auto px-4 pb-4 space-y-1.5 custom-scrollbar">
+            <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pb-4 space-y-1.5 custom-scrollbar">
                 <div className="mt-4 mb-3 px-2 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Mailboxes</div>
                 {displayFolders.map(folder => (
                     <button
@@ -505,7 +505,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     );
 
     return (
-        <div className={`flex flex-col bg-[var(--ws-canvas)] rounded-2xl md:rounded-3xl border border-[var(--ws-border)] overflow-hidden  relative h-[calc(100dvh-140px)]`}>
+        <div className={`flex flex-col bg-[var(--ws-canvas)] rounded-2xl md:rounded-3xl border border-[var(--ws-border)] overflow-hidden  relative h-full min-h-0`}>
             
             {/* Expired Token Inline Banner (non-blocking, below header) */}
             {needsReconnect && (
@@ -531,7 +531,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 </div>
             )}
 
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 min-h-0 overflow-hidden">
                 {/* Desktop Sidebar */}
                 <div className="hidden md:flex w-72 flex-col bg-[var(--ws-canvas)] border-r border-[var(--ws-border)] shrink-0">
                     <SidebarContent />
@@ -551,7 +551,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 </AnimatePresence>
 
                 {/* Message List Panel */}
-                <div className={`flex flex-col bg-[var(--ws-canvas)] border-r border-[var(--ws-border)] shrink-0 transition-all duration-300 w-full md:w-96 ${selectedMessage ? 'hidden md:flex' : 'flex'}`}>
+                <div className={`flex flex-col min-h-0 bg-[var(--ws-canvas)] border-r border-[var(--ws-border)] shrink-0 transition-all duration-300 w-full md:w-96 ${selectedMessage ? 'hidden md:flex' : 'flex'}`}>
                     
                     {/* Header Bar */}
                     <div className="h-20 border-b border-[var(--ws-border)] px-6 flex items-center gap-4 sticky top-0 z-10 bg-[var(--ws-canvas)] shrink-0">
@@ -585,7 +585,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                     )}
 
                     {/* Inbox Flat List of Rows */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain custom-scrollbar">
                         {/* Category Filter Pills */}
                         <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 py-2 border-b border-[var(--ws-border)]">
                             {['all', 'urgent', 'follow-up', 'newsletter'].map(cat => (
@@ -703,7 +703,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                     </div>
                                 </div>
 
-                                <div className="flex-1 overflow-y-auto px-4 py-6 md:p-10 custom-scrollbar">
+                                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-6 md:p-10 custom-scrollbar">
                                     <div className="max-w-4xl mx-auto space-y-6">
                                         
                                         {/* Subject */}

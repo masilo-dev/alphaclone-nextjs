@@ -118,10 +118,8 @@ function toUnifiedMicrosoft(
 type ProviderStatus = { microsoft: boolean; zoho: boolean; timedOut: boolean };
 
 /**
- * The Zoho status route performs several Zoho API round-trips, which can take
- * well over 5s on a cold tenant. A short timeout here used to report a healthy
- * Zoho account as "not connected" and show the connect wall by mistake, so the
- * budget is generous and a timeout is surfaced separately from a real "no".
+ * Navigation probes stored provider connections without running provider health
+ * checks. A bounded timeout is surfaced separately from a real disconnect.
  */
 const PROVIDER_STATUS_TIMEOUT_MS = 15000;
 
@@ -139,7 +137,7 @@ async function fetchProviderStatus(tenantId?: string): Promise<ProviderStatus> {
     withTimeout(microsoftAuthService.isConnected().catch(() => false)),
     tenantId
       ? withTimeout(
-          fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' })
+          fetch(`/api/auth/zoho/status?mode=connection&tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' })
             .then((r) => r.json().catch(() => ({})))
             .then((d) => Boolean(d.isConnected))
             .catch(() => false),
@@ -393,7 +391,6 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
       if (status.zoho) void refreshZohoTokenIfNeeded(false, currentTenant?.id);
     };
 
-    refreshTokens();
     const interval = window.setInterval(refreshTokens, 25 * 60 * 1000);
     return () => window.clearInterval(interval);
   }, [statusChecked, anyConnected, status.microsoft, status.zoho, currentTenant?.id]);
@@ -751,11 +748,10 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
       setInlineReply('');
       refresh();
       if (selectedEmail.threadId) {
-        const msgs = await microsoftGraphService.getConversationMessages(
+        void microsoftGraphService.getConversationMessages(
           selectedEmail.threadId,
           selectedEmail.id
-        );
-        setThreadMessages(
+        ).then((msgs) => setThreadMessages(
           msgs.map((m) => ({
             id: m.id,
             provider: 'microsoft' as const,
@@ -770,7 +766,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
             hasAttachments: m.hasAttachments,
             webLink: m.webLink,
           }))
-        );
+        )).catch(() => toast('Reply sent; refresh the conversation to see the latest messages.'));
       }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to send reply');

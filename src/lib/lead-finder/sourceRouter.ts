@@ -85,12 +85,19 @@ export class LeadSourceRouter {
   constructor(private readonly providers: LeadDiscoveryProvider[]) {}
   async search(input: LeadSearchInput) {
     const enabled = this.providers.filter((p) => p.enabled());
-    const settled = await Promise.allSettled(enabled.map(async (provider) => ({ provider: provider.id, started: Date.now(), result: await provider.search(input) })));
+    const settled = await Promise.allSettled(enabled.map(async (provider) => {
+      const started = Date.now(); const result = await provider.search(input);
+      return { provider: provider.id, duration_ms: Date.now() - started, result };
+    }));
     const businesses: DiscoveredBusiness[] = []; const health: Record<string, unknown>[] = [];
-    for (const result of settled) {
-      if (result.status === 'fulfilled') { businesses.push(...result.value.result.businesses); health.push({ provider: result.value.provider, status: 'success', results: result.value.result.businesses.length, duration_ms: Date.now() - result.value.started }); }
-      else health.push({ provider: enabled[health.length]?.id || 'unknown', status: 'failed', error: result.reason instanceof Error ? result.reason.message : 'PROVIDER_FAILED' });
-    }
+    settled.forEach((response, index) => {
+      if (response.status === 'fulfilled') {
+        const { result, provider, duration_ms } = response.value;
+        businesses.push(...result.businesses);
+        health.push({ provider, status: result.metadata?.status || 'success', results: result.businesses.length,
+          duration_ms, error: result.metadata?.error || null });
+      } else health.push({ provider: enabled[index].id, status: 'failed', error: response.reason instanceof Error ? response.reason.message : 'PROVIDER_FAILED' });
+    });
     return { businesses, health };
   }
 }

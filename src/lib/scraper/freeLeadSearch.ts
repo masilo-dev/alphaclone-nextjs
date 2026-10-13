@@ -540,6 +540,9 @@ export async function runLeadStep(input: {
         searchCenter = searchCenter || (await geocodeFree(input.location));
       }
 
+      for (const [name, response] of [['wikidata', wikiRes], ['web_search', ddgRes], ['searxng', searxRes], ['browser', browserRes]] as const) {
+        if (response.status === 'rejected') sourceErrors[name] = response.reason instanceof Error ? response.reason.message : `${name} unavailable`;
+      }
       if (wikiRes.status === 'fulfilled') {
         const withReach = attachReach(wikiRes.value, searchCenter, input.radiusKm * 4);
         partial.push(...enrichWithContactFlag(withReach));

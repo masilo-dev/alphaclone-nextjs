@@ -37,6 +37,15 @@ export async function GET(req: NextRequest) {
 
     try {
         const { user } = await requireTenantAccess(tenantId, req);
+        // Inbox navigation checks stored connection only. Provider verification remains
+        // available through the normal health route and each mailbox operation.
+        if (req.nextUrl.searchParams.get('mode') === 'connection') {
+            const config = await new ZohoService(user.id, tenantId).getConfig();
+            const connected = Boolean(config?.refreshToken || config?.accessToken);
+            return NextResponse.json({ isConnected: connected, baseConnected: connected,
+                healthStatus: connected ? 'configured' : 'not_connected',
+                verified: false, needsReconnect: !connected }, { headers: { 'Cache-Control': 'private, no-store' } });
+        }
         const cacheKey = `${user.id}:${tenantId}`;
 
         if (!force) {
