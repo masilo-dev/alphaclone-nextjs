@@ -1,0 +1,62 @@
+/* One global product theme, including portaled menus and client workspaces. */
+html.light[data-ac-surface="app"], html[data-theme="light"][data-ac-surface="app"] {
+  --app-bg: #f6f7f9;
+  --background-app: var(--app-bg);
+  --background: var(--app-bg);
+  --dashboard-bg: var(--app-bg);
+  --sidebar-bg: #ffffff;
+  --surface-1: #ffffff;
+  --surface-2: #f1f3f5;
+  --surface-3: #e9edf1;
+  --surface-primary: var(--surface-1);
+  --surface-secondary: var(--surface-2);
+  --surface-tertiary: var(--surface-3);
+  --surface-elevated: var(--surface-1);
+  --text-primary: #182230;
+  --text-secondary: #475467;
+  --text-muted: #596579;
+  --foreground: var(--text-primary);
+  --border-default: #d5dbe3;
+  --border-strong: #b8c2cf;
+  --ws-canvas: var(--app-bg);
+  --ws-sidebar: var(--sidebar-bg);
+  --ws-toolbar: var(--surface-1);
+  --ws-panel: var(--surface-1);
+  --ws-surface-primary: var(--surface-1);
+  --ws-surface-secondary: var(--surface-2);
+  --ws-surface-tertiary: var(--surface-3);
+  --ws-text-primary: var(--text-primary);
+  --ws-text-secondary: var(--text-secondary);
+  --ws-text-muted: var(--text-muted);
+  --ws-text-tertiary: var(--text-muted);
+  --ws-border: var(--border-default);
+  --ws-border-strong: var(--border-strong);
+  --ws-hover: var(--surface-2);
+  --ws-active: #e7f3f2;
+  --ac-v3-surface-canvas: var(--app-bg);
+  --ac-v3-surface-content: var(--surface-1);
+  --ac-v3-surface-elevated: var(--surface-1);
+  --ac-v3-surface-floating: var(--surface-1);
+  --ac-v3-glass-blur: 0px;
+  --ac-v3-glass-saturate: 1;
+  --brand-violet-950: var(--surface-2);
+  --brand-violet-900: var(--surface-3);
+  --info-text: #175cd3;
+  --success-text: #067647;
+  --warning-text: #854a0e;
+  --error-text: #b42318;
+}
+html.light[data-ac-surface="app"] :is(.ac-v3-glass, .glass-panel, .ac-v3-floating, .ac-workspace-panel, .ac-v3-sheet, .ac-v3-popover) {
+  background: var(--ws-panel);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: var(--ws-text-primary);
+}
+html.light[data-ac-surface="app"] :is(.text-sky-200, .text-sky-300, .text-blue-200, .text-blue-300) { color: var(--info-text); }
+html.light[data-ac-surface="app"] :is(.text-emerald-200, .text-emerald-300, .text-teal-300, .text-teal-400, .text-green-300) { color: var(--success-text); }
+html.light[data-ac-surface="app"] :is(.text-amber-200, .text-amber-300, .text-yellow-300, .text-yellow-400) { color: var(--warning-text); }
+html.light[data-ac-surface="app"] :is(.text-red-300, .text-red-400, .text-rose-300) { color: var(--error-text); }
+/* Shared scrolling contract: panes shrink before their content scrolls. */
+:root { --ws-scroll-bottom-clearance: max(1rem, env(safe-area-inset-bottom)); }
+.ac-scroll-pane { min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
+[data-module="tasks"] [data-testid="tasks-scroll-list"], .ac-email-reader-scroll { padding-bottom: var(--ws-scroll-bottom-clearance); }
