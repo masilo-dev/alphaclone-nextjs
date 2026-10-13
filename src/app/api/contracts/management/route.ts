@@ -1,3 +1,4 @@
+import { contractSendReview, sendsDraftReview } from '@/lib/contracts/contractSendReview';
 import { resolveAllConnectedEmailProviders } from "@/lib/email/providerIntegrationResolver";
 import { assertBrevoSender } from "@/lib/email/providerSenderIdentity";
 import { NextRequest, NextResponse } from "next/server";
@@ -461,12 +462,6 @@ export async function sendContract(
     const contractText = String(contract.content || "");
 
     const variableValidation = validateContractVariables(contractText);
-    if (!variableValidation.valid) {
-      return {
-        success: false,
-        error: `Cannot send contract with unresolved placeholder tokens: ${variableValidation.unresolvedTokens.slice(0, 5).join(', ')}`,
-      };
-    }
 
     const clientName =
       String(contract.client_name || metadata.client_name || "").trim() ||
@@ -521,9 +516,7 @@ export async function sendContract(
       hasPageNumbers: metadata.has_page_numbers === true,
     });
 
-    const isDraftReview =
-      Boolean(config.isDraft || config.draftReview || config.send_draft_for_review) ||
-      contract.status === "draft";
+    const isDraftReview = sendsDraftReview(config);
 
     const legalConsistencyFindings = runContractLegalConsistencyCheck({
       content: contractText,
@@ -533,43 +526,7 @@ export async function sendContract(
       governingLaw,
       supplierLegalName: String(metadata.supplier_legal_name || metadata.provider_name || "").trim() || undefined,
     });
-    // For drafts being sent for review, lack of governing law or jurisdiction is an advisory warning,
-    // not a hard blocker to sending the draft review copy to the client/owner.
-    const effectiveCriticalFindings = isDraftReview
-      ? legalConsistencyFindings.filter(
-          (finding) =>
-            finding.severity === "critical" &&
-            !finding.id.includes("governing_law") &&
-            !finding.id.includes("jurisdiction")
-        )
-      : legalConsistencyFindings.filter((finding) => finding.severity === "critical");
-
-    const effectiveValidationFindings = isDraftReview
-      ? validation.findings.filter(
-          (finding) =>
-            finding.severity === "critical" &&
-            !finding.id.includes("governing_law") &&
-            !finding.id.includes("jurisdiction")
-        )
-      : validation.findings.filter((finding) => finding.severity === "critical");
-
-    const mergedFindings = [...validation.findings, ...legalConsistencyFindings].map((finding) =>
-      isDraftReview && finding.severity === "critical" && (finding.id.includes("governing_law") || finding.id.includes("jurisdiction"))
-        ? { ...finding, severity: "warning" as const, evidence: { ...finding.evidence, policy: "draft_review_only", blocks_signature: true } }
-        : finding);
-    const canSend =
-      effectiveValidationFindings.length === 0 &&
-      effectiveCriticalFindings.length === 0;
-    const mergedValidation = {
-      ...validation,
-      findings: mergedFindings,
-      valid: canSend,
-      can_send: canSend,
-      score: Math.max(
-        0,
-        validation.score - effectiveCriticalFindings.length * 25 - effectiveValidationFindings.length * 25
-      ),
-    };
+    const mergedValidation = contractSendReview(validation, legalConsistencyFindings, variableValidation.unresolvedTokens);
     const reviewedAt = new Date().toISOString();
     await supabase
       .from("contracts")
@@ -608,13 +565,10 @@ export async function sendContract(
         },
       });
     if (!mergedValidation.can_send) {
-      const blocking = [
-        ...effectiveValidationFindings,
-        ...effectiveCriticalFindings,
-      ];
+      const blocking = mergedValidation.findings.filter(finding => finding.severity === 'critical');
       return {
         success: false,
-        error: `Contract failed pre-send legal checks: ${blocking
+        error: `Contract recipient details need correction: ${blocking
           .map((finding) => finding.message)
           .join(" ")}`,
         validation: mergedValidation,
@@ -632,6 +586,7 @@ export async function sendContract(
     let recipientEmail = explicitRecipient.includes("@")
       ? explicitRecipient
       : "";
+    if (!recipientEmail && clientEmail?.includes("@")) recipientEmail = clientEmail.trim().toLowerCase();
     if (!recipientEmail) {
       const meta = (contract.metadata || {}) as Record<string, unknown>;
       const metaEmail = String(
@@ -644,7 +599,7 @@ export async function sendContract(
     if (!recipientEmail && contract.client_id) {
       const { data: businessClient } = await supabase
         .from("business_clients")
-        .select("email, emails, name")
+        .select("email, name")
         .eq("id", contract.client_id)
         .eq("tenant_id", tenantId)
         .maybeSingle();
@@ -653,20 +608,12 @@ export async function sendContract(
         .toLowerCase();
       if (clientEmail.includes("@")) {
         recipientEmail = clientEmail;
-      } else if (
-        Array.isArray(businessClient?.emails) &&
-        businessClient.emails.length > 0
-      ) {
-        const first = String(businessClient.emails[0] || "")
-          .trim()
-          .toLowerCase();
-        if (first.includes("@")) recipientEmail = first;
       }
 
       if (!recipientEmail) {
         const { data: contact } = await supabase
           .from("contacts")
-          .select("email, emails")
+          .select("email")
           .eq("id", contract.client_id)
           .eq("tenant_id", tenantId)
           .maybeSingle();
@@ -675,14 +622,6 @@ export async function sendContract(
           .toLowerCase();
         if (contactEmail.includes("@")) {
           recipientEmail = contactEmail;
-        } else if (
-          Array.isArray(contact?.emails) &&
-          contact.emails.length > 0
-        ) {
-          const first = String(contact.emails[0] || "")
-            .trim()
-            .toLowerCase();
-          if (first.includes("@")) recipientEmail = first;
         }
       }
     }
