@@ -468,7 +468,9 @@ export class ZohoMailService extends ZohoService {
         const uploaded = [];
         for (const attachment of attachments || []) {
             const response = await this.callZohoAPI(`${base}/messages/attachments?fileName=${encodeURIComponent(attachment.filename)}&isInline=false`, {
-                method:'POST', headers:{'Content-Type':attachment.contentType || 'application/octet-stream'},
+                // Zoho's raw-upload endpoint requires its API media type, not the
+                // document MIME (application/pdf, DOCX, etc.). Keep the body binary.
+                method:'POST', headers:{'Content-Type':'application/json', 'Accept':'application/json'},
                 body:new Uint8Array(Buffer.from(attachment.content,'base64')),
             });
             const data = Array.isArray(response.data) ? response.data[0] : response.data;
