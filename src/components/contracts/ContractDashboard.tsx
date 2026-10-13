@@ -59,7 +59,6 @@ import { resolveContractGoverningLaw } from '@/lib/contracts/contractGoverningLa
 import {
     buildContractVariableContext,
     resolveContractVariables,
-    validateContractVariables,
 } from '@/lib/contracts/contractVariables';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
@@ -710,10 +709,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
         if (!form.clientName.trim()) { toast.error('Client name is required'); return; }
         if (!form.projectName.trim()) { toast.error('Project name is required'); return; }
         if (!form.totalAmount.trim()) { toast.error('Contract value is required'); return; }
-        if (!form.jurisdiction.trim() || !form.governingLaw.trim()) {
-            toast.error('Governing jurisdiction and governing law are required — a contract cannot be sent for signature without them.');
-            return;
-        }
+
 
         rememberSignerDetails(form);
         setIsGenerating(true);
@@ -991,18 +987,6 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
             toast.error('Save the contract first before sending');
             return;
         }
-        if (sendNeedsGoverningLaw && (!sendForm.jurisdiction.trim() || !sendForm.governingLaw.trim())) {
-            toast.error('Pick the governing jurisdiction and law — the contract cannot be sent without them.');
-            return;
-        }
-
-        const contentToCheck = (isEditing ? editedHtml : generatedContract) || '';
-        const validation = validateContractVariables(contentToCheck);
-        if (!validation.valid) {
-            toast.error(`Cannot send: please replace placeholder tokens (${validation.unresolvedTokens.slice(0, 3).join(', ')})`);
-            return;
-        }
-
         setSendingContract(true);
         try {
             const res = await fetch('/api/contracts/management', {
@@ -1840,9 +1824,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                     <JurisdictionFields
                                         jurisdiction={form.jurisdiction}
                                         governingLaw={form.governingLaw}
-                                        required
                                         onChange={(next) => setForm((prev) => ({ ...prev, ...next }))}
-                                        hint="Required — the contract cannot be sent for signature without a governing law. Saved to your signer profile for next time."
+                                        hint="Optional contract detail. Saved to your signer profile for next time."
                                     />
                                     <div className="md:col-span-2">
                                         <label className={labelCls}>{t("Additional Terms (optional)")}</label>
@@ -2403,12 +2386,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                 <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3" data-testid="send-governing-law">
                                     <p className="type-card-description text-amber-200 font-semibold">{t("This contract has no governing law recorded yet.")}</p>
                                     <p className="type-card-description text-[var(--ws-text-muted)]">
-                                        {t("It cannot be sent for signature without one. Pick it here and it will be recorded on the contract before sending.")}</p>
+                                        {t("You can add it here or send the contract as written.")}</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <JurisdictionFields
                                             jurisdiction={sendForm.jurisdiction}
                                             governingLaw={sendForm.governingLaw}
-                                            required
                                             onChange={(next) => setSendForm((prev) => ({ ...prev, ...next }))}
                                         />
                                     </div>
