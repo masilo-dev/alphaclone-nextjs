@@ -47,7 +47,7 @@ export async function deriveTenantNextBestActions(
   const [leads, deals, quotes, contracts, invoices, projects] = await Promise.all([
     admin
       .from('leads')
-      .select('id, business_name, stage, outreach_status, updated_at, last_contacted_at, created_at')
+      .select('id, business_name, stage, outreach_status, updated_at, last_outreach_at, created_at')
       .eq('tenant_id', tenantId)
       .not('stage', 'in', '("won","lost","converted")')
       .order('updated_at', { ascending: true })
@@ -56,12 +56,12 @@ export async function deriveTenantNextBestActions(
       .from('deals')
       .select('id, name, stage, updated_at, value')
       .eq('tenant_id', tenantId)
-      .not('stage', 'in', '("closed_won","closed_lost","won","lost")')
+      .not('stage', 'in', '("closed_won","closed_lost")')
       .order('updated_at', { ascending: true })
       .limit(20),
     admin
       .from('quotes')
-      .select('id, quote_number, status, sent_at, updated_at, client_name')
+      .select('id, quote_number, status, sent_at, updated_at, name')
       .eq('tenant_id', tenantId)
       .in('status', ['sent', 'viewed'])
       .order('sent_at', { ascending: true })
@@ -84,13 +84,13 @@ export async function deriveTenantNextBestActions(
       .from('projects')
       .select('id, name, status, current_stage, updated_at, due_date')
       .eq('tenant_id', tenantId)
-      .not('status', 'in', '("Completed","Cancelled","completed","cancelled")')
+      .not('status', 'in', '("Completed","Declined","done","cancelled")')
       .order('updated_at', { ascending: true })
       .limit(20),
   ]);
 
   for (const lead of leads.data || []) {
-    const last = lead.last_contacted_at || lead.updated_at || lead.created_at;
+    const last = lead.last_outreach_at || lead.updated_at || lead.created_at;
     const days = daysSince(last) ?? 99;
     const outreach = String(lead.outreach_status || '').toLowerCase();
     if (outreach === 'pending' || days >= 3) {
@@ -142,7 +142,7 @@ export async function deriveTenantNextBestActions(
       actions.push({
         object_type: 'quote',
         object_id: String(quote.id),
-        object_label: String(quote.quote_number || quote.client_name || 'Quote'),
+        object_label: String(quote.quote_number || quote.name || 'Quote'),
         current_state: String(quote.status),
         last_meaningful_event: quote.sent_at ? `Sent ${days}d ago` : null,
         outstanding_action: 'quote_follow_up',
