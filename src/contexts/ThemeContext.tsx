@@ -52,12 +52,13 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const applyMode = useCallback((mode: ThemeMode) => {
         const acMode = forceLight ? 'light' : uiModeToAcTheme(mode);
         applyAcThemeClass(acMode);
+        if (acMode === 'light') document.documentElement.style.removeProperty('--dashboard-bg');
         setIsDark(resolveIsDark(acMode));
     }, [forceLight]);
 
     useLayoutEffect(() => {
         const savedColor = localStorage.getItem('dashboard-bg-color');
-        if (savedColor) {
+        if (savedColor && readStoredAcTheme(userId) !== 'light') {
             setBackgroundColor(savedColor);
             document.documentElement.style.setProperty('--dashboard-bg', savedColor);
         }
