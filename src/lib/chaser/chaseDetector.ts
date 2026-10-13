@@ -74,7 +74,7 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
 
   const { data: overdueMilestones, error: milestonesError } = await admin
     .from('project_milestones')
-    .select('id, project_id, name, status, due_date, target_date, owner_user_id, progress_percent')
+    .select('id, project_id, name, status, due_date, target_date, owner_user_id, progress_percent').is('deleted_at', null)
     .eq('tenant_id', tenantId)
     .not('status', 'in', '("completed","done","cancelled")')
     .or(`due_date.lt.${today},target_date.lt.${today}`)

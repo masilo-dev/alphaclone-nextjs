@@ -121,7 +121,7 @@ defineConnectorTool({
         .limit(25),
       supabase
         .from('project_milestones')
-        .select('title, status, due_date')
+        .select('title:name, status, due_date').is('deleted_at', null)
         .eq('project_id', projectId)
         .order('due_date', { ascending: true })
         .limit(25),

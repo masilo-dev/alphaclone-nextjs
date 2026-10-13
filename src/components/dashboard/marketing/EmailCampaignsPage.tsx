@@ -56,8 +56,9 @@ export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) 
     <ModuleOverviewChrome moduleId="marketing" activeHref="/dashboard/business/campaigns">
       <div className="space-y-4">
         <CRMWorkspaceBridge active="outreach" compact />
-        <section aria-labelledby="campaign-setup-heading" className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 shadow-lg shadow-black/10 md:p-6">
-          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <details aria-labelledby="campaign-setup-heading" className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 shadow-lg shadow-black/10 md:p-6">
+          <summary className="cursor-pointer type-ui font-semibold text-[var(--ws-text-primary)]">How to create a campaign</summary>
+          <div className="mt-3 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="inline-flex rounded-full bg-[var(--ac-accent-muted)] px-2.5 py-1 type-caption font-semibold uppercase tracking-label text-[var(--ac-accent)]">Simple campaign setup</p>
               <h1 id="campaign-setup-heading" className="mt-3 text-2xl font-semibold tracking-tight text-[var(--ws-text-primary)]">Send a clear message in four steps</h1>
@@ -83,7 +84,7 @@ export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) 
               </li>
             ))}
           </ol>
-        </section>
+        </details>
 
         <CampaignBuilderShell userId={userId} initialCampaignId={initialCampaignId} />
       </div>

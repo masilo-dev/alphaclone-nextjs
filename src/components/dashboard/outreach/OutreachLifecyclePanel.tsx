@@ -4,9 +4,10 @@ import { Input as AlphaCloneInput } from '@/components/ui/input';
 import { Select as AlphaCloneSelect } from '@/components/ui/select';
 import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
+  RefreshCw,
   CheckCircle2,
   FlaskConical,
   GitBranch,
@@ -20,6 +21,11 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTenant } from "@/contexts/TenantContext";
+
+import { loadWorkspaceSections } from '@/lib/outreach/loadWorkspaceSections';
+
+type OutreachSection = 'sequences' | 'audiences' | 'experiments' | 'senders' | 'health';
+const sections: Array<{ id: OutreachSection; label: string }> = [{ id: 'sequences', label: 'Sequences' }, { id: 'audiences', label: 'Audiences' }, { id: 'experiments', label: 'Experiments' }, { id: 'senders', label: 'Senders' }, { id: 'health', label: 'Results' }];
 
 type Step = {
   channel: "email" | "linkedin" | "sms" | "whatsapp" | "call" | "task";
@@ -127,6 +133,9 @@ export function OutreachLifecyclePanel() {
     bodyB: "",
   });
   const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState<OutreachSection>('sequences');
+  const [loadErrors, setLoadErrors] = useState<Partial<Record<OutreachSection, string>>>({});
+  const activeLoad = useRef<AbortController | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -142,81 +151,31 @@ export function OutreachLifecyclePanel() {
   const [steps, setSteps] = useState<Step[]>([blankStep()]);
 
   const load = useCallback(async () => {
-    if (!currentTenant?.id) return;
+    activeLoad.current?.abort();
+    if (!currentTenant?.id) { setLoading(false); return; }
+    const controller = new AbortController();
+    activeLoad.current = controller;
     setLoading(true);
-    try {
-      const [
-        sequencesResponse,
-        healthResponse,
-        audiencesResponse,
-        experimentsResponse,
-        sendersResponse,
-      ] = await Promise.all([
-        fetch(
-          `/api/outreach/sequences?tenantId=${encodeURIComponent(currentTenant.id)}`,
-          { credentials: "include" },
-        ),
-        fetch(
-          `/api/outreach/events?tenantId=${encodeURIComponent(currentTenant.id)}`,
-          { credentials: "include" },
-        ),
-        fetch(
-          `/api/outreach/audiences?tenantId=${encodeURIComponent(currentTenant.id)}`,
-          { credentials: "include" },
-        ),
-        fetch(
-          `/api/outreach/experiments?tenantId=${encodeURIComponent(currentTenant.id)}`,
-          { credentials: "include" },
-        ),
-        fetch(
-          `/api/outreach/senders?tenantId=${encodeURIComponent(currentTenant.id)}`,
-          { credentials: "include" },
-        ),
-      ]);
-      const sequencePayload = await sequencesResponse.json().catch(() => ({}));
-      const healthPayload = await healthResponse.json().catch(() => ({}));
-      const audiencePayload = await audiencesResponse.json().catch(() => ({}));
-      const experimentPayload = await experimentsResponse
-        .json()
-        .catch(() => ({}));
-      const senderPayload = await sendersResponse.json().catch(() => ({}));
-      if (!sequencesResponse.ok)
-        throw new Error(
-          sequencePayload.error || "Sequences could not be loaded",
-        );
-      if (!healthResponse.ok)
-        throw new Error(
-          healthPayload.error || "Campaign health could not be loaded",
-        );
-      if (!audiencesResponse.ok)
-        throw new Error(
-          audiencePayload.error || "Audiences could not be loaded",
-        );
-      if (!experimentsResponse.ok)
-        throw new Error(
-          experimentPayload.error || "Experiments could not be loaded",
-        );
-      if (!sendersResponse.ok)
-        throw new Error(
-          senderPayload.error || "Sender health could not be loaded",
-        );
-      setSequences(sequencePayload.sequences || []);
-      setHealth(healthPayload.campaigns || []);
-      setAudiences(audiencePayload.audiences || []);
-      setExperiments(experimentPayload.experiments || []);
-      setSenders(senderPayload.senders || []);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Outreach workspace could not be loaded",
-      );
-    } finally {
-      setLoading(false);
-    }
+    setLoadErrors({});
+    const query = `?tenantId=${encodeURIComponent(currentTenant.id)}`;
+    await loadWorkspaceSections<OutreachSection>({
+      sections: { sequences: `/api/outreach/sequences${query}`, health: `/api/outreach/events${query}`, audiences: `/api/outreach/audiences${query}`, experiments: `/api/outreach/experiments${query}`, senders: `/api/outreach/senders${query}` },
+      signal: controller.signal,
+      onData: (section, payload) => {
+        const rows = (key: string) => Array.isArray(payload[key]) ? payload[key] : [];
+        if (section === 'sequences') { setSequences(rows('sequences')); setLoading(false); }
+        if (section === 'health') setHealth(rows('campaigns'));
+        if (section === 'audiences') setAudiences(rows('audiences'));
+        if (section === 'experiments') setExperiments(rows('experiments'));
+        if (section === 'senders') setSenders(rows('senders'));
+      },
+      onError: (section, error) => { setLoadErrors(previous => ({ ...previous, [section]: error })); if (section === 'sequences') setLoading(false); },
+    });
   }, [currentTenant?.id]);
   useEffect(() => {
+    setSequences([]); setHealth([]); setAudiences([]); setExperiments([]); setSenders([]);
     void load();
+    return () => activeLoad.current?.abort();
   }, [load]);
 
   const save = async () => {
@@ -478,14 +437,19 @@ export function OutreachLifecyclePanel() {
           </p>
         </div>
         <button
-          onClick={() => setCreating((value) => !value)}
+          onClick={() => { setActiveSection('sequences'); setCreating((value) => !value); }}
           className="ac-workspace-action-btn ac-workspace-action-btn--primary type-ui min-h-8 px-3"
         >
           <Plus className="h-3.5 w-3.5" /> New sequence
         </button>
       </div>
-      <div className="grid gap-4 xl:grid-cols-2">
-        <section className={panel}>
+      <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Outreach sections">
+        {sections.map(section => <button key={section.id} role="tab" aria-selected={activeSection === section.id} onClick={() => setActiveSection(section.id)} className={`shrink-0 rounded-lg border px-3 py-2 type-ui ${activeSection === section.id ? 'border-[var(--ac-accent)] bg-[var(--ac-accent-muted)] text-[var(--ws-text-primary)]' : 'border-[var(--ws-border)] text-[var(--ws-text-secondary)]'}`}>{section.label}{loadErrors[section.id] ? ' · unavailable' : ''}</button>)}
+        <button onClick={() => void load()} aria-label="Refresh outreach" className="ac-workspace-action-btn ml-auto shrink-0"><RefreshCw className="h-4 w-4" /></button>
+      </div>
+      {loadErrors[activeSection] && <div role="alert" className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 type-ui"><p className="font-medium text-[var(--ws-text-primary)]">This section could not be loaded</p><p className="mt-1 text-[var(--ws-text-secondary)]">{loadErrors[activeSection]}</p><button onClick={() => void load()} className="mt-2 ac-workspace-action-btn">Retry</button></div>}
+      <div className="grid gap-4">
+        <section hidden={activeSection !== 'audiences'} className={panel}>
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-[var(--info-text,var(--info-500))]" />
             <p className="type-card-description font-bold text-[var(--ws-text-primary)]">CRM audiences</p>
@@ -559,7 +523,7 @@ export function OutreachLifecyclePanel() {
             ))}
           </div>
         </section>
-        <section className={panel}>
+        <section hidden={activeSection !== 'experiments'} className={panel}>
           <div className="flex items-center gap-2">
             <FlaskConical className="h-4 w-4 text-violet-300" />
             <p className="type-card-description font-bold text-[var(--ws-text-primary)]">A/B experiments</p>
@@ -718,7 +682,7 @@ export function OutreachLifecyclePanel() {
           </div>
         </section>
       </div>
-      {creating ? (
+      {creating && activeSection === 'sequences' ? (
         <section className={panel}>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <label className="type-caption font-bold uppercase text-[var(--ws-text-muted)]">
@@ -932,7 +896,7 @@ export function OutreachLifecyclePanel() {
           </div>
         </section>
       ) : null}
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div hidden={activeSection !== 'sequences'} className="grid gap-3 lg:grid-cols-2">
         {loading ? (
           <div
             className={`${panel} flex min-h-32 items-center justify-center lg:col-span-2`}
@@ -1011,7 +975,7 @@ export function OutreachLifecyclePanel() {
           </div>
         )}
       </div>
-      <section className={panel}>
+      <section hidden={activeSection !== 'senders'} className={panel}>
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-[var(--info-text,var(--info-500))]" />
           <p className="type-card-description font-bold text-[var(--ws-text-primary)]">
@@ -1099,7 +1063,7 @@ export function OutreachLifecyclePanel() {
           </p>
         )}
       </section>
-      <section className={panel}>
+      <section hidden={activeSection !== 'health'} className={panel}>
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-[var(--success-text,var(--success-500))]" />
           <p className="type-card-description font-bold text-[var(--ws-text-primary)]">

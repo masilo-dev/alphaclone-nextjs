@@ -53,7 +53,7 @@ async function checkProgress(projectId: string, tenantId: string) {
   "use step";
   const supabase = createSupabaseAdminClient();
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
-  const { data: milestones } = await supabase.from('project_milestones').select('status').eq('project_id', projectId);
+  const { data: milestones } = await supabase.from('project_milestones').select('status').is('deleted_at', null).eq('project_id', projectId);
   const allDone = milestones?.every((m: any) => m.status === 'completed');
   
   if (!allDone) {

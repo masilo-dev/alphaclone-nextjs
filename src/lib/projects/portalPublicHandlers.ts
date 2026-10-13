@@ -51,7 +51,7 @@ export async function loadPublicPortalPayload(admin: SupabaseClient, project: Po
   const [{ data: milestones }, { data: invoices }, { data: clientRow }] = await Promise.all([
     admin
       .from('project_milestones')
-      .select('id, name, status, due_date, description, order_index')
+      .select('id, name, status, due_date, description, order_index').is('deleted_at', null)
       .eq('project_id', project.id)
       .order('order_index', { ascending: true })
       .order('created_at', { ascending: true }),

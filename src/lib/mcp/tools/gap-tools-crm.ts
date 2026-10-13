@@ -350,7 +350,7 @@ registerTool('gap-crm', {
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, project_id: { type: 'string' } }, required: ['project_id'] },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase.from('project_milestones').select('*').eq('project_id', args.project_id).eq('tenant_id', args.tenant_id).order('due_date');
+    const { data, error } = await supabase.from('project_milestones').select('*').is('deleted_at', null).eq('project_id', args.project_id).eq('tenant_id', args.tenant_id).order('due_date');
     if (error) return { content: [{ type: 'text', text: JSON.stringify({ milestones: [], error: error.message }) }] };
     return { content: [{ type: 'text', text: JSON.stringify({ milestones: data || [] }, null, 2) }] };
   },
@@ -365,7 +365,7 @@ registerTool('gap-crm', {
     const supabase = createSupabaseAdminClient();
     const [{ data: tasks }, { data: milestones }] = await Promise.all([
       supabase.from('tasks').select('id, title, status, due_date, priority').eq('project_id', args.project_id).eq('tenant_id', args.tenant_id).order('due_date'),
-      supabase.from('project_milestones').select('id, title, status, due_date').eq('project_id', args.project_id).eq('tenant_id', args.tenant_id).order('due_date'),
+      supabase.from('project_milestones').select('id, title:name, status, due_date').is('deleted_at', null).eq('project_id', args.project_id).eq('tenant_id', args.tenant_id).order('due_date'),
     ]);
     const timeline = [
       ...(tasks || []).map((t: any) => ({ ...t, type: 'task' })),

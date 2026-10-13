@@ -36,7 +36,7 @@ async function resolveClientRecipient(
 
   const { data: client } = await admin
     .from('business_clients')
-    .select('email, name, company_name')
+    .select('email, name, company')
     .eq('tenant_id', tenantId)
     .eq('id', clientId)
     .limit(1)
@@ -45,13 +45,13 @@ async function resolveClientRecipient(
   if (client?.email) {
     return {
       email: String(client.email).trim().toLowerCase(),
-      name: client.name || client.company_name || null,
+      name: client.name || client.company || null,
     };
   }
 
   const { data: contact } = await admin
     .from('contacts')
-    .select('email, name')
+    .select('email, full_name, first_name, last_name')
     .eq('tenant_id', tenantId)
     .eq('id', clientId)
     .limit(1)
@@ -59,7 +59,7 @@ async function resolveClientRecipient(
 
   return {
     email: contact?.email ? String(contact.email).trim().toLowerCase() : null,
-    name: contact?.name || null,
+    name: contact?.full_name || [contact?.first_name, contact?.last_name].filter(Boolean).join(' ') || null,
   };
 }
 
@@ -106,9 +106,8 @@ async function loadProjectForClientNotify(
   }
 
   const row = project as ProjectNotifyRow;
-  if (!row.is_public || !row.portal_token) {
-    return { row: null, skipped: 'portal_not_enabled' };
-  }
+  // Client email is independent of whether a public portal is enabled.
+  if (!row.is_public) row.portal_token = null;
 
   return { row };
 }
@@ -120,6 +119,7 @@ async function sendClientProjectNoReplyEmail(params: {
   html: string;
   text: string;
   templateName: string;
+  idempotencyKey?: string;
 }): Promise<{ success: boolean; error?: string }> {
   const sendResult = await sendEmailServer({
     tenantId: params.tenantId,
@@ -130,6 +130,7 @@ async function sendClientProjectNoReplyEmail(params: {
     fromName: 'AlphaClone Project Updates',
     category: 'transactional',
     templateName: params.templateName,
+    idempotencyKey: params.idempotencyKey,
   });
   return { success: sendResult.success, error: sendResult.error };
 }
@@ -190,9 +191,7 @@ export async function notifyProjectClientProgressUpdate(params: {
   }
 
   const row = project as ProjectNotifyRow;
-  if (!row.is_public || !row.portal_token) {
-    return { sent: false, skipped: 'portal_not_enabled' };
-  }
+  if (!row.is_public) row.portal_token = null;
 
   const { email, name } = await resolveClientRecipient(admin, tenantId, row.client_id);
   if (!email || !email.includes('@')) {
@@ -585,4 +584,35 @@ ${portalUrl ? `<p><a href="${portalUrl}">View your project portal</a></p>` : ''}
   }
 
   return { client: clientResult, owner: ownerResult };
+}
+
+/** A milestone date/name/status update merits an email even if project % is unchanged. */
+export async function notifyProjectClientMilestoneUpdate(params: {
+  admin: SupabaseClient; tenantId: string; projectId: string;
+  milestone: { id: string; name: string; status: string; due_date?: string | null; updated_at?: string };
+  action: 'created' | 'updated' | 'deleted'; progress?: number;
+}): Promise<{ sent: boolean; skipped?: string; email?: string; status?: string }> {
+  const { admin, tenantId, projectId, milestone, action } = params;
+  const loaded = await loadProjectForClientNotify(admin, projectId, tenantId);
+  if (!loaded.row) return { sent: false, skipped: loaded.skipped };
+  const project = loaded.row;
+  const { email, name } = await resolveClientRecipient(admin, tenantId, project.client_id);
+  if (!email) return { sent: false, skipped: 'no_client_email' };
+  const key = `milestone:${tenantId}:${milestone.id}:${action}:${milestone.updated_at || 'initial'}`;
+  const portalUrl = project.is_public && project.portal_token ? buildCanonicalProjectPortalUrl(project.portal_token) : null;
+  const lines = [
+    `Milestone ${action}: ${milestone.name}`,
+    `Status: ${milestone.status.replace(/_/g, ' ')}`,
+    `Due date: ${milestone.due_date ? milestone.due_date.slice(0, 10) : 'Not set'}`,
+    `Project progress: ${params.progress ?? project.progress ?? 0}%`,
+  ];
+  const result = await sendClientProjectNoReplyEmail({
+    tenantId, to: email, subject: `Milestone update: ${project.name}`,
+    templateName: 'projectMilestoneUpdate', idempotencyKey: key,
+    html: `<p>Hi ${escapeHtml(name || 'there')},</p><p>Your project <strong>${escapeHtml(project.name)}</strong> has an update.</p><ul>${lines.map(line => `<li>${escapeHtml(line)}</li>`).join('')}</ul>${portalUrl ? `<p><a href="${escapeHtml(portalUrl)}">Open your project</a></p>` : ''}<p>You can contact the business through your client workspace.</p>`,
+    text: [`Hi ${name || 'there'},`, '', `Project: ${project.name}`, ...lines, portalUrl || '', NOREPLY_FOOTER].filter(Boolean).join('\n'),
+  });
+  const saved = await admin.from('client_portal_events').insert({ tenant_id: tenantId, project_id: projectId, client_id: project.client_id, event_type: 'custom', metadata: { kind: 'milestone_email', milestone_id: milestone.id, action, recipient: email, status: result.success ? 'provider_accepted' : 'failed', error: result.error || null, idempotency_key: key } });
+  if (saved.error) console.error('[milestone-notify] receipt event failed:', saved.error.message);
+  return { sent: result.success, skipped: result.error, email, status: result.success ? 'provider_accepted' : 'failed' };
 }

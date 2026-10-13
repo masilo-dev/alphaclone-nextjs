@@ -15,7 +15,7 @@ export async function loadClientProjects(admin: SupabaseClient, tenantId: string
 }
 export async function loadClientProjectDetails(admin: SupabaseClient, tenantId: string, projectId: string) {
   const results = await Promise.all([
-    admin.from('project_milestones').select('*').eq('tenant_id', tenantId).eq('project_id', projectId).order('order_index'),
+    admin.from('project_milestones').select('*').is('deleted_at', null).eq('tenant_id', tenantId).eq('project_id', projectId).order('order_index'),
     admin.from('tasks').select('*').eq('tenant_id', tenantId).or(`project_id.eq.${projectId},related_to_project.eq.${projectId}`).order('created_at'),
     admin.from('project_deliverables').select('*').eq('tenant_id', tenantId).eq('project_id', projectId).order('created_at'),
   ]);

@@ -52,7 +52,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
             // Fetch real milestones from database
             const { data: milestonesData, error: milestonesError } = await supabase
                 .from('project_milestones')
-                .select('*')
+                .select('*').is('deleted_at', null)
                 .eq('project_id', selectedProject.id)
                 .eq('tenant_id', tenantId)
                 .order('order_index', { ascending: true });

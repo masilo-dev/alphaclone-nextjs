@@ -134,7 +134,7 @@ export const emailCampaignService = {
         try {
             const tenantId = tenantService.getCurrentTenantId();
             if (!tenantId) return { contacts: [], error: 'No active tenant' };
-            const res = await fetch(`/api/email/campaigns?tenantId=${encodeURIComponent(tenantId)}&mode=contacts`);
+            const res = await fetch(`/api/email/campaigns?tenantId=${encodeURIComponent(tenantId)}&mode=contacts`, { credentials: 'include', signal: AbortSignal.timeout(15000) });
             const payload = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(payload.error || 'Failed to load contacts');
             const contacts: MarketingContact[] = (payload.contacts || [])
@@ -334,7 +334,7 @@ export const emailCampaignService = {
         try {
             const tenantId = tenantService.getCurrentTenantId();
             if (!tenantId) return { campaigns: [], error: 'No active tenant' };
-            const res = await fetch(`/api/email/campaigns?tenantId=${encodeURIComponent(tenantId)}`);
+            const res = await fetch(`/api/email/campaigns?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include', signal: AbortSignal.timeout(15000) });
             const payload = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(payload.error || 'Failed to load campaigns');
             const rows = Array.isArray(payload.campaigns) ? payload.campaigns.slice(0, limit || 100) : [];

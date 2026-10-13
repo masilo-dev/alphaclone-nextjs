@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
 type NativeEventType = 'task' | 'project' | 'milestone';
@@ -39,9 +40,10 @@ function isMissingRelatedEntityColumn(error: { message?: string; code?: string }
 async function findExistingEvent(
   tenantId: string,
   entityType: NativeEventType,
-  entityId: string
+  entityId: string,
+  client: SupabaseClient = supabase
 ): Promise<{ id: string } | null> {
-  const withRelated = await supabase
+  const withRelated = await client
     .from('calendar_events')
     .select('id')
     .eq('tenant_id', tenantId)
@@ -60,7 +62,7 @@ async function findExistingEvent(
 
   // Schema without related_entity_id / type: match via metadata sync keys.
   const metaKey = `alphaclone_${entityType}_id`;
-  const fallback = await supabase
+  const fallback = await client
     .from('calendar_events')
     .select('id')
     .eq('tenant_id', tenantId)
@@ -74,7 +76,7 @@ async function findExistingEvent(
   return fallback.data ? { id: fallback.data.id } : null;
 }
 
-export async function syncToNativeCalendar(input: NativeCalendarSyncInput): Promise<{ eventId?: string; removed?: boolean }> {
+export async function syncToNativeCalendar(input: NativeCalendarSyncInput, client: SupabaseClient = supabase): Promise<{ eventId?: string; removed?: boolean }> {
   const {
     tenantId,
     userId,
@@ -92,11 +94,11 @@ export async function syncToNativeCalendar(input: NativeCalendarSyncInput): Prom
     remove = false,
   } = input;
 
-  const existing = await findExistingEvent(tenantId, entityType, entityId);
+  const existing = await findExistingEvent(tenantId, entityType, entityId, client);
 
   if (remove || !startTime) {
     if (existing?.id) {
-      await supabase.from('calendar_events').delete().eq('id', existing.id);
+      await client.from('calendar_events').delete().eq('id', existing.id);
     }
     return { removed: true };
   }
@@ -127,7 +129,7 @@ export async function syncToNativeCalendar(input: NativeCalendarSyncInput): Prom
   };
 
   if (existing?.id) {
-    const withRelated = await supabase
+    const withRelated = await client
       .from('calendar_events')
       .update(fullRow)
       .eq('id', existing.id)
@@ -139,7 +141,7 @@ export async function syncToNativeCalendar(input: NativeCalendarSyncInput): Prom
     }
 
     if (isMissingRelatedEntityColumn(withRelated.error)) {
-      const { data } = await supabase
+      const { data } = await client
         .from('calendar_events')
         .update(baseRow)
         .eq('id', existing.id)
@@ -152,13 +154,13 @@ export async function syncToNativeCalendar(input: NativeCalendarSyncInput): Prom
     return {};
   }
 
-  const insertFull = await supabase.from('calendar_events').insert(fullRow).select('id').single();
+  const insertFull = await client.from('calendar_events').insert(fullRow).select('id').single();
   if (!insertFull.error) {
     return { eventId: insertFull.data?.id };
   }
 
   if (isMissingRelatedEntityColumn(insertFull.error)) {
-    const { data } = await supabase.from('calendar_events').insert(baseRow).select('id').single();
+    const { data } = await client.from('calendar_events').insert(baseRow).select('id').single();
     return { eventId: data?.id };
   }
 
@@ -259,7 +261,8 @@ export async function syncMilestoneToNativeCalendar(
     status?: string | null;
     project_id: string;
     client_id?: string | null;
-  }
+  },
+  client: SupabaseClient = supabase
 ): Promise<void> {
   if (!milestone.due_date || milestone.status === 'completed') {
     await syncToNativeCalendar({
@@ -270,7 +273,7 @@ export async function syncMilestoneToNativeCalendar(
       title: milestone.name,
       startTime: milestone.due_date || '',
       remove: true,
-    });
+    }, client);
     return;
   }
 
@@ -285,7 +288,7 @@ export async function syncMilestoneToNativeCalendar(
     clientId: milestone.client_id,
     isAllDay: true,
     metadata: { milestoneId: milestone.id, projectId: milestone.project_id },
-  });
+  }, client);
 }
 
 export async function getProjectCalendarContext(projectId: string): Promise<{

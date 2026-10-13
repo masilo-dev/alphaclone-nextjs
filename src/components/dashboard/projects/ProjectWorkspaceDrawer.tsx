@@ -222,26 +222,29 @@ export function ProjectWorkspaceDrawer({
     if (!target) return;
     const nextChecked = !target.checked;
     setMilestones((prev) => prev.map((m) => (m.id === id ? { ...m, checked: nextChecked } : m)));
-    const { error } = await milestoneService.updateMilestone(id, {
+    const { error, notification } = await milestoneService.updateMilestone(id, {
       status: nextChecked ? 'completed' : 'pending',
     });
     if (error) {
       setMilestones((prev) => prev.map((m) => (m.id === id ? { ...m, checked: !nextChecked } : m)));
-      toast.error('Failed to update milestone');
+      toast.error(error);
       return;
     }
+    if (notification?.sent) toast.success('Milestone saved; client email accepted');
+    else if (notification?.skipped && notification.skipped !== 'unchanged') toast(`Milestone saved; client notification: ${notification.skipped}`);
     await refreshProgress();
   };
 
   const updateMilestoneDueDate = async (id: string, dateInput: string) => {
-    const dueDate = dateInput ? new Date(`${dateInput}T12:00:00`).toISOString() : undefined;
+    const dueDate = dateInput || undefined;
     setMilestones((prev) => prev.map((m) => (m.id === id ? { ...m, dueDate } : m)));
-    const { error } = await milestoneService.updateMilestone(id, { dueDate });
+    const { error, notification } = await milestoneService.updateMilestone(id, { dueDate });
     if (error) {
-      toast.error('Could not update milestone date');
+      toast.error(error);
       return;
     }
-    toast.success(dueDate ? 'Milestone date saved — synced to calendar' : 'Milestone date cleared');
+    toast.success(dueDate ? 'Milestone date saved' : 'Milestone date cleared');
+    if (notification && !notification.sent && notification.skipped !== 'unchanged') toast(`Client notification: ${notification.skipped || 'unavailable'}`);
   };
 
   const toDateInput = (iso?: string) => {

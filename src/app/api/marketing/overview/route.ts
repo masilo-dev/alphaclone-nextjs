@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
       admin
         .from('email_campaigns')
         .select(
-          'id, name, status, subject, total_recipients, recipient_count, total_sent, sent_count, total_failed, failed_count, bounced_count, total_opened, opened_count, total_clicked, clicked_count, replied_count, reply_count, scheduled_at, started_at, next_batch_at, metadata, created_at, updated_at',
+          'id, name, status, subject, total_recipients, total_sent, total_failed, total_bounced, total_opened, total_clicked, scheduled_at, sent_at, metadata, created_at, updated_at',
         )
         .eq('tenant_id', tenantId)
         .order('updated_at', { ascending: false })
@@ -187,7 +187,7 @@ export async function GET(request: NextRequest) {
         .select('id', { count: 'exact', head: true })
         .eq('tenant_id', tenantId)
         .eq('status', 'bounced')
-        .gte('bounced_at', todayStart),
+        .gte('updated_at', todayStart),
       admin
         .from('email_suppressions')
         .select('id', { count: 'exact', head: true })
@@ -209,7 +209,7 @@ export async function GET(request: NextRequest) {
         .maybeSingle(),
       admin
         .from('audit_logs')
-        .select('id, action, entity_type, created_at, metadata')
+        .select('id, action, entity_type, created_at, new_values')
         .eq('tenant_id', tenantId)
         .in('entity_type', ['campaign', 'email', 'social', 'outreach'])
         .order('created_at', { ascending: false })
@@ -222,6 +222,7 @@ export async function GET(request: NextRequest) {
         .limit(10),
     ]);
 
+    if (campaignsRes.error) console.error('[marketing-overview] campaigns:', campaignsRes.error.message);
     const campaigns = (campaignsRes.data || []) as CampaignRow[];
     const activeCampaigns = campaigns.filter((c) =>
       ['active', 'sending', 'processing', 'queued', 'scheduled'].includes(String(c.status).toLowerCase()),
@@ -400,7 +401,7 @@ export async function GET(request: NextRequest) {
         time: formatTime(row.created_at),
         label: String(row.action || row.entity_type),
         source: 'AlphaClone',
-        detail: (row.metadata as Record<string, unknown>)?.name as string | undefined,
+        detail: (row.new_values as Record<string, unknown>)?.name as string | undefined,
       });
     }
 

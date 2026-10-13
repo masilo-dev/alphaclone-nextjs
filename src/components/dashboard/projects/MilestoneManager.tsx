@@ -19,7 +19,7 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
         setIsLoading(true);
         const { milestones, error } = await milestoneService.getMilestones(projectId);
         if (error) {
-            toast.error('Failed to load milestones');
+            toast.error(error);
         } else {
             setMilestones(milestones);
         }
@@ -41,7 +41,7 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
         });
 
         if (error) {
-            toast.error('Failed to create milestone');
+            toast.error(error);
         } else if (milestone) {
             setMilestones(prev => [...prev, milestone]);
             setNewMilestone({ name: '', description: '', dueDate: '' });
@@ -55,7 +55,7 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
 
         const { error } = await milestoneService.deleteMilestone(id);
         if (error) {
-            toast.error('Failed to delete milestone');
+            toast.error(error);
         } else {
             setMilestones(prev => prev.filter(m => m.id !== id));
             toast.success('Milestone deleted');
@@ -64,12 +64,14 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
 
     const toggleStatus = useCallback(async (milestone: Milestone) => {
         const newStatus = milestone.status === 'completed' ? 'pending' : 'completed';
-        const { error } = await milestoneService.updateMilestone(milestone.id, { status: newStatus });
+        const { error, notification } = await milestoneService.updateMilestone(milestone.id, { status: newStatus });
 
         if (error) {
-            toast.error('Failed to update status');
+            toast.error(error);
         } else {
             setMilestones(prev => prev.map(m => m.id === milestone.id ? { ...m, status: newStatus } : m));
+            if (notification?.sent) toast.success('Milestone saved; client email accepted');
+            else if (notification?.skipped && notification.skipped !== 'unchanged') toast(`Milestone saved; client notification: ${notification.skipped}`);
             toast.success(`Milestone marked as ${newStatus}`);
         }
     }, []);

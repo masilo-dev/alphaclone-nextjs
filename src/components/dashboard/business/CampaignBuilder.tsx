@@ -20,6 +20,8 @@ import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { CAMPAIGN_LANGUAGE_OPTIONS, getCampaignLanguageInstruction, type CampaignLanguageMode } from '@/lib/languageUtils';
+import CampaignOverview from '../marketing/CampaignOverview';
+import { useTenant } from '@/contexts/TenantContext';
 import EmailCampaignAnalytics from '../marketing/EmailCampaignAnalytics';
 import SegmentBuilder from '../marketing/SegmentBuilder';
 import DeliverabilityPanel from '../marketing/DeliverabilityPanel';
@@ -223,6 +225,9 @@ type CampaignBuilderProps = {
 
 const CampaignBuilder: React.FC<CampaignBuilderProps> = ({ userId, initialCampaignId = null, onCampaignChanged }) => {
     const router = useRouter();
+    const { currentTenant } = useTenant();
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const loadVersion = useRef(0);
     const searchParams = useSearchParams();
     const { isMobile } = useBreakpoint();
     const [recoveryBanner, setRecoveryBanner] = useState<Array<{ title?: string; reason?: string; amount?: number }>>([]);
@@ -355,7 +360,7 @@ const CampaignBuilder: React.FC<CampaignBuilderProps> = ({ userId, initialCampai
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submissionStatus, setSubmissionStatus] = useState<string | null>(null);
 
-    useEffect(() => { loadData(); }, []);
+    useEffect(() => { setSelectedCampaign(null); setViewMode('list'); setCampaigns([]); setContacts([]); void loadData(); return () => { loadVersion.current++; }; }, [currentTenant?.id]);
 
     useEffect(() => {
         if (!initialCampaignId || loading || openedInitialCampaignId.current === initialCampaignId) return;
@@ -394,6 +399,8 @@ const CampaignBuilder: React.FC<CampaignBuilderProps> = ({ userId, initialCampai
     }, [searchParams]);
 
     useEffect(() => {
+        let active = true;
+        setSenderProfile(null); setConnectedProviders([]);
         const loadSender = async () => {
             const tenantId = tenantService.getCurrentTenantId();
             if (!tenantId) return;
@@ -405,6 +412,7 @@ const CampaignBuilder: React.FC<CampaignBuilderProps> = ({ userId, initialCampai
                 ]);
                 const senderData = await senderRes.json().catch(() => ({}));
                 const providerData = await providerRes.json().catch(() => ({}));
+                if (!active) return;
                 if (senderData?.profile?.fromEmail || senderData?.profile?.fromName || senderData?.profile?.defaultProvider) {
                     setSenderProfile(senderData.profile);
                     setTestEmailAddress(String(senderData.profile.fromEmail || ''));
@@ -429,11 +437,12 @@ const CampaignBuilder: React.FC<CampaignBuilderProps> = ({ userId, initialCampai
             } catch {
                 // Non-fatal
             } finally {
-                setProviderStateLoading(false);
+                if (active) setProviderStateLoading(false);
             }
         };
-        loadSender();
-    }, []);
+        void loadSender();
+        return () => { active = false; };
+    }, [currentTenant?.id]);
 
     const resolvedProvider = useMemo<DeliveryEmailProvider>(() => {
         const selected = (form.selectedProviders[0] || '').trim();
@@ -584,15 +593,22 @@ const CampaignBuilder: React.FC<CampaignBuilderProps> = ({ userId, initialCampai
     };
 
     const loadData = async () => {
-        setLoading(true);
-        const [campsResult, contactsResult] = await Promise.all([
-            emailCampaignService.getCampaigns(),
-            emailCampaignService.getMarketingContacts(),
-        ]);
-        if (!campsResult.error) setCampaigns(campsResult.campaigns);
-        if (!contactsResult.error) setContacts(contactsResult.contacts);
-        setLoading(false);
-        onCampaignChanged?.();
+        const version = ++loadVersion.current;
+        setLoading(true); setLoadError(null);
+        if (!tenantService.getCurrentTenantId()) { setLoading(false); return; }
+        // Recipient data is independent; a slow list must not block campaign browsing.
+        void emailCampaignService.getMarketingContacts().then(result => {
+            if (version === loadVersion.current && !result.error) setContacts(result.contacts);
+        }).catch(() => undefined);
+        try {
+            const result = await emailCampaignService.getCampaigns();
+            if (version !== loadVersion.current) return;
+            if (result.error) throw new Error(result.error);
+            setCampaigns(result.campaigns);
+            onCampaignChanged?.();
+        } catch (error) {
+            if (version === loadVersion.current) setLoadError(error instanceof Error ? error.message : 'Campaigns could not be loaded');
+        } finally { if (version === loadVersion.current) setLoading(false); }
     };
 
     const handleImportLeads = async () => {
@@ -1309,110 +1325,8 @@ Voice & rules:
                     {/* 1. LIST VIEW */}
                     {viewMode === 'list' && (
                         <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
-                            <div className="rounded-2xl border border-teal-500/20 bg-teal-500/5 p-4 type-ui text-[var(--ws-text-secondary)] leading-relaxed">
-                                <p className="font-semibold text-teal-200">You choose how campaigns are sent and styled</p>
-                                <p className="mt-1.5">
-                                    Zoho Mail is <span className="text-[var(--ws-text-primary)] font-medium">one option</span>, not the only path.
-                                    Pick your delivery provider in{' '}
-                                    <button
-                                        type="button"
-                                        onClick={() => router.push('/dashboard/business/settings')}
-                                        className="text-teal-400 hover:text-[var(--brand-blue-300)] underline underline-offset-2"
-                                    >
-                                        Settings → Email Delivery
-                                    </button>
-                                    {' '}— Brevo, SendGrid, Resend, or Zoho Mail. Write in plain English or switch to advanced HTML when you want full design control.
-                                </p>
-                            </div>
-                            <DeliverabilityPanel />
-                            {campaigns.some((camp) => camp.status === 'draft') && (
-                                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 flex gap-3">
-                                    <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                                    <div className="type-ui">
-                                        <p className="font-semibold text-amber-200">Draft campaigns stay draft until you launch them</p>
-                                        <p className="mt-1 text-[var(--ws-text-muted)] leading-relaxed">
-                                            Open a draft and tap <span className="text-[var(--ws-text-primary)] font-semibold">Run Now</span>, or connect an email provider in{' '}
-                                            <button
-                                                type="button"
-                                                onClick={() => router.push('/dashboard/business/settings')}
-                                                className="text-teal-400 hover:text-[var(--brand-blue-300)] underline underline-offset-2"
-                                            >
-                                                Settings → Integrations
-                                            </button>{' '}
-                                            (SendGrid, Resend, Brevo, Zoho Mail, or Gmail).
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                            {campaigns.length === 0 ? (
-                                <div className="py-16 text-center border border-dashed border-[var(--ws-border)] rounded-2xl">
-                                    <Inbox className="w-10 h-10 text-slate-700 mx-auto mb-3" />
-                                    <h3 className="type-ui font-bold text-[var(--ws-text-muted)]">No campaigns yet</h3>
-                                    <p className="type-card-description text-slate-600 max-w-xs mx-auto mt-1">Create a simple campaign, choose who should receive it, and let the Copilot write the first draft.</p>
-                                </div>
-                            ) : (
-                                <div className="divide-y divide-white/5 border border-[var(--ws-border)] rounded-2xl bg-[var(--ws-panel)] overflow-hidden">
-                                    {campaigns.map((camp) => {
-                                        const offset = swipeState[camp.id] || 0;
-                                        const provider = (camp.metadata as any)?.provider || 'tenant-default';
-                                        const sent = Number(camp.totalSent || 0);
-                                        const opened = Number(camp.totalOpened || 0);
-                                        const clicked = Number(camp.totalClicked || 0);
-                                        const openRate = sent > 0 ? Math.round((opened / sent) * 100) : 0;
-                                        const clickRate = sent > 0 ? Math.round((clicked / sent) * 100) : 0;
-                                        
-                                        return (
-                                            <div 
-                                                key={camp.id}
-                                                className="relative select-none overflow-hidden bg-[var(--ws-canvas)]"
-                                                onTouchStart={(e) => handleTouchStart(e, camp.id)}
-                                                onTouchMove={(e) => handleTouchMove(e, camp.id)}
-                                                onTouchEnd={(e) => handleTouchEnd(e, camp.id)}
-                                            >
-                                                {/* Swipe actions */}
-                                                <div className="absolute inset-y-0 right-0 w-20 bg-rose-600 flex items-center justify-center text-[var(--text-inverse)] type-caption font-bold">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </div>
-                                                <div className="absolute inset-y-0 left-0 w-20 bg-emerald-600 flex items-center justify-center text-[var(--text-inverse)] type-caption font-bold">
-                                                    <Repeat className="w-4 h-4" />
-                                                </div>
-
-                                                {/* Camp list row */}
-                                                <div 
-                                                    onClick={() => {
-                                                        setSelectedCampaign(camp);
-                                                        setViewMode('detail');
-                                                    }}
-                                                    className="relative z-10 flex items-center justify-between p-3.5 bg-[var(--ws-panel)] active:bg-[var(--ws-surface-secondary)] transition-transform duration-150 cursor-pointer"
-                                                    style={{ transform: `translateX(${offset}px)` }}
-                                                >
-                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                                                        {/* Avatar / provider badge */}
-                                                        <div className="w-9 h-9 rounded-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] flex items-center justify-center text-[var(--ws-text-muted)] font-bold type-caption uppercase flex-shrink-0">
-                                                            {provider.slice(0, 2)}
-                                                        </div>
-                                                        <div className="min-w-0 flex-1 flex flex-col">
-                                                            <span className="type-ui text-[var(--ws-text-primary)] font-bold truncate">
-                                                                {camp.name}
-                                                            </span>
-                                                            <span className="type-ui text-[var(--ws-text-muted)] font-medium truncate mt-0.5">
-                                                                Subj: {camp.subject} • Opens: {openRate}% • Clicks: {clickRate}%
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-2.5 ml-3 flex-shrink-0">
-                                                        <span className={`type-caption font-black uppercase px-2 py-0.5 rounded-lg border ${statusColors[camp.status]}`}>
-                                                            {camp.status}
-                                                        </span>
-                                                        <ChevronRight className="w-4 h-4 text-slate-600" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
+                            {loadError ? <div role="alert" className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4"><p className="font-semibold text-[var(--ws-text-primary)]">Campaigns could not be loaded</p><p className="mt-1 type-ui text-[var(--ws-text-secondary)]">{loadError}</p><button onClick={() => void loadData()} className="ac-workspace-action-btn mt-3">Retry</button></div> : <CampaignOverview campaigns={campaigns} onOpen={campaign => { setSelectedCampaign(campaign); setViewMode('detail'); }} onDuplicate={handleDuplicateCampaign} onDelete={id => void handleDeleteCampaign(id)} />}
+                            <details className="rounded-xl border border-[var(--ws-border)] p-4"><summary className="cursor-pointer type-ui font-medium text-[var(--ws-text-secondary)]">Email delivery health</summary><div className="mt-3"><DeliverabilityPanel /></div></details>
                         </motion.div>
                     )}
 

@@ -389,7 +389,7 @@ export async function POST(
       admin
         .from("project_milestones")
         .select("id, status")
-        .eq("project_id", projectId),
+        .eq("project_id", projectId).or(`tenant_id.eq.${tenantId},tenant_id.is.null`).is("deleted_at", null),
       admin
         .from("tasks")
         .select("status")
@@ -423,10 +423,11 @@ export async function POST(
       .eq("tenant_id", tenantId);
     if (error) throw error;
 
+    let notification: Record<string, unknown> | null = null;
     const beforeProgress = typeof project.progress === "number" ? project.progress : 0;
     if (beforeProgress !== progress) {
-      if (project.client_id && project.is_public && project.portal_token) {
-        void notifyProjectClientProgressUpdate({
+      if (project.client_id) {
+        notification = await notifyProjectClientProgressUpdate({
           admin,
           projectId,
           tenantId,
@@ -434,7 +435,7 @@ export async function POST(
           newProgress: progress,
           origin: req.nextUrl.origin,
           trigger: "milestone",
-        }).catch((err) => console.warn("[projects] notify progress failed:", err));
+        }).catch((err) => ({ sent: false, skipped: err instanceof Error ? err.message : String(err) }));
       }
 
       void admin
@@ -471,7 +472,7 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ progress });
+    return NextResponse.json({ progress, notification });
   } catch (error) {
     return routeErrorResponse(
       error,

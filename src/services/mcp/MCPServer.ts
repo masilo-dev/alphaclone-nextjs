@@ -193,7 +193,7 @@ async function loadProjectMilestonesOrFallback(
   try {
     const { data, error } = await supabaseAdmin
       .from('project_milestones')
-      .select('id, name, description, status, due_date, completed_at, order_index, created_at, updated_at')
+      .select('id, name, description, status, due_date, completed_at, order_index, created_at, updated_at').is('deleted_at', null)
       .eq('tenant_id', tenantId)
       .eq('project_id', projectId)
       .order('due_date', { ascending: true });
@@ -8476,7 +8476,7 @@ Return ONLY a JSON array of 60 objects:
           const [{ data: project, error: projectError }, { data: tasks }, { data: milestones }] = await Promise.all([
             supabaseAdmin.from('projects').select('*').eq('tenant_id', tenant_id).eq('id', projectId).single(),
             supabaseAdmin.from('tasks').select('title,status,priority,due_date').eq('tenant_id', tenant_id).eq('related_to_project', projectId).order('due_date', { ascending: true }),
-            supabaseAdmin.from('project_milestones').select('title,status,due_date').eq('project_id', projectId).order('due_date', { ascending: true }),
+            supabaseAdmin.from('project_milestones').select('title:name,status,due_date').is('deleted_at', null).eq('project_id', projectId).order('due_date', { ascending: true }),
           ]);
           if (projectError || !project) throw supabaseErrorToMcpClientError('send_project_email', projectError?.message || 'Project not found');
           const taskRows = (tasks || []).map((task: any) => `<li>${task.title} - ${task.status || 'todo'}${task.due_date ? `, due ${task.due_date}` : ''}</li>`).join('');

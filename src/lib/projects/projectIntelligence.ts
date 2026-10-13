@@ -144,7 +144,7 @@ export async function loadProjectIntelligence(
       .eq('tenant_id', tenantId),
     supabase
       .from('project_milestones')
-      .select('id,name,status,due_date,target_date,progress_percent,order_index')
+      .select('id,name,status,due_date,target_date,progress_percent,order_index').is('deleted_at', null)
       .eq('tenant_id', tenantId)
       .eq('project_id', projectId)
       .is('deleted_at', null),

@@ -83,7 +83,7 @@ export const calendarService = {
         // 6. Milestones Query (Project Milestones)
         let milestonesQuery = supabase
             .from('project_milestones')
-            .select('*, projects!inner(tenant_id, client_id, name)')
+            .select('*, projects!inner(tenant_id, client_id, name)').is('deleted_at', null)
             .eq('projects.tenant_id', tenantId)
             .not('due_date', 'is', null)
             .neq('status', 'completed');

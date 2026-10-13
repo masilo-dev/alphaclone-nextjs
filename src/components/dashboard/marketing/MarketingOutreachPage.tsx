@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Loader2, Send, ArrowRight, RefreshCw } from 'lucide-react';
@@ -55,6 +55,8 @@ export default function MarketingOutreachPage() {
   const router = useRouter();
   const [data, setData] = useState<OverviewSlice | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const loadController = useRef<AbortController | null>(null);
   const [outreachOpen, setOutreachOpen] = useState(false);
 
   const load = useCallback(async () => {
@@ -63,9 +65,13 @@ export default function MarketingOutreachPage() {
       setLoading(false);
       return;
     }
+    loadController.current?.abort();
+    const controller = new AbortController();
+    loadController.current = controller;
     setLoading(true);
+    setLoadError(null);
     try {
-      const res = await fetch(`/api/marketing/overview?tenantId=${currentTenant.id}`);
+      const res = await fetch(`/api/marketing/overview?tenantId=${encodeURIComponent(currentTenant.id)}`, { credentials: 'include', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]) });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to load');
       setData({
@@ -77,14 +83,15 @@ export default function MarketingOutreachPage() {
         recentOutreach: Array.isArray(json.recentOutreach) ? json.recentOutreach : [],
       });
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load outreach');
+      if (!controller.signal.aborted) setLoadError(err instanceof Error ? err.message : 'Failed to load outreach');
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, [currentTenant?.id]);
 
   useEffect(() => {
-    load();
+    setData(null); void load();
+    return () => loadController.current?.abort();
   }, [load]);
 
   return (
@@ -121,6 +128,7 @@ export default function MarketingOutreachPage() {
           </div>
         ) : null}
 
+        {loadError && <div role="alert" className="ac-workspace-panel p-4"><p className="font-medium text-[var(--ws-text-primary)]">Outreach activity is temporarily unavailable</p><p className="mt-1 type-ui text-[var(--ws-text-secondary)]">{loadError}</p><button onClick={() => void load()} className="mt-2 ac-workspace-action-btn">Retry activity</button></div>}
         {currentTenant?.id && loading && !data ? (
           <div className="flex justify-center py-12">
             <Loader2 className="w-5 h-5 animate-spin text-[var(--ws-text-muted)]" />
@@ -241,9 +249,9 @@ export default function MarketingOutreachPage() {
               )}
             </section>
 
-            <OutreachLifecyclePanel />
           </>
         )}
+        {currentTenant?.id && <OutreachLifecyclePanel />}
       </div>
 
       {user?.id ? (
