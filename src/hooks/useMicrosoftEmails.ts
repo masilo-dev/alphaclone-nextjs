@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { microsoftGraphService } from '@/services/microsoftGraphService';
 import { microsoftAuthService } from '@/services/microsoftAuthService';
 import { isAuthErrorMessage, refreshMicrosoftTokenIfNeeded } from '@/lib/email/tokenRefresh';
@@ -25,25 +25,22 @@ export function useMicrosoftEmails(limit = 25, enabled = true) {
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const requestVersion = useRef(0);
+  const currentScope = useRef(''); currentScope.current = `${enabled}:${folder}`;
   const refresh = useCallback(async (retried = false) => {
     if (!enabled) return;
+    const version = ++requestVersion.current;
+    const scope = currentScope.current;
+    const isCurrent = () => version === requestVersion.current && scope === currentScope.current;
     setLoading(true);
     setError(null);
     try {
-      const isConnected = await microsoftAuthService.isConnected();
-      setConnected(isConnected);
-      if (!isConnected) {
-        setEmails([]);
-        return;
-      }
-
-      if (!retried) {
-        await refreshMicrosoftTokenIfNeeded(false);
-      }
-
       const messages = await microsoftGraphService.getFolderMessages(folder, limit);
+      if (!isCurrent()) return;
+      setConnected(true);
       setEmails(messages);
     } catch (refreshError) {
+      if (!isCurrent()) return;
       const raw =
         refreshError instanceof Error
           ? refreshError.message
@@ -63,7 +60,7 @@ export function useMicrosoftEmails(limit = 25, enabled = true) {
       setError(friendly);
       setEmails([]);
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
   }, [limit, folder, enabled]);
 
@@ -95,7 +92,7 @@ export function useMicrosoftEmails(limit = 25, enabled = true) {
     bcc?: string[];
   }) => {
     await microsoftGraphService.sendEmail(input);
-    await refresh();
+    void refresh();
   };
 
   return {
