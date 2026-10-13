@@ -290,7 +290,7 @@ export async function resolveAllConnectedEmailProviders(params: {
     console.warn('[email] Ignoring fallbackToEnv for tenant-owned send; shared provider credentials are platform-only.');
   }
 
-  const tenantDefault = await resolveTenantDefaultProvider(params.tenantId);
+  const tenantDefault = params.preferredProvider ? (normalizeEmailProvider(params.preferredProvider) || undefined) : await resolveTenantDefaultProvider(params.tenantId);
   const preferredProvider = normalizeEmailProvider(params.preferredProvider) || tenantDefault;
   const order = buildProviderOrder(preferredProvider, tenantDefault || null);
   const rows = await loadIntegrationRows(params.tenantId, params.preferredUserId);
