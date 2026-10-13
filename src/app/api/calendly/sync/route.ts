@@ -3,7 +3,7 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { pullAndSyncCalendlyEvents, type CalendlyTenantConfig } from '@/lib/calendly/syncToNative';
 import { requireTenantRole } from '@/lib/apiAuth';
-import { refreshCalendlyTokenIfNeeded } from '@/services/calendly/calendlyIntegrationService';
+import { refreshCalendlyTokenIfNeeded, CalendlyReconnectRequiredError } from '@/services/calendly/calendlyIntegrationService';
 import { z } from 'zod';
 
 export async function POST(req: Request) {
@@ -20,6 +20,7 @@ export async function POST(req: Request) {
         const result = await pullAndSyncCalendlyEvents(tenantId, user.id, config);
         return NextResponse.json({ success: true, ...result });
     } catch (err: unknown) {
+        if (err instanceof CalendlyReconnectRequiredError) return NextResponse.json({ error: err.message, code: err.code, reconnect: true }, { status: 401 });
         console.error('API /calendly/sync Error:', err);
         return clientErrorResponse(err, { request: req, scope: 'calendly/sync' });
     }
