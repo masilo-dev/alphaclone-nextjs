@@ -256,3 +256,24 @@ test('provider HTTP 5xx remains uncertain and stops all provider fallback', asyn
   assert.deepEqual(fixture.calls, ['zoho']);
   assert.equal(result.deliveryStatus, 'unknown'); assert.equal(result.code, 'OUTCOME_UNKNOWN');
 });
+
+
+test('Zoho raw uploads use the endpoint media type for every document type without altering bytes', async () => {
+ const calls = [];
+ class Base {
+  async getConfig() { return { accountId:'chosen', mailApiHost:'mail.zoho.eu' }; }
+  async callZohoAPI(url, options) { calls.push({url, options}); return { data: { storeName:'store', attachmentName:'document', attachmentPath:'/Mail/document' } }; }
+ }
+ const {ZohoMailService} = load('src/services/zoho/ZohoMailService.ts', { './ZohoService': { ZohoService:Base }, __globals:{Buffer} });
+ const service = new ZohoMailService();
+ for (const [filename, contentType] of [['contract.pdf','application/pdf'], ['proposal.docx','application/vnd.openxmlformats-officedocument.wordprocessingml.document'], ['invoice.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], ['photo.png','image/png']]) {
+  const bytes = Buffer.from([0, 255, 80, 68, 70, 13, 10]);
+  await service.uploadMailAttachments([{ filename, contentType, content:bytes.toString('base64') }]);
+  const request = calls.at(-1);
+  assert.equal(request.options.headers['Content-Type'], 'application/json');
+  assert.equal(request.options.headers.Accept, 'application/json');
+  assert.deepEqual(Buffer.from(request.options.body), bytes);
+  assert.equal(new URL(request.url).searchParams.get('fileName'), filename);
+ }
+ assert.equal(calls.length, 4);
+});
