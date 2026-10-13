@@ -436,20 +436,20 @@ export const extendedHubStats = {
     const now = new Date();
     const in7 = new Date(now.getTime() + 7 * 86400000).toISOString();
     const events = await safeRows<{
-      status?: string;
+      metadata?: Record<string, string>;
       start_time?: string;
       end_time?: string;
       created_at: string;
-    }>(supabase, 'calendar_events', 'status, start_time, end_time, created_at', tenantId);
+    }>(supabase, 'calendar_events', 'metadata, start_time, end_time, created_at', tenantId);
 
     const upcoming = events.filter((e) => e.start_time && e.start_time >= now.toISOString() && e.start_time <= in7).length;
     const inPeriodEvents = events.filter((e) => e.start_time && inPeriod(e.start_time, startIso, endIso));
-    const completed = inPeriodEvents.filter((e) => e.status === 'completed' || (e.end_time && e.end_time < now.toISOString())).length;
+    const completed = inPeriodEvents.filter((e) => e.metadata?.status === 'completed' || (e.end_time && e.end_time < now.toISOString())).length;
     const scheduled = inPeriodEvents.length;
 
     const typeMap: Record<string, number> = { Scheduled: 0, Completed: 0, Cancelled: 0 };
     inPeriodEvents.forEach((e) => {
-      const s = String(e.status || 'scheduled').toLowerCase();
+      const s = String(e.metadata?.calendly_status || e.metadata?.status || 'scheduled').toLowerCase();
       if (s === 'cancelled') typeMap.Cancelled++;
       else if (s === 'completed' || (e.end_time && e.end_time < now.toISOString())) typeMap.Completed++;
       else typeMap.Scheduled++;
