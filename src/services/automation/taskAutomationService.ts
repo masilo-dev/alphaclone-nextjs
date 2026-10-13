@@ -2,6 +2,9 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { aiService } from '@/services/ai/aiService';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { absoluteUrl } from '@/lib/siteUrl';
+import { nextCronRun, parseCron, validateTimezone } from '@/lib/scheduling/scheduleTime';
+import { assertPermission } from '@/lib/mcp/connector/permissions';
+import { executionOutcome, schedulePermission, isSchedulableTool } from '@/lib/scheduling/scheduledActions';
 
 export interface ScheduledAiTask {
     id: string;
@@ -20,29 +23,11 @@ export interface ScheduledAiTask {
     updated_at: string;
 }
 
-function cronFieldMatches(field: string, value: number): boolean {
-    if (field === '*') return true;
-    return field.split(',').some((part) => Number(part) === value);
-}
-
 export function isValidCronSchedule(schedule: string): boolean {
-    const parts = schedule.trim().split(/\s+/);
-    return parts.length === 5 && parts.every((part) => /^(?:\*|\d{1,2}(?:,\d{1,2})*)$/.test(part));
+    try { parseCron(schedule); return true; } catch { return false; }
 }
-
-export function getNextTaskRun(schedule: string, after = new Date()): Date {
-    const parts = schedule.trim().split(/\s+/);
-    if (!isValidCronSchedule(schedule)) throw new Error('Schedule must be a supported five-field cron expression');
-    const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
-    const candidate = new Date(after.getTime());
-    candidate.setUTCSeconds(0, 0);
-    candidate.setUTCMinutes(candidate.getUTCMinutes() + 1);
-    const maximum = 366 * 24 * 60;
-    for (let attempt = 0; attempt < maximum; attempt += 1) {
-        if (cronFieldMatches(minute, candidate.getUTCMinutes()) && cronFieldMatches(hour, candidate.getUTCHours()) && cronFieldMatches(dayOfMonth, candidate.getUTCDate()) && cronFieldMatches(month, candidate.getUTCMonth() + 1) && cronFieldMatches(dayOfWeek, candidate.getUTCDay())) return candidate;
-        candidate.setUTCMinutes(candidate.getUTCMinutes() + 1);
-    }
-    throw new Error('Schedule has no run time within the next year');
+export function getNextTaskRun(schedule: string, after = new Date(), timezone = 'UTC'): Date {
+    return nextCronRun(schedule, timezone, after);
 }
 
 export const taskAutomationService = {
@@ -57,10 +42,21 @@ export const taskAutomationService = {
         schedule: string;
         timezone?: string;
         notificationPreference?: any;
+        action?: { tool_name: string; args: Record<string, unknown> };
     }) {
         const supabase = createSupabaseAdminClient();
-        
-        const nextRunAt = getNextTaskRun(params.schedule);
+        if (!params.prompt?.trim() && !params.action) throw new Error('Prompt or exact action is required');
+        if (!params.timezone) throw new Error('User-selected timezone is required');
+        const timezone = validateTimezone(params.timezone);
+        if (params.action) {
+            if (!params.userId || !isSchedulableTool(params.action.tool_name)) throw new Error('Invalid scheduled action');
+            await assertPermission(params.tenantId, params.userId, schedulePermission(params.action.tool_name));
+            const { getTool } = await import('@/lib/mcp/tool-registry');
+            const tool = getTool(params.action.tool_name);
+            if (!tool) throw new Error('Unknown scheduled action tool');
+            tool.inputSchema.parse({ ...params.action.args, tenant_id: params.tenantId, user_id: params.userId });
+        }
+        const nextRunAt = getNextTaskRun(params.schedule, new Date(), timezone);
 
         const { data, error } = await supabase
             .from('scheduled_ai_tasks')
@@ -68,9 +64,10 @@ export const taskAutomationService = {
                 tenant_id: params.tenantId,
                 user_id: params.userId,
                 name: params.name,
-                prompt: params.prompt,
+                prompt: params.prompt || '',
                 schedule: params.schedule,
-                timezone: params.timezone || 'UTC',
+                timezone,
+                metadata: params.action ? { action: params.action, action_approved_by: params.userId } : {},
                 notification_preference: params.notificationPreference || { email: true },
                 status: 'active',
                 next_run_at: nextRunAt.toISOString()
@@ -170,14 +167,31 @@ export const taskAutomationService = {
         }
 
         try {
-            const completion = await aiService.complete({
-                prompt: task.prompt,
-                systemPrompt: `Execute the scheduled workspace task named "${task.name}". Return a concise, actionable result.`,
-                provider: 'auto',
-                temperature: 0.2,
-            });
-            const output = String(completion.content || '').trim();
-            if (!output) throw new Error('AI provider returned an empty result');
+            let output: string;
+            if (task.metadata?.action) {
+                if (!task.user_id || task.metadata.action_approved_by !== task.user_id) throw new Error('Scheduled action authorization is missing');
+                const membership = await supabase.from('tenant_users').select('user_id').eq('tenant_id', task.tenant_id).eq('user_id', task.user_id).maybeSingle();
+                if (membership.error) throw membership.error;
+                if (!membership.data) throw new Error('Scheduling user no longer has workspace access');
+                const action = task.metadata.action;
+                if (!isSchedulableTool(action.tool_name)) throw new Error('Invalid scheduled action tool');
+                await assertPermission(task.tenant_id, task.user_id, schedulePermission(action.tool_name));
+                const { executeTool } = await import('@/lib/mcp/tool-registry');
+                const result = await executeTool(task.tenant_id, task.user_id, action.tool_name, {
+                    ...action.args, idempotency_key: `scheduled-task:${task.tenant_id}:${task.id}:${task.next_run_at}`,
+                }, { executionSource: 'cron', skipPolicyEvaluation: true });
+                const outcome = executionOutcome(result);
+                if (outcome.status === 'failed' || outcome.status === 'unknown') throw new Error(outcome.error || 'Scheduled action requires reconciliation');
+                output = result.content?.[0]?.text || '';
+            } else {
+                const completion = await aiService.complete({
+                    prompt: task.prompt,
+                    systemPrompt: `Prepare the scheduled workspace report named "${task.name}". This is a text-generation task; do not claim to have sent messages or executed external tools.`,
+                    provider: 'auto', temperature: 0.2,
+                });
+                output = String(completion.content || '').trim();
+            }
+            if (!output) throw new Error('Task returned an empty result');
 
             // 2. Store Result
             await supabase.from('scheduled_ai_task_results').insert({
@@ -189,7 +203,7 @@ export const taskAutomationService = {
             });
 
             // 3. Update Task Last Run and Next Run
-            const nextRunAt = getNextTaskRun(task.schedule);
+            const nextRunAt = getNextTaskRun(task.schedule, new Date(), task.timezone || 'UTC');
 
             await supabase
                 .from('scheduled_ai_tasks')
@@ -214,14 +228,14 @@ export const taskAutomationService = {
             });
 
             const nextRunAt = isValidCronSchedule(task.schedule)
-                ? getNextTaskRun(task.schedule, new Date())
+                ? getNextTaskRun(task.schedule, new Date(), task.timezone || 'UTC')
                 : null;
 
             await supabase
                 .from('scheduled_ai_tasks')
                 .update({
                     last_run_at: new Date().toISOString(),
-                    ...(nextRunAt ? { next_run_at: nextRunAt.toISOString() } : { status: 'paused' }),
+                    ...(nextRunAt && !task.metadata?.action ? { next_run_at: nextRunAt.toISOString() } : { status: 'paused' }),
                 })
                 .eq('id', task.id);
 

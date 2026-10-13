@@ -16,7 +16,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
       const { data: sequence, error } = await admin.from('email_sequences').select('id, name, created_at').eq('tenant_id', tenantId).eq('id', sequenceId).maybeSingle();
       if (error) throw error;
       if (!sequence) return NextResponse.json({ error: 'Sequence not found' }, { status: 404 });
-      const { data: steps, error: stepError } = await admin.from('email_sequence_steps').select('*').eq('sequence_id', sequenceId).order('delay_days');
+      const { data: steps, error: stepError } = await admin.from('email_sequence_steps').select('*').eq('sequence_id', sequenceId).order('step_order', { nullsFirst: false }).order('delay_days');
       if (stepError) throw stepError;
       return NextResponse.json({ sequence: { ...sequence, steps: steps || [] } });
     }
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
     const admin = createSupabaseAdminClient();
     const { data: sequence, error } = await admin.from('email_sequences').insert({ tenant_id: tenantId, name: parsed.data.name }).select('*').single();
     if (error) throw error;
-    const { error: stepError } = await admin.from('email_sequence_steps').insert(parsed.data.steps.map((step) => ({ sequence_id: sequence.id, delay_days: step.delayDays, subject: step.subject, body: step.body })));
+    const { error: stepError } = await admin.from('email_sequence_steps').insert(parsed.data.steps.map((step, index) => ({ tenant_id: tenantId, step_order: index, sequence_id: sequence.id, delay_days: step.delayDays, subject: step.subject, body: step.body })));
     if (stepError) { await admin.from('email_sequences').delete().eq('tenant_id', tenantId).eq('id', sequence.id); throw stepError; }
     await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: 'email_sequence_created', payload: { sequenceId: sequence.id, actorUserId: user.id, stepCount: parsed.data.steps.length } });
     return NextResponse.json({ sequence }, { status: 201 });

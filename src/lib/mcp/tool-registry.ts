@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isSchedulableTool } from '@/lib/scheduling/scheduledActions';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { MCPTool, MCPToolExecutionResult } from '@/types/mcp';
 import { mergeSessionArgs, sanitizeToolSchemaForClient } from '@/lib/mcp/sanitizeToolSchema';
@@ -64,6 +65,13 @@ export function registerTool<T extends z.ZodObject<any>>(
   moduleName: string,
   tool: MCPTool<T>
 ) {
+  if (isSchedulableTool(tool.name)) {
+    tool.jsonSchema = { ...tool.jsonSchema, properties: { ...tool.jsonSchema.properties,
+      scheduled_at: { type: 'string', description: 'Optional user-chosen execution time. ISO timestamp with offset, or local ISO timestamp plus schedule_timezone. Schedule once; no second approval.' },
+      schedule_timezone: { type: 'string', description: 'IANA timezone for local scheduled_at, e.g. Europe/Zurich. Never infer a different time.' },
+      repeat_cron: { type: 'string', description: 'Optional recurring five-field cron expression, interpreted in schedule_timezone.' },
+    } };
+  }
   registry.set(tool.name, tool);
   toolModules.set(tool.name, moduleName);
 }
@@ -207,6 +215,16 @@ export async function executeTool(
   });
   if (!guard.allowed) {
     return guard.mcpResult;
+  }
+
+  if (typeof args.scheduled_at === 'string' && isSchedulableTool(requestedTool)) {
+    try {
+      const { scheduleAction, scheduledActionResponse } = await import('@/lib/scheduling/scheduledActions');
+      const job = await scheduleAction({ tenantId, userId, toolName: requestedTool, args, scheduledAt: args.scheduled_at, timezone: args.schedule_timezone as string | undefined, repeatCron: args.repeat_cron as string | undefined });
+      return { content: [{ type: 'text', text: JSON.stringify(scheduledActionResponse(job)) }] };
+    } catch (error) {
+      return { isError: true, content: [{ type: 'text', text: JSON.stringify({ ok: false, error: { code: 'SCHEDULE_VALIDATION_FAILED', message: error instanceof Error ? error.message : String(error) } }) }] };
+    }
   }
 
   const primaryMetric = determinePrimaryQuotaMetric(requestedTool);
@@ -398,6 +416,7 @@ export function initializeRegistry() {
   loadToolModule(() => require('./tools/marketing-ops'), './tools/marketing-ops');
   loadToolModule(() => require('./tools/sales-ops'), './tools/sales-ops');
   loadToolModule(() => require('./tools/calendar-ops'), './tools/calendar-ops');
+  loadToolModule(() => require('./tools/scheduled-actions'), './tools/scheduled-actions');
   loadToolModule(() => require('./tools/documents-ops'), './tools/documents-ops');
   loadToolModule(() => require('./tools/revenue-lifecycle'), './tools/revenue-lifecycle');
   loadToolModule(() => require('./tools/reports-ops'), './tools/reports-ops');

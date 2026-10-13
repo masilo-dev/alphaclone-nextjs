@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { getNextTaskRun } from '@/services/automation/taskAutomationService';
+import { taskAutomationService, getNextTaskRun } from '@/services/automation/taskAutomationService';
 
-const cronSchema = z.string().trim().regex(/^(?:\*|[0-5]?\d(?:,[0-5]?\d)*) (?:\*|(?:[01]?\d|2[0-3])(?:,(?:[01]?\d|2[0-3]))*) (?:\*|(?:[1-9]|[12]\d|3[01])(?:,(?:[1-9]|[12]\d|3[01]))*) (?:\*|(?:[1-9]|1[0-2])(?:,(?:[1-9]|1[0-2]))*) (?:\*|[0-6](?:,[0-6])*)$/);
-const createSchema = z.object({ name: z.string().trim().min(1).max(200), prompt: z.string().trim().min(1).max(20000), schedule: cronSchema });
+import { isValidCronSchedule } from '@/services/automation/taskAutomationService';
+import { validateTimezone } from '@/lib/scheduling/scheduleTime';
+const cronSchema = z.string().trim().refine(isValidCronSchedule, 'Invalid five-field cron expression');
+const createSchema = z.object({ name: z.string().trim().min(1).max(200), prompt: z.string().trim().max(20000).optional(), schedule: cronSchema,
+  timezone: z.string().min(1), action: z.object({ tool_name: z.string().min(1), args: z.record(z.string(), z.unknown()) }).optional(),
+}).refine(value => Boolean(value.prompt?.trim() || value.action), 'Prompt or exact action is required');
 const updateSchema = z.object({ id: z.string().uuid(), status: z.enum(['active', 'paused']) });
 
 export async function GET(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
@@ -29,9 +33,9 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
     const { user } = await requireTenantAccess(tenantId, req);
     const parsed = createSchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return NextResponse.json({ error: 'Invalid task or schedule', fields: parsed.error.flatten().fieldErrors }, { status: 400 });
+    const timezone = validateTimezone(parsed.data.timezone);
     const admin = createSupabaseAdminClient();
-    const { data, error } = await admin.from('scheduled_ai_tasks').insert({ tenant_id: tenantId, user_id: user.id, name: parsed.data.name, prompt: parsed.data.prompt, schedule: parsed.data.schedule, timezone: 'UTC', status: 'active', next_run_at: getNextTaskRun(parsed.data.schedule).toISOString() }).select('*').single();
-    if (error) throw error;
+    const data = await taskAutomationService.createTask({ tenantId, userId: user.id, name: parsed.data.name, prompt: parsed.data.prompt || '', schedule: parsed.data.schedule, timezone, action: parsed.data.action });
     await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: 'scheduled_ai_task_created', payload: { taskId: data.id, actorUserId: user.id } });
     return NextResponse.json({ task: data }, { status: 201 });
   } catch (error) { return routeErrorResponse(error, 'Scheduled AI task could not be created', req); }
@@ -46,10 +50,10 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ tenan
     const admin = createSupabaseAdminClient();
     const update: Record<string, unknown> = { status: parsed.data.status, updated_at: new Date().toISOString() };
     if (parsed.data.status === 'active') {
-      const { data: current, error: readError } = await admin.from('scheduled_ai_tasks').select('schedule').eq('tenant_id', tenantId).eq('id', parsed.data.id).maybeSingle();
+      const { data: current, error: readError } = await admin.from('scheduled_ai_tasks').select('schedule,timezone').eq('tenant_id', tenantId).eq('id', parsed.data.id).maybeSingle();
       if (readError) throw readError;
       if (!current) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
-      update.next_run_at = getNextTaskRun(current.schedule).toISOString();
+      update.next_run_at = getNextTaskRun(current.schedule, new Date(), current.timezone || 'UTC').toISOString();
     }
     const { data, error } = await admin.from('scheduled_ai_tasks').update(update).eq('tenant_id', tenantId).eq('id', parsed.data.id).select('*').maybeSingle();
     if (error) throw error;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 import { withCronJob } from '@/lib/cron/withCronJob';
+import { runDueScheduledActions } from '@/lib/scheduling/scheduledActions';
 import { executeScheduledAiTasksDirect } from '@/lib/cron/directCronExecutors';
 
 export const dynamic = 'force-dynamic';
@@ -12,11 +13,13 @@ export async function GET(request: NextRequest) {
 
   return withCronJob('process-scheduled-ai-tasks', async () => {
     try {
+      const scheduledActions = await runDueScheduledActions();
       const result = await executeScheduledAiTasksDirect();
 
       return NextResponse.json({
         success: true,
         ...result,
+        scheduled_actions: scheduledActions,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {

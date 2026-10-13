@@ -15,6 +15,7 @@ type ScheduledTask = {
   name: string;
   prompt: string;
   schedule: string;
+  timezone?: string;
   status: 'active' | 'paused';
   last_run_at?: string | null;
   next_run_at: string;
@@ -26,13 +27,13 @@ type Frequency = 'daily' | 'weekly' | 'monthly';
 function cronFor(frequency: Frequency, time: string, day: number) {
   const [hour, minute] = time.split(':').map(Number);
   if (frequency === 'weekly') return `${minute} ${hour} * * ${Math.min(6, Math.max(0, day))}`;
-  if (frequency === 'monthly') return `${minute} ${hour} ${Math.min(28, Math.max(1, day))} * *`;
+  if (frequency === 'monthly') return `${minute} ${hour} ${Math.min(31, Math.max(1, day))} * *`;
   return `${minute} ${hour} * * *`;
 }
 
-function scheduleLabel(cron: string) {
+function scheduleLabel(cron: string, timezone = 'UTC') {
   const [minute, hour, date, , weekday] = cron.split(' ');
-  const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')} UTC`;
+  const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${timezone}`;
   if (weekday !== '*') return `Weekly on day ${weekday} at ${time}`;
   if (date !== '*') return `Monthly on day ${date} at ${time}`;
   return `Daily at ${time}`;
@@ -48,7 +49,8 @@ export default function TaskScheduler({ onTaskComplete }: { onTaskComplete?: (ta
   const [name, setName] = useState('');
   const [prompt, setPrompt] = useState('');
   const [frequency, setFrequency] = useState<Frequency>('daily');
-  const [time, setTime] = useState('09:00');
+  const [time, setTime] = useState('');
+  const [timezone, setTimezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [day, setDay] = useState(1);
 
   const endpoint = currentTenant?.id ? `/api/tenant/${encodeURIComponent(currentTenant.id)}/scheduled-ai-tasks` : '';
@@ -68,10 +70,10 @@ export default function TaskScheduler({ onTaskComplete }: { onTaskComplete?: (ta
   useEffect(() => { void load(); }, [load]);
 
   const createTask = async () => {
-    if (!endpoint || !name.trim() || !prompt.trim()) return toast.error('Name and instructions are required');
+    if (!endpoint || !name.trim() || !prompt.trim() || !time || !timezone.trim()) return toast.error('Name, instructions, time and timezone are required');
     setBusyId('create');
     try {
-      const response = await fetch(endpoint, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, prompt, schedule: cronFor(frequency, time, day) }) });
+      const response = await fetch(endpoint, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, prompt, timezone, schedule: cronFor(frequency, time, day) }) });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || 'Task could not be scheduled');
       setName(''); setPrompt(''); setShowCreate(false); await load();
@@ -129,14 +131,15 @@ export default function TaskScheduler({ onTaskComplete }: { onTaskComplete?: (ta
       <div className="grid sm:grid-cols-3 gap-3">
         <AlphaCloneSelect value={frequency} onChange={(event) => setFrequency(event.target.value as Frequency)} className="px-3 py-2"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></AlphaCloneSelect>
         <AlphaCloneInput type="time" value={time} onChange={(event) => setTime(event.target.value)} className="px-3 py-2" />
-        {frequency !== 'daily' ? <AlphaCloneInput type="number" min={frequency === 'weekly' ? 0 : 1} max={frequency === 'weekly' ? 6 : 28} value={day} onChange={(event) => setDay(Number(event.target.value))} aria-label={frequency === 'weekly' ? 'Day of week, Sunday is 0' : 'Day of month'} className="px-3 py-2" /> : <div className="rounded-lg border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-muted)]">UTC timezone</div>}
+        {frequency !== 'daily' ? <AlphaCloneInput type="number" min={frequency === 'weekly' ? 0 : 1} max={frequency === 'weekly' ? 6 : 31} value={day} onChange={(event) => setDay(Number(event.target.value))} aria-label={frequency === 'weekly' ? 'Day of week, Sunday is 0' : 'Day of month'} className="px-3 py-2" /> : <div className="rounded-lg border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-muted)]">{timezone}</div>}
       </div>
-      {frequency === 'weekly' && <p className="type-card-description text-[var(--ws-text-muted)]">Weekly day: 0 Sunday through 6 Saturday.</p>}
+      <AlphaCloneInput value={timezone} onChange={(event) => setTimezone(event.target.value)} aria-label="Timezone" placeholder="IANA timezone, e.g. Europe/Zurich" className="w-full px-3 py-2" />
+      {frequency === 'weekly'  && <p className="type-card-description text-[var(--ws-text-muted)]">Weekly day: 0 Sunday through 6 Saturday.</p>}
       <button disabled={busyId === 'create'} onClick={createTask} className="px-4 py-2 rounded-lg bg-violet-500 disabled:opacity-50 text-[var(--ws-text-primary)] font-semibold">{busyId === 'create' ? 'Scheduling…' : 'Create schedule'}</button>
     </div>}
 
     {loading ? <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-violet-400" /></div> : tasks.length === 0 ? <div className="dashboard-panel-soft p-10 text-center"><CalendarClock className="w-9 h-9 text-slate-600 mx-auto mb-3" /><p className="text-[var(--ws-text-primary)] font-medium">No scheduled AI tasks</p><p className="type-card-description text-[var(--ws-text-muted)] mt-1">Create one to generate a stored result on a durable server schedule.</p></div> : <div className="space-y-3">{tasks.map((task) => <div key={task.id} className="dashboard-panel-soft p-4">
-      <div className="flex items-start justify-between gap-3"><button onClick={() => setExpandedId(expandedId === task.id ? null : task.id)} className="text-left flex-1"><div className="flex items-center gap-2"><span className="font-semibold text-[var(--ws-text-primary)]">{task.name}</span><span className={`type-caption uppercase px-2 py-0.5 rounded-full ${task.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)]'}`}>{task.status}</span></div><p className="type-caption text-[var(--ws-text-muted)] mt-1">{scheduleLabel(task.schedule)} · Next {new Date(task.next_run_at).toLocaleString()}</p></button><div className="flex items-center gap-1">
+      <div className="flex items-start justify-between gap-3"><button onClick={() => setExpandedId(expandedId === task.id ? null : task.id)} className="text-left flex-1"><div className="flex items-center gap-2"><span className="font-semibold text-[var(--ws-text-primary)]">{task.name}</span><span className={`type-caption uppercase px-2 py-0.5 rounded-full ${task.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)]'}`}>{task.status}</span></div><p className="type-caption text-[var(--ws-text-muted)] mt-1">{scheduleLabel(task.schedule, task.timezone)} · Next {new Date(task.next_run_at).toLocaleString()}</p></button><div className="flex items-center gap-1">
         <button disabled={busyId === task.id} onClick={() => runNow(task)} className="p-2 text-violet-400 hover:bg-violet-500/10 rounded-lg" aria-label="Run now"><Play className="w-4 h-4" /></button>
         <button disabled={busyId === task.id} onClick={() => setStatus(task)} className="p-2 text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-tertiary)] rounded-lg" aria-label={task.status === 'active' ? 'Pause' : 'Resume'}>{task.status === 'active' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}</button>
         <button disabled={busyId === task.id} onClick={() => deleteTask(task)} className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg" aria-label="Delete"><Trash2 className="w-4 h-4" /></button>

@@ -1973,7 +1973,8 @@ class AlphaCloneMCPServer {
             prompt,
             schedule,
             timezone,
-            notificationPreference: notification_preference
+            notificationPreference: notification_preference,
+            action: a.action,
           });
           result = { content: [{ type: 'text', text: JSON.stringify(task, null, 2) }] };
           break;
@@ -2795,7 +2796,7 @@ class AlphaCloneMCPServer {
           }
 
           if (publish_now) {
-             const sendResult = await sendScheduledCampaignServer(campaign.id);
+             const sendResult = await sendScheduledCampaignServer(campaign.id, { approvedBy: createdByUserId });
              if (!sendResult.success) {
                throw new Error(sendResult.error || 'Campaign send failed');
              }
@@ -2850,7 +2851,7 @@ class AlphaCloneMCPServer {
             );
           }
 
-          const sendResult = await sendScheduledCampaignServer(campaignId);
+          const sendResult = await sendScheduledCampaignServer(campaignId, { approvedBy: userId });
           if (!sendResult.success) {
             throw new Error(sendResult.error || 'Campaign send failed');
           }

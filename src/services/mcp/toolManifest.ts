@@ -1224,7 +1224,7 @@ export const MCP_TOOLS = [
   },
   {
     name: 'queue_email_campaign_send',
-    description: 'Queue an existing AlphaClone email campaign for immediate sending through connected providers such as Zoho, Brevo, Resend, SendGrid, or Gmail. Keeps delivery inside AlphaClone.',
+    description: 'Send an existing AlphaClone email campaign now, or provide scheduled_at and schedule_timezone for user-approved future delivery through connected providers such as Zoho, Brevo, Resend, SendGrid, or Gmail. Keeps delivery inside AlphaClone.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -3420,18 +3420,19 @@ export const MCP_TOOLS = [
   },
   {
     name: 'task_create',
-    description: 'Autonomous Scheduler: Create a recurring or one-time AI prompt task. e.g. "Check Bitcoin price every morning"',
+    description: 'Create a recurring report or exact approved tool action. Use schedule_mcp_action for one-time delivery.',
     inputSchema: {
       type: 'object',
       properties: {
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         name: { type: 'string', description: 'Name for the task' },
         prompt: { type: 'string', description: 'What the AI should do each time the task runs' },
-        schedule: { type: 'string', description: 'Cron expression or natural language (e.g. "every day at 8am")' },
-        timezone: { type: 'string', description: 'Default: UTC' },
+        schedule: { type: 'string', description: 'Five-field cron expression for the user-chosen local clock time; convert natural language before calling' },
+        timezone: { type: 'string', description: 'User-selected IANA timezone; required for local clock schedules' },
+        action: { type: 'object', description: 'Optional frozen execution action: {tool_name, args}. Without this, only a report is generated.' },
         notification_preference: { type: 'object', description: 'e.g. {"email": true}' }
       },
-      required: ['name', 'prompt', 'schedule'],
+      required: ['name', 'schedule', 'timezone'],
     },
   },
   {

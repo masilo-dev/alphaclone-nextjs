@@ -279,6 +279,7 @@ registerTool('invoicing', {
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(), // injected from session
     invoice_id: z.string().uuid(),
+    idempotency_key: z.string().optional(),
     recipient_email: z.string().email().optional(),
   }),
   jsonSchema: {
@@ -311,6 +312,7 @@ registerTool('invoicing', {
       userId: ctx.userId,
       invoiceId: args.invoice_id,
       recipients: [toEmail],
+      idempotencyKey: args.idempotency_key,
     });
 
     return {

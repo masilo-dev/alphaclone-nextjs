@@ -221,7 +221,7 @@ function selectProviderForRecipient(
  * Sends a scheduled campaign from cron/worker context (no browser session).
  * Uses service role for DB and internal API key for /api/email/send.
  */
-export async function sendScheduledCampaignServer(campaignId: string): Promise<{
+export async function sendScheduledCampaignServer(campaignId: string, options?: { approvedBy?: string }): Promise<{
   success: boolean;
   error: string | null;
   status?: "completed" | "partial";
@@ -254,7 +254,13 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
       .in("status", ["active", "pending_approval"])
       .limit(1)
       .maybeSingle();
-    if (sequence?.status === "pending_approval")
+    let userApproved = false;
+    if (options?.approvedBy) {
+      const membership = await admin.from('tenant_users').select('user_id').eq('tenant_id', tenantId).eq('user_id', options.approvedBy).maybeSingle();
+      if (membership.error) throw membership.error;
+      userApproved = Boolean(membership.data);
+    }
+    if (sequence?.status === "pending_approval" && !userApproved)
       return {
         success: false,
         error: "The linked outreach sequence still requires approval.",
