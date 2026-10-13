@@ -1,7 +1,14 @@
+import { createHash } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+
+// Stable IDs preserve retry deduplication for older clients using timestamp IDs.
+function legacyMessageUuid(value: string): string {
+  const hex = createHash('sha256').update(value).digest('hex');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
 
 async function requireUser(tenantId: string) {
   await requireTenantAccess(tenantId);
@@ -241,7 +248,9 @@ export async function POST(request: NextRequest) {
     if (relevantMessages.length > 0) {
       await admin.from('bonnie_messages').upsert(
         relevantMessages.map((m: any) => ({
-          id: m.id,
+          id: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(m.id))
+            ? m.id
+            : legacyMessageUuid(`${tenantId}:${userId}:${conversationId}:${m.id}`),
           conversation_id: conversationId,
           tenant_id: tenantId,
           user_id: userId,
