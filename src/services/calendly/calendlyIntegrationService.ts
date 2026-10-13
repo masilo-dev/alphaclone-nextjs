@@ -157,18 +157,41 @@ export async function saveCalendlyIntegration(params: {
   };
 }
 
-export async function refreshCalendlyTokenIfNeeded(
+export class CalendlyReconnectRequiredError extends Error {
+  readonly code = 'CALENDLY_RECONNECT_REQUIRED';
+  constructor(message = 'Calendly authorization expired. Reconnect Calendly in Settings.') {
+    super(message); this.name = 'CalendlyReconnectRequiredError';
+  }
+}
+const refreshFlights = new Map<string, Promise<CalendlyTenantConfig | null>>();
+export async function refreshCalendlyTokenIfNeeded(admin: SupabaseClient, tenantId: string): Promise<CalendlyTenantConfig | null> {
+  const existing = refreshFlights.get(tenantId);
+  if (existing) return existing;
+  const flight = refreshCalendlyToken(admin, tenantId).finally(() => refreshFlights.delete(tenantId));
+  refreshFlights.set(tenantId, flight);
+  return flight;
+}
+async function refreshCalendlyToken(
+
   admin: SupabaseClient,
   tenantId: string
 ): Promise<CalendlyTenantConfig | null> {
   const config = await getCalendlyConfig(admin, tenantId);
-  if (!config?.refreshToken || !config.expiresAt) return config;
+  if (!config) return null;
+  const expiresAt = config.expiresAt ? Date.parse(config.expiresAt) : NaN;
+  if (!config.refreshToken) {
+    if (Number.isFinite(expiresAt) && expiresAt < Date.now()) throw new CalendlyReconnectRequiredError();
+    return config;
+  }
+  if (!config.expiresAt) return config;
   if (new Date(config.expiresAt).getTime() >= Date.now() + 5 * 60_000) return config;
 
   const clientId = ENV.VITE_CALENDLY_CLIENT_ID || '';
   const clientSecret = ENV.CALENDLY_CLIENT_SECRET || '';
+  if (!clientId || !clientSecret) throw new Error('Calendly OAuth refresh is not configured on the server.');
   const tokenRes = await fetch('https://auth.calendly.com/oauth/token', {
     method: 'POST',
+    signal: AbortSignal.timeout(15_000),
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
@@ -179,7 +202,11 @@ export async function refreshCalendlyTokenIfNeeded(
     }),
   });
 
-  if (!tokenRes.ok) throw new Error('Calendly token expired. Please reconnect.');
+  if (!tokenRes.ok) {
+    const failure = await tokenRes.json().catch(() => ({}));
+    if (tokenRes.status === 401 || failure.error === 'invalid_grant') throw new CalendlyReconnectRequiredError();
+    throw new Error(`Calendly token refresh unavailable (${tokenRes.status}). Try again later.`);
+  }
 
   const tokens = await tokenRes.json();
   return saveCalendlyIntegration({
