@@ -117,7 +117,7 @@ function memoryStore(evidenceInput) {
     async read() { return row; }, async save(id, status, output) { row = { ...row, action_id: id, final_status: status, sanitized_output: output }; },
     async reconcile() { return evidence || null; }, setEvidence(value) { evidence = value; } };
 }
-function outreachFixture(sendImpl = async () => ({})) {
+function outreachFixture(sendImpl = async () => ({}), providerOptions = {}) {
   let sends = 0; const stores = new Map();
   const admin = queryFixture(async s => {
     if (s.table === 'mcp_action_receipts') {
@@ -132,11 +132,12 @@ function outreachFixture(sendImpl = async () => ({})) {
       }
       return { data: s.filters.idempotency_key ? found[0] || null : found, error: null };
     }
-    return { data: s.table === 'lead_outreach_log' && s.operation === 'insert' ? { id: 'log-test' } : s.table === 'tenants' ? { name: 'Test workspace' } : s.table === 'integrations' ? [] : null, error: null };
+    return { data: s.table === 'lead_outreach_log' && s.operation === 'insert' ? { id: 'log-test' } : s.table === 'tenants' ? { name: 'Test workspace' } : s.table === 'integrations' ? (providerOptions.integrations || []) : null, error: null };
   });
   const access = { admin, user: { id: userId, email: 'owner@example.com', user_metadata: {} } };
   const connections = { getConnection: async () => ({ user_id: userId, microsoft_email: 'owner@example.com' }), sendEmail: async () => { sends++; return sendImpl(); } };
   const module = load('src/app/api/outreach/send/route.ts', {
+    '../../../../services/zoho/ZohoMailService': { ZohoMailService: class { async getSenderAddresses() { return providerOptions.addresses || ['bonnie@company.example']; } async sendEmail(params) { sends++; providerOptions.onSend?.(params); return { status: { code: 200 }, data: { messageId: 'native-zoho-1' } }; } } },
     'next/server': fakeResponse,
     '@/lib/email/outreachApproval': approval,
     '@/lib/email/emailOperation': { runEmailOperation: run, emailOperationStore: (tenant, tool, key, evidenceInput) => { if (!stores.has(key)) stores.set(key, memoryStore(evidenceInput)); return stores.get(key); } },
@@ -446,4 +447,21 @@ test('corrected sender retries only a failed receipt and only one worker reclaim
   assert.equal(await store.claim('three'), false);
   record = { final_status: 'provider_accepted', sender_revision: 'old' };
   assert.equal(await store.claim('four'), false);
+});
+
+test('Zoho OAuth configuration discovers its sender before validating missing fromEmail', async () => {
+  let actual;
+  const f = outreachFixture(undefined, { integrations: [{ type: 'zoho', config: { accountId: 'native-account', refreshToken: 'mock-token' } }], onSend: params => actual = params });
+  const payload = { ...f.payload, preferredProvider: 'zoho', deliveryProviders: ['zoho'] };
+  const issued = await (await f.module.POST(f.request(payload, { 'x-outreach-phase': 'approve' }))).json();
+  const result = await (await f.module.POST(f.request(payload, { 'x-outreach-approval': issued.approvalToken }))).json();
+  assert.equal(result.success, true); assert.equal(result.deliveryStatus, 'provider_accepted'); assert.equal(f.sends, 1);
+  assert.equal(actual.fromAddress, 'bonnie@company.example');
+});
+test('Zoho with no provider sender remains a definite pre-send failure', async () => {
+  const f = outreachFixture(undefined, { integrations: [{ type: 'zoho', config: { accountId: 'native-account' } }], addresses: [] });
+  const payload = { ...f.payload, preferredProvider: 'zoho', deliveryProviders: ['zoho'] };
+  const issued = await (await f.module.POST(f.request(payload, { 'x-outreach-phase': 'approve' }))).json();
+  const result = await (await f.module.POST(f.request(payload, { 'x-outreach-approval': issued.approvalToken }))).json();
+  assert.equal(result.code, 'EMAIL_SENDER_NOT_VERIFIED'); assert.equal(f.sends, 0);
 });

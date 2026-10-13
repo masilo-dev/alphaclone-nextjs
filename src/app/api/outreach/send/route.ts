@@ -489,37 +489,9 @@ async function executeOutreach(request: Request, access: Awaited<ReturnType<type
         return (providerCounts.get(provider.provider) || 0) < provider.dailyLimit;
       });
 
-    const invalidProviderConfigs = providerQueue
-      .filter((provider) => {
-        if (provider.provider === 'microsoft' || provider.provider === 'zoho') {
-          return !provider.fromEmail;
-        }
-        return !provider.apiKey || !provider.fromEmail;
-      })
-      .map((provider) => ({
-        provider: provider.provider,
-        missing: {
-          apiKey:
-            provider.provider === 'microsoft' || provider.provider === 'zoho'
-              ? false
-              : !provider.apiKey,
-          fromEmail: !provider.fromEmail,
-        },
-      }));
-
-    if (invalidProviderConfigs.length > 0 && invalidProviderConfigs.length === providerQueue.length) {
-      return NextResponse.json(
-        {
-          success: false,
-          status: 'failed',
-          error: 'Email provider configuration is incomplete. Update API key and sender email in Integrations.',
-          code: 'OUTREACH_PROVIDER_CONFIG_INVALID',
-          invalidProviders: invalidProviderConfigs,
-        },
-        { status: 400 }
-      );
-    }
-
+    // Provider configuration is resolved by its authoritative transport. Zoho OAuth
+    // rows contain account/token fields, not a cached fromEmail or an API key.
+    // Validate the actual connected sender below before any provider write.
     if (!providerQueue.length) {
       return NextResponse.json({ success: false, status: 'failed', error: 'No provider selected' }, { status: 500 });
     }
@@ -542,6 +514,7 @@ async function executeOutreach(request: Request, access: Awaited<ReturnType<type
         return NextResponse.json({ success: false, status: 'failed', code: 'EMAIL_SENDER_NOT_VERIFIED', error: 'Select a sender available on the connected Zoho account. No email was sent.' }, { status: 422 });
       }
       zohoConfig.fromEmail = requested || addresses.find((address) => address.toLowerCase() === zohoConfig.fromEmail.toLowerCase()) || addresses[0] || '';
+      if (!zohoConfig.fromEmail) return NextResponse.json({ success: false, status: 'failed', code: 'EMAIL_SENDER_NOT_VERIFIED', error: 'Zoho did not return a sender for the connected mailbox. Check its sending permissions. No email was sent.' }, { status: 422 });
     }
 
     for (const selectedProvider of [approvedProvider]) {
