@@ -467,11 +467,12 @@ export class ZohoMailService extends ZohoService {
         const { base } = await this.getMailBase();
         const uploaded = [];
         for (const attachment of attachments || []) {
-            const response = await this.callZohoAPI(`${base}/messages/attachments?fileName=${encodeURIComponent(attachment.filename)}&isInline=false`, {
-                // Zoho's raw-upload endpoint requires its API media type, not the
-                // document MIME (application/pdf, DOCX, etc.). Keep the body binary.
-                method:'POST', headers:{'Content-Type':'application/json', 'Accept':'application/json'},
-                body:new Uint8Array(Buffer.from(attachment.content,'base64')),
+            const body = new FormData();
+            body.append('attach', new Blob([new Uint8Array(Buffer.from(attachment.content, 'base64'))], {
+                type: attachment.contentType || 'application/octet-stream',
+            }), attachment.filename);
+            const response = await this.callZohoAPI(`${base}/messages/attachments?uploadType=multipart&isInline=false`, {
+                method: 'POST', headers: { Accept: 'application/json' }, body,
             });
             const data = Array.isArray(response.data) ? response.data[0] : response.data;
             if (!data?.storeName || !data?.attachmentName || !data?.attachmentPath) throw new Error('ZOHO_ATTACHMENT_UPLOAD_FAILED: Zoho did not return a complete attachment reference');

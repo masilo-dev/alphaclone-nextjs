@@ -335,14 +335,18 @@ export class ZohoService {
      */
     protected async callZohoAPI(url: string, options: RequestInit = {}): Promise<any> {
         const makeRequest = async (token: string): Promise<Response> => {
+            const headers = new Headers(options.headers);
+            if (options.body instanceof FormData) {
+                // fetch must generate the multipart boundary for this body.
+                headers.delete('Content-Type');
+            } else if (!headers.has('Content-Type')) {
+                headers.set('Content-Type', 'application/json');
+            }
+            headers.set('Authorization', `Zoho-oauthtoken ${token}`);
             return fetch(url, {
                 ...options,
                 signal: options.signal || AbortSignal.timeout(10_000),
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...options.headers,
-                    Authorization: `Zoho-oauthtoken ${token}`,
-                },
+                headers,
             });
         };
 

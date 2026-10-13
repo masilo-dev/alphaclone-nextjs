@@ -14,7 +14,7 @@ function load(path, dependencies = {}) {
   const source = fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const exports = {};
-  vm.runInNewContext(code, { exports, require: (name) => name === 'node:crypto' ? crypto : dependencies[name] || {}, crypto, console, setTimeout, clearTimeout, process, ...(dependencies.__globals || {}) }, { filename: path });
+  vm.runInNewContext(code, { exports, require: (name) => name === 'node:crypto' ? crypto : dependencies[name] || {}, crypto, console, setTimeout, clearTimeout, process, FormData, Blob, Headers, AbortSignal, ...(dependencies.__globals || {}) }, { filename: path });
   return exports;
 }
 function memoryStore() {
@@ -241,7 +241,7 @@ test('Zoho uploads PDF bytes before sending only file-store references',async()=
  const {ZohoMailService}=load('src/services/zoho/ZohoMailService.ts',{'./ZohoService':{ZohoService:Base},'@/lib/email/emailComposition':{normalizeEmailSubject:v=>v,ensureFooter:v=>v},'@/lib/email/parseEmailHeader':{extractEmailAddress:v=>v},__globals:{Buffer}});
  const service=new ZohoMailService();service.getSenderAddresses=async()=>['chosen@example.com'];
  await service.sendEmail({fromAddress:'chosen@example.com',toAddress:'bonniiehendrix@gmail.com',subject:'TEST ONLY',content:'Nonbinding test',attachments:[{filename:'TEST_ONLY.pdf',content:Buffer.from('%PDF-test').toString('base64'),contentType:'application/pdf'}]});
- assert.equal(calls.length,2);assert.match(calls[0].url,/accounts\/chosen\/messages\/attachments\?fileName=TEST_ONLY.pdf/);assert.equal(Buffer.from(calls[0].options.body).toString(),'%PDF-test');const body=JSON.parse(calls[1].options.body);assert.deepEqual(body.attachments,[{storeName:'store',attachmentName:'TEST_ONLY.pdf',attachmentPath:'/Mail/test.pdf'}]);assert.equal(body.toAddress,'bonniiehendrix@gmail.com');assert.equal(body.attachments[0].content,undefined);
+ assert.equal(calls.length,2);assert.match(calls[0].url,/accounts\/chosen\/messages\/attachments\?uploadType=multipart/);assert.equal(Buffer.from(await calls[0].options.body.get('attach').arrayBuffer()).toString(),'%PDF-test');const body=JSON.parse(calls[1].options.body);assert.deepEqual(body.attachments,[{storeName:'store',attachmentName:'TEST_ONLY.pdf',attachmentPath:'/Mail/test.pdf'}]);assert.equal(body.toAddress,'bonniiehendrix@gmail.com');assert.equal(body.attachments[0].content,undefined);
 });
 test('incomplete Zoho upload evidence prevents the send POST',async()=>{
  let requests=0;class Base{async getConfig(){return {accountId:'chosen',mailApiHost:'mail.zoho.eu'}};async callZohoAPI(){requests++;return {data:{storeName:'incomplete'}}}}
@@ -258,7 +258,7 @@ test('provider HTTP 5xx remains uncertain and stops all provider fallback', asyn
 });
 
 
-test('Zoho raw uploads use the endpoint media type for every document type without altering bytes', async () => {
+test('Zoho multipart uploads preserve each document MIME, filename and bytes', async () => {
  const calls = [];
  class Base {
   async getConfig() { return { accountId:'chosen', mailApiHost:'mail.zoho.eu' }; }
@@ -270,10 +270,37 @@ test('Zoho raw uploads use the endpoint media type for every document type witho
   const bytes = Buffer.from([0, 255, 80, 68, 70, 13, 10]);
   await service.uploadMailAttachments([{ filename, contentType, content:bytes.toString('base64') }]);
   const request = calls.at(-1);
-  assert.equal(request.options.headers['Content-Type'], 'application/json');
+  assert.equal(request.options.headers['Content-Type'], undefined);
   assert.equal(request.options.headers.Accept, 'application/json');
-  assert.deepEqual(Buffer.from(request.options.body), bytes);
-  assert.equal(new URL(request.url).searchParams.get('fileName'), filename);
+  assert.deepEqual(Buffer.from(await request.options.body.get('attach').arrayBuffer()), bytes);
+  assert.equal(request.options.body.get('attach').type, contentType);
+  assert.equal(request.options.body.get('attach').name, filename);
+  assert.equal(new URL(request.url).searchParams.get('uploadType'), 'multipart');
  }
  assert.equal(calls.length, 4);
+});
+
+test('Zoho HTTP transport generates a valid multipart boundary and keeps JSON sends separate', async () => {
+ const requests = [];
+ const { ZohoService } = load('src/services/zoho/ZohoService.ts', {
+  __globals: { fetch: async (url, options) => {
+   const request = new Request(url, options);
+   requests.push(request);
+   return new Response(JSON.stringify({ data: {} }), { status: 200 });
+  } },
+ });
+ const service = Object.create(ZohoService.prototype);
+ service.getValidAccessToken = async () => 'test-token';
+ const body = new FormData();
+ body.append('attach', new Blob(['%PDF-test'], { type: 'application/pdf' }), 'contract.pdf');
+ await service.callZohoAPI('https://mail.zoho.eu/api/accounts/chosen/messages/attachments?uploadType=multipart', {
+  method: 'POST', body, headers: new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' }),
+ });
+ assert.match(requests[0].headers.get('Content-Type'), /^multipart\/form-data; boundary=/);
+ assert.equal(requests[0].headers.get('Authorization'), 'Zoho-oauthtoken test-token');
+ const attachment = (await requests[0].formData()).get('attach');
+ assert.equal(attachment.name, 'contract.pdf');
+ assert.equal(await attachment.text(), '%PDF-test');
+ await service.callZohoAPI('https://mail.zoho.eu/api/accounts/chosen/messages', { method: 'POST', body: JSON.stringify({ subject: 'Test' }) });
+ assert.equal(requests[1].headers.get('Content-Type'), 'application/json');
 });
