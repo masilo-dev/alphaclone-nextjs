@@ -566,7 +566,7 @@ defineConnectorTool({
     const supabase = createSupabaseAdminClient();
     const { data: approvals } = await supabase
       .from('bonnie_approvals')
-      .select('id, tool_name, status, created_at, risk_class')
+      .select('id, name, status, created_at, metadata')
       .eq('tenant_id', args.tenant_id)
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
@@ -580,7 +580,7 @@ defineConnectorTool({
       .limit(20);
 
     return {
-      pending_approvals: approvals || [],
+      pending_approvals: (approvals || []).map((row) => ({ ...row, tool_name: row.name, risk_class: row.metadata?.risk_class || null })),
       recent_executions: recent || [],
     };
   },

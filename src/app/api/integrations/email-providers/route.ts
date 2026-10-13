@@ -168,7 +168,7 @@ export async function DELETE(request: NextRequest) {
 
     const { error } = await supabase
       .from('integrations')
-      .delete()
+      .update({ enabled: false, config: {}, updated_at: new Date().toISOString() })
       .eq('tenant_id', tenantId)
       .eq('user_id', tenantCtx.user.id)
       .eq('type', provider);
@@ -176,6 +176,11 @@ export async function DELETE(request: NextRequest) {
     if (error) {
       return NextResponse.json({ error: error.message, code: 'INTEGRATION_DELETE_FAILED' }, { status: 500 });
     }
+
+    const { error: accountError } = await supabase.from('email_provider_accounts')
+      .update({ connection_status: 'disconnected', deleted_at: new Date().toISOString() })
+      .eq('tenant_id', tenantId).eq('owner_user_id', tenantCtx.user.id).eq('provider', provider);
+    if (accountError) throw accountError;
 
     return NextResponse.json({ success: true });
   } catch (error) {

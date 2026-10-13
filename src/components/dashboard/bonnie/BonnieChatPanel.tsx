@@ -343,14 +343,14 @@ export default function BonnieChatPanel({
       if (!tenantId || sending || !transcript.trim()) return;
       setSending(true);
       setAgentPhase('executing');
-      const userMsg: BonnieChatMessage = { id: `user-voice-${Date.now()}`, role: 'user', text: `🎤 ${transcript}` };
+      const userMsg: BonnieChatMessage = { id: crypto.randomUUID(), role: 'user', text: `🎤 ${transcript}` };
       setMessages((prev) => [...prev, userMsg]);
       try {
         const res = await bonnieService.sendVoiceCommand(tenantId, transcript, { pathname });
         setMessages((prev) => [
           ...prev,
           {
-            id: `assistant-voice-${Date.now()}`,
+            id: crypto.randomUUID(),
             role: 'assistant',
             text: res.response,
             error: !res.success,
@@ -386,7 +386,7 @@ export default function BonnieChatPanel({
       setMessages((prev) => [
         ...prev,
         {
-          id: `voice-err-${Date.now()}`,
+          id: crypto.randomUUID(),
           role: 'assistant',
           text: 'Voice input is not supported in this browser. Use Chrome or Edge.',
           error: true,
@@ -454,7 +454,7 @@ export default function BonnieChatPanel({
     if (!text || sending || disabled) return;
 
     const userMsg: BonnieChatMessage = {
-      id: `user-${Date.now()}`,
+      id: crypto.randomUUID(),
       role: 'user',
       text,
     };
@@ -500,7 +500,7 @@ export default function BonnieChatPanel({
 
     try {
       if (streaming && onStreamSend) {
-        const streamMsgId = `assistant-${Date.now()}`;
+        const streamMsgId = crypto.randomUUID();
         setMessages((prev) => [...prev, { id: streamMsgId, role: 'assistant', text: '' }]);
         setAgentPhase('responding');
 
@@ -570,7 +570,7 @@ export default function BonnieChatPanel({
         setMessages((prev) => [
           ...prev,
           {
-            id: `assistant-${Date.now()}`,
+            id: crypto.randomUUID(),
             role: 'assistant',
             text: result.text,
             error: result.error,
@@ -588,7 +588,7 @@ export default function BonnieChatPanel({
         setMessages((prev) => [
           ...prev,
           {
-            id: `assistant-stop-${Date.now()}`,
+            id: crypto.randomUUID(),
             role: 'assistant',
             text: 'Response stopped. Any action already submitted may still be processing; check its status before retrying.',
           },
@@ -597,7 +597,7 @@ export default function BonnieChatPanel({
         setMessages((prev) => [
           ...prev,
           {
-            id: `assistant-${Date.now()}`,
+            id: crypto.randomUUID(),
             role: 'assistant',
             text: 'Bonnie could not finish this request. Your conversation is saved. Check any pending actions before trying again.',
             error: true,
@@ -820,7 +820,7 @@ export default function BonnieChatPanel({
                     if (result.success) {
                       const followUps: BonnieChatMessage[] = [
                         {
-                          id: `assistant-approval-${Date.now()}`,
+                          id: crypto.randomUUID(),
                           role: 'assistant',
                           text: result.message
                             ? `Approved and executed: ${result.message}`
@@ -830,7 +830,7 @@ export default function BonnieChatPanel({
                       ];
                       if (result.continuation?.response) {
                         followUps.push({
-                          id: `assistant-resume-${Date.now() + 1}`,
+                          id: crypto.randomUUID(),
                           role: 'assistant',
                           text: result.continuation.response,
                           executionStatus: result.continuation.executionStatus,
@@ -853,7 +853,7 @@ export default function BonnieChatPanel({
                           m.id === msg.id ? { ...m, approval: undefined } : m
                         ),
                         {
-                          id: `assistant-reject-${Date.now()}`,
+                          id: crypto.randomUUID(),
                           role: 'assistant',
                           text: 'Action cancelled. I will not proceed with that step.',
                         },

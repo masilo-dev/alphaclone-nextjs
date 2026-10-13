@@ -310,7 +310,7 @@ async function logRateLimitViolation(identifier: string, ipAddress: string, path
                     user_id: null,
                     action: 'rate_limit_exceeded',
                     resource_type: 'api',
-                    resource_id: path,
+                    resource_id: null,
                     metadata: {
                         identifier,
                         ip_address: ipAddress,
