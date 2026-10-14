@@ -196,8 +196,9 @@ export function buildContractDocumentInput(
   // Legacy agreements often embed an unsigned signature form in their HTML.
   // Remove only that trailing form: the structured signature renderer below
   // shows authoritative signer state and preserves actual signature evidence.
-  const withoutLegacySignatureForm = /<h[1-6][^>]*>\\s*(?:\\d+[.)]\\s*)?signatures?\\s*<\\/h[1-6]>/i.test(content)
-    ? content.replace(/(?:<\\/p>\\s*)?<p[^>]*>\\s*)?<h[1-6][^>]*>\\s*(?:\\d+[.)]\\s*)?signatures?\\s*<\\/h[1-6]>[\\s\\S]*$/i, '')
+  const signatureHeadingMatch = /<h[1-6][^>]*>\s*(?:\d+[.)]\s*)?signatures?\s*<\/h[1-6]>/i.exec(content);
+  const withoutLegacySignatureForm = signatureHeadingMatch
+    ? content.slice(0, signatureHeadingMatch.index)
     : content;
   const sections = parseContractContentToSections(withoutLegacySignatureForm);
   const paymentAmount = Number(contract.payment_amount ?? meta.payment_amount ?? 0);
