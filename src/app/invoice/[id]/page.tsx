@@ -151,7 +151,7 @@ function PublicInvoiceContent() {
             <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-[var(--ws-text-muted)] font-mono type-caption tracking-widest uppercase">Initializing Secure Payment Gateway</p>
+                    <p className="text-[var(--ws-text-muted)] font-mono type-caption tracking-widest uppercase">Loading your invoice</p>
                 </div>
             </div>
         );
@@ -180,11 +180,13 @@ function PublicInvoiceContent() {
             amount,
         };
     });
-    const subtotal = Math.round(normalizedItems.reduce((sum: number, item: any) => sum + item.amount, 0) * 100) / 100;
+    const lineItemSubtotal = Math.round(normalizedItems.reduce((sum: number, item: any) => sum + item.amount, 0) * 100) / 100;
+    const subtotal = normalizedItems.length ? lineItemSubtotal : Number(invoice.subtotal ?? 0);
     const discount = Number(invoice.discount_amount ?? invoice.discountAmount ?? 0);
     const taxRate = Number(invoice.tax_rate ?? invoice.taxRate ?? 0);
     const taxAmount = Math.round(Math.max(0, subtotal - discount) * (taxRate / 100) * 100) / 100;
     const total = Number(invoice.total ?? 0) || Math.round(((subtotal - discount) + taxAmount) * 100) / 100;
+    const invoiceNeedsAttention = invoice.status === 'draft' || normalizedItems.length === 0 || subtotal <= 0 || Math.abs(total - (subtotal - discount + taxAmount)) > 0.01;
     const balanceDue = Math.max(0, Number(invoice.balanceDue ?? total - Number(invoice.amountPaid || 0)));
     const formatMoney = (amount: number) => new Intl.NumberFormat(undefined, { style: 'currency', currency: invoice.currency || 'USD' }).format(amount);
     const isPaid = invoice.status === 'paid';
@@ -217,6 +219,12 @@ function PublicInvoiceContent() {
                             <p className="text-[var(--ws-text-muted)] type-card-description sm:text-sm font-mono">INVOICE & PAYMENT</p>
                         </div>
                     </div>
+
+                    {invoiceNeedsAttention && (
+                        <div role="alert" className="rounded-xl border border-amber-400/40 bg-amber-500/10 p-4 text-sm text-amber-100">
+                            This invoice is not finalized. Please contact the issuer before making a payment. Billing details may be incomplete.
+                        </div>
+                    )}
 
                     {/* Status Pipeline */}
                     <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-5">
@@ -256,6 +264,7 @@ function PublicInvoiceContent() {
                         <div className="space-y-4 border-t border-white/5 pt-8">
                             <p className="text-[var(--ws-text-muted)] type-caption uppercase font-bold mb-4">Billing Summary</p>
                             <div className="space-y-3">
+                                {normalizedItems.length === 0 && <p className="text-sm text-[var(--ws-text-muted)]">No itemized services have been provided for this invoice.</p>}
                                 {normalizedItems.map((item: any, idx: number) => (
                                     <div key={idx} className="flex justify-between items-center gap-3 bg-[var(--ws-canvas)] p-4 rounded-xl border border-white/5">
                                         <div className="min-w-0">
@@ -350,7 +359,7 @@ function PublicInvoiceContent() {
 
                                         <button
                                             onClick={handlePayment}
-                                            disabled={processing}
+                                            disabled={processing || invoiceNeedsAttention}
                                             className="w-full py-4 bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:bg-teal-900 disabled:text-teal-500 text-black font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_10px_30px_rgba(20,184,166,0.3)] hover:-translate-y-1"
                                         >
                                             {processing ? (
@@ -358,7 +367,7 @@ function PublicInvoiceContent() {
                                                     <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
                                                     Processing...
                                                 </span>
-                                            ) : `Pay ${formatMoney(balanceDue)} Now`}
+                                            ) : invoiceNeedsAttention ? 'Payment unavailable until invoice is finalized' : `Pay ${formatMoney(balanceDue)} Now`}
                                         </button>
                                     </div>
 
