@@ -380,7 +380,7 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
 
   const signersHtml =
     input.signers && input.signers.length > 0
-      ? `<div class="signature-block" style="margin-top:40px;padding-top:24px;border-top:1px solid #cbd5e1;page-break-inside:avoid;break-inside:avoid;">
+      ? `<div class="signature-block" style="margin-top:18px;padding-top:12px;border-top:1px solid #cbd5e1;page-break-inside:auto;break-inside:auto;">
           <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:${primary};margin-bottom:18px;">Execution & Signatures</div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:20px;">
             ${input.signers
@@ -395,7 +395,7 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
                     ${
                       isSigned
                         ? hasSigImg
-                          ? `<img src="${escapeHtml(signer.signatureUrl!)}" alt="Signature of ${escapeHtml(signer.name)}" style="max-height:50px;max-width:200px;object-fit:contain;" />`
+                          ? `<img src="${escapeHtml(signer.signatureUrl!)}" alt="Signature of ${escapeHtml(signer.name)}" style="max-height:70px;max-width:220px;width:auto;height:auto;object-fit:contain;" />`
                           : `<span style="font-family:'Brush Script MT', 'Dancing Script', 'Caveat', cursive, serif;font-size:26px;color:#1e3a8a;line-height:1.2;">${escapeHtml(typedText)}</span>`
                         : `<span style="font-size:12px;color:#94a3b8;font-style:italic;">Awaiting signature</span>`
                     }
@@ -423,7 +423,7 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
       ? `<div style="margin-top:20px;padding:12px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#475569;page-break-inside:avoid;break-inside:avoid;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
             <span style="font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#334155;">Cryptographic Audit Certificate</span>
-            <span style="color:#059669;font-weight:600;font-size:10px;text-transform:uppercase;">Tamper-Sealed Verification</span>
+            <span style="color:#059669;font-weight:600;font-size:10px;text-transform:uppercase;">${input.auditCertificate.tamperSeal ? 'Tamper-Sealed Verification' : 'Content Integrity Record'}</span>
           </div>
           ${input.auditCertificate.documentHash ? `<div><span style="color:#64748b;">Content Hash (SHA-256):</span> <code style="font-family:monospace;font-size:10px;background:#f1f5f9;padding:1px 4px;border-radius:3px;">${escapeHtml(input.auditCertificate.documentHash)}</code></div>` : ''}
           ${input.auditCertificate.tamperSeal ? `<div style="margin-top:3px;"><span style="color:#64748b;">Tamper Seal:</span> <code style="font-family:monospace;font-size:10px;background:#f1f5f9;padding:1px 4px;border-radius:3px;">${escapeHtml(input.auditCertificate.tamperSeal)}</code></div>` : ''}
@@ -474,8 +474,11 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
     .total-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 18px; text-align: right; margin-top: 24px; page-break-inside: avoid; break-inside: avoid; }
     .total-amount { font-size: 26px; font-weight: 800; color: ${primary}; font-family: monospace; }
     .status-ribbon { display: inline-block; padding: 3px 10px; border-radius: 9999px; border: 1px solid #cbd5e1; color: #334155; font-size: 11px; font-weight: 600; text-transform: uppercase; background: #f8fafc; }
-    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #64748b; page-break-inside: avoid; break-inside: avoid; }
-    h2 { page-break-after: avoid; break-after: avoid; }\n    section { break-inside: auto; page-break-inside: auto; }\n    section p { orphans: 3; widows: 3; }\n    section h2 + div { break-before: avoid; }
+    .footer { margin-top: 12px; padding-top: 8px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #64748b; }
+    h2 { page-break-after: avoid; break-after: avoid-page; }
+    section h2 { break-after: avoid-page; page-break-after: avoid; }
+    section h2 + div { break-before: avoid-page; page-break-before: avoid; }
+    section p:first-child { break-before: avoid-page; }\n    section { break-inside: auto; page-break-inside: auto; }\n    section p { orphans: 3; widows: 3; }\n    section h2 + div { break-before: avoid; }
     .signature-block { page-break-inside: avoid; break-inside: avoid; }
     table thead { display: table-header-group; }
     tr { page-break-inside: avoid; break-inside: avoid; }
