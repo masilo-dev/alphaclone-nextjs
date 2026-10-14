@@ -193,7 +193,13 @@ export function buildContractDocumentInput(
 ): RenderDocumentInput {
   const meta = (contract.metadata || {}) as Record<string, unknown>;
   const content = String(contract.content || contract.original_content || '');
-  const sections = parseContractContentToSections(content);
+  // Legacy agreements often embed an unsigned signature form in their HTML.
+  // Remove only that trailing form: the structured signature renderer below
+  // shows authoritative signer state and preserves actual signature evidence.
+  const withoutLegacySignatureForm = /<h[1-6][^>]*>\\s*(?:\\d+[.)]\\s*)?signatures?\\s*<\\/h[1-6]>/i.test(content)
+    ? content.replace(/(?:<\\/p>\\s*)?<p[^>]*>\\s*)?<h[1-6][^>]*>\\s*(?:\\d+[.)]\\s*)?signatures?\\s*<\\/h[1-6]>[\\s\\S]*$/i, '')
+    : content;
+  const sections = parseContractContentToSections(withoutLegacySignatureForm);
   const paymentAmount = Number(contract.payment_amount ?? meta.payment_amount ?? 0);
 
   const signers: NonNullable<RenderDocumentInput['signers']> = [];
@@ -210,7 +216,7 @@ export function buildContractDocumentInput(
       const signatureUrl = party.signature_url
         ? String(party.signature_url)
         : signed
-          ? String(contract.client_signature || contract.admin_signature || '')
+          ? String(/client/i.test(rawRole) ? (contract.client_signature || '') : /provider|admin|owner/i.test(rawRole) ? (contract.admin_signature || '') : '')
           : undefined;
       const date = party.signed_at ? new Date(String(party.signed_at)).toLocaleDateString() : undefined;
 
