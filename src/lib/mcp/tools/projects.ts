@@ -26,6 +26,13 @@ registerTool('projects', {
   handler: async args => updatePersistedProject(createSupabaseAdminClient(), args.tenant_id, args.project_id, {status: args.status, ...(args.notes === undefined ? {} : {description: args.notes})}),
 });
 
+registerTool('projects', {
+  name:'get_project_summary',description:'Read the canonical project, task summary, milestones, client, contracts, invoices, deadlines and activity.',
+  inputSchema:z.object({tenant_id:z.string().uuid(),project_id:z.string().uuid()}),
+  jsonSchema:{type:'object',properties:{tenant_id:{type:'string',format:'uuid'},project_id:{type:'string',format:'uuid'}},required:['tenant_id','project_id']},
+  handler:async args => {const {loadProjectLifecycleSummary}=await import('@/lib/projects/projectLifecycleSummary');return loadProjectLifecycleSummary(createSupabaseAdminClient(),args.tenant_id,args.project_id);},
+});
+
 // 1. get_projects
 registerTool('projects', {
   name: 'get_projects',
@@ -56,7 +63,13 @@ registerTool('projects', {
     tenant_id: z.string().uuid(),
     name: z.string().trim().min(1),
     client_id: z.string().uuid().optional(),
-    status: z.string().optional().default('active'),
+    status: z.string().optional().default('pending'),
+    template_id:z.string().uuid().optional(),
+    contract_id:z.string().uuid().optional(),
+    project_type:z.string().optional(),
+    progress_method:z.enum(['task_based','weighted_tasks','milestones','manual']).optional(),
+    is_test_data:z.boolean().optional(),
+    historical_import:z.boolean().optional(),
     description: z.string().optional(),
     due_date: z.string().optional(),
     idempotency_key: z.string().min(1).optional(),
@@ -67,7 +80,8 @@ registerTool('projects', {
       tenant_id: { type: 'string', format: 'uuid' },
       name: { type: 'string' },
       client_id: { type: 'string', format: 'uuid' },
-      status: { type: 'string', default: 'active' },
+      status: { type: 'string', default: 'pending' },
+      template_id:{type:'string',format:'uuid'},contract_id:{type:'string',format:'uuid'},project_type:{type:'string'},progress_method:{type:'string',enum:['task_based','weighted_tasks','milestones','manual']},is_test_data:{type:'boolean'},historical_import:{type:'boolean'},
       description: { type: 'string' },
       due_date: { type: 'string', format: 'date-time' },
       idempotency_key: {type: 'string'},
@@ -89,10 +103,10 @@ registerTool('projects', {
           : undefined,
       input: {
         name: args.name,
-        clientId: args.client_id,
+        clientId: args.client_id, contractId:args.contract_id,
         status: args.status,
         description: args.description,
-        dueDate: args.due_date,
+        dueDate: args.due_date, templateId:args.template_id, projectType:args.project_type,progressMethod:args.progress_method,isTestData:args.is_test_data,historicalImport:args.historical_import,
       },
     });
     if (!execution.ok || !execution.result) {
@@ -102,6 +116,8 @@ registerTool('projects', {
       ...execution.result.project,
       created: execution.result.created,
       duplicate: execution.result.duplicate,
+      templateApplication:execution.result.templateApplication,
+      lifecycle:{project_persisted:true,template_initialized:Boolean(execution.result.templateApplication),confirmation_email_status:execution.result.created?'queued_for_policy_evaluation':'existing_project_no_new_confirmation'},
       receipt: {action_id: execution.execution_id, status: 'verified', entity_type: 'project', entity_id: String(execution.result.project.id), timestamp: new Date().toISOString()},
       execution_id: execution.execution_id,
       idempotency_key: execution.idempotency_key,
@@ -169,7 +185,7 @@ registerTool('projects', {
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
-      .eq('related_to_project', args.project_id)
+      .or(`related_to_project.eq.${args.project_id},project_id.eq.${args.project_id}`)
       .eq('tenant_id', args.tenant_id);
 
     if (error) throw error;
@@ -341,7 +357,7 @@ registerTool('projects', {
         : supabase.from('deals').select('id, title, stage, value').eq('project_id', args.project_id).eq('tenant_id', args.tenant_id),
       supabase.from('business_invoices').select('id, invoice_number, status, total_amount').eq('project_id', args.project_id).eq('tenant_id', args.tenant_id),
       supabase.from('contracts').select('id, title, status').eq('project_id', args.project_id).eq('tenant_id', args.tenant_id),
-      supabase.from('tasks').select('id, title, status, priority, due_date').eq('related_to_project', args.project_id).eq('tenant_id', args.tenant_id),
+      supabase.from('tasks').select('id, title, status, priority, due_date').or(`related_to_project.eq.${args.project_id},project_id.eq.${args.project_id}`).eq('tenant_id', args.tenant_id),
     ]);
 
     return {

@@ -1,0 +1,10 @@
+{
+  "provider": "zoho",
+  "recipient": "bornfacemasilo22@gmail.com",
+  "subject": "AlphaClone delivery test \u2014 14 October 2026",
+  "provider_message_id": "1791988564297002100",
+  "canonical_message_id": "75ca0299-dc91-47cb-8045-2baac65eb5de",
+  "status": "provider_accepted",
+  "delivered_at": null,
+  "verification": "Canonical acceptance event and independent Zoho sent-message lookup; recipient delivery unconfirmed"
+}

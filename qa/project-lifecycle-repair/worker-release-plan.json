@@ -1,0 +1,22 @@
+{
+  "project": "c75eaf5f-1ec8-4565-b3b6-8e318f1251bd",
+  "environment": "78325a44-cd94-4b10-aa41-c09ebd978c7f",
+  "service_name": "alphaclone-durable-worker",
+  "source": "masilo-dev/alphaclone-nextjs",
+  "source_commit": "pending approval to publish worker repair",
+  "start_command": "npm run start:worker",
+  "restart_policy": "ALWAYS",
+  "variables": {
+    "BONNIE_DURABLE_RUNTIME": "true",
+    "WORKER_MODE": "bonnie",
+    "BONNIE_WORKER_TASK_CONCURRENCY": "1",
+    "BONNIE_WORKER_POLL_MS": "5000",
+    "BONNIE_WORKER_MIN_TASK_CREATED_AT": "set to activation time at deployment",
+    "BONNIE_WORKER_RECOVERY_TASK_IDS": "391ac3d9-9b0c-4977-87e4-951e9f134a2c"
+  },
+  "secret_handling": "Reference existing web-service variables; never copy secrets into source or reports.",
+  "backlog_policy": "Only new tasks and the explicitly authorized existing invoice task may execute; historical records remain preserved.",
+  "verification": ["Deployment SUCCESS", "Worker lease/attempt for original invoice", "PDF/email result", "Canonical provider receipt", "Delivery/bounce evidence if available"],
+  "database_migrations": "None for isolated shared-worker repair; project lifecycle migration is a separate release dependency.",
+  "status": "Prepared locally; no remote service or deployment created"
+}

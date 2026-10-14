@@ -106,6 +106,8 @@ export function registerManifestBridgeTools() {
           console.error(`[manifest-bridge] ${toolDef.name} MCPServer error:`, mcpServerError);
         }
 
+        if (mcpServerError) throw Object.assign(new Error(mcpServerError), {code:'MCP_OPERATION_FAILED'});
+
         // MCPServer returned nothing or errored — return structured not_configured
         // so ChatGPT can surface the real issue instead of showing fake success.
         const isOAuthRequired = /oauth|not connected|not configured|missing token|no account/i.test(mcpServerError || '');

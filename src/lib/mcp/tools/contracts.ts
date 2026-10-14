@@ -329,3 +329,28 @@ registerTool('contracts', {
     };
   },
 });
+
+registerTool('contracts', {
+  name: 'prepare_business_contract_signature',
+  description: 'Review the exact contract version and saved business signer before requesting explicit owner approval. Never returns signature image data.',
+  inputSchema: z.object({ contract_id: z.string().uuid() }),
+  jsonSchema: { type: 'object', properties: { contract_id: { type: 'string', format: 'uuid' } }, required: ['contract_id'] },
+  handler: async (args, ctx) => {
+    const { inspectSavedBusinessSignature } = await import('@/lib/contracts/savedBusinessSignature');
+    const prepared = await inspectSavedBusinessSignature(createSupabaseAdminClient(), ctx.tenantId, ctx.userId, args.contract_id);
+    return { contract_id: args.contract_id, status: prepared.contract.status, content_hash: prepared.contentHash,
+      signer_name: prepared.profile.signature!.fullName, signer_email: prepared.profile.providerEmail,
+      approval_required: true, consent_required: true, client_signature_applied: false };
+  },
+});
+registerTool('contracts', {
+  name: 'sign_contract_with_saved_business_signature',
+  description: 'Apply ONLY the authenticated owner’s saved business signature after explicit approval of the prepared contract hash and electronic-signature consent. Never signs for a client. Read back the resulting contract status; one signature does not establish full execution.',
+  inputSchema: z.object({ contract_id: z.string().uuid(), expected_content_hash: z.string().regex(/^[0-9a-f]{64}$/), owner_approved: z.literal(true), consent_given: z.literal(true) }),
+  jsonSchema: { type: 'object', properties: { contract_id: { type: 'string', format: 'uuid' }, expected_content_hash: { type: 'string' }, owner_approved: { type: 'boolean', const: true }, consent_given: { type: 'boolean', const: true } }, required: ['contract_id','expected_content_hash','owner_approved','consent_given'] },
+  handler: async (args, ctx) => {
+    const { applySavedBusinessSignature } = await import('@/lib/contracts/savedBusinessSignature');
+    return applySavedBusinessSignature(createSupabaseAdminClient(), { tenantId: ctx.tenantId, userId: ctx.userId,
+      contractId: args.contract_id, expectedContentHash: args.expected_content_hash, ownerApproved: args.owner_approved, consentGiven: args.consent_given });
+  },
+});

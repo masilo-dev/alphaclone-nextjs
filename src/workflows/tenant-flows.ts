@@ -1,5 +1,4 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { sendEmailServer } from '@/lib/email/sendEmailServer';
 
 export async function tenantCreatedWorkflow({ tenantId, payload }: { tenantId: string; payload: any }) {
     "use workflow";
@@ -9,6 +8,7 @@ export async function tenantCreatedWorkflow({ tenantId, payload }: { tenantId: s
 
 async function notifyPlatformStep(tenantId: string, payload: any) {
     "use step";
+  const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
 
     const supabase = createSupabaseAdminClient();
 

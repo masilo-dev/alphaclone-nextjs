@@ -65,7 +65,8 @@
     "test:tool-registry": "node --import tsx --test tests/unit/mcp-tool-registry-static-load.test.mjs tests/unit/mcp-tool-exposure-gate.test.mjs tests/unit/mcp-production-hardening.test.mjs",
     "chatgpt:annotate-connector": "node scripts/annotate-chatgpt-connector-tools.mjs",
     "verify:production": "npm run typecheck && npm test && npm run validate:prod-guards && npm run validate:env",
-    "typecheck:build": "cross-env NODE_OPTIONS=--max-old-space-size=5760 tsc --noEmit"
+    "typecheck:build": "cross-env NODE_OPTIONS=--max-old-space-size=5760 tsc --noEmit",
+    "test:project-lifecycle-db": "node tests/integration/project-lifecycle-postgres.test.mjs"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.0",
@@ -226,6 +227,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.9",
     "@playwright/test": "^1.58.1",
     "@tailwindcss/postcss": "^4",
     "@types/canvas-confetti": "^1.9.0",

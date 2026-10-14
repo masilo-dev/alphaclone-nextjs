@@ -1,6 +1,5 @@
 import { sleep } from 'workflow';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { sendScheduledCampaignServer } from '@/lib/server/sendScheduledCampaignServer';
 
 /**
  * Email Campaign Workflow
@@ -17,6 +16,7 @@ export async function emailCampaignWorkflow({ campaignId, tenantId }: { campaign
 
 async function dispatchCampaign(campaignId: string) {
   "use step";
+  const { sendScheduledCampaignServer } = await import('@/lib/server/sendScheduledCampaignServer');
   const result = await sendScheduledCampaignServer(campaignId);
   if (!result.success) {
     throw new Error(result.error || 'Campaign delivery failed');
@@ -26,6 +26,7 @@ async function dispatchCampaign(campaignId: string) {
 
 async function generateReport(campaignId: string) {
   "use step";
+  const { sendScheduledCampaignServer } = await import('@/lib/server/sendScheduledCampaignServer');
   const supabase = createSupabaseAdminClient();
   const { data: campaign } = await supabase
     .from('email_campaigns')

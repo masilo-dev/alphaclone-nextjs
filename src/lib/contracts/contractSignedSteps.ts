@@ -16,6 +16,7 @@ export type ContractSignedFlowInput = {
   tenantId: string;
   contractId: string;
   actorUserId?: string;
+  templateId?:string;
 };
 
 export type ContractSignedFlowResult = {
@@ -194,23 +195,11 @@ async function connectInvoiceToContractStep(
   }
 }
 
-async function kickoffProjectStep(contractId: string, tenantId: string) {
+async function kickoffProjectStep(contractId: string, tenantId: string,templateId?:string) {
   const supabase = createSupabaseAdminClient();
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
-  const { data: contract } = await supabase.from('contracts').select('*').eq('id', contractId).single();
+  const { data: contract } = await supabase.from('contracts').select('*').eq('tenant_id',tenantId).eq('id', contractId).single();
   if (!contract) return null;
-
-  if (contract.project_id) {
-    const { data: existingProject } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('id', contract.project_id)
-      .eq('tenant_id', tenantId)
-      .maybeSingle();
-    if (existingProject?.id) {
-      return existingProject;
-    }
-  }
 
   const dealId = resolveContractDealId(contract);
   let clientId = contract.client_id || null;
@@ -221,7 +210,7 @@ async function kickoffProjectStep(contractId: string, tenantId: string) {
     const { data: deal } = await supabase
       .from('deals')
       .select('contact_id, owner_id, name')
-      .eq('id', dealId)
+      .eq('tenant_id',tenantId).eq('id', dealId)
       .maybeSingle();
     ownerId = deal?.owner_id || null;
     clientId = clientId || deal?.contact_id || null;
@@ -229,29 +218,17 @@ async function kickoffProjectStep(contractId: string, tenantId: string) {
 
   const businessClientId = await resolveBusinessClientIdForParty(supabase, tenantId, clientId);
 
-  const { data: project } = await supabase
-    .from('projects')
-    .insert({
-      tenant_id: tenantId,
-      name: `Project: ${contract?.title || 'Signed Project'}`,
-      contract_id: contractId,
-      deal_id: dealId || null,
-      client_id: businessClientId,
-      owner_id: ownerId,
-      owner_name: ownerName,
-      category: 'Client Delivery',
-      current_stage: 'Initiation',
-      status: 'Active',
-      progress: 0,
-      contract_status: 'Signed',
-      auto_invoice_enabled: true,
-    })
-    .select()
-    .single();
+  const {executeProjectCreateCommand}=await import('@/lib/execution/commands/projectCreateCommand');
+  const activate=!contract.start_date || new Date(contract.start_date).getTime()<=Date.now();
+  const execution=await executeProjectCreateCommand({tenantId,userId:ownerId || contract.created_by || '',executionSource:'worker',
+    input:{name:`Project: ${contract.title || 'Signed Project'}`,contractId,dealId:dealId || undefined,clientId:businessClientId || undefined,status:activate?'Active':'Pending',executionAuthorized:activate,templateId,currentStage:'Initiation',category:'Client Delivery',ownerId:ownerId || undefined,ownerName:ownerName || undefined}});
+  if(!execution.ok || !execution.result)throw new Error(execution.error?.message || 'Contract project creation failed');
+  const project=execution.result.project as Record<string,any>;
 
   if (project) {
     const now = new Date().toISOString();
-    const activate = !contract.start_date || new Date(contract.start_date).getTime() <= Date.now();
+    const saved=await supabase.from('projects').update({status:activate?'Active':'Pending',metadata:{...(project.metadata || {}),execution_authorized:activate}}).eq('tenant_id',tenantId).eq('id',project.id);
+    if(saved.error)throw saved.error;
     await supabase
       .from('contracts')
       .update({
@@ -276,7 +253,7 @@ async function kickoffProjectStep(contractId: string, tenantId: string) {
       await supabase
         .from('deals')
         .update({ project_id: project.id, updated_at: new Date().toISOString() })
-        .eq('id', dealId);
+        .eq('tenant_id',tenantId).eq('id', dealId);
     }
     await supabase
       .from('business_invoices')
@@ -286,28 +263,6 @@ async function kickoffProjectStep(contractId: string, tenantId: string) {
   }
 
   return project;
-}
-
-async function createDefaultTasksStep(projectId: string, tenantId: string) {
-  const supabase = createSupabaseAdminClient();
-  await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
-  const defaultTasks = [
-    { project_id: projectId, title: 'Kickoff Meeting', status: 'todo' },
-    { project_id: projectId, title: 'Requirements Gathering', status: 'todo' },
-  ];
-  const { data: existing } = await supabase
-    .from('tasks')
-    .select('title')
-    .eq('tenant_id', tenantId)
-    .eq('project_id', projectId);
-  const have = new Set((existing || []).map((row) => String(row.title || '')));
-  const toInsert = defaultTasks.filter((task) => !have.has(task.title));
-  if (!toInsert.length) return;
-  await supabase.from('tasks').insert(toInsert.map((t) => ({ ...t, tenant_id: tenantId })));
-}
-
-async function sendWelcomePackageStep(projectId: string, tenantId: string) {
-  console.log(`[contract-signed] Welcome package queued for project ${projectId} (tenant ${tenantId})`);
 }
 
 async function syncDealStatusStep(contractId: string, tenantId: string) {
@@ -342,6 +297,8 @@ export async function runContractSignedFlow(
   const { tenantId, contractId, actorUserId } = input;
   if (!contractId) throw new Error('missing_contract_id');
 
+  const {assertContractFullyExecuted}=await import('@/lib/contracts/projectExecutionAuthorization');
+  await assertContractFullyExecuted(createSupabaseAdminClient(),tenantId,contractId);
   const invoice = await generateInvoiceStep(contractId, tenantId);
 
   let invoiceQueued = false;
@@ -355,15 +312,14 @@ export async function runContractSignedFlow(
     invoiceQueued = true;
   }
 
-  const project = await kickoffProjectStep(contractId, tenantId);
+  const project = await kickoffProjectStep(contractId, tenantId,input.templateId);
 
   if (invoice?.id) {
     await connectInvoiceToContractStep(contractId, invoice.id, project?.id || null, tenantId);
   }
 
   if (project) {
-    await createDefaultTasksStep(project.id, tenantId);
-    await sendWelcomePackageStep(project.id, tenantId);
+    // Configured templates and the durable notification outbox are owned by project creation.
   }
 
   await syncDealStatusStep(contractId, tenantId);

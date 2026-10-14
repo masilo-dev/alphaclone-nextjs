@@ -8,6 +8,7 @@ import { selectAgentsForGoal, collectToolsFromAgents, decideSupervision } from '
 import type { AgentRunRow, RunStatus } from './types';
 import { createInitialGraphForObjective } from './plannerService';
 import { verifyRunOutcomes } from './verificationService';
+import { diagnoseQueueHealth } from './queueHealth';
 
 const ALLOWED_AGENT_RUN_EXECUTION_MODES = new Set([
   'ask_only',
@@ -153,11 +154,13 @@ export async function getRunProgressSummary(runId: string, tenantId: string) {
   const run = await getRun(runId, tenantId);
   if (!run) return null;
 
-  const { data: tasks } = await admin
+  const { data: tasks, error: taskError } = await admin
     .from('agent_tasks')
-    .select('id, status, title, assigned_agent_id, failure_reason, updated_at')
+    .select('id, status, title, assigned_agent_id, failure_reason, updated_at, scheduled_at')
     .eq('run_id', runId)
     .eq('tenant_id', tenantId);
+
+  if (taskError) throw new Error(`Run task lookup failed: ${taskError.message}`);
 
   const list = tasks || [];
   const byStatus: Record<string, number> = {};
@@ -218,7 +221,8 @@ export async function getRunProgressSummary(runId: string, tenantId: string) {
     .from('agent_runs')
     .update({
       progress_pct: progressPct,
-      last_progress_at: new Date().toISOString(),
+      ...(run.progress_pct !== progressPct || run.status !== nextStatus
+        ? { last_progress_at: new Date().toISOString() } : {}),
       updated_at: new Date().toISOString(),
       status: nextStatus,
       ...(String(nextStatus).startsWith('completed') || nextStatus === 'failed' || nextStatus === 'partially_completed' || nextStatus === 'cancelled'
@@ -241,6 +245,7 @@ export async function getRunProgressSummary(runId: string, tenantId: string) {
     progressPct,
     summary,
     verification,
+    queueHealth: diagnoseQueueHealth(list),
     tasks: list,
   };
 }

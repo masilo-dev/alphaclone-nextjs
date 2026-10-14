@@ -2345,51 +2345,9 @@ class AlphaCloneMCPServer {
           const projectId = String(a.project_id || '').trim();
           if (!isUuidString(projectId)) throw new Error('project_id must be a valid business project UUID from get_projects');
 
-          const { data: project, error: projectError } = await supabaseAdmin
-            .from('business_projects')
-            .select('*')
-            .eq('tenant_id', tenant_id)
-            .eq('id', projectId)
-            .single();
-          if (projectError || !project) {
-            throw supabaseErrorToMcpClientError('get_project_summary', projectError?.message || 'Project not found');
-          }
-
-          const [{ data: tasks }, { data: documents }] = await Promise.all([
-            supabaseAdmin
-              .from('tasks')
-              .select('id, title, status, priority, due_date, assigned_to, estimated_hours, actual_hours')
-              .eq('tenant_id', tenant_id)
-              .eq('related_to_project', projectId)
-              .limit(500),
-            supabaseAdmin
-              .from('file_uploads')
-              .select('id, original_filename, category, file_type, created_at')
-              .eq('tenant_id', tenant_id)
-              .eq('entity_type', 'project')
-              .eq('entity_id', projectId)
-              .limit(100),
-          ]);
-
-          const taskRows = tasks || [];
-          const taskStatusCounts = taskRows.reduce((acc: Record<string, number>, task: any) => {
-            const status = String(task.status || 'unknown');
-            acc[status] = (acc[status] || 0) + 1;
-            return acc;
-          }, {});
-          const estimatedHours = taskRows.reduce((sum: number, task: any) => sum + (Number(task.estimated_hours) || 0), 0);
-          const actualHours = taskRows.reduce((sum: number, task: any) => sum + (Number(task.actual_hours) || 0), 0);
-
-          result = { content: [{ type: 'text', text: JSON.stringify({
-            project,
-            task_summary: {
-              total: taskRows.length,
-              by_status: taskStatusCounts,
-              estimated_hours: estimatedHours,
-              actual_hours: actualHours,
-            },
-            documents: documents || [],
-          }, null, 2) }] };
+          const {loadProjectLifecycleSummary} = await import('@/lib/projects/projectLifecycleSummary');
+          const summary = await loadProjectLifecycleSummary(supabaseAdmin, tenant_id, projectId);
+          result = {content:[{type:'text',text:JSON.stringify(summary)}]};
           break;
         }
 
@@ -2405,20 +2363,11 @@ class AlphaCloneMCPServer {
             throw new Error('client_id must be a valid CRM client UUID or omitted');
           }
 
-          const { data, error } = await supabaseAdmin
-            .from('business_projects')
-            .insert({
-              tenant_id,
-              name: name.trim(),
-              description: typeof description === 'string' ? description : null,
-              status: typeof status === 'string' && status.trim() ? status.trim() : 'planning',
-              due_date: typeof due_date === 'string' && due_date.trim() ? due_date.trim() : null,
-              client_id: client_id && isUuidString(client_id) ? client_id.trim() : null,
-            })
-            .select('id, name, status, due_date, client_id, created_at')
-            .single();
-          if (error) throw supabaseErrorToMcpClientError('create_project', error.message);
-          result = { content: [{ type: 'text', text: `Project created: ${JSON.stringify(data)}` }] };
+          const {executeProjectCreateCommand} = await import('@/lib/execution/commands/projectCreateCommand');
+          const execution = await executeProjectCreateCommand({tenantId:tenant_id,userId:this.ctx?.userId || '',executionSource:'mcp',skipPolicyEvaluation:true,idempotencyKey:a.idempotency_key,
+            input:{name:name.trim(),clientId:client_id,status:status==='planning'?'Pending':status,description,dueDate:due_date,templateId:a.template_id,projectType:a.project_type,progressMethod:a.progress_method,isTestData:a.is_test_data,historicalImport:a.historical_import}});
+          if(!execution.ok || !execution.result) throw new Error(execution.error?.message || 'Project creation failed');
+          result = {content:[{type:'text',text:JSON.stringify(execution.result)}]};
           break;
         }
 

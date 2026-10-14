@@ -39,7 +39,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
         .from('tasks')
         .select('id, title, status, due_date, parent_task_id, milestone_id, progress_percent, weight, owner_user_id')
         .eq('tenant_id', tenantId)
-        .eq('project_id', projectId)
+        .or(`project_id.eq.${projectId},related_to_project.eq.${projectId}`)
         .is('deleted_at', null)
         .order('created_at', { ascending: true }),
       admin
@@ -69,6 +69,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
         .eq('project_id', projectId),
     ]);
 
+    for (const result of [tasksResult,milestonesResult,blockersResult,activityResult,relationshipsResult]) if (result.error) throw result.error;
     const tasks = tasksResult.data || [];
     const milestones = milestonesResult.data || [];
     const blockers = (blockersResult.data || []).filter((item: any) => isOpen(item.status));
@@ -145,7 +146,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
         priority: project.priority,
         startDate: project.start_date,
         deadline: project.target_date || project.due_date,
-        progress: calculatedProgress,
+        progress: Number(project.progress || 0),
         health: health.status,
         healthReasons: health.reasons,
       },

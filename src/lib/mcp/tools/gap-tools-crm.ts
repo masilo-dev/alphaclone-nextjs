@@ -351,7 +351,7 @@ registerTool('gap-crm', {
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase.from('project_milestones').select('*').is('deleted_at', null).eq('project_id', args.project_id).eq('tenant_id', args.tenant_id).order('due_date');
-    if (error) return { content: [{ type: 'text', text: JSON.stringify({ milestones: [], error: error.message }) }] };
+    if (error) throw error;
     return { content: [{ type: 'text', text: JSON.stringify({ milestones: data || [] }, null, 2) }] };
   },
 });
@@ -363,15 +363,9 @@ registerTool('gap-crm', {
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, project_id: { type: 'string' } }, required: ['project_id'] },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const [{ data: tasks }, { data: milestones }] = await Promise.all([
-      supabase.from('tasks').select('id, title, status, due_date, priority').eq('project_id', args.project_id).eq('tenant_id', args.tenant_id).order('due_date'),
-      supabase.from('project_milestones').select('id, title:name, status, due_date').is('deleted_at', null).eq('project_id', args.project_id).eq('tenant_id', args.tenant_id).order('due_date'),
-    ]);
-    const timeline = [
-      ...(tasks || []).map((t: any) => ({ ...t, type: 'task' })),
-      ...(milestones || []).map((m: any) => ({ ...m, type: 'milestone' })),
-    ].sort((a: any, b: any) => new Date(a.due_date || '9999').getTime() - new Date(b.due_date || '9999').getTime());
-    return { content: [{ type: 'text', text: JSON.stringify({ project_id: args.project_id, timeline }, null, 2) }] };
+    const {loadProjectLifecycleSummary}=await import('@/lib/projects/projectLifecycleSummary');
+    const summary=await loadProjectLifecycleSummary(supabase,args.tenant_id,args.project_id);
+    return {project_id:args.project_id,timeline:summary.activity};
   },
 });
 
@@ -382,11 +376,14 @@ registerTool('gap-crm', {
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, project_id: { type: 'string' }, kickoff_tasks: { type: 'array', items: { type: 'string' } } }, required: ['project_id'] },
   handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
-    await supabase.from('projects').update({ status: 'active', started_at: new Date().toISOString() }).eq('id', args.project_id).eq('tenant_id', args.tenant_id);
-    if (args.kickoff_tasks?.length) {
-      const rows = args.kickoff_tasks.map((title: string) => ({ tenant_id: args.tenant_id, project_id: args.project_id, title, status: 'todo', priority: 'medium', created_by: ctx.userId, created_at: new Date().toISOString() }));
-      await supabase.from('tasks').insert(rows);
-    }
-    return { content: [{ type: 'text', text: JSON.stringify({ kicked_off: true, project_id: args.project_id, tasks_created: (args.kickoff_tasks || []).length }, null, 2) }] };
+    const found=await supabase.from('projects').select('*').eq('tenant_id',args.tenant_id).eq('id',args.project_id).maybeSingle();
+    if(found.error)throw found.error;
+    if(!found.data)throw new Error('Project not found in this workspace');
+    if(found.data.contract_id){const {assertContractFullyExecuted}=await import('@/lib/contracts/projectExecutionAuthorization');await assertContractFullyExecuted(supabase,args.tenant_id,found.data.contract_id);}
+    if(found.data.metadata?.execution_authorized!==true)throw new Error('The owner must authorize project execution before kickoff');
+    if(args.kickoff_tasks?.length)throw new Error('Use a configured project template to initialize work atomically before kickoff');
+    const saved=await supabase.from('projects').update({status:'Active',start_date:new Date().toISOString().slice(0,10)}).eq('tenant_id',args.tenant_id).eq('id',args.project_id).select('id,status').single();
+    if(saved.error)throw saved.error;
+    return {kicked_off:true,project:saved.data,confirmation_email_status:'queued_for_policy_evaluation'};
   },
 });

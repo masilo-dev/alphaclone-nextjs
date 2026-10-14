@@ -135,9 +135,11 @@ export function ProjectWorkspaceDrawer({
   }, [project.id, project.progress]);
 
   const refreshProgress = async () => {
-    const { progress: recalculated } = await projectService.recalculateProjectProgress(project.id);
-    setProgress(recalculated);
-    onProgressChange?.(project.id, recalculated);
+    const result = await supabase.from('projects').select('progress').eq('tenant_id',tenantId).eq('id',project.id).maybeSingle();
+    if(result.error || !result.data){console.error('Project progress could not be read',result.error);return;}
+    const persistedProgress=Number(result.data.progress || 0);
+    setProgress(persistedProgress);
+    onProgressChange?.(project.id,persistedProgress);
     setTasksRefreshKey((k) => k + 1);
   };
 
@@ -420,7 +422,7 @@ export function ProjectWorkspaceDrawer({
                   <div className="absolute inset-0 flex items-center justify-center text-base font-bold text-[var(--ws-text-primary)]">{progress || 0}%</div>
                 </div>
                 <div className="type-ui text-[var(--ws-text-secondary)] space-y-1">
-                  <p><span className="text-[var(--ws-text-muted)]">Stage:</span> {normalizedStage}</p>
+                  <p><span className="text-[var(--ws-text-muted)]">Stage:</span> {project.currentStage || normalizedStage}</p>
                   {project.budget ? <p><span className="text-[var(--ws-text-muted)]">Budget:</span> ${project.budget.toLocaleString()}</p> : null}
                 </div>
               </div>
@@ -578,7 +580,7 @@ export function ProjectWorkspaceDrawer({
 
               <div className="space-y-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
                 <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Lifecycle stage</span>
-                <p className="type-card-description text-[var(--ws-text-primary)] font-semibold">{normalizedStage}</p>
+                <p className="type-card-description text-[var(--ws-text-primary)] font-semibold">{project.currentStage || normalizedStage}</p>
                 <AlphaCloneSelect
                   value={normalizedStage}
                   onChange={(e) => void handleStageSelect(e.target.value as ProjectStage)}

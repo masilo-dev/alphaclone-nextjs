@@ -27,6 +27,7 @@ const PrefsSchema = z.object({
   quiet_hours_end: z.string().nullable().optional(),
   event_types: z.record(z.string(), z.boolean()).optional(),
   categories: z.record(z.string(), ChannelSchema).optional(),
+  project_notifications: z.object({enabled:z.boolean(),transactional_authorized:z.boolean(),allow_test_notifications:z.boolean().optional(),events:z.record(z.string(),z.boolean()).optional(),templates:z.record(z.string(),z.object({body:z.string().max(4000)})).optional()}).optional(),
 });
 
 export async function GET(
@@ -60,7 +61,10 @@ export async function GET(
     .eq('tenant_id', tenantId)
     .maybeSingle();
 
+  const tenant = await admin.from('tenants').select('settings').eq('id',tenantId).maybeSingle();
+  if(tenant.error) return NextResponse.json({error:tenant.error.message},{status:500});
   return NextResponse.json({
+    project_notifications:tenant.data?.settings?.project_notifications || {enabled:false,transactional_authorized:false},
     notification_preferences: data,
     email_preferences: profile?.email_preferences || {},
     tenant_policy: mergeTenantNotificationPolicy(policyRow?.categories as Record<string, Partial<CategoryChannelPolicy>> | null),
@@ -77,7 +81,14 @@ export async function PATCH(
   const body = PrefsSchema.parse(await req.json());
 
   const admin = createSupabaseAdminClient();
-  const { categories, ...userPrefs } = body;
+  const { categories, project_notifications, ...userPrefs } = body;
+  if(project_notifications) {
+    if(!['owner','admin','tenant_admin','super_admin'].includes(String(membership.role)))return NextResponse.json({error:'Only workspace administrators can authorize project notifications'},{status:403});
+    const tenant=await admin.from('tenants').select('settings').eq('id',tenantId).maybeSingle();
+    if(tenant.error)throw tenant.error;
+    const saved=await admin.from('tenants').update({settings:{...(tenant.data?.settings || {}),project_notifications}}).eq('id',tenantId);
+    if(saved.error)throw saved.error;
+  }
   const row = {
     tenant_id: tenantId,
     user_id: user.id,
@@ -141,5 +152,5 @@ export async function PATCH(
     await admin.from('profiles').update({ email_preferences: merged }).eq('id', user.id);
   }
 
-  return NextResponse.json({ notification_preferences: data, tenant_policy: tenantPolicy });
+  return NextResponse.json({ notification_preferences: data, tenant_policy: tenantPolicy,project_notifications });
 }

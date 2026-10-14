@@ -85,6 +85,7 @@ function sourceParts(params: SendEmailServerParams): { module: string; action: s
 }
 
 export async function sendEmailServer(params: SendEmailServerParams): Promise<SendEmailServerResult> {
+  "use step";
   const category = inferCategory(params);
   if (category === 'internal_notification' && !params.internalNotificationKind) {
     return { success: false, error: 'Internal notifications are digest-only unless explicitly classified as an immediate exception.', code: 'DIGEST_REQUIRED' };

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { scheduleDurableWorkerKick } from '@/lib/bonnie/runtime/workerKick';
 
 export type StartWorkflowInput = {
   tenantId: string;
@@ -88,6 +89,18 @@ export async function startWorkflow(
 
   if (error || !run) {
     throw new Error(`Failed to create workflow run: ${error?.message || 'unknown error'}`);
+  }
+
+  const { createInitialGraphForObjective } = await import('@/lib/bonnie/runtime/plannerService');
+  try {
+    await createInitialGraphForObjective({ tenantId: input.tenantId, runId: run.id,
+      objective: `${input.objective}\nRequested workflow context: ${JSON.stringify(initialState)}`,
+      agentIds: ['crm', 'finance', 'operations'], correlationId });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Task initialization failed';
+    await supabase.from('agent_runs').update({status:'failed',failure_reason:message,updated_at:new Date().toISOString()})
+      .eq('tenant_id',input.tenantId).eq('id',run.id);
+    return {success:false,run_id:run.id,status:'failed',error:message,partial_completion:{run_created:true,tasks_initialized:false},poll_tool:'inspect_workflow'};
   }
 
   return {
@@ -191,7 +204,7 @@ export async function resumeWorkflow(
   }
 
   const now = new Date().toISOString();
-  await supabase
+  const { error: resumeError } = await supabase
     .from('agent_runs')
     .update({
       status: 'running',
@@ -201,30 +214,41 @@ export async function resumeWorkflow(
     .eq('id', runId)
     .eq('tenant_id', tenantId);
 
+  if (resumeError) throw new Error(`Workflow resume failed: ${resumeError.message}`);
+
   // If a specific task failed, reset it to READY
   if (fromStepId) {
-    await supabase
+    const { error: resetError } = await supabase
       .from('agent_tasks')
       .update({ status: 'READY', failure_reason: null, updated_at: now })
       .eq('id', fromStepId)
       .eq('run_id', runId)
-      .eq('tenant_id', tenantId);
+      .eq('tenant_id', tenantId)
+      .eq('status', 'FAILED');
+    if (resetError) throw new Error(`Task resume failed: ${resetError.message}`);
   } else {
     // Reset any failed task to READY
-    await supabase
+    const { error: resetError } = await supabase
       .from('agent_tasks')
       .update({ status: 'READY', failure_reason: null, updated_at: now })
       .eq('run_id', runId)
       .eq('tenant_id', tenantId)
       .eq('status', 'FAILED');
+    if (resetError) throw new Error(`Task resume failed: ${resetError.message}`);
   }
+
+  const { data: readyTasks, error: readyError } = await supabase
+    .from('agent_tasks').select('id').eq('tenant_id', tenantId)
+    .eq('run_id', runId).in('status', ['READY', 'QUEUED']);
+  if (readyError) throw new Error(`Resumed task lookup failed: ${readyError.message}`);
+  if (readyTasks?.length) await scheduleDurableWorkerKick(readyTasks.map(task => ({ tenantId, taskId: task.id })));
 
   return {
     success: true,
     run_id: runId,
-    status: 'running',
+    status: readyTasks?.length ? 'queued' : 'waiting',
     resumed_at: now,
-    message: 'Workflow execution resumed.',
+    message: readyTasks?.length ? 'Workflow tasks queued; completion is not yet verified.' : 'No runnable tasks. Inspect dependencies, approvals, or uncertain execution.',
     poll_tool: 'inspect_workflow',
   };
 }

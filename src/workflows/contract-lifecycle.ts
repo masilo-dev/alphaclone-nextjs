@@ -1,4 +1,3 @@
-import { markContractSentForSignature } from '@/lib/contracts/contractLifecycleSteps';
 
 /**
  * Contract Lifecycle Workflow — send for signature only.
@@ -12,5 +11,11 @@ export async function contractLifecycleWorkflow({
   tenantId: string;
 }) {
   "use workflow";
-  await markContractSentForSignature(contractId, tenantId);
+  await sendContractStep(contractId, tenantId);
+}
+
+async function sendContractStep(contractId: string, tenantId: string) {
+  "use step";
+  const { markContractSentForSignature } = await import('@/lib/contracts/contractLifecycleSteps');
+  return markContractSentForSignature(contractId, tenantId);
 }

@@ -22,12 +22,20 @@ export type ProjectCreateInput = {
   category?: string;
   ownerId?: string;
   ownerName?: string;
+  templateId?: string;
+  projectType?: string;
+  progressMethod?: 'task_based' | 'weighted_tasks' | 'milestones' | 'manual';
+  extras?: Record<string, unknown>;
+  isTestData?: boolean;
+  historicalImport?: boolean;
+  executionAuthorized?: boolean;
 };
 
 export type ProjectCreateResult = {
   project: Record<string, unknown>;
   created: boolean;
   duplicate: boolean;
+  templateApplication?: unknown;
 };
 
 export type ProjectCreateCommandParams = {
@@ -123,34 +131,6 @@ export async function executeProjectCreateCommand(
       clientId: params.input.clientId,
     },
     execute: async (executionContext): Promise<ProjectCreateResult> => {
-      const existingByKey = await admin.from('projects').select('*').eq('tenant_id', params.tenantId).contains('metadata', {creation_idempotency_key: idempotencyKey}).maybeSingle();
-      if (existingByKey.error) throw existingByKey.error;
-      if (existingByKey.data) return {project: existingByKey.data, created: false, duplicate: true};
-      // Deal-won / lifecycle: one project per deal.
-      if (params.input.dealId) {
-        const { data: existingByDeal } = await admin
-          .from('projects')
-          .select('*')
-          .eq('tenant_id', params.tenantId)
-          .eq('deal_id', params.input.dealId)
-          .maybeSingle();
-        if (existingByDeal) {
-          return { project: existingByDeal, created: false, duplicate: true };
-        }
-      }
-
-      if (params.input.contractId) {
-        const { data: existingByContract } = await admin
-          .from('projects')
-          .select('*')
-          .eq('tenant_id', params.tenantId)
-          .eq('contract_id', params.input.contractId)
-          .maybeSingle();
-        if (existingByContract) {
-          return { project: existingByContract, created: false, duplicate: true };
-        }
-      }
-
       const clientId = params.input.clientId ? await resolveCanonicalLifecycleClient(admin, params.tenantId, params.input.clientId) : null;
       const status = normalizeProjectStatus(params.input.status || 'Pending');
       if (!status) throw Object.assign(new Error('input.status is not a supported project status'), {code: 'VALIDATION_ERROR'});
@@ -158,6 +138,7 @@ export async function executeProjectCreateCommand(
       const ownerId = params.input.ownerId || params.userId;
 
       const row: Record<string, unknown> = {
+        ...params.input.extras,
         tenant_id: params.tenantId,
         owner_id: ownerId,
         owner_name: params.input.ownerName || 'Workspace member',
@@ -171,37 +152,38 @@ export async function executeProjectCreateCommand(
         client_id: clientId,
         deal_id: params.input.dealId || null,
         contract_id: params.input.contractId || null,
-        team: [],
-        resources: [],
-        is_public: false,
-        show_in_portfolio: false,
-        portal_enabled: false,
+        team: params.input.extras?.team || [],
+        resources: params.input.extras?.resources || [],
+        is_public: Boolean(params.input.extras?.is_public),
+        show_in_portfolio: Boolean(params.input.extras?.show_in_portfolio),
+        portal_enabled: Boolean(params.input.extras?.portal_enabled),
+        portal_token: params.input.extras?.portal_enabled ? globalThis.crypto.randomUUID() : null,
         auto_invoice_enabled: false,
         contract_status: 'None',
         budget_used: 0,
-        metadata: {creation_idempotency_key: idempotencyKey},
+        project_type: params.input.projectType || null,
+        progress_method: params.input.progressMethod || 'weighted_tasks',
+        metadata: {creation_idempotency_key: idempotencyKey, is_test_data: Boolean(params.input.isTestData), historical_import: Boolean(params.input.historicalImport), execution_authorized:Boolean(params.input.executionAuthorized), client_visible: Boolean(params.input.extras?.portal_enabled)},
       };
 
-      let { data: project, error } = await admin.from('projects').insert(row).select('*').single();
-      if (error && /deal_id|contract_id|schema cache|PGRST204/i.test(error.message)) {
-        delete row.deal_id;
-        delete row.contract_id;
-        const retry = await admin.from('projects').insert(row).select('*').single();
-        project = retry.data;
-        error = retry.error;
+      let templateId=params.input.templateId;
+      if(!templateId && params.input.projectType) {
+        const templateKey=params.input.projectType==='website'?'website-development':params.input.projectType;
+        const template=await admin.from('project_templates').select('id').eq('tenant_id',params.tenantId).eq('template_key',templateKey).eq('is_active',true).maybeSingle();
+        if(template.error)throw template.error;
+        if(!template.data)throw new Error('No active project template is configured for this project type');
+        templateId=template.data.id;
       }
-      if (error?.code === '23505') {
-        const winner = await admin.from('projects').select('*').eq('tenant_id', params.tenantId).contains('metadata', {creation_idempotency_key: idempotencyKey}).maybeSingle();
-        if (winner.error) throw winner.error;
-        if (winner.data) return {project: winner.data, created: false, duplicate: true};
-      }
+      const {data, error} = await admin.rpc('create_project_lifecycle', {
+        p_tenant_id: params.tenantId, p_row: row, p_key: idempotencyKey,
+        p_template_id: templateId || null, p_actor: params.userId || null,
+      });
       if (error) {
-        console.error('[project.create] database failure', {tenantId: params.tenantId, correlationId: executionContext.correlationId, idempotencyKey, code: error.code, message: error.message, details: error.details});
-        const message = error.code === '23502' && /due_date/.test(error.message) ? 'input.due_date is required by the current database schema; apply the unscheduled-project migration' : error.code === '23503' ? 'A linked project field does not resolve to a valid record in this workspace' : 'Project persistence failed; inspect the correlated server log';
-        throw Object.assign(new Error(message), {code: error.code === '23502' || error.code === '23503' ? 'VALIDATION_ERROR' : 'PROJECT_PERSISTENCE_FAILED'});
+        console.error('[project.create] database failure', {correlationId: executionContext.correlationId, code: error.code, message: error.message});
+        throw Object.assign(new Error(`Project lifecycle persistence failed: ${error.message}`), {code: 'PROJECT_PERSISTENCE_FAILED'});
       }
-      if (!project) throw new Error('Project create returned no row');
-      return { project, created: true, duplicate: false };
+      if (!data?.project?.id) throw new Error('Project create returned no persisted row');
+      return data as ProjectCreateResult;
     },
     isSuccess: (r) => Boolean(r.project?.id),
     buildReceipt: (r) => ({

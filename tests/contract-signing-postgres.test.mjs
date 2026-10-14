@@ -16,6 +16,7 @@ alter table contracts add check(status in ('draft','sent','client_signed','fully
 alter table contract_audit_trail add check(action in ('created','viewed','modified','sent','opened','downloaded','signature_initiated','signature_completed','signature_declined','voided','completed','expired'));
 grant usage on schema public to service_role,anon,authenticated;grant select,insert,update on all tables in schema public to service_role;`);
 await db.exec(fs.readFileSync(new URL('../supabase/migrations/20261014105959_atomic_contract_signing.sql',import.meta.url),'utf8'));
+await db.exec(fs.readFileSync(new URL('../supabase/migrations/20261014162000_saved_contract_signature_hash_guard.sql',import.meta.url),'utf8'));
 await db.query('insert into tenant_users(tenant_id,user_id,role) values($1,$2,$3)',[tenant,owner,'owner']);
 let sequence = 0;
 async function fixture({ parties=false }={}) {
@@ -90,5 +91,11 @@ test('anonymous and authenticated database roles cannot call the signing functio
     await db.exec(`set role ${role}`);
     try {await assert.rejects(sign({}),/permission denied/);} finally {await db.exec('reset role');}
   }
+});
+test('contract hash approved by owner is checked within the atomic transaction',async()=>{
+ const f=await fixture();
+ await assert.rejects(sign({...request(f),expectedContentHash:'0'.repeat(64)}),/changed since approval/);
+ assert.equal((await counts(f.id)).signatures,0);
+ assert.equal((await db.query('select used_at from contract_signing_tokens where token=$1',[f.token])).rows[0].used_at,null);
 });
 test.after(()=>db.close());

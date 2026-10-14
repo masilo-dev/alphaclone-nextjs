@@ -1,4 +1,3 @@
-import { sendScheduledCampaignServer } from '@/lib/server/sendScheduledCampaignServer';
 
 interface CampaignPayload {
     campaignId: string;
@@ -24,5 +23,6 @@ export async function campaignDelivery({ campaignId, tenantId, userId }: Campaig
 
 async function runCampaignDelivery(campaignId: string) {
     "use step";
+  const { sendScheduledCampaignServer } = await import('@/lib/server/sendScheduledCampaignServer');
     return sendScheduledCampaignServer(campaignId);
 }

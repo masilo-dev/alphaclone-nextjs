@@ -57,6 +57,8 @@ const fields = z
     velocityScore: z.number().min(0).max(100).nullable(),
     healthScore: z.number().min(0).max(100).nullable(),
     portalEnabled: z.boolean(),
+    clientVisible:z.boolean(),
+    executionAuthorized:z.boolean(),
     estimatedCompletionDate: z.union([
       z.string().date(),
       z.string().datetime(),
@@ -137,13 +139,14 @@ export async function PATCH(
     }
     const { data: before, error: beforeError } = await admin
       .from("projects")
-      .select("id, name, description, due_date, client_id, current_stage, status, progress, portal_expires_at, owner_id")
+      .select("id, name, description, due_date, client_id, current_stage, status, progress, portal_expires_at, owner_id, metadata, progress_method")
       .eq("id", projectId)
       .eq("tenant_id", tenantId)
       .maybeSingle();
     if (beforeError) throw beforeError;
     if (!before)
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    if(parsed.data.progress!==undefined && before.progress_method!=='manual')return NextResponse.json({error:'Progress is calculated automatically; configure manual progress to edit it directly'},{status:400});
     const patch: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     };
@@ -168,6 +171,11 @@ export async function PATCH(
         patch.current_stage = currentStage;
         continue;
       }
+      if(key==='executionAuthorized'){
+        if(!['owner','admin','tenant_admin'].includes(auth.membership.role))return NextResponse.json({error:'Project execution requires owner or administrator approval'},{status:403});
+        patch.metadata={...(patch.metadata as Record<string,unknown> || before.metadata || {}),execution_authorized:value};continue;
+      }
+      if(key==='clientVisible'){patch.metadata={...(patch.metadata as Record<string,unknown> || before.metadata || {}),client_visible:value};continue;}
       patch[columnMap[key] || key] = [
         "dueDate",
         "startDate",
@@ -382,95 +390,9 @@ export async function POST(
       if (error) throw error;
       return NextResponse.json({ token });
     }
-    const [
-      { data: milestones, error: milestoneError },
-      { data: tasks, error: taskError },
-    ] = await Promise.all([
-      admin
-        .from("project_milestones")
-        .select("id, status")
-        .eq("project_id", projectId).or(`tenant_id.eq.${tenantId},tenant_id.is.null`).is("deleted_at", null),
-      admin
-        .from("tasks")
-        .select("status")
-        .eq("tenant_id", tenantId)
-        .or(`related_to_project.eq.${projectId},project_id.eq.${projectId}`),
-    ]);
-    if (milestoneError) throw milestoneError;
-    if (taskError) throw taskError;
-    const progress = computeProjectProgressPercent({
-      status: project.status,
-      current_stage: project.current_stage,
-      milestones,
-      tasks,
-    });
-    const finishedPatch = isFinishedProject({
-      status: project.status,
-      current_stage: project.current_stage,
-    })
-      ? finishedProjectWriteFields()
-      : null;
-    const { error } = await admin
-      .from("projects")
-      .update({
-        progress,
-        updated_at: new Date().toISOString(),
-        ...(finishedPatch
-          ? { status: finishedPatch.status, current_stage: finishedPatch.current_stage }
-          : {}),
-      })
-      .eq("id", projectId)
-      .eq("tenant_id", tenantId);
-    if (error) throw error;
-
-    let notification: Record<string, unknown> | null = null;
-    const beforeProgress = typeof project.progress === "number" ? project.progress : 0;
-    if (beforeProgress !== progress) {
-      if (project.client_id) {
-        notification = await notifyProjectClientProgressUpdate({
-          admin,
-          projectId,
-          tenantId,
-          previousProgress: beforeProgress,
-          newProgress: progress,
-          origin: req.nextUrl.origin,
-          trigger: "milestone",
-        }).catch((err) => ({ sent: false, skipped: err instanceof Error ? err.message : String(err) }));
-      }
-
-      void admin
-        .from("business_automation_events")
-        .insert({
-          tenant_id: tenantId,
-          event_type: "project_updated",
-          payload: {
-            projectId,
-            actorUserId: auth.user.id,
-            previousProgress: beforeProgress,
-            currentProgress: progress,
-            trigger: "milestone_progress_recalculate",
-          },
-        })
-        .then(() => undefined, () => undefined);
-    }
-
-    const completedMilestones = (milestones || []).filter(
-      (m: { id?: string; status?: string }) => m.status === "completed" || m.status === "done"
-    );
-    if (completedMilestones.length > 0) {
-      const { resolveChasesForDomainEvent } = await import("@/lib/chaser/chaseEventBridge");
-      for (const m of completedMilestones) {
-        if (m.id) {
-          void resolveChasesForDomainEvent({
-            tenantId,
-            eventType: "milestone.completed",
-            entityId: m.id,
-            entityType: "milestone",
-            outcome: "completed",
-          }).catch(() => undefined);
-        }
-      }
-    }
+    const {data:progress,error} = await admin.rpc('recalculate_project_lifecycle',{p_tenant_id:tenantId,p_project_id:projectId});
+    if(error) throw error;
+    const notification = {sent:false,skipped:'internal_task_progress_is_not_a_client_email_event'};
 
     return NextResponse.json({ progress, notification });
   } catch (error) {

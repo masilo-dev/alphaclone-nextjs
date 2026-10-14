@@ -25,11 +25,12 @@ export type ProjectAutomationEventResult = {
 };
 
 async function loadAmountPaid(supabase: SupabaseClient, tenantId: string, contractId: string): Promise<number> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('business_invoices')
     .select('amount_paid')
     .eq('tenant_id', tenantId)
     .eq('contract_id', contractId);
+  if(error)throw error;
   return (data || []).reduce((sum: number, row: any) => sum + Number(row.amount_paid || 0), 0);
 }
 
@@ -121,9 +122,8 @@ export async function runProjectAutomationEvent(
   if (contractError) throw contractError;
   if (!contract) throw new Error('contract_not_found');
 
-  const signed = ['signed', 'active', 'expiring', 'renewed'].includes(
-    String(contract.lifecycle_status || contract.status || '').toLowerCase(),
-  );
+  const {contractIsFullyExecuted}=await import('@/lib/contracts/projectExecutionAuthorization');
+  const signed=await contractIsFullyExecuted(admin,input.tenantId,input.contractId);
   const amountPaid = await loadAmountPaid(admin, input.tenantId, input.contractId);
   const contractValue = Number(contract.value ?? contract.total_amount ?? contract.payment_amount ?? 0);
   const decision = evaluateProjectKickoff(
@@ -138,7 +138,7 @@ export async function runProjectAutomationEvent(
       contractSigned: signed,
       contractValue,
       amountPaid,
-      projectAlreadyExists: Boolean(contract.project_id),
+      projectAlreadyExists: false,
     },
   );
 
@@ -153,7 +153,7 @@ export async function runProjectAutomationEvent(
     policyVersion: Number(policy.version || 1),
   });
 
-  const { data: execution, error: claimError } = await admin
+  let { data: execution, error: claimError } = await admin
     .from('project_automation_executions')
     .insert({
       tenant_id: input.tenantId,
@@ -172,20 +172,18 @@ export async function runProjectAutomationEvent(
     .single();
 
   if (claimError?.code === '23505') {
-    const { data: prior } = await admin
-      .from('project_automation_executions')
-      .select('id,status,project_id,result,decision')
-      .eq('tenant_id', input.tenantId)
-      .eq('idempotency_key', idempotencyKey)
-      .maybeSingle();
-    return {
-      status: prior?.status === 'succeeded' ? 'duplicate' : prior?.status === 'waiting' ? 'waiting' : 'duplicate',
-      executionId: prior?.id,
-      projectId: prior?.project_id || prior?.result?.project_id,
-      reasons: prior?.decision?.reasons,
-    };
+    const prior=await admin.from('project_automation_executions').select('id,status,project_id,result,decision').eq('tenant_id',input.tenantId).eq('idempotency_key',idempotencyKey).maybeSingle();
+    if(prior.error)throw prior.error;
+    if(!prior.data)throw new Error('Automation retry record could not be found');
+    if(prior.data.status==='succeeded')return {status:'duplicate',executionId:prior.data.id,projectId:prior.data.project_id || prior.data.result?.project_id};
+    if(!decision.eligible || !['waiting','failed'].includes(prior.data.status))return {status:'waiting',executionId:prior.data.id,reasons:decision.reasons};
+    const reclaimed=await admin.from('project_automation_executions').update({status:'running',decision:{eligible:true,reasons:decision.reasons,amountPaid,contractValue},started_at:new Date().toISOString(),error:null}).eq('tenant_id',input.tenantId).eq('id',prior.data.id).in('status',['waiting','failed']).select('id,status,project_id,result').maybeSingle();
+    if(reclaimed.error)throw reclaimed.error;
+    if(!reclaimed.data)return {status:'waiting',executionId:prior.data.id,reasons:['Another worker has claimed this automation']};
+    execution=reclaimed.data;claimError=null;
   }
   if (claimError) throw claimError;
+  if(!execution)throw new Error('Automation claim returned no persisted execution');
 
   if (!decision.eligible) {
     return { status: 'waiting', executionId: execution.id, reasons: decision.reasons };
@@ -195,9 +193,9 @@ export async function runProjectAutomationEvent(
     const result = await runContractSignedFlow({
       tenantId: input.tenantId,
       contractId: input.contractId,
-      actorUserId: input.actorUserId,
+      actorUserId: input.actorUserId,templateId:policy.template_id || undefined,
     });
-    await admin
+    const saved=await admin
       .from('project_automation_executions')
       .update({
         status: 'succeeded',
@@ -209,6 +207,7 @@ export async function runProjectAutomationEvent(
       .eq('tenant_id', input.tenantId)
       .eq('id', execution.id);
 
+    if(saved.error)throw saved.error;
     return { status: 'succeeded', executionId: execution.id, projectId: result.project_id };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

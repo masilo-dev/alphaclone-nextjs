@@ -1,7 +1,4 @@
-import {
-  runInvoiceInitialSend,
-  type InvoiceLifecycleInput,
-} from '@/lib/invoices/invoiceLifecycleSteps';
+import type { InvoiceLifecycleInput } from '@/lib/invoices/invoiceLifecycleSteps';
 
 export type { InvoiceLifecycleInput };
 
@@ -13,5 +10,6 @@ export async function invoiceLifecycleWorkflow(input: InvoiceLifecycleInput) {
 
 async function runInvoiceInitialSendStep(input: InvoiceLifecycleInput) {
   "use step";
+  const { runInvoiceInitialSend } = await import('@/lib/invoices/invoiceLifecycleSteps');
   return runInvoiceInitialSend(input);
 }

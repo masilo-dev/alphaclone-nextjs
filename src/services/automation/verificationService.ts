@@ -1,6 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
-export type VerificationStatus = 'verified' | 'pending' | 'failed' | 'unknown';
+export type VerificationStatus = 'verified' | 'pending' | 'failed' | 'unknown' | 'not_sent' | 'provider_accepted' | 'queued';
 
 export type VerificationResult = {
   status: VerificationStatus;
@@ -114,10 +114,23 @@ export async function verifyInvoiceSent(tenantId: string, invoiceId: string): Pr
     .maybeSingle();
   if (error) return { status: 'unknown', retryable: true, message: error.message, evidence: { invoice_id: invoiceId } };
   if (!data) return { status: 'pending', retryable: true, message: 'Invoice not found.', evidence: { invoice_id: invoiceId } };
-  const status = String(data.status || '').toLowerCase();
-  if (status === 'sent' || status === 'paid' || data.issued_at || data.canonical_delivery_status === 'sent') {
-    return { status: 'verified', retryable: false, message: `Invoice status is ${status}.`, evidence: data as Record<string, unknown> };
-  }
-  return { status: 'pending', retryable: true, message: `Invoice status is ${status || 'unknown'}.`, evidence: data as Record<string, unknown> };
+  const delivery=await supabase.from('invoice_delivery_log')
+    .select('id,provider_msg_id,email_provider,delivery_status,sent_at,delivered_at,bounced_at')
+    .eq('tenant_id',tenantId).eq('invoice_id',invoiceId).order('sent_at',{ascending:false}).limit(10);
+  if(delivery.error)return {status:'unknown',retryable:false,message:'Invoice delivery evidence could not be loaded; do not resend until reconciled.',evidence:{invoice_id:invoiceId}};
+  return deriveInvoiceSendVerification(data,delivery.data || []);
 }
 
+/** Financial state is independent of the evidence for sending an email. */
+export function deriveInvoiceSendVerification(invoice:Record<string,any>,receipts:Array<Record<string,any>>):VerificationResult {
+  const receipt=receipts[0];
+  const evidence={invoice_id:invoice.id,invoice_status:invoice.status,canonical_delivery_status:invoice.canonical_delivery_status,delivery_receipt:receipt || null};
+  if(receipt?.bounced_at || receipt?.delivery_status==='BOUNCED')return {status:'failed',retryable:false,message:'Invoice email bounced; correct the recipient before another send.',evidence};
+  if(receipt?.provider_msg_id && receipt?.delivered_at)return {status:'verified',retryable:false,message:'Provider evidence confirms receiving-server delivery of the invoice email; inbox placement is not proven.',evidence};
+  if(receipt?.provider_msg_id)return {status:'provider_accepted',retryable:false,message:'The provider accepted the invoice email. Final delivery is unconfirmed; do not send a duplicate.',evidence};
+  const state=String(invoice.canonical_delivery_status || '').toLowerCase();
+  if(state==='failed')return {status:'failed',retryable:false,message:'Invoice email sending failed. Inspect the recorded send error before retrying.',evidence};
+  if(['queued','sending','processing'].includes(state))return {status:'queued',retryable:false,message:'Invoice email is queued or processing; provider acceptance is not yet confirmed.',evidence};
+  if(state==='not_sent')return {status:'not_sent',retryable:false,message:'No invoice email send is recorded. Payment or invoice issue status does not prove email sending.',evidence};
+  return {status:'unknown',retryable:false,message:'No reliable invoice email receipt was found. Reconcile the send attempt before retrying.',evidence};
+}

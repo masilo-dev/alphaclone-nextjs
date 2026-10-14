@@ -88,7 +88,7 @@ export async function loadTenantEmailBrandingProfile(
     'Your Business';
 
   const tradingName = readString(extracted.name) || legalName;
-  const logoUrl = resolveEmailLogoUrl();
+  const logoUrl = readString(tenant.logo_url) || readString(brandingSettings.logoUrl);
   const website = readString(brandingSettings.website) || readString(tenant.domain) || readString(emailSettings.website);
   const supportEmail = readString(emailSettings.supportEmail) || readString(extracted.supportEmail);
   const replyTo = readString(emailSettings.replyTo) || readString(emailSettings.reply_to) || supportEmail;

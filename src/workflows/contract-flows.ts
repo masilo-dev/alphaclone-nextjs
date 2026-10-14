@@ -1,5 +1,4 @@
-import { runContractSignedFlow, type ContractSignedFlowInput } from '@/lib/contracts/contractSignedSteps';
-import { runProjectAutomationEvent } from '@/lib/projects/projectAutomationService';
+import type { ContractSignedFlowInput } from '@/lib/contracts/contractSignedSteps';
 
 /**
  * Contract Signed Workflow
@@ -32,6 +31,8 @@ async function runContractSignedFlowStep(
   input: ContractSignedFlowInput & { eventId?: string },
 ) {
   "use step";
+  const { runContractSignedFlow } = await import('@/lib/contracts/contractSignedSteps');
+  const { runProjectAutomationEvent } = await import('@/lib/projects/projectAutomationService');
 
   const automation = await runProjectAutomationEvent({
     tenantId: input.tenantId,

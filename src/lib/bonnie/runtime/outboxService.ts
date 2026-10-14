@@ -43,6 +43,8 @@ export async function publishOutboxBatch(limit = 50): Promise<{
   deadLetter: number;
 }> {
   const admin = createSupabaseAdminClient();
+  const {processProjectNotificationOutbox}=await import('@/lib/projects/projectNotificationOutbox');
+  await processProjectNotificationOutbox(limit,admin);
   const workerId = `outbox-${process.pid}-${Date.now()}`;
   const now = new Date().toISOString();
 

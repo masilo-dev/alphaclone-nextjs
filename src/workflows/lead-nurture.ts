@@ -1,6 +1,5 @@
 import { sleep } from 'workflow';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { sendEmailServer } from '@/lib/email/sendEmailServer';
 
 /**
  * Lead Nurture Workflow
@@ -33,6 +32,7 @@ export async function leadNurtureWorkflow({ leadId, tenantId }: { leadId: string
 
 async function sendIntroEmail(leadId: string, tenantId: string) {
   "use step";
+  const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
   const lead = await loadLead(leadId, tenantId);
   const result = await sendEmailServer({ tenantId, to: lead.email, subject: `A quick introduction for ${lead.business_name || 'your team'}`, text: `Hello,\n\nI wanted to introduce our team and learn whether we can help with your current business priorities. If this is relevant, reply with a convenient time for a short conversation.\n\nBest regards`, templateName: 'lead-nurture-intro' });
   if (!result.success) throw new Error(result.error || 'Intro email could not be delivered');
@@ -48,6 +48,7 @@ async function loadLead(leadId: string, tenantId: string) {
 
 async function sendFollowUp(leadId: string, tenantId: string) {
   "use step";
+  const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
   const lead = await loadLead(leadId, tenantId);
   const result = await sendEmailServer({ tenantId, to: lead.email, subject: `Following up: ${lead.business_name || 'your priorities'}`, text: `Hello,\n\nI’m following up on my earlier note. If improving your current workflow is a priority, reply with the area you would most like to improve and we can suggest a concrete next step.\n\nBest regards`, templateName: 'lead-nurture-follow-up' });
   if (!result.success) throw new Error(result.error || 'Follow-up email could not be delivered');
@@ -55,6 +56,7 @@ async function sendFollowUp(leadId: string, tenantId: string) {
 
 async function checkReply(leadId: string, tenantId: string, since: string) {
   "use step";
+  const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
   const lead = await loadLead(leadId, tenantId);
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase.from('unified_messages').select('id').eq('tenant_id', tenantId).eq('direction', 'inbound').ilike('from_address', lead.email).gte('created_at', since).limit(1).maybeSingle();
@@ -64,6 +66,7 @@ async function checkReply(leadId: string, tenantId: string, since: string) {
 
 async function moveToQualified(leadId: string, tenantId: string) {
   "use step";
+  const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
   const supabase = createSupabaseAdminClient();
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
   const { error } = await supabase.from('leads').update({ status: 'qualified', stage: 'prospect' }).eq('id', leadId).eq('tenant_id', tenantId);
@@ -72,6 +75,7 @@ async function moveToQualified(leadId: string, tenantId: string) {
 
 async function moveToCold(leadId: string, tenantId: string) {
   "use step";
+  const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
   const supabase = createSupabaseAdminClient();
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
   const { error } = await supabase.from('leads').update({ status: 'contacted', stage: 'lead' }).eq('id', leadId).eq('tenant_id', tenantId);

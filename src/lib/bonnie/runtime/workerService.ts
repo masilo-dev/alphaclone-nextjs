@@ -32,6 +32,7 @@ import {
   setActiveBonnieTasks,
 } from '@/lib/runtime/workerRuntimeCounters';
 import { isBackgroundJobHeapBlocked } from '@/lib/runtime/backgroundJobGate';
+import { workerRecoveryFilter } from './workerRecoveryPolicy';
 
 const TASK_SELECT_FIELDS =
   'id, tenant_id, status, task_type, title, assigned_agent_id, structured_input, structured_output, run_id, owner_id, created_by, risk_level, approval_policy, version, attempt_count, max_attempts, idempotency_key, correlation_id, scheduled_at, priority, updated_at';
@@ -543,7 +544,7 @@ async function executeTaskStages(params: {
   return { status: 'COMPLETED' as const };
 }
 
-export async function processClaimableTasks(limit = 10): Promise<{
+export async function processClaimableTasks(limit = 10, scope?: { tenantId: string; taskId: string }): Promise<{
   processed: number;
   completed: number;
   waiting: number;
@@ -572,9 +573,9 @@ export async function processClaimableTasks(limit = 10): Promise<{
   let failed = 0;
 
   try {
-    await scheduleReadyTasks({ limit: 40 });
+    if (!scope) await scheduleReadyTasks({ limit: 40 });
 
-    const { data: candidates } = await admin
+    let candidateQuery = admin
       .from('agent_tasks')
       .select(TASK_SELECT_FIELDS)
       .in('status', ['READY', 'QUEUED'])
@@ -582,6 +583,11 @@ export async function processClaimableTasks(limit = 10): Promise<{
       .order('priority', { ascending: true })
       .order('updated_at', { ascending: true })
       .limit(limit);
+    if (scope) candidateQuery = candidateQuery.eq('tenant_id', scope.tenantId).eq('id', scope.taskId);
+    const recoveryFilter = workerRecoveryFilter();
+    if (recoveryFilter) candidateQuery = candidateQuery.or(recoveryFilter);
+    const { data: candidates, error: candidateError } = await candidateQuery;
+    if (candidateError) throw new Error(`Worker task lookup failed: ${candidateError.message}`);
 
     const claimedTasks: Array<{
       task: Record<string, any>;
@@ -594,7 +600,10 @@ export async function processClaimableTasks(limit = 10): Promise<{
         taskId: task.id,
         workerId: worker,
       });
-      if (!claim.ok) continue;
+      if (!claim.ok) {
+        console.warn('[bonnie-worker] task claim rejected', { taskId: task.id, error: claim.error });
+        continue;
+      }
       claimedTasks.push({ task, claim });
     }
 

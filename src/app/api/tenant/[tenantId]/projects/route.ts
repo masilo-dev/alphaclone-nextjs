@@ -16,6 +16,7 @@ const optionalUrl = z.union([z.string(), z.null()]).optional().transform((val) =
 const optionalNumber = z.union([z.number(), z.string().transform((v) => parseFloat(v)), z.null()]).optional().transform((val) => (typeof val === 'number' && !isNaN(val) ? val : null));
 
 const schema = z.object({
+  isTestData:z.boolean().optional(),historicalImport:z.boolean().optional(),projectType:z.string().optional(),progressMethod:z.enum(['task_based','weighted_tasks','milestones','manual']).optional(),
   name: z.string().trim().min(1).max(200), ownerId: optionalUuid, ownerName: z.string().trim().max(300).optional(),
   category: z.string().trim().max(120).default("General"), status: z.string().trim().min(1).max(80).default("Pending"),
   currentStage: z.string().trim().min(1).max(120).default("Discovery"), progress: z.union([z.number(), z.string().transform((v) => parseFloat(v))]).default(0),
@@ -44,129 +45,20 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
     const admin = createSupabaseAdminClient();
     const headerKey = req.headers.get('idempotency-key') || req.headers.get('Idempotency-Key');
 
-    // Domain command path for standard creates (no template / portal extras).
-    if (!input.templateId && !input.portalEnabled) {
-      const { executeProjectCreateCommand } = await import(
-        '@/lib/execution/commands/projectCreateCommand'
-      );
-      const { data: ownerProfile } = await admin.from("profiles").select("full_name, name, email").eq("id", ownerId).maybeSingle();
-      const execution = await executeProjectCreateCommand({
-        tenantId,
-        userId: user.id,
-        executionSource: 'ui',
-        idempotencyKey: headerKey || undefined,
-        input: {
-          name: input.name,
-          clientId: input.clientId,
-          status,
-          currentStage,
-          category: input.category,
-          description: input.description,
-          dueDate: cleanDate(input.dueDate),
-          ownerId,
-          ownerName: input.ownerName || ownerProfile?.full_name || ownerProfile?.name || ownerProfile?.email || user.email || "Workspace member",
-        },
-      });
-      if (!execution.ok || !execution.result) {
-        return NextResponse.json(
-          { error: execution.error?.message || 'Project create blocked', code: execution.failure_code },
-          { status: execution.failure_code === 'APPROVAL_REQUIRED' ? 202 : 403 }
-        );
-      }
-      return NextResponse.json({
-        project: execution.result.project,
-        created: execution.result.created,
-        duplicate: execution.result.duplicate,
-        execution_id: execution.execution_id,
-        idempotency_key: execution.idempotency_key,
-      });
-    }
-
-    if (input.clientId) {
-      const { data: client, error: clientError } = await admin.from('business_clients')
-        .select('id').eq('tenant_id', tenantId).eq('id', input.clientId).eq('is_active', true).maybeSingle();
-      if (clientError) throw clientError;
-      if (!client) return NextResponse.json({ error: 'Client not found in this workspace' }, { status: 404 });
-    }
-
-    const memberIds = [...new Set([ownerId, ...input.team])].filter((id) => Boolean(id) && z.string().uuid().safeParse(id).success);
-    if (memberIds.length) {
-      const { data: members, error: memberError } = await admin.from("tenant_users").select("user_id").eq("tenant_id", tenantId).in("user_id", memberIds);
-      if (!memberError) {
-        const valid = new Set((members || []).map((m) => m.user_id)); valid.add(user.id); input.team = input.team.filter((id) => valid.has(id));
-      }
-    }
-    const { data: ownerProfile } = await admin.from("profiles").select("full_name, name, email").eq("id", ownerId).maybeSingle();
-
-    if (input.templateId) {
-      const { data: template, error: templateError } = await admin.from("project_templates").select("id").eq("id", input.templateId).eq("tenant_id", tenantId).eq("is_active", true).maybeSingle();
-      if (templateError) throw templateError;
-      if (!template) return NextResponse.json({ error: "Project template not found" }, { status: 404 });
-    }
-
-    const portalToken = input.portalEnabled ? crypto.randomUUID().replace(/-/g, "") : null;
-    const projectPayload: Record<string, unknown> = {
-      tenant_id: tenantId, owner_id: ownerId,
-      owner_name: input.ownerName || ownerProfile?.full_name || ownerProfile?.name || ownerProfile?.email || user.email || "Workspace member",
-      name: input.name, category: input.category, status, current_stage: currentStage, progress: input.progress,
-      due_date: cleanDate(input.dueDate), start_date: cleanDate(input.startDate), team: input.team, image: input.image || null,
-      description: input.description || null, contract_status: input.contractStatus, contract_text: input.contractText || null, external_url: input.externalUrl || null,
-      is_public: input.isPublic, show_in_portfolio: input.showInPortfolio, client_id: input.clientId || null, location: input.location || null,
-      budget: input.budget ?? null, risk: input.risk || null, health: input.health || null, resources: input.resources,
-      budget_total: input.budgetTotal ?? null, budget_used: input.budgetUsed, velocity_score: input.velocityScore ?? null, health_score: input.healthScore ?? null,
-      portal_token: portalToken, portal_enabled: input.portalEnabled, estimated_completion_date: cleanDate(input.estimatedCompletionDate), auto_invoice_enabled: input.autoInvoiceEnabled,
-    };
-    let { data: project, error } = await admin.from("projects").insert(projectPayload).select("*").single();
-    if (error && (error.code === 'PGRST204' || /location|schema cache/i.test(error.message))) {
-      delete projectPayload.location;
-      const fallback = await admin.from("projects").insert(projectPayload).select("*").single(); project = fallback.data; error = fallback.error;
-    }
-    if (error || !project) throw error || new Error("Project creation failed");
-
-    let templateApplication: unknown = null;
-    if (input.templateId) {
-      const startDate = cleanDate(input.startDate) || cleanDate(project.created_at) || new Date().toISOString().slice(0, 10);
-      const idempotencyKey = `project-create:${tenantId}:${project.id}:${input.templateId}`;
-      const { data: application, error: applicationError } = await admin.rpc("apply_project_template", {
-        p_tenant_id: tenantId, p_project_id: project.id, p_template_id: input.templateId, p_start_date: startDate,
-        p_idempotency_key: idempotencyKey, p_applied_by: user.id, p_correlation_id: `project-create:${project.id}`,
-      });
-      if (applicationError) {
-        await admin.from("projects").delete().eq("id", project.id).eq("tenant_id", tenantId);
-        throw applicationError;
-      }
-      templateApplication = application;
-    }
-
-    const { error: eventError } = await admin.from("business_automation_events").insert({
-      tenant_id: tenantId, event_type: "project_created",
-      payload: { projectId: project.id, projectName: project.name || input.name, actorUserId: user.id, templateId: input.templateId || null, templateApplication },
+    const { executeProjectCreateCommand } = await import('@/lib/execution/commands/projectCreateCommand');
+    const execution = await executeProjectCreateCommand({
+      tenantId, userId: user.id, executionSource: 'ui', idempotencyKey: headerKey || undefined,
+      input: {name: input.name, clientId: input.clientId, status, currentStage,
+        category: input.category, description: input.description, dueDate: cleanDate(input.dueDate),
+        ownerId, ownerName: input.ownerName || user.email || 'Workspace member', templateId: input.templateId,isTestData:input.isTestData,historicalImport:input.historicalImport,projectType:input.projectType,progressMethod:input.progressMethod,
+        extras: {start_date: cleanDate(input.startDate), team: input.team, resources: input.resources,
+          image: input.image, external_url: input.externalUrl, budget: input.budget, budget_total: input.budgetTotal,
+          estimated_completion_date: cleanDate(input.estimatedCompletionDate), portal_enabled: input.portalEnabled,is_public:input.isPublic,show_in_portfolio:input.showInPortfolio},
+      },
     });
-    if (eventError) console.error("[projects] project_created event could not be recorded", eventError);
-
-    const { bridgeAutomationEventToTenantNotification } = await import('@/lib/audit/businessEventBridge');
-    void bridgeAutomationEventToTenantNotification(tenantId, 'project_created', { projectId: project.id, projectName: project.name || input.name, actorUserId: user.id, source: 'user' });
-
-    void appendWorkspaceActivity(admin, {
-      tenant_id: tenantId,
-      project_id: project.id,
-      client_id: project.client_id || null,
-      invoice_id: null,
-      contract_id: null,
-      actor_type: 'team_user',
-      actor_id: user.id,
-      actor_display_name: ownerProfile?.full_name || ownerProfile?.name || ownerProfile?.email || user.email || 'Workspace member',
-      event_type: 'project.created',
-      summary: `Created project ${project.name || input.name}`,
-      metadata: { projectId: project.id, projectName: project.name || input.name, category: input.category },
-    }).catch((e) => console.error('[projects/route] workspace activity failed', e));
-
-    const clientNotification = project.client_id
-      ? await notifyProjectClientDetails({ admin, projectId: project.id, tenantId, kind: 'created', origin: req.nextUrl.origin })
-          .catch((notificationError) => ({ sent: false, skipped: String(notificationError) }))
-      : { sent: false, skipped: 'no_client' };
-    return NextResponse.json({ project, templateApplication, clientNotification }, { status: 201 });
+    if (!execution.ok || !execution.result) return NextResponse.json({error: execution.error?.message || 'Project creation failed',code:execution.failure_code}, {status:execution.failure_code==='APPROVAL_REQUIRED'?202:422});
+    return NextResponse.json({...execution.result,execution_id:execution.execution_id,idempotency_key:execution.idempotency_key}, {status:execution.result.created?201:200});
   } catch (error) {
-    return routeErrorResponse(error, "Project could not be created", req);
+    return routeErrorResponse(error, 'Project could not be created', req);
   }
 }

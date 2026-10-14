@@ -20,6 +20,7 @@ const CHANNELS: Array<{ key: keyof CategoryChannelPolicy; label: string }> = [
 
 export default function NotificationCategoryPolicyPanel({ tenantId }: { tenantId: string }) {
   const [policy, setPolicy] = useState<TenantNotificationPolicy>(defaultTenantNotificationPolicy());
+  const [projectNotifications,setProjectNotifications]=useState({enabled:false,transactional_authorized:false});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -30,6 +31,7 @@ export default function NotificationCategoryPolicyPanel({ tenantId }: { tenantId
         const res = await fetch(`/api/tenant/${tenantId}/notification-preferences`);
         const payload = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(payload.error || 'Preferences could not be loaded');
+        if(!cancelled && payload.project_notifications)setProjectNotifications(payload.project_notifications);
         if (!cancelled && payload.tenant_policy) setPolicy(payload.tenant_policy);
       } catch (err) {
         if (!cancelled) toast.error(err instanceof Error ? err.message : 'Preferences could not be loaded');
@@ -62,12 +64,27 @@ export default function NotificationCategoryPolicyPanel({ tenantId }: { tenantId
     }
   };
 
+  const saveProjectNotifications=async()=>{
+    const next={...projectNotifications,enabled:!projectNotifications.enabled,transactional_authorized:!projectNotifications.enabled};
+    setSaving(true);
+    try {
+      const res=await fetch(`/api/tenant/${tenantId}/notification-preferences`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({project_notifications:next,categories:{projects:{...policy.projects,email_client:next.enabled}}})});
+      const payload=await res.json();if(!res.ok)throw new Error(payload.error || 'Project notification policy could not be saved');
+      setProjectNotifications(next);if(payload.tenant_policy)setPolicy(payload.tenant_policy);
+    }catch(error){toast.error(error instanceof Error?error.message:'Policy could not be saved');}finally{setSaving(false);}
+  };
+
   if (loading) {
     return <p className="type-card-description text-[var(--ws-text-muted)] p-4">Loading notification policy…</p>;
   }
 
   return (
     <div className="divide-y divide-white/5">
+      <div className="p-4 space-y-2">
+        <h4 className="type-ui font-bold text-[var(--ws-text-primary)]">Automatic project emails</h4>
+        <p className="type-card-description text-[var(--ws-text-muted)]">Authorize routine project confirmations and milestone updates through your connected business email provider. Marketing still requires approval. Test projects are excluded.</p>
+        <button type="button" disabled={saving} onClick={()=>void saveProjectNotifications()} className="px-3 py-2 rounded-md bg-[var(--ws-surface-secondary)] type-ui">{projectNotifications.enabled?'Disable automatic project emails':'Authorize automatic project emails'}</button>
+      </div>
       {NOTIFICATION_CATEGORIES.map((category) => {
         const row = policy[category];
         return (

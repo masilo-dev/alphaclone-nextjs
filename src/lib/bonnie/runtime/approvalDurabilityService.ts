@@ -143,7 +143,7 @@ export async function decideApproval(params: {
       .maybeSingle();
 
     if (task) {
-      await transitionTask({
+      const transition = await transitionTask({
         tenantId: params.tenantId,
         taskId: task.id,
         to: 'READY',
@@ -152,6 +152,9 @@ export async function decideApproval(params: {
         actorId: params.decisionMaker,
         expectedVersion: task.version,
       });
+      if (!transition.ok) return { ok: false, error: 'approved_task_transition_failed' };
+      const { scheduleDurableWorkerKick } = await import('./workerKick');
+      await scheduleDurableWorkerKick({ tenantId: params.tenantId, taskId: task.id });
       await insertOutboxEvent({
         tenantId: params.tenantId,
         eventType: 'task.ready',

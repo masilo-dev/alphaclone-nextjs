@@ -73,8 +73,8 @@ export function normalizeProjectStage(value: string): string | null {
   return STAGE_ALIASES[trimmed.toLowerCase()] || null;
 }
 
-const FINISHED_STATUSES = new Set(["Completed", "done", "cancelled", "Declined"]);
-const FINISHED_STAGES = new Set(["Closure", "Completed", "Deployment", "Maintenance"]);
+const FINISHED_STATUSES = new Set(["Completed", "done"]);
+const FINISHED_STAGES = new Set(["Closure", "Completed"]);
 
 export function isFinishedProjectStatus(status?: string | null): boolean {
   if (!status) return false;

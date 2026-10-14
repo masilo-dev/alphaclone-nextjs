@@ -5,6 +5,7 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import type { GraphDependencyInput, GraphTaskInput } from './types';
 import { insertOutboxEvent } from './outboxService';
+import { scheduleDurableWorkerKick } from './workerKick';
 
 export async function createGraphTransactional(params: {
   tenantId: string;
@@ -57,6 +58,12 @@ export async function createGraphTransactional(params: {
       },
       correlationId: task.correlation_id,
     });
+  }
+
+  // Every producer (email, social, contracts, invoices, MCP outcomes) uses this
+  // persisted graph. Wake only its READY tasks, never unrelated tenant work.
+  if (readyTasks?.length) {
+    await scheduleDurableWorkerKick(readyTasks.map(task => ({ tenantId: params.tenantId, taskId: task.id })));
   }
 
   return {
@@ -144,6 +151,11 @@ export async function expandGraph(params: {
     .from('agent_graphs')
     .update({ current_version: nextVersion, updated_at: new Date().toISOString() })
     .eq('id', params.graphId);
+
+  const readyScopes = params.tasks
+    .filter(task => task.status === 'READY')
+    .map(task => ({ tenantId: params.tenantId, taskId: idMap[task.tempId] }));
+  if (readyScopes.length) await scheduleDurableWorkerKick(readyScopes);
 
   return { version: nextVersion, idMap };
 }
