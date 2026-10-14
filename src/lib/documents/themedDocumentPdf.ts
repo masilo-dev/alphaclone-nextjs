@@ -8,6 +8,7 @@ import {
 } from '@/lib/documents/documentBuilders';
 import { renderDocumentHtml } from '@/lib/documents/renderDocument';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { loadContractSignatureParties } from '@/lib/contracts/contractSignatureEvidence';
 
 type TenantLike = {
   id?: string;
@@ -17,7 +18,7 @@ type TenantLike = {
   settings?: unknown;
 };
 
-async function inlineLogoForPdf(logoUrl?: string): Promise<string | undefined> {
+async function inlineLogoForPdf(logoUrl?: string, tenantId?: string): Promise<string | undefined> {
   if (!logoUrl) return undefined;
   if (logoUrl.startsWith('data:')) return logoUrl;
 
@@ -27,6 +28,7 @@ async function inlineLogoForPdf(logoUrl?: string): Promise<string | undefined> {
       if (match) {
         const bucket = match[1];
         const filePath = match[2];
+        if (!tenantId || !filePath.startsWith(`tenant/${tenantId}/`) || filePath.split('/').some(part => part === '..' || part === '.')) return undefined;
         const supabase = createSupabaseAdminClient();
         const { data: blob, error } = await supabase.storage.from(bucket).download(filePath);
         if (!error && blob) {
@@ -37,8 +39,8 @@ async function inlineLogoForPdf(logoUrl?: string): Promise<string | undefined> {
         }
       }
     } else if (logoUrl.startsWith('http')) {
-      const res = await fetch(logoUrl);
-      if (res.ok) {
+      const res = await fetch(logoUrl, { signal: AbortSignal.timeout(10000) });
+      if (res.ok && res.headers.get('content-type')?.startsWith('image/')) {
         const buffer = Buffer.from(await res.arrayBuffer());
         const mime = res.headers.get('content-type') || 'image/png';
         return `data:${mime};base64,${buffer.toString('base64')}`;
@@ -47,7 +49,8 @@ async function inlineLogoForPdf(logoUrl?: string): Promise<string | undefined> {
   } catch (err) {
     console.warn('[themedDocumentPdf] failed to inline logo:', err);
   }
-  return logoUrl;
+  // A failed lookup uses the document's wordmark instead of embedding broken media.
+  return undefined;
 }
 
 async function resolveTenantWithBusinessSettings(
@@ -88,7 +91,7 @@ export async function generateThemedInvoicePdfBuffer(
   const resolvedTenant = await resolveTenantWithBusinessSettings(tenant, invoice.tenant_id as string);
   const input = buildInvoiceDocumentInput(invoice, items, resolvedTenant, client);
   if (input.branding?.logoUrl) {
-    input.branding.logoUrl = await inlineLogoForPdf(input.branding.logoUrl);
+    input.branding.logoUrl = await inlineLogoForPdf(input.branding.logoUrl, resolvedTenant?.id || String(invoice.tenant_id || ''));
     input.branding.companyLogo = input.branding.logoUrl;
   }
   const html = renderDocumentHtml(input);
@@ -103,7 +106,7 @@ export async function generateThemedQuotePdfBuffer(
   const resolvedTenant = await resolveTenantWithBusinessSettings(tenant, quote.tenant_id as string);
   const input = buildQuoteDocumentInput(quote, items, resolvedTenant);
   if (input.branding?.logoUrl) {
-    input.branding.logoUrl = await inlineLogoForPdf(input.branding.logoUrl);
+    input.branding.logoUrl = await inlineLogoForPdf(input.branding.logoUrl, resolvedTenant?.id || String(quote.tenant_id || ''));
     input.branding.companyLogo = input.branding.logoUrl;
   }
   const html = renderDocumentHtml(input);
@@ -116,9 +119,12 @@ export async function generateThemedContractPdfBuffer(
   client?: { name?: string; email?: string }
 ): Promise<Buffer> {
   const resolvedTenant = await resolveTenantWithBusinessSettings(tenant, contract.tenant_id as string);
-  const input = buildContractDocumentInput(contract, resolvedTenant, client);
+  const parties = contract.id && contract.tenant_id
+    ? await loadContractSignatureParties(createSupabaseAdminClient(), String(contract.tenant_id), String(contract.id))
+    : undefined;
+  const input = buildContractDocumentInput(parties ? { ...contract, contract_parties: parties } : contract, resolvedTenant, client);
   if (input.branding?.logoUrl) {
-    input.branding.logoUrl = await inlineLogoForPdf(input.branding.logoUrl);
+    input.branding.logoUrl = await inlineLogoForPdf(input.branding.logoUrl, resolvedTenant?.id || String(contract.tenant_id || ''));
     input.branding.companyLogo = input.branding.logoUrl;
   }
   const html = renderDocumentHtml(input);

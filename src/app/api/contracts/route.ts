@@ -5,6 +5,7 @@ import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/serv
 import { queueDocumentIntelligence } from '@/lib/documents/fileDocument';
 import { assessContractContentQuality } from '@/lib/documents/contractContentQuality';
 import { resolveContractGoverningLaw } from '@/lib/contracts/contractGoverningLaw';
+import { documentContentToHtml } from '@/lib/documents/documentContent';
 
 const CreateContractSchema = z.object({
   title: z.string().trim().min(1).max(300),
@@ -32,7 +33,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 422 });
     }
 
-    const { tenantId, client_id, project_id, title, content, type, status, metadata, admin_signature, admin_signed_at, payment_due_date, payment_amount, payment_status, governing_law, jurisdiction } = parsed.data;
+    const { tenantId, client_id, project_id, title, content: sourceContent, type, status, metadata, admin_signature, admin_signed_at, payment_due_date, payment_amount, payment_status, governing_law, jurisdiction } = parsed.data;
+    // Normalize newly generated unsigned content; adopted provider evidence freezes its source.
+    const content = admin_signature || admin_signed_at ? sourceContent : documentContentToHtml(sourceContent);
     const { user, admin } = await requireTenantAccess(tenantId, req);
 
     // The pre-send legal check reads governing_law/jurisdiction from the row.

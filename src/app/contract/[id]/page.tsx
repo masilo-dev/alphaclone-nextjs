@@ -7,6 +7,7 @@ import { SignaturePad } from '../../../components/contracts/SignaturePad';
 import { esignatureComplianceService } from '../../../services/esignatureComplianceService';
 import toast, { Toaster } from 'react-hot-toast';
 import { DocumentPreview } from '@/components/documents/DocumentPreview';
+import { tenantBrandingFromRecord } from '@/lib/documents/documentBuilders';
 import { buildContractDocumentInput } from '@/lib/documents/documentBuilders';
 
 export default function PublicContractPage() {
@@ -48,9 +49,13 @@ export default function PublicContractPage() {
             setContract(payload.contract);
             setReviewOnly(payload.review_only === true);
             setSignerEmail(payload?.signer?.email || '');
-            if (payload.contract.status === 'fully_signed' || payload.contract.status === 'client_signed') {
-                setSigned(true);
-            }
+            const parties = payload.contract.contract_parties || [];
+            const matchingParty = parties.find((party: any) =>
+                String(party.party_snapshot?.email || '').toLowerCase() === String(payload.signer?.email || '').toLowerCase());
+            const partySigned = matchingParty?.signature_status === 'signed';
+            const legacySigned = parties.length === 0 && Boolean(
+                payload.signer?.role === 'client' ? payload.contract.client_signed_at : payload.contract.admin_signed_at);
+            setSigned(payload.contract.status === 'fully_signed' || partySigned || legacySigned);
             if (payload.contract.status === 'rejected') {
                 setDeclined(true);
             }
@@ -119,7 +124,7 @@ export default function PublicContractPage() {
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || !payload.success) throw new Error(payload.error || 'Unable to record your signature');
-            setContract(payload.contract || contract);
+            setContract(payload.contract ? { ...contract, ...payload.contract, tenant: payload.contract.tenant || contract.tenant } : contract);
             setSigned(true);
             toast.success('Your signature has been recorded. The authoritative agreement and completion receipt will be available after all required signers finish.');
 
@@ -156,9 +161,9 @@ export default function PublicContractPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[var(--ws-canvas)] text-[var(--ws-text-secondary)] py-12 px-4">
+        <div className="min-h-screen bg-[var(--ws-canvas)] text-[var(--ws-text-secondary)] py-3 sm:py-8 px-0 sm:px-4 pb-[max(12px,env(safe-area-inset-bottom))]">
             <Toaster position="top-center" />
-            <div className="max-w-4xl mx-auto bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl overflow-hidden shadow-2xl">
+            <div className="max-w-4xl mx-auto bg-[var(--ws-panel)] border border-[var(--ws-border)] sm:rounded-2xl overflow-hidden shadow-2xl">
                 {/* Header */}
                 <div className="bg-[var(--ws-canvas)] p-6 border-b border-[var(--ws-border)] flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
@@ -166,22 +171,23 @@ export default function PublicContractPage() {
                             <FileText className="w-8 h-8 text-teal-400" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-white">{contract.title}</h1>
-                            <p className="type-card-description text-[var(--ws-text-muted)]">Provided by {contract.tenant?.name || 'AlphaClone'}</p>
+                            <h1 className="text-xl font-bold text-white">{reviewOnly ? 'Review agreement' : signed ? 'Signed agreement' : 'Review and sign'}</h1>
+                            <p className="type-card-description text-[var(--ws-text-muted)]">Provided by {tenantBrandingFromRecord(contract.tenant).name}</p>
                         </div>
                     </div>
                     {signed && (
                         <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-400 rounded-lg border border-green-500/20">
                             <CheckCircle className="w-5 h-5" />
-                            <span className="font-bold type-ui">Signed & Active</span>
+                            <span className="font-bold type-ui">{contract.status === 'fully_signed' ? 'Fully signed' : 'Your signature recorded'}</span>
                         </div>
                     )}
                 </div>
 
-                <div className="p-4 sm:p-6 bg-[var(--ws-canvas)] border-y border-[var(--ws-border)] print-content">
+                <div className="p-0 sm:p-3 bg-white border-y border-[var(--ws-border)] print-content">
                     <DocumentPreview
                         className="!mb-0"
                         hideLabel
+                        expandToContent
                         input={buildContractDocumentInput(
                             contract,
                             contract.tenant,
@@ -192,14 +198,14 @@ export default function PublicContractPage() {
 
                 {/* Signature Section */}
                 {reviewOnly ? (<p className="type-card-description text-[var(--ws-text-muted)]">Draft for review only. No signature is requested or permitted.</p>) : declined ? (
-                    <div className="p-8 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] text-center">
+                    <div className="p-4 sm:p-8 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--error-500)]/10 text-red-400 rounded-lg border border-red-500/20">
                             <XCircle className="w-5 h-5" />
                             <span className="font-bold type-ui">Contract Declined</span>
                         </div>
                     </div>
                 ) : !signed ? (
-                    <div className="p-8 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)]">
+                    <div className="p-4 sm:p-8 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)]">
                         {/* ESIGN Disclosure */}
                         <div className="mb-8 p-6 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl">
                             <div
@@ -315,11 +321,11 @@ export default function PublicContractPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="p-8 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] text-center space-y-4">
+                    <div className="p-4 sm:p-8 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] text-center space-y-4">
                         <CheckCircle2 className="mx-auto mb-2 h-10 w-10 text-emerald-400" />
                         <h2 className="text-lg font-semibold text-white">Your signature is recorded</h2>
                         <p className="mx-auto max-w-lg type-card-description text-[var(--ws-text-muted)]">
-                            The agreement has been sealed with an electronic signature and tamper audit certificate.
+                            Your signature is recorded. The completed agreement is available after all required parties have signed.
                         </p>
                         {contract.pdf_url && (
                             <div>
@@ -342,32 +348,4 @@ export default function PublicContractPage() {
             </div>
         </div>
     );
-}
-
-function contractToStyledHtml(text: string): string {
-    if (!text) return '';
-
-    // If it looks like HTML (starts with a tag), trust it but wrap it in a styled container
-    const isHtml = /<[a-z][\s\S]*>/i.test(text);
-
-    if (isHtml) {
-        return `<div class="contract-content" style="font-family:'Times New Roman', Georgia, serif; font-size:15px; line-height:1.75; color:var(--ws-canvas);">${text}</div>`;
-    }
-
-    // Otherwise, treat as markdown-ish text
-    const escaped = text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-
-    const formatted = escaped
-        .replace(/^# (.+)$/gm, '<h1 style="font-size:28px; text-align:center; text-transform:uppercase; letter-spacing:1px; margin:0 0 18px; font-weight:700; color:var(--brand-violet-950);">$1</h1>')
-        .replace(/^## (.+)$/gm, '<h2 style="font-size:17px; text-transform:uppercase; border-bottom:1px solid var(--ws-border); padding-bottom:6px; margin:26px 0 14px; font-weight:700; color:var(--ws-canvas);">$1</h2>')
-        .replace(/^### (.+)$/gm, '<h3 style="font-size:15px; margin:16px 0 8px; font-weight:700; color:var(--ws-canvas);">$1</h3>')
-        .replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight:700; color:var(--brand-violet-950);">$1</strong>')
-        .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid var(--ws-border);margin:20px 0;" />')
-        .replace(/\n\n/g, '</p><p style="margin:0 0 12px; text-align:justify;">')
-        .replace(/\n/g, '<br/>');
-
-    return `<div class="contract-content" style="font-family:'Times New Roman', Georgia, serif; font-size:15px; line-height:1.75; color:var(--ws-canvas);"><p style="margin:0 0 12px; text-align:justify;">${formatted}</p></div>`;
 }

@@ -17,6 +17,7 @@ export interface TenantBranding {
   taxNumber?: string;
   taxId?: string;
   documentFooterText?: string;
+  configurationIssues?: string[];
 }
 
 export function extractTenantBranding(
@@ -32,7 +33,7 @@ export function extractTenantBranding(
     settings?: unknown;
   } | null | undefined
 ): TenantBranding {
-  if (!tenant) return { name: 'Unconfigured Business' };
+  if (!tenant) return { name: 'Unconfigured Business', configurationIssues: ['Business name is missing'] };
   const settings = (tenant.settings || {}) as Record<string, unknown>;
   const bSettings = ((tenant as any).business_settings || settings.business_settings || settings.businessSettings || {}) as Record<string, any>;
   const branding = (settings.branding || settings.publicBranding || settings.documentBranding || bSettings.branding || {}) as Record<string, any>;
@@ -43,7 +44,7 @@ export function extractTenantBranding(
     branding.companyName ||
     branding.displayName ||
     branding.tradingName ||
-    tenant.name ||
+    (tenant.name && !/['’]s Organization$/i.test(tenant.name) ? tenant.name : '') ||
     legalName ||
     'Unconfigured Business';
 
@@ -77,5 +78,9 @@ export function extractTenantBranding(
     taxNumber: taxId,
     taxId,
     documentFooterText: footerText,
+    configurationIssues: [
+      ...(display === 'Unconfigured Business' ? ['Business name is missing'] : []),
+      ...(!legalName ? ['Legal business name is missing'] : []),
+    ],
   };
 }

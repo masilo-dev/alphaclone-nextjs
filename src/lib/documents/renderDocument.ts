@@ -1,3 +1,4 @@
+import { documentContentToHtml } from './documentContent';
 /**
  * Unified document rendering — HTML templates + jsPDF fallback.
  */
@@ -360,34 +361,24 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
   const sectionsHtml =
     input.sections
       ?.map((s) => {
-        const bodyLooksHtml = /<[a-z][\s\S]*>/i.test(s.body);
-        const bodyHtml = bodyLooksHtml
-          ? s.body
-          : escapeHtml(s.body)
-              .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-              .split(/\n{2,}/)
-              .map(
-                (para) =>
-                  `<p style="margin:0 0 12px;text-align:justify;color:#334155;line-height:1.75;">${para.replace(/\n/g, '<br/>')}</p>`
-              )
-              .join('');
+        const bodyHtml = documentContentToHtml(s.body);
         return `<section style="margin:16px 0;break-inside:auto;">
-        <h2 style="color:${primary};font-size:15px;letter-spacing:0.04em;text-transform:uppercase;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin:0 0 9px;">${escapeHtml(s.heading)}</h2>
-        <div style="color:#334155;line-height:1.75;">${bodyHtml}</div>
+        ${s.heading === 'Agreement' && /<h[1-6][\s>]/i.test(bodyHtml) ? '' : `<h2 style="color:${primary};font-size:15px;letter-spacing:0.04em;text-transform:uppercase;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin:0 0 9px;">${escapeHtml(s.heading)}</h2>`}
+        <div class="document-body">${bodyHtml}</div>
       </section>`;
       })
       .join('') || '';
 
   const signersHtml =
     input.signers && input.signers.length > 0
-      ? `<div class="signature-block" style="margin-top:18px;padding-top:12px;border-top:1px solid #cbd5e1;page-break-inside:auto;break-inside:auto;">
+      ? `<div class="signature-block" style="margin-top:18px;padding-top:12px;border-top:1px solid #cbd5e1;">
           <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:${primary};margin-bottom:18px;">Execution & Signatures</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:20px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 260px), 1fr));gap:20px;">
             ${input.signers
               .map((signer) => {
                 const isSigned = Boolean(signer.signed);
                 const hasSigImg = Boolean(signer.signatureUrl && (signer.signatureUrl.startsWith('data:image') || signer.signatureUrl.startsWith('http')));
-                const typedText = signer.signatureUrl?.replace(/^typed:/i, '') || signer.name;
+                const typedText = signer.signatureUrl?.startsWith('typed:') ? signer.signatureUrl.slice(6) : '';
 
                 return `<div style="border:1px solid #e2e8f0;border-radius:6px;padding:16px;background:#f8fafc;page-break-inside:avoid;break-inside:avoid;">
                   <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:0.04em;margin-bottom:10px;">${escapeHtml(signer.role || 'Authorized Signatory')}</div>
@@ -396,7 +387,7 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
                       isSigned
                         ? hasSigImg
                           ? `<img src="${escapeHtml(signer.signatureUrl!)}" alt="Signature of ${escapeHtml(signer.name)}" style="max-height:70px;max-width:220px;width:auto;height:auto;object-fit:contain;" />`
-                          : `<span style="font-family:'Brush Script MT', 'Dancing Script', 'Caveat', cursive, serif;font-size:26px;color:#1e3a8a;line-height:1.2;">${escapeHtml(typedText)}</span>`
+                          : typedText ? `<span style="font-family:'Brush Script MT', 'Dancing Script', 'Caveat', cursive, serif;font-size:26px;color:#1e3a8a;line-height:1.2;">${escapeHtml(typedText)}</span>` : '<span style="font-size:12px;color:#475569;">Signature recorded</span>'
                         : `<span style="font-size:12px;color:#94a3b8;font-style:italic;">Awaiting signature</span>`
                     }
                   </div>
@@ -437,12 +428,12 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
   const logoOrWordmarkHtml = branding.logoUrl
     ? `<div style="min-height:36px;display:flex;align-items:center;">
         <img src="${escapeHtml(branding.logoUrl)}" alt="${escapeHtml(branding.name || '')}" style="max-height:36px;max-width:160px;width:auto;height:auto;object-fit:contain;object-position:left;" />
-       </div>`
+       <div style="font-size:14px;font-weight:700;">${escapeHtml(branding.legalName || branding.name || 'Business')}</div></div>`
     : `<div style="min-height:36px;display:flex;align-items:center;font-size:18px;font-weight:700;letter-spacing:-0.01em;color:${primary};">
         ${escapeHtml(branding.name || 'Unconfigured Business')}
        </div>`;
 
-  const headerHtml = `<div style="border-bottom:1px solid #e2e8f0;padding-bottom:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-start;page-break-inside:avoid;break-inside:avoid;">
+  const headerHtml = `<div class="document-header" style="border-bottom:1px solid #e2e8f0;padding-bottom:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-start;page-break-inside:avoid;break-inside:avoid;">
       <div style="max-width:55%;">
         ${logoOrWordmarkHtml}
         <div style="margin-top:8px;font-size:11px;color:#64748b;line-height:1.5;">
@@ -469,6 +460,19 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
     @page { size: A4; margin: 15mm 12mm; }
     @page { @bottom-center { content: "Page " counter(page) " of " counter(pages); font-size: 8pt; color: #64748b; } }
     body { font-family: ${theme.fontFamily}; margin: 0; padding: 0; color: #0f172a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    * { box-sizing: border-box; }
+    body { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+    .content > *, .document-header > *, .meta > * { min-width: 0; }
+    img { max-width: 100%; height: auto; }
+    .document-body { color: #334155; line-height: 1.65; }
+    .document-body p { margin: 0 0 12px; text-align: left; word-spacing: normal; letter-spacing: normal; }
+    .document-body h1 { font-size: 20px; line-height: 1.3; margin: 16px 0 12px; }
+    .document-body h2 { font-size: 16px; line-height: 1.4; margin: 22px 0 10px; }
+    .document-body h3 { font-size: 15px; margin: 18px 0 8px; }
+    .document-body ul, .document-body ol { padding-left: 24px; margin: 8px 0 14px; }
+    .document-body table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+    .document-body td, .document-body th { padding: 8px; border: 1px solid #e2e8f0; }
+    .document-body pre { white-space: pre-wrap; }
     .content { padding: 32px 40px; max-width: 820px; margin: 0 auto; box-sizing: border-box; }
     .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; page-break-inside: avoid; break-inside: avoid; }
     .total-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 18px; text-align: right; margin-top: 24px; page-break-inside: avoid; break-inside: avoid; }
@@ -485,7 +489,11 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
     @media screen and (max-width: 600px) {
       .content { padding: 16px 12px; overflow-wrap: anywhere; }
       .meta { grid-template-columns: 1fr; gap: 12px; }
-      table.doc-table { display: block; overflow-x: auto; }
+      .document-header { flex-direction: column; gap: 12px; }
+      .document-header > div { max-width: 100% !important; text-align: left !important; }
+      table.doc-table { width: 100%; table-layout: fixed; }
+      table.doc-table th { width: auto !important; }
+      .meta > div { text-align: left !important; }
       table.doc-table th, table.doc-table td { padding: 6px !important; }
     }
     @media print {

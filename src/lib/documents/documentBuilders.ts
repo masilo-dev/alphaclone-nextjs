@@ -38,6 +38,9 @@ export function resolveDocumentThemeId(
 
 type TenantLike = {
   name?: string | null;
+  legal_name?: string | null;
+  business_settings?: unknown;
+  business_address?: string | null;
   logo_url?: string | null;
   brand_color_primary?: string | null;
   settings?: unknown;
@@ -47,7 +50,7 @@ export function tenantBrandingFromRecord(tenant: TenantLike | null | undefined) 
   const base = extractTenantBranding(tenant);
   return {
     ...base,
-    logoUrl: tenant?.logo_url || base.logoUrl,
+    logoUrl: base.logoUrl,
     primaryColor: tenant?.brand_color_primary || base.primaryColor,
   };
 }
@@ -86,7 +89,7 @@ export function buildQuoteDocumentInput(
     dueDate: quote.valid_until ? new Date(String(quote.valid_until)).toLocaleDateString() : undefined,
     lineItems,
     subtotal,
-    total: Number(quote.total_amount || subtotal),
+    total: Number(quote.total_amount ?? subtotal),
     notes: quote.notes ? String(quote.notes) : undefined,
     status: quote.status ? String(quote.status) : undefined,
   };
@@ -113,7 +116,7 @@ export function buildInvoiceDocumentInput(
       amount,
     };
   });
-  const subtotal = Number(invoice.subtotal || lineItems.reduce((s, r) => s + r.amount, 0));
+  const subtotal = Number(invoice.subtotal ?? lineItems.reduce((s, r) => s + r.amount, 0));
   const tax = Number(invoice.tax ?? invoice.tax_amount ?? 0);
 
   return {
@@ -134,7 +137,7 @@ export function buildInvoiceDocumentInput(
     lineItems,
     subtotal,
     tax,
-    total: Number(invoice.total || subtotal + tax),
+    total: Number(invoice.total ?? subtotal + tax),
     notes: invoice.notes ? String(invoice.notes) : undefined,
     status: invoice.status ? String(invoice.status) : undefined,
   };
@@ -148,14 +151,8 @@ export function parseContractContentToSections(
   if (!raw) return [{ heading: 'Agreement', body: '' }];
 
   const looksLikeHtml = /<[a-z][\s\S]*>/i.test(raw);
-  const textOnly = looksLikeHtml ? raw.replace(/<[^>]+>/g, '\n') : raw;
-  const hasMarkdownHeadings = /^#{1,3}\s+.+/m.test(textOnly);
-
-  if (looksLikeHtml && !hasMarkdownHeadings) {
-    return [{ heading: 'Agreement', body: raw }];
-  }
-
-  const source = looksLikeHtml ? textOnly : raw;
+  if (looksLikeHtml) return [{ heading: 'Agreement', body: raw }];
+  const source = raw;
   const normalized = source.replace(/\r\n/g, '\n').trim();
   const headingRegex = /^(#{1,3})\s+(.+)$/gm;
   const matches = [...normalized.matchAll(headingRegex)];
@@ -193,18 +190,23 @@ export function buildContractDocumentInput(
 ): RenderDocumentInput {
   const meta = (contract.metadata || {}) as Record<string, unknown>;
   const content = String(contract.content || contract.original_content || '');
-  // Legacy agreements often embed an unsigned signature form in their HTML.
-  // Remove only that trailing form: the structured signature renderer below
-  // shows authoritative signer state and preserves actual signature evidence.
-  const signatureHeadingMatch = /<h[1-6][^>]*>\s*(?:\d+[.)]\s*)?signatures?\s*<\/h[1-6]>/i.exec(content);
-  const withoutLegacySignatureForm = signatureHeadingMatch
-    ? content.slice(0, signatureHeadingMatch.index)
-    : content;
-  const sections = parseContractContentToSections(withoutLegacySignatureForm);
+  // Preserve all legacy clauses and embedded evidence; normalization is presentation-only.
+  const sections = parseContractContentToSections(content);
   const paymentAmount = Number(contract.payment_amount ?? meta.payment_amount ?? 0);
 
   const signers: NonNullable<RenderDocumentInput['signers']> = [];
   const explicitParties = (contract.contract_parties || contract.parties || meta.parties || meta.signers) as Array<Record<string, unknown>> | undefined;
+
+  const providerSigned = Boolean(contract.admin_signature || contract.admin_signed_at);
+  const providerSigner: NonNullable<RenderDocumentInput['signers']>[number] = {
+      role: 'Service Provider',
+      name: String(meta.provider_signatory_name || tenantBrandingFromRecord(tenant).legalName || tenantBrandingFromRecord(tenant).name),
+      title: String(meta.provider_signatory_title || 'Authorized Representative'),
+      email: String(meta.provider_email || ''),
+      signed: providerSigned,
+      signatureUrl: contract.admin_signature ? String(contract.admin_signature) : undefined,
+      date: contract.admin_signed_at ? new Date(String(contract.admin_signed_at)).toISOString() : undefined,
+  };
 
   if (Array.isArray(explicitParties) && explicitParties.length > 0) {
     for (const party of explicitParties) {
@@ -213,13 +215,18 @@ export function buildContractDocumentInput(
       const name = String(partySnapshot.name || party.name || party.signer_name || 'Authorized Signatory');
       const email = String(partySnapshot.email || party.email || party.signer_email || '');
       const title = String(partySnapshot.title || party.title || party.signer_title || '');
-      const signed = party.signature_status === 'signed' || Boolean(party.signed);
+      const roleGroup = /client/i.test(rawRole) ? /client/i : /provider|admin|owner/i.test(rawRole) ? /provider|admin|owner/i : /$a/;
+      const uniqueRole = explicitParties.filter(p => roleGroup.test(String(p.signer_role || p.role || ''))).length === 1;
+      const roleDate = /client/i.test(rawRole) ? contract.client_signed_at : /provider|admin|owner/i.test(rawRole) ? contract.admin_signed_at : undefined;
+      const roleEvidence = /client/i.test(rawRole) ? contract.client_signature : /provider|admin|owner/i.test(rawRole) ? contract.admin_signature : undefined;
+      const signed = party.signature_status === 'signed' || Boolean(uniqueRole && roleDate && roleEvidence);
       const signatureUrl = party.signature_url
         ? String(party.signature_url)
-        : signed
+        : signed && uniqueRole
           ? String(/client/i.test(rawRole) ? (contract.client_signature || '') : /provider|admin|owner/i.test(rawRole) ? (contract.admin_signature || '') : '')
           : undefined;
-      const date = party.signed_at ? new Date(String(party.signed_at)).toLocaleDateString() : undefined;
+      const signedAt = party.signed_at || (uniqueRole ? roleDate : undefined);
+      const date = signedAt ? new Date(String(signedAt)).toISOString() : undefined;
 
       signers.push({
         role: rawRole.charAt(0).toUpperCase() + rawRole.slice(1).replace(/_/g, ' '),
@@ -231,17 +238,11 @@ export function buildContractDocumentInput(
         date,
       });
     }
+    if (providerSigned && !explicitParties.some(p => /provider|admin|owner|supplier/i.test(String(p.signer_role || p.role || '')))) {
+      signers.push(providerSigner);
+    }
   } else {
-    const providerSigned = Boolean(contract.admin_signature || contract.admin_signed_at);
-    signers.push({
-      role: 'Service Provider',
-      name: String(meta.provider_signatory_name || tenant?.name || 'Service Provider'),
-      title: String(meta.provider_signatory_title || 'Authorized Representative'),
-      email: String(meta.provider_email || ''),
-      signed: providerSigned,
-      signatureUrl: contract.admin_signature ? String(contract.admin_signature) : undefined,
-      date: contract.admin_signed_at ? new Date(String(contract.admin_signed_at)).toLocaleDateString() : undefined,
-    });
+    signers.push(providerSigner);
 
     const clientSigned = Boolean(contract.client_signature || contract.client_signed_at);
     signers.push({
@@ -251,14 +252,16 @@ export function buildContractDocumentInput(
       email: client?.email || String(meta.client_email || contract.client_email || ''),
       signed: clientSigned,
       signatureUrl: contract.client_signature ? String(contract.client_signature) : undefined,
-      date: contract.client_signed_at ? new Date(String(contract.client_signed_at)).toLocaleDateString() : undefined,
+      date: contract.client_signed_at ? new Date(String(contract.client_signed_at)).toISOString() : undefined,
     });
   }
 
   const contentHash = String(meta.content_hash || meta.contentHash || '');
   const tamperSeal = String(meta.tamper_seal || meta.tamperSeal || '');
-  const completedAt = contract.client_signed_at || contract.admin_signed_at || meta.signed_at
-    ? new Date(String(contract.client_signed_at || contract.admin_signed_at || meta.signed_at)).toLocaleString()
+  const signingTimes = [contract.client_signed_at, contract.admin_signed_at, meta.signed_at]
+    .filter(Boolean).map(value => Date.parse(String(value))).filter(Number.isFinite);
+  const completedAt = signers.length > 0 && signers.every(s => s.signed) && signingTimes.length
+    ? new Date(Math.max(...signingTimes)).toISOString()
     : undefined;
 
   const auditCertificate =

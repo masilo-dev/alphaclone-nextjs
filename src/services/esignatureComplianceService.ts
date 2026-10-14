@@ -13,9 +13,7 @@ export const ESIGN_DISCLOSURE = `
     <p>You may request a paper copy or withdraw consent for future electronic transactions by contacting the sender. Withdrawal does not affect signatures already completed.</p>
     <h4>Record Retention</h4>
     <p>Download or print a copy for your records. The sender will retain the executed agreement according to its applicable retention policy.</p>
-    <div class="consent-checkbox">
-      <label><input type="checkbox" id="esign-consent" required> <strong>I have read this disclosure and consent to use electronic records and signatures for this transaction.</strong></label>
-    </div>
+    <p><strong>Confirm below that you have read this disclosure and consent to use electronic records and signatures for this transaction.</strong></p>
   </div>
 `;
 

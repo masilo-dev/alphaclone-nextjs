@@ -93,7 +93,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext('2d');
         if (canvas && ctx) {
-            ctx.fillStyle = 'var(--color-white)';
+            ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             setHasDrawn(false);
         }
@@ -148,9 +148,9 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
             canvas.height = canvas.offsetHeight;
             const ctx = canvas.getContext('2d');
             if (ctx) {
-                ctx.fillStyle = 'var(--color-white)';
+                ctx.fillStyle = 'white';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.strokeStyle = 'var(--color-black)';
+                ctx.strokeStyle = 'black';
                 ctx.lineWidth = 3;
                 ctx.lineCap = 'round';
             }

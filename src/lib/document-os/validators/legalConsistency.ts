@@ -127,7 +127,10 @@ export function detectBlankPlaceholders(clauses: ContractClause[]): ValidationIs
   const placeholder = /\[(?:TODO|TBD|PLACEHOLDER|[A-Z_ ]{3,})\]|\{+[a-zA-Z._]+\}+|_{3,}|\bXXX\b/g;
   const issues: ValidationIssue[] = [];
   for (const clause of clauses) {
-    const rawMatches = clause.body.match(placeholder) || [];
+    // An empty signature line is an intentional signing control, not an unresolved business term.
+    // Do not exempt blanks for names, dates, amounts, addresses, or arbitrary clauses.
+    const validationBody = clause.body.replace(/\bSignature\s*:\s*_{3,}/gi, 'Signature: [SIGNATURE_BLOCK]');
+    const rawMatches = validationBody.match(placeholder) || [];
     const blocking = [...new Set(rawMatches.filter((m) => !ALLOWED_PLACEHOLDER_TOKENS.has(m.toUpperCase())))];
     if (blocking.length) {
       issues.push({

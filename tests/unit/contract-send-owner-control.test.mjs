@@ -9,7 +9,8 @@ test('signature lines and filled draft signatures do not veto sending', () => {
   const review = contractSendReview(validateContract({ text, isDraft: true, hasSignaturesFilled: true }), runContractLegalConsistencyCheck({ content: text }), ['{{client.address}}']);
   assert.equal(review.can_send, true);
   assert.ok(review.findings.some(f => f.id === 'draft-with-signatures' && f.severity === 'warning'));
-  assert.ok(review.findings.some(f => f.id === 'blank_placeholder' && f.severity === 'warning'));
+  assert.equal(review.findings.some(f => f.id === 'blank_placeholder'), false);
+  assert.ok(runContractLegalConsistencyCheck({ content: 'Payment amount: ______________________' }).some(f => f.id === 'blank_placeholder'));
   assert.ok(review.findings.some(f => f.id === 'unresolved-template-tokens'));
 });
 test('owner-authored contract terms remain advisory even for signature delivery', () => {

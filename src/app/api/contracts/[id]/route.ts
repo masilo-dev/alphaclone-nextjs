@@ -43,8 +43,8 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
     }
 
     // 2. Status Guard: issued contracts must be preserved as immutable records.
-    const immutableStatuses = ['sent', 'approved', 'signed'];
-    if (immutableStatuses.includes(existing.status)) {
+    const immutableStatuses = ['sent', 'approved', 'signed', 'client_signed', 'fully_signed'];
+    if (immutableStatuses.includes(existing.status) || existing.client_signature || existing.client_signed_at || existing.admin_signature || existing.admin_signed_at) {
       return NextResponse.json(
         { error: `Contract is in ${existing.status} status and cannot be modified. Void it or create a new version.` },
         { status: 409 }

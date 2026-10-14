@@ -3,6 +3,7 @@ import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { generateThemedContractPdfBuffer } from '@/lib/documents/themedDocumentPdf';
 import { fileContractPdfDocument } from '@/lib/documents/fileDocument';
 import { z } from 'zod';
+import { createHash, randomUUID } from 'node:crypto';
 
 const generatePdfSchema = z.object({
     tenantId: z.string().uuid(),
@@ -31,6 +32,10 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
             return NextResponse.json({ error: 'Contract not found', code: 'NOT_FOUND' }, { status: 404 });
         }
 
+        if (['client_signed', 'fully_signed', 'signed', 'completed'].includes(contract.status)) {
+            return NextResponse.json({ error: 'Executed agreements must use their recorded original PDF', code: 'SIGNED_DOCUMENT_IMMUTABLE' }, { status: 409 });
+        }
+
         const { data: tenant } = await admin
             .from('tenants')
             .select('name, logo_url, settings')
@@ -43,41 +48,46 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
                 .from('business_clients')
                 .select('name, email')
                 .eq('id', contract.client_id)
+                .eq('tenant_id', tenantId)
                 .maybeSingle();
             if (clientRow) client = { name: clientRow.name, email: clientRow.email };
         }
 
         const pdfContent = await generateThemedContractPdfBuffer(contract, tenant, client);
 
-        const fileName = `${contract.id}.pdf`;
-        const filePath = `contracts/${tenantId}/${fileName}`;
+        const filePath = `tenant/${tenantId}/contracts/${contract.id}/${randomUUID()}.pdf`;
 
         const { error: uploadError } = await admin.storage
-            .from('contracts')
+            .from('uploads')
             .upload(filePath, pdfContent, {
                 contentType: 'application/pdf',
-                upsert: true,
+                upsert: false,
             });
 
         if (uploadError) {
             throw new Error(`Failed to upload PDF: ${uploadError.message}`);
         }
 
-        const { data: publicUrlData } = admin.storage
-            .from('contracts')
-            .getPublicUrl(filePath);
+        const pdfUrl = `/api/storage/uploads/${filePath}`;
 
-        const pdfUrl = publicUrlData?.publicUrl || '';
-
-        const { error: updateError } = await admin
+        const { data: recordedPdf, error: updateError } = await admin
             .from('contracts')
             .update({
                 pdf_url: pdfUrl,
+                metadata: { ...contract.metadata, pdf_path: filePath, storage_bucket: 'uploads', pdf_sha256: createHash('sha256').update(pdfContent).digest('hex') },
                 updated_at: new Date().toISOString(),
             })
             .eq('id', id)
-            .eq('tenant_id', tenantId);
+            .eq('tenant_id', tenantId)
+            .eq('status', contract.status)
+            .is('client_signed_at', null)
+            .filter('admin_signed_at', contract.admin_signed_at ? 'eq' : 'is', contract.admin_signed_at || null)
+            .select('id')
+            .maybeSingle();
 
+        if (!updateError && !recordedPdf) {
+            return NextResponse.json({ error: 'The agreement changed during export. Use its current recorded PDF.', code: 'CONTRACT_CHANGED' }, { status: 409 });
+        }
         if (updateError) {
             throw new Error(`Failed to update contract with pdf_url: ${updateError.message}`);
         }
@@ -94,7 +104,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
                 status: contract.status,
             },
             storagePath: filePath,
-            storageBucket: 'contracts',
+            storageBucket: 'uploads',
             sizeBytes: pdfContent.byteLength,
         }).catch((err) => console.error('[contracts/generate-pdf] catalog filing failed', err));
 

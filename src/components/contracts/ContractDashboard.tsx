@@ -1,5 +1,7 @@
 'use client';
 
+import { documentContentToHtml } from '@/lib/documents/documentContent';
+
 import { Input as AlphaCloneInput } from '@/components/ui/input';
 import { Select as AlphaCloneSelect } from '@/components/ui/select';
 import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
@@ -2488,14 +2490,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
 };
 
 function contractToHTML(text: string): string {
-    return text
-        .replace(/^# (.+)$/gm, '<h1 style="font-size:20pt;text-align:center;text-transform:uppercase;letter-spacing:2px;margin:0 0 8px;font-weight:bold;">$1</h1>')
-        .replace(/^## (.+)$/gm, '<h2 style="font-size:13pt;text-transform:uppercase;border-bottom:1px solid var(--text-primary);padding-bottom:4px;margin:28px 0 12px;font-weight:bold;">$1</h2>')
-        .replace(/^### (.+)$/gm, '<h3 style="font-size:12pt;margin:16px 0 8px;font-weight:bold;">$1</h3>')
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid var(--text-primary);margin:20px 0;" />')
-        .replace(/\n\n/g, '</p><p style="margin:8px 0;text-align:justify;">')
-        .replace(/\n/g, '<br/>');
+    return documentContentToHtml(text);
 }
 
 function outputLanguageInstruction(langCode: string): string {

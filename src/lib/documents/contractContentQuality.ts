@@ -1,4 +1,5 @@
 const PLACEHOLDER_PATTERNS = [
+  /\{\{[^{}]+\}\}|\$\{[^{}]+\}/,
   /\[(?:client|company|vendor|party|name|date|amount|insert|todo|tbd)[^\]]*\]/i,
   /\b(?:TBD|TODO|Lorem ipsum|INSERT HERE|YOUR COMPANY|CLIENT NAME HERE)\b/i,
   /\$\s*[xX]{1,3}\b/,

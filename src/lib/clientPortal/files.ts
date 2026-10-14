@@ -52,7 +52,14 @@ export async function readContractFile(admin: SupabaseClient, contract: Record<s
     }
   }
   refs.push({bucket:'contracts', path:`contracts/${contract.tenant_id}/${contract.id}.pdf`});
-  const result = await readStoredFile(admin, refs, metadata.signed_pdf_sha256 || metadata.pdf_sha256);
+  const tenantRefs = refs.filter(ref => {
+    if (ref.path.startsWith('tenant/')) return ref.path.startsWith(`tenant/${contract.tenant_id}/`);
+    if (ref.path.startsWith('contracts/')) return ref.path === `contracts/${contract.tenant_id}/${contract.id}.pdf`;
+    // Legacy unprefixed references are retained only from the already-authorized
+    // contract/catalog records above; clients cannot supply arbitrary storage paths.
+    return true;
+  });
+  const result = await readStoredFile(admin, tenantRefs, metadata.signed_pdf_sha256 || metadata.pdf_sha256);
   if (result && new TextDecoder().decode(result.bytes.slice(0,5)) !== '%PDF-') throw new Error('INVALID_PDF_FILE');
   return result;
 }

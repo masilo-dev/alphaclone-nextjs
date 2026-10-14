@@ -9,6 +9,9 @@ import { resolveContractDealId } from '@/lib/contracts/contractCoherenceServer';
 import { generateThemedContractPdfBuffer } from '@/lib/documents/themedDocumentPdf';
 import { fileContractPdfDocument, queueDocumentIntelligence } from '@/lib/documents/fileDocument';
 import { requireTenantRole } from '@/lib/apiAuth';
+import { extractTenantBranding } from '@/lib/tenantBranding';
+import { loadContractSignatureParties } from '@/lib/contracts/contractSignatureEvidence';
+import { createHash } from 'node:crypto';
 
 function getClientIpAddress(req: NextRequest): string {
     const forwarded = req.headers.get('x-forwarded-for');
@@ -44,13 +47,13 @@ export async function GET(req: NextRequest) {
         if (signingToken.used_at) {
             return NextResponse.json({ error: 'This signing link has already been used' }, { status: 410 });
         }
-        if (new Date(signingToken.expires_at).getTime() < Date.now()) {
+        if (!Number.isFinite(Date.parse(signingToken.expires_at)) || Date.parse(signingToken.expires_at) <= Date.now()) {
             return NextResponse.json({ error: 'This signing link has expired' }, { status: 410 });
         }
 
         const { data: contract, error: contractError } = await admin
             .from('contracts')
-            .select('id, title, content, status, client_signed_at, payment_amount, metadata, tenant:tenants(name, logo_url, settings)')
+            .select('id, title, content, status, created_at, client_signed_at, client_signature, admin_signed_at, admin_signature, payment_amount, metadata, tenant:tenants(name, logo_url, settings)')
             .eq('id', signingToken.contract_id)
             .eq('tenant_id', signingToken.tenant_id)
             .single();
@@ -58,6 +61,26 @@ export async function GET(req: NextRequest) {
         if (contractError || !contract) {
             return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
         }
+
+        const { data: business } = await admin.from('business_settings')
+            .select('*')
+            .eq('tenant_id', signingToken.tenant_id).maybeSingle();
+        const parties = await loadContractSignatureParties(admin, signingToken.tenant_id, signingToken.contract_id);
+        const publicBranding = extractTenantBranding({
+            ...(contract.tenant as { name?: string; logo_url?: string; settings?: unknown } || {}),
+            business_settings: business,
+        } as Parameters<typeof extractTenantBranding>[0]);
+        if (publicBranding.logoUrl?.startsWith('/api/storage/')) {
+            const tokenLogo = `/api/contracts/logo?token=${encodeURIComponent(token)}`;
+            publicBranding.logoUrl = tokenLogo;
+            publicBranding.companyLogo = tokenLogo;
+        }
+        // Do not expose tenant integration settings or payment configuration on a public link.
+        const publicContract = {
+            ...contract,
+            tenant: { name: publicBranding.name, logo_url: publicBranding.logoUrl, settings: { branding: publicBranding } },
+            contract_parties: parties || [],
+        };
 
         const now = new Date().toISOString();
         const signerEmail = String(signingToken.signer_email || '').trim().toLowerCase();
@@ -84,9 +107,9 @@ export async function GET(req: NextRequest) {
                 occurred_at: now,
             }),
             admin.from('contract_audit_trail').insert({
-                tenant_id: signingToken.tenant_id,
                 contract_id: signingToken.contract_id,
-                action: 'contract_viewed',
+                action: 'viewed',
+                details: { tenant_id: signingToken.tenant_id },
                 actor_role: signingToken.signer_role,
                 actor_email: signerEmail,
                 ip_address: getClientIpAddress(req),
@@ -104,7 +127,7 @@ export async function GET(req: NextRequest) {
             signer: { email: signingToken.signer_email, role: signingToken.signer_role },
             review_only: signingToken.metadata?.review_only === true,
             tokenStatus: { expiresAt: signingToken.expires_at, serverTime: new Date().toISOString() },
-            contract,
+            contract: publicContract,
         });
     } catch (error: any) {
         console.error('Contract public fetch error:', error);
@@ -125,7 +148,7 @@ export async function POST(req: NextRequest) {
         if (!signatureDataUrl) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
-        if (!consentGiven) {
+        if (consentGiven !== true) {
             return NextResponse.json({ error: 'Electronic signature consent is required before signing' }, { status: 400 });
         }
         if (!signingToken && !['client', 'admin'].includes(String(role))) {
@@ -155,6 +178,7 @@ export async function POST(req: NextRequest) {
             if (authError || !user) {
                 return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
             }
+            if (!user.email) return NextResponse.json({ error: 'A verified account email is required for signing' }, { status: 403 });
             if (signerEmail && user.email && String(signerEmail).trim().toLowerCase() !== user.email.toLowerCase()) {
                 return NextResponse.json({ error: 'Signer email does not match authenticated user' }, { status: 403 });
             }
@@ -183,7 +207,7 @@ export async function POST(req: NextRequest) {
         }
 
         // EMIT AUTOMATION EVENT + notify owner
-        if (updatedContract) {
+        if (updatedContract && !updatedContract.signature_replayed) {
             const origin = req.nextUrl.origin;
             const admin = createSupabaseAdminClient();
             const { data: tenantRow } = await admin
@@ -291,6 +315,7 @@ export async function POST(req: NextRequest) {
                             .from('business_clients')
                             .select('name, email')
                             .eq('id', updatedContract.client_id)
+                            .eq('tenant_id', updatedContract.tenant_id)
                             .maybeSingle();
                         if (clientRow) client = { name: clientRow.name, email: clientRow.email };
                     }
@@ -302,18 +327,20 @@ export async function POST(req: NextRequest) {
                         .maybeSingle();
 
                     const pdfContent = await generateThemedContractPdfBuffer(updatedContract, tenant, client);
-                    const filePath = `contracts/${updatedContract.tenant_id}/${updatedContract.id}.pdf`;
-                    await adminClient.storage.from('contracts').upload(filePath, pdfContent, {
+                    const filePath = `tenant/${updatedContract.tenant_id}/contracts/${updatedContract.id}/${updatedContract.signature_event_id}.pdf`;
+                    const { error: uploadError } = await adminClient.storage.from('uploads').upload(filePath, pdfContent, {
                         contentType: 'application/pdf',
-                        upsert: true,
+                        upsert: false,
                     });
-
-                    const { data: publicUrlData } = adminClient.storage.from('contracts').getPublicUrl(filePath);
-                    await adminClient
+                    if (uploadError) throw new Error(`Signed PDF storage failed: ${uploadError.message}`);
+                    const storedPdfUrl = `/api/storage/uploads/${filePath}`;
+                    const { error: pdfRecordError } = await adminClient
                         .from('contracts')
-                        .update({ pdf_url: publicUrlData?.publicUrl || null, updated_at: new Date().toISOString() })
+                        .update({ pdf_url: storedPdfUrl, metadata: { ...updatedContract.metadata, signed_pdf_path: filePath, pdf_path: filePath, storage_bucket: 'uploads', signed_pdf_sha256: createHash('sha256').update(pdfContent).digest('hex') }, updated_at: new Date().toISOString() })
                         .eq('id', updatedContract.id)
                         .eq('tenant_id', updatedContract.tenant_id);
+                    if (pdfRecordError) throw pdfRecordError;
+                    updatedContract.pdf_url = signingToken ? `/api/contracts/file?token=${encodeURIComponent(signingToken)}` : storedPdfUrl;
 
                     const filingUserId = String(updatedContract.created_by || updatedContract.owner_id || '');
                     if (filingUserId) {
@@ -329,7 +356,7 @@ export async function POST(req: NextRequest) {
                                 status: updatedContract.status,
                             },
                             storagePath: filePath,
-                            storageBucket: 'contracts',
+                            storageBucket: 'uploads',
                             sizeBytes: pdfContent.byteLength,
                         });
 
