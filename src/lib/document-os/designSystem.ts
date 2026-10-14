@@ -101,7 +101,7 @@ export function designSystemCss(brand: DocumentBrandProfile): string {
     h2 { font-size: ${DOCUMENT_DESIGN_TOKENS.typography.h2.size}; font-weight: ${DOCUMENT_DESIGN_TOKENS.typography.h2.weight}; margin: var(--doc-space-section) 0 var(--doc-space-sm); border-bottom: 1px solid var(--doc-border); padding-bottom: 4px; }
     h3 { font-size: ${DOCUMENT_DESIGN_TOKENS.typography.h3.size}; font-weight: ${DOCUMENT_DESIGN_TOKENS.typography.h3.weight}; margin: var(--doc-space-md) 0 var(--doc-space-xs); }
     p { margin: 0 0 var(--doc-space-md); orphans: 3; widows: 3; }
-    .doc-section { page-break-inside: avoid; break-inside: avoid-page; margin-bottom: var(--doc-space-section); }
+    .doc-section { page-break-inside: auto; break-inside: auto; margin-bottom: var(--doc-space-section); }\n    .doc-section h2 { break-after: avoid-page; page-break-after: avoid; }
     .doc-signature-block { page-break-inside: avoid; break-inside: avoid-page; margin-top: var(--doc-space-lg); }
     table.doc-table { width: 100%; border-collapse: collapse; margin: var(--doc-space-md) 0; font-size: 9.5pt; }
     table.doc-table thead { display: table-header-group; }
@@ -152,7 +152,7 @@ export function designSystemCss(brand: DocumentBrandProfile): string {
       object-position: left center;
     }
     .doc-footer {
-      margin-top: var(--doc-space-xl);
+      margin-top: var(--doc-space-lg);
       padding-top: var(--doc-space-md);
       border-top: 1px solid var(--doc-border);
       font-size: ${DOCUMENT_DESIGN_TOKENS.typography.small.size};
