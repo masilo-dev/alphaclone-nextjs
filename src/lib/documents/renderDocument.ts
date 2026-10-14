@@ -371,8 +371,8 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
                   `<p style="margin:0 0 12px;text-align:justify;color:#334155;line-height:1.75;">${para.replace(/\n/g, '<br/>')}</p>`
               )
               .join('');
-        return `<section style="margin:28px 0;page-break-inside:avoid;break-inside:avoid;">
-        <h2 style="color:${primary};font-size:15px;letter-spacing:0.04em;text-transform:uppercase;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin:0 0 14px;">${escapeHtml(s.heading)}</h2>
+        return `<section style="margin:16px 0;break-inside:auto;">
+        <h2 style="color:${primary};font-size:15px;letter-spacing:0.04em;text-transform:uppercase;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin:0 0 9px;">${escapeHtml(s.heading)}</h2>
         <div style="color:#334155;line-height:1.75;">${bodyHtml}</div>
       </section>`;
       })
@@ -442,7 +442,7 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
         ${escapeHtml(branding.name || 'Unconfigured Business')}
        </div>`;
 
-  const headerHtml = `<div style="border-bottom:1px solid #e2e8f0;padding-bottom:24px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-start;page-break-inside:avoid;break-inside:avoid;">
+  const headerHtml = `<div style="border-bottom:1px solid #e2e8f0;padding-bottom:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-start;page-break-inside:avoid;break-inside:avoid;">
       <div style="max-width:55%;">
         ${logoOrWordmarkHtml}
         <div style="margin-top:8px;font-size:11px;color:#64748b;line-height:1.5;">
@@ -453,7 +453,7 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
         </div>
       </div>
       <div style="text-align:right;">
-        <div style="font-size:26px;font-weight:800;letter-spacing:-0.02em;text-transform:uppercase;color:${primary};line-height:1.1;">${escapeHtml(input.title)}</div>
+        <div style="font-size:20px;font-weight:800;letter-spacing:-0.02em;text-transform:uppercase;color:${primary};line-height:1.1;">${escapeHtml(input.title)}</div>
         ${input.documentNumber ? `<div style="font-family:monospace;font-size:13px;font-weight:600;color:#64748b;margin-top:4px;">#${escapeHtml(input.documentNumber)}</div>` : ''}
         ${input.status ? `<div style="margin-top:8px;"><span class="status-ribbon">${escapeHtml(input.status)}</span></div>` : ''}
       </div>
@@ -470,12 +470,12 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
     @page { @bottom-center { content: "Page " counter(page) " of " counter(pages); font-size: 8pt; color: #64748b; } }
     body { font-family: ${theme.fontFamily}; margin: 0; padding: 0; color: #0f172a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .content { padding: 32px 40px; max-width: 820px; margin: 0 auto; box-sizing: border-box; }
-    .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; page-break-inside: avoid; break-inside: avoid; }
+    .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; page-break-inside: avoid; break-inside: avoid; }
     .total-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 18px; text-align: right; margin-top: 24px; page-break-inside: avoid; break-inside: avoid; }
     .total-amount { font-size: 26px; font-weight: 800; color: ${primary}; font-family: monospace; }
     .status-ribbon { display: inline-block; padding: 3px 10px; border-radius: 9999px; border: 1px solid #cbd5e1; color: #334155; font-size: 11px; font-weight: 600; text-transform: uppercase; background: #f8fafc; }
     .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #64748b; page-break-inside: avoid; break-inside: avoid; }
-    h2 { page-break-after: avoid; break-after: avoid; }
+    h2 { page-break-after: avoid; break-after: avoid; }\n    section { break-inside: auto; page-break-inside: auto; }\n    section p { orphans: 3; widows: 3; }\n    section h2 + div { break-before: avoid; }
     .signature-block { page-break-inside: avoid; break-inside: avoid; }
     table thead { display: table-header-group; }
     tr { page-break-inside: avoid; break-inside: avoid; }
@@ -496,7 +496,7 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
     ${headerHtml}
     <div class="meta">
       <div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:0.05em;margin-bottom:6px;">Billed To / Recipient</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:0.05em;margin-bottom:6px;">${isAgreement ? 'Parties / Client' : 'Billed To / Recipient'}</div>
         <div style="font-weight:600;font-size:15px;color:#0f172a;">${escapeHtml(input.clientName || 'Client')}</div>
         ${input.clientEmail ? `<div style="font-size:12px;color:#475569;margin-top:2px;">${escapeHtml(input.clientEmail)}</div>` : ''}
       </div>
