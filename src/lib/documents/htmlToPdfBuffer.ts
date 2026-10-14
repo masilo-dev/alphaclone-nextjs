@@ -8,9 +8,9 @@ export async function htmlToPdfBuffer(html: string): Promise<Buffer> {
     await page.setContent(html, { waitUntil: 'load', timeout: 30000 });
     await page.emulateMedia({ media: 'print' });
     const pdf = await page.pdf({
-      format: 'Letter',
+      format: 'A4',
       printBackground: true,
-      margin: { top: '12mm', right: '12mm', bottom: '12mm', left: '12mm' },
+      preferCSSPageSize: true,\n      margin: { top: '15mm', right: '12mm', bottom: '15mm', left: '12mm' },
     });
     return Buffer.from(pdf);
   } finally {
