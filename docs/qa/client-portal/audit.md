@@ -1,6 +1,6 @@
 # Client portal repair and deployment checklist
 
-Prepared 2026-10-09. This branch contains code changes only. It has not been merged or deployed. Authenticated behavior on the production portal has not been verified. No production payments, client messages, agreement edits, deletions, or data reclassification were performed.
+Prepared 2026-10-09. Release update: PR #196 merged and deployed successfully as master eda95248bae3571a548dbe14c2f1b96ebd6e54b3; PR #197 follow-up deployed successfully as f86c76019745d227919f29d1395c42db0a4d2563. See followup.md for release evidence and remaining verification limits. The audit below records the original preparation evidence. Authenticated behavior on the production portal has not been verified. No production payments, client messages, agreement edits, deletions, or data reclassification were performed.
 
 ## Implemented
 
@@ -40,4 +40,4 @@ Client `f7f68c79-d3a9-4995-86c5-0717bcc97599`, tenant `066eb88e-3fb0-45c9-b4d1-c
 4. Complete the original-file, invoice-reconciliation/configuration, and project-linking steps above. Retain an audit trail; no signed-content edits or record deletion.
 5. Merge and deploy this reviewed branch through Railway. No database migration is introduced. Check `/api/readiness`, inspect deployment logs, and verify the deployed commit matches the PR commit. Repeat all seven sections in the authorized client session at mobile and desktop widths and capture real screenshots. Update this report with actual deployed SHA/time and verified outcomes.
 
-The prior Railway TypeScript repair deployed successfully; this portal branch is separate and remains undeployed.
+Both the initial portal repair and the theme/logout/message follow-up deployed successfully. Authentic file recovery, finance reconciliation, project linking, and authenticated verification remain unresolved as documented above.
