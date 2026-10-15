@@ -15,7 +15,7 @@ test('Area A & O: TurnstileWidget resiliency and registration plan summary', () 
   const loginSrc = read('src/app/auth/login/page.tsx');
   assert.match(loginSrc, /Plan Selected/, 'Renders selected plan summary banner');
   assert.match(loginSrc, /resetTurnstileScriptCache/, 'Resets script cache on manual retry');
-  assert.match(loginSrc, /14-day free trial/i, 'Mentions 14-day free trial on signup');
+  assert.match(loginSrc, /45-day free trial/i, 'Mentions 45-day free trial on signup');
   assert.match(loginSrc, /No card required/i, 'States no card required on signup');
 });
 
@@ -98,10 +98,10 @@ test('Area B: Authoritative trial entitlement engine logic', async () => {
   assert.equal(expiredTrialRes.isExpired, true);
   assert.equal(expiredTrialRes.daysRemaining, 0);
 
-  // Tenant with no explicit subscription status created 25 days ago (implicit trial)
+  // Tenant with no explicit subscription status created 50 days ago (implicit trial)
   const legacyExpiredTenant = {
     id: 't-4',
-    created_at: new Date(now - 25 * dayMs).toISOString(),
+    created_at: new Date(now - 50 * dayMs).toISOString(),
   };
   const legacyRes = getTrialEntitlement(legacyExpiredTenant);
   assert.equal(legacyRes.status, 'expired');

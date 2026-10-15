@@ -317,7 +317,7 @@ function LoginContent() {
                 if (newUser) {
                     toast.loading('Provisioning workspace...', { id: 'workspace' });
                     const trialEndDate = new Date();
-                    trialEndDate.setDate(trialEndDate.getDate() + 14);
+                    trialEndDate.setDate(trialEndDate.getDate() + 45);
 
                     const workspaceName = businessName?.trim() || `${name}'s Organization`;
                     const randomSuffix = crypto.randomUUID().replace(/-/g, '').slice(0, 10);
@@ -549,7 +549,7 @@ function LoginContent() {
                     <h1 className="text-base font-bold text-[var(--color-text-primary)] mb-0.5">{t("AlphaClone Systems")}</h1>
                     <p className="text-[var(--color-text-secondary)] type-card-description mb-2">
                         {isRegistering
-                            ? t("14-day free trial · workspace ready in seconds")
+                            ? t("45-day free trial · workspace ready in seconds")
                             : t("Sign in to your business workspace")}
                     </p>
                     <div className="flex justify-center my-1">
@@ -570,7 +570,7 @@ function LoginContent() {
                             </span>
                         </div>
                         <p className="type-card-description text-[var(--color-text-secondary)] mt-1">
-                            {t("14-day free trial · No card required today · Cancel anytime before trial ends")}
+                            {t("45-day free trial · No card required today · Cancel anytime before trial ends")}
                         </p>
                     </div>
                 )}

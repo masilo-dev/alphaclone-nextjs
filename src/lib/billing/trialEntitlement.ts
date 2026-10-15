@@ -57,9 +57,9 @@ export function getTrialEntitlement(tenant: {
   } else if (tenant.trial_end) {
     trialEndsAt = new Date(tenant.trial_end);
   } else if (tenant.trial_start) {
-    trialEndsAt = new Date(new Date(tenant.trial_start).getTime() + 14 * 24 * 60 * 60 * 1000);
+    trialEndsAt = new Date(new Date(tenant.trial_start).getTime() + 45 * 24 * 60 * 60 * 1000);
   } else if (tenant.created_at && isTrial) {
-    trialEndsAt = new Date(new Date(tenant.created_at).getTime() + 14 * 24 * 60 * 60 * 1000);
+    trialEndsAt = new Date(new Date(tenant.created_at).getTime() + 45 * 24 * 60 * 60 * 1000);
   }
 
   const now = new Date();
@@ -75,7 +75,7 @@ export function getTrialEntitlement(tenant: {
       daysRemaining: 0,
       trialEndsAt,
       statusLabel: 'Trial Expired',
-      description: 'Your 14-day free trial has expired. Upgrade your workspace to continue executing business workflows.',
+      description: 'Your free trial has expired. Upgrade your workspace to continue executing business workflows.',
     };
   }
 

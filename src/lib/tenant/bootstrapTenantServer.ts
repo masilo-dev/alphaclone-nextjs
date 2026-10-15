@@ -231,7 +231,7 @@ export async function bootstrapTenantForUser(
     `org-${user.id.slice(0, 8)}`
   );
   const slug = await uniqueSlug(admin, slugBase);
-  const plan = options?.plan || 'free';
+  const plan = options?.plan && options.plan !== 'free' ? options.plan : 'pro';
 
   const { data: tenantId, error: rpcError } = await admin.rpc('create_tenant_idempotent', {
     p_name: displayName,
@@ -242,6 +242,16 @@ export async function bootstrapTenantForUser(
   });
 
   if (!rpcError && tenantId) {
+    const trialEndsAt = new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString();
+    await admin
+      .from('tenants')
+      .update({
+        subscription_plan: 'pro',
+        subscription_status: 'trial',
+        trial_ends_at: trialEndsAt,
+      })
+      .eq('id', tenantId);
+
     await ensureNativeBookingDefaults(admin, String(tenantId), slug);
     return { tenantId: String(tenantId), created: true };
   }

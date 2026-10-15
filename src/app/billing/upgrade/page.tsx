@@ -142,7 +142,7 @@ export default function UpgradePage() {
                     >
                         You're currently on the <span className="text-teal-400 font-bold uppercase">{currentTenant?.subscription_plan}</span> plan.
                         {currentTenant?.subscription_status === 'trial' && currentTenant?.trial_ends_at && (
-                            <> Your 14-day free trial ends {new Date(currentTenant.trial_ends_at).toLocaleDateString()} — no card required until then.</>
+                            <> Your free trial ends {new Date(currentTenant.trial_ends_at).toLocaleDateString()} — no card required until then.</>
                         )}
                         {' '}Upgrade to raise your workspace limits and enable the listed automation features.
                     </motion.p>
