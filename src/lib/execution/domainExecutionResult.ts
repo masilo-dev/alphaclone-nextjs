@@ -16,6 +16,7 @@ export type DomainExecutionResult<TResult = unknown> = {
   approval_state?: string;
   failure_code?: string;
   retryable?: boolean;
+  replayed?: boolean;
   next_action?: string;
   idempotency_key: string;
   execution_source: string;
@@ -29,6 +30,7 @@ export function domainResultFromGateway<TResult>(params: {
   executionSource: string;
   gateway: {
     ok: boolean;
+    replayed?: boolean;
     actionId: string;
     auditLogId: string | null;
     idempotencyKey: string;
@@ -71,6 +73,7 @@ export function domainResultFromGateway<TResult>(params: {
     idempotency_key: params.gateway.idempotencyKey,
     execution_source: params.executionSource,
     ok: params.gateway.ok,
+    replayed: params.gateway.replayed ?? false,
     result: params.gateway.result,
     receipt: params.gateway.receipt,
     error: params.gateway.error

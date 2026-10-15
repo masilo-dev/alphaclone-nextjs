@@ -168,7 +168,38 @@ async function accountForIntegration(tenantId: string, provider: EmailProvider, 
     .is('deleted_at', null)
     .maybeSingle();
   if (error) throw new Error(`EMAIL_PROVIDER_ACCOUNT_LOOKUP_FAILED: ${error.message}`);
-  return data;
+  if (data) return data;
+
+  // Auto-heal missing email_provider_accounts row for valid integration
+  try {
+    const cfg = (row.config || {}) as Record<string, unknown>;
+    const emailAddress = String(cfg.fromEmail || cfg.from_email || cfg.email || `${provider}@${tenantId}.alphaclone.local`);
+    const displayName = String(cfg.fromName || cfg.from_name || provider);
+    const { data: created, error: createError } = await supabase
+      .from('email_provider_accounts')
+      .upsert({
+        tenant_id: tenantId,
+        owner_user_id: row.user_id || null,
+        provider: canonicalProvider(provider),
+        account_type: 'user',
+        email_address: emailAddress,
+        display_name: displayName,
+        connection_status: 'connected',
+        legacy_integration_id: row.id,
+        deleted_at: null,
+        updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'tenant_id,legacy_integration_id',
+      })
+      .select('id, tenant_id, owner_user_id, provider, account_type, email_address, display_name, legacy_integration_id')
+      .maybeSingle();
+
+    if (!createError && created) return created;
+  } catch (healErr) {
+    console.warn('[providerIntegrationResolver] auto-healing email_provider_accounts failed:', healErr);
+  }
+
+  return null;
 }
 
 async function resolveOutlookConfig(tenantId: string, userId: string): Promise<ResolvedEmailProviderConfig | null> {

@@ -136,6 +136,7 @@ export async function POST(request: NextRequest) {
       .select('id')
       .single();
 
+    let integrationId = firstTry.data?.id;
     if (firstTry.error) {
       const secondTry = await supabase
         .from('integrations')
@@ -145,6 +146,28 @@ export async function POST(request: NextRequest) {
       if (secondTry.error) {
         return NextResponse.json({ error: secondTry.error.message, code: 'INTEGRATION_UPSERT_FAILED' }, { status: 500 });
       }
+      integrationId = secondTry.data?.id;
+    }
+
+    if (integrationId) {
+      const canonicalProvider = provider === 'custom_smtp' ? 'smtp' : provider;
+      await supabase
+        .from('email_provider_accounts')
+        .upsert({
+          tenant_id: tenantId,
+          owner_user_id: tenantCtx.user.id,
+          provider: canonicalProvider,
+          account_type: 'user',
+          email_address: fromEmail || `${provider}@${tenantId}.alphaclone.local`,
+          display_name: fromName || getProviderName(provider),
+          connection_status: 'connected',
+          legacy_integration_id: integrationId,
+          deleted_at: null,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'tenant_id,legacy_integration_id',
+        })
+        .catch((syncErr: any) => console.warn('[integrations/email-providers] email_provider_accounts sync failed:', syncErr));
     }
 
     return NextResponse.json({ success: true, webhookUrl: getWebhookUrl(provider, webhookToken) });

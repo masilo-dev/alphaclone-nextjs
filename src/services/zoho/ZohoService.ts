@@ -340,7 +340,11 @@ export class ZohoService {
                 // fetch must generate the multipart boundary for this body.
                 headers.delete('Content-Type');
             } else if (!headers.has('Content-Type')) {
-                headers.set('Content-Type', 'application/json');
+                if (options.body instanceof Uint8Array || (typeof Buffer !== 'undefined' && Buffer.isBuffer(options.body))) {
+                    headers.set('Content-Type', 'application/octet-stream');
+                } else {
+                    headers.set('Content-Type', 'application/json');
+                }
             }
             headers.set('Authorization', `Zoho-oauthtoken ${token}`);
             return fetch(url, {

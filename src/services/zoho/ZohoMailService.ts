@@ -463,20 +463,59 @@ export class ZohoMailService extends ZohoService {
         });
     }
 
-    async uploadMailAttachments(attachments?: Array<{ filename: string; content: string; contentType?: string }>) {
+    async uploadMailAttachments(attachments?: Array<{ filename: string; content: string | Buffer | Uint8Array; contentType?: string }>) {
         const { base } = await this.getMailBase();
         const uploaded = [];
         for (const attachment of attachments || []) {
-            const body = new FormData();
-            body.append('attach', new Blob([new Uint8Array(Buffer.from(attachment.content, 'base64'))], {
-                type: attachment.contentType || 'application/octet-stream',
-            }), attachment.filename);
-            const response = await this.callZohoAPI(`${base}/messages/attachments?uploadType=multipart&isInline=false`, {
-                method: 'POST', headers: { Accept: 'application/json' }, body,
-            });
-            const data = Array.isArray(response.data) ? response.data[0] : response.data;
-            if (!data?.storeName || !data?.attachmentName || !data?.attachmentPath) throw new Error('ZOHO_ATTACHMENT_UPLOAD_FAILED: Zoho did not return a complete attachment reference');
-            uploaded.push({storeName:data.storeName,attachmentName:data.attachmentName,attachmentPath:data.attachmentPath});
+            let buffer: Buffer;
+            if (Buffer.isBuffer(attachment.content)) {
+                buffer = attachment.content;
+            } else if (attachment.content instanceof Uint8Array) {
+                buffer = Buffer.from(attachment.content.buffer, attachment.content.byteOffset, attachment.content.byteLength);
+            } else if (typeof attachment.content === 'string') {
+                const cleaned = attachment.content.replace(/^data:[^;]+;base64,/, '').trim();
+                buffer = Buffer.from(cleaned, 'base64');
+            } else {
+                buffer = Buffer.from('');
+            }
+
+            const filename = attachment.filename || 'attachment';
+            const contentType = attachment.contentType || 'application/octet-stream';
+
+            try {
+                const body = new FormData();
+                body.append('attach', new Blob([new Uint8Array(buffer)], {
+                    type: contentType,
+                }), filename);
+                const response = await this.callZohoAPI(`${base}/messages/attachments?uploadType=multipart&isInline=false`, {
+                    method: 'POST', headers: { Accept: 'application/json' }, body,
+                });
+                const data = Array.isArray(response.data) ? response.data[0] : response.data;
+                if (!data?.storeName || !data?.attachmentName || !data?.attachmentPath) {
+                    throw new Error('ZOHO_ATTACHMENT_UPLOAD_FAILED: Zoho did not return a complete attachment reference');
+                }
+                uploaded.push({ storeName: data.storeName, attachmentName: data.attachmentName, attachmentPath: data.attachmentPath });
+            } catch (err: any) {
+                const is415 = err?.status === 415 || String(err?.message || '').includes('415') || String(err?.message || '').includes('UNSUPPORTED_MEDIA_TYPE');
+                if (is415) {
+                    console.warn(`[ZohoMailService] Multipart upload returned 415 for ${filename}; falling back to raw binary endpoint`);
+                    const fallbackResponse = await this.callZohoAPI(`${base}/messages/attachments?fileName=${encodeURIComponent(filename)}&isInline=false`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': contentType,
+                            Accept: 'application/json',
+                        },
+                        body: new Uint8Array(buffer),
+                    });
+                    const fbData = Array.isArray(fallbackResponse.data) ? fallbackResponse.data[0] : fallbackResponse.data;
+                    if (!fbData?.storeName || !fbData?.attachmentName || !fbData?.attachmentPath) {
+                        throw new Error('ZOHO_ATTACHMENT_UPLOAD_FAILED: Zoho binary fallback did not return a complete attachment reference');
+                    }
+                    uploaded.push({ storeName: fbData.storeName, attachmentName: fbData.attachmentName, attachmentPath: fbData.attachmentPath });
+                } else {
+                    throw err;
+                }
+            }
         }
         return uploaded;
     }

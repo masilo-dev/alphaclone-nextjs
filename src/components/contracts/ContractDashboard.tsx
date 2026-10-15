@@ -1026,11 +1026,30 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                     jurisdiction: c.jurisdiction || sendForm.jurisdiction.trim() || c.jurisdiction,
                 }
                 : c)));
-            toast.success(resendForSignature ? 'Signature request resent' : 'Contract sent successfully');
+            const successMsg = payload.replayed
+                ? 'Replayed previous send confirmation'
+                : resendForSignature
+                  ? 'Signature request resent (Accepted by email provider — final delivery unverified)'
+                  : 'Contract sent (Accepted by email provider — final delivery unverified)';
+            toast.success(successMsg, { duration: 5000 });
             setShowSendModal(false);
             setResendForSignature(false);
         } catch (error: any) {
-            toast.error(error?.message || 'Failed to send contract');
+            const rawMsg = String(error?.message || error || 'Failed to send contract');
+            let cleanMsg = rawMsg;
+            if (cleanMsg.startsWith('{') || cleanMsg.includes('"error"')) {
+                try {
+                    const parsed = JSON.parse(cleanMsg);
+                    cleanMsg = parsed.error || parsed.message || cleanMsg;
+                } catch {}
+            }
+            if (cleanMsg.length > 120) {
+                cleanMsg = cleanMsg.slice(0, 117) + '...';
+            }
+            toast.error(cleanMsg, {
+                className: 'max-w-[90vw] sm:max-w-md break-words text-sm',
+                duration: 6000,
+            });
         } finally {
             setSendingContract(false);
         }

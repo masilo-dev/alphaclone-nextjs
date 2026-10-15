@@ -45,6 +45,8 @@ export async function publishOutboxBatch(limit = 50): Promise<{
   const admin = createSupabaseAdminClient();
   const {processProjectNotificationOutbox}=await import('@/lib/projects/projectNotificationOutbox');
   await processProjectNotificationOutbox(limit,admin);
+  const {processOutboundEmailJobs}=await import('@/lib/email/processOutboundEmailJobs');
+  await processOutboundEmailJobs(limit).catch((err) => console.warn('[outbox] processOutboundEmailJobs error:', err));
   const workerId = `outbox-${process.pid}-${Date.now()}`;
   const now = new Date().toISOString();
 

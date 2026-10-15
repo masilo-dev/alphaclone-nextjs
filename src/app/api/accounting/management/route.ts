@@ -595,29 +595,35 @@ async function sendInvoice(tenantId: string, config: any, supabase: any, origin:
       });
     }
 
-    // Send email using tenant's email integration
-    const emailResponse = await fetch(`${origin}/api/email/send`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-api-key': process.env.INTERNAL_API_KEY || '',
+    // Send email using canonical sendEmailServer
+    const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
+    const recipientList = Array.isArray(recipients) ? recipients : [recipients];
+    const emailResult = await sendEmailServer({
+      tenantId,
+      userId: actorUserId,
+      to: recipientList,
+      subject: subject || `Invoice ${invoice.invoice_number}`,
+      text: message || `Please find attached invoice ${invoice.invoice_number} for ${invoice.total} ${invoice.currency}.`,
+      category: 'invoice_payment',
+      templateName: 'invoiceSent',
+      relatedRecord: { type: 'invoice', id: invoiceId },
+      auditMetadata: {
+        invoice_id: invoiceId,
+        client_id: invoice.client_id || null,
+        recipient: recipientList[0],
+        source_module: 'INVOICES',
+        source_action: 'send_invoice',
       },
-      body: JSON.stringify({
-        tenantId: tenantId,
-        userId: actorUserId,
-        to: recipients,
-        subject: subject || `Invoice ${invoice.invoice_number}`,
-        text: message || `Please find attached invoice ${invoice.invoice_number} for ${invoice.total} ${invoice.currency}.`,
-        attachments: attachPDF ? [{
-          filename: `Invoice_${invoice.invoice_number}.pdf`,
-          content: pdfBuffer?.toString('base64'),
-          contentType: 'application/pdf',
-        }] : undefined
-      })
+      attachments: attachPDF && pdfBuffer ? [{
+        filename: `Invoice_${invoice.invoice_number}.pdf`,
+        content: pdfBuffer.toString('base64'),
+        contentType: 'application/pdf',
+      }] : undefined,
+      skipFooter: true,
     });
 
-    if (!emailResponse.ok) {
-      return { success: false, error: 'Failed to send invoice' };
+    if (!emailResult.success) {
+      return { success: false, error: emailResult.error || 'Failed to send invoice', code: emailResult.code };
     }
 
     const sentAt = new Date().toISOString();
@@ -633,6 +639,20 @@ async function sendInvoice(tenantId: string, config: any, supabase: any, origin:
       .eq('id', invoiceId)
       .eq('tenant_id', tenantId);
 
+    // Record invoice delivery log
+    await supabase.from('invoice_delivery_log').insert(
+      recipientList.map((email: string) => ({
+        invoice_id: invoiceId,
+        tenant_id: tenantId,
+        sent_at: sentAt,
+        delivered_at: emailResult.deliveryStatus === 'delivered' ? emailResult.deliveredAt || sentAt : null,
+        sent_to_email: email,
+        email_provider: emailResult.provider || null,
+        provider_msg_id: emailResult.emailId || null,
+        delivery_status: emailResult.deliveryStatus === 'delivered' ? 'DELIVERED' : 'PENDING',
+      }))
+    ).catch((err: any) => console.warn('[accounting/send_invoice] delivery log failed', err));
+
     const { postInvoiceIssueJournalServer } = await import('@/lib/invoices/postInvoiceIssueJournalServer');
     await postInvoiceIssueJournalServer(supabase, {
       tenantId,
@@ -642,7 +662,12 @@ async function sendInvoice(tenantId: string, config: any, supabase: any, origin:
 
     return {
       success: true,
-      message: 'Invoice sent successfully'
+      message: emailResult.deliveryStatus === 'delivered'
+        ? 'Invoice delivered successfully'
+        : 'Invoice accepted by provider — final delivery unverified',
+      provider: emailResult.provider,
+      provider_message_id: emailResult.emailId,
+      delivery_status: emailResult.deliveryStatus || 'provider_accepted',
     };
   } catch (error: any) {
     return operationFailed('accounting/management', error);

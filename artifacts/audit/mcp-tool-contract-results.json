@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-10-10T20:01:47.050Z",
-  "total_tools": 588,
-  "passed": 529,
+  "generated_at": "2026-10-15T07:14:57.001Z",
+  "total_tools": 593,
+  "passed": 533,
   "failed": 0,
-  "skipped": 59,
+  "skipped": 60,
   "before_failure_count": 8,
   "after_failure_count": 0,
   "results": [
@@ -405,6 +405,15 @@
     },
     {
       "tool": "cancel_run",
+      "classification": "delete",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "cancel_scheduled_action",
       "classification": "delete",
       "registered": true,
       "has_schema": true,
@@ -3041,6 +3050,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "list_scheduled_actions",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "list_scheduled_social_posts",
       "classification": "read-only",
       "registered": true,
@@ -3582,6 +3600,15 @@
     },
     {
       "tool": "preflight_social_publish",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "prepare_business_contract_signature",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -4220,6 +4247,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "schedule_mcp_action",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "schedule_post",
       "classification": "create",
       "registered": true,
@@ -4563,6 +4599,15 @@
     },
     {
       "tool": "show_related_records",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "sign_contract_with_saved_business_signature",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,

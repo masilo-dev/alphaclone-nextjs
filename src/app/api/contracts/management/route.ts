@@ -745,8 +745,18 @@ export async function sendContract(
       preferredProvider: senderConfig.provider,
       providerAccountId: senderConfig.providerAccountId,
       skipFooter: true,
-      idempotencyKey: `contract-email:${config.idempotencyKey || `${tenantId}:${contractId}:${recipientEmail}:${contract.current_version_id || "latest"}`}`,
+      idempotencyKey: config.idempotencyKey
+        ? `contract-email:${String(config.idempotencyKey).replace(/^contract-email:/, '')}`
+        : `contract-email:${tenantId}:${contractId}:${recipientEmail}:${contract.current_version_id || "latest"}${config.attemptId ? `:attempt:${config.attemptId}` : isResend ? `:resend:${Date.now()}` : ''}`,
       relatedRecord: {type: "contract", id: contractId},
+      auditMetadata: {
+        contract_id: contractId,
+        client_id: contract.client_id || null,
+        recipient: recipientEmail,
+        attempt_id: config.attemptId || null,
+        source_module: 'CONTRACTS',
+        source_action: isResend ? 'contract_resend' : 'contract_send',
+      },
       attachments: [
         {
           filename:
@@ -798,13 +808,29 @@ export async function sendContract(
         tenant_id: tenantId, contract_id: contractId, party_id: signingParty.id,
         event_type: "requested", signer_email: recipientEmail, signing_order: signingParty.signing_order || null,
         provider: emailResult.provider || "email", provider_event_id: providerReceipt,
-        evidence: { review_only: isDraftReview, signature_requested: !isDraftReview, provider_accepted: true, delivery_verified: false, signing_url_created: true, token_expires_at: expiresAt, recipient: recipientEmail },
+        evidence: {
+          review_only: isDraftReview,
+          signature_requested: !isDraftReview,
+          provider_accepted: true,
+          delivery_verified: false,
+          delivery_status: emailResult.deliveryStatus || 'provider_accepted',
+          signing_url_created: true,
+          token_expires_at: expiresAt,
+          recipient: recipientEmail,
+          attempt_id: config.attemptId || null,
+        },
       }),
       supabase.from("contract_lifecycle_events").insert({
         tenant_id: tenantId, contract_id: contractId, from_status: fromLifecycle, to_status: "sent",
         reason: isDraftReview ? "Draft sent for review only" : isResend ? "Contract resent for signature" : "Contract sent for signature",
         actor_user_id: actorUserId, source: "contracts_management_send",
-        evidence: { provider: emailResult.provider || null, provider_event_id: providerReceipt, recipient: recipientEmail },
+        evidence: {
+          provider: emailResult.provider || null,
+          provider_event_id: providerReceipt,
+          recipient: recipientEmail,
+          attempt_id: config.attemptId || null,
+          delivery_status: emailResult.deliveryStatus || 'provider_accepted',
+        },
       }),
     ]);
     const writeError = [contractUpdate, partyUpdate, signatureEvidence, lifecycleEvidence].find((result) => result.error)?.error;
@@ -831,9 +857,14 @@ export async function sendContract(
       sent: true,
       sent_to: recipientEmail,
       sent_at: sentAt,
-      message: "Provider accepted the contract email; final delivery is not verified",
-      provider: emailResult.provider, provider_message_id: emailResult.emailId,
-      providerAccountId: emailResult.providerAccountId, delivery_status: "provider_accepted", review_only: isDraftReview,
+      message: emailResult.deliveryStatus === 'delivered'
+        ? "Contract delivered to recipient"
+        : "Provider accepted the contract email; final delivery is not verified",
+      provider: emailResult.provider,
+      provider_message_id: emailResult.emailId,
+      providerAccountId: emailResult.providerAccountId,
+      delivery_status: emailResult.deliveryStatus || "provider_accepted",
+      review_only: isDraftReview,
       signingUrl,
       providerCopySent,
       runId,

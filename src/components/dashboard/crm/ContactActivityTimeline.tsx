@@ -89,6 +89,59 @@ export function ContactActivityTimeline({ contactId, contactEmail, contactName, 
           });
         }
 
+        // Query canonical email_message_recipients + email_messages
+        try {
+          const { data: recipientRows } = await supabase
+            .from('email_message_recipients')
+            .select('id, email_address, delivery_status, created_at, message:email_messages(id, subject, direction, purpose, application_status, delivery_status, sent_at, created_at, metadata)')
+            .eq('tenant_id', currentTenant.id)
+            .ilike('email_address', contactEmail)
+            .order('created_at', { ascending: false })
+            .limit(30);
+
+          for (const row of recipientRows || []) {
+            const msg = (row as any).message;
+            if (msg) {
+              const isContract = msg.purpose === 'contract' || msg.metadata?.contract_id;
+              const isInvoice = msg.purpose === 'invoice' || msg.metadata?.invoice_id;
+              const prefix = isContract ? 'Contract Email' : isInvoice ? 'Invoice Email' : 'Email';
+              const delivery = msg.delivery_status || row.delivery_status || msg.application_status || 'sent';
+              items.push({
+                id: `email-${msg.id || row.id}`,
+                type: 'email',
+                title: `${prefix}: ${msg.subject || 'No Subject'}`,
+                detail: `Status: ${String(delivery).replace(/_/g, ' ')} · ${msg.direction === 'inbound' ? 'Received from' : 'Sent to'} ${row.email_address}`,
+                date: msg.sent_at || msg.created_at || row.created_at,
+              });
+            }
+          }
+        } catch (emailQueryErr) {
+          console.warn('[ContactActivityTimeline] email_messages query failed', emailQueryErr);
+        }
+
+        // Query CRM activities table
+        try {
+          const { data: crmActivities } = await supabase
+            .from('activities')
+            .select('id, type, title, description, created_at')
+            .eq('tenant_id', currentTenant.id)
+            .ilike('description', `%${contactEmail}%`)
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+          for (const act of crmActivities || []) {
+            items.push({
+              id: `act-${act.id}`,
+              type: act.type === 'email' ? 'email' : 'note',
+              title: act.title || 'CRM Activity',
+              detail: typeof act.description === 'string' ? act.description.slice(0, 100) : '',
+              date: act.created_at,
+            });
+          }
+        } catch {
+          // non-fatal
+        }
+
         const { data: logs } = await supabase
           .from('lead_audit_logs')
           .select('id, action, details, created_at')

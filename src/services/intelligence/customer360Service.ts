@@ -84,7 +84,7 @@ class Customer360Service {
     const [deals, invoices, messages, meetings, tasks, contracts, quotes, commitmentsData, decisionsData, outreachLog] = await Promise.all([
       this.fetchDeals(supabase, tenantId, allUserIds, email),
       this.fetchInvoices(supabase, tenantId, allUserIds, email),
-      this.fetchMessages(supabase, tenantId, allUserIds),
+      this.fetchMessages(supabase, tenantId, allUserIds, email),
       this.fetchMeetings(supabase, tenantId, allUserIds, email),
       this.fetchTasks(supabase, tenantId, allUserIds),
       this.fetchContracts(supabase, tenantId, allUserIds, email),
@@ -280,10 +280,81 @@ class Customer360Service {
     return Array.isArray(data) ? data : [];
   }
 
-  private async fetchMessages(supabase: SupabaseClient, tenantId: string, userIds: string[]): Promise<any[]> {
-    if (userIds.length === 0) return [];
-    const { data } = await supabase.from('messages').select('*').eq('tenant_id', tenantId).limit(50);
-    return Array.isArray(data) ? data : [];
+  private async fetchMessages(supabase: SupabaseClient, tenantId: string, userIds: string[], email?: string): Promise<any[]> {
+    const results: any[] = [];
+    if (email) {
+      try {
+        const { data: recipientRows } = await supabase
+          .from('email_message_recipients')
+          .select('id, email_address, delivery_status, created_at, message:email_messages(id, subject, direction, purpose, application_status, delivery_status, sent_at, created_at)')
+          .eq('tenant_id', tenantId)
+          .ilike('email_address', email)
+          .order('created_at', { ascending: false })
+          .limit(30);
+
+        for (const row of recipientRows || []) {
+          const msg = (row as any).message;
+          if (msg) {
+            results.push({
+              id: msg.id || row.id,
+              content: `${msg.subject || '(No Subject)'} [${msg.delivery_status || row.delivery_status || 'sent'}]`,
+              created_at: msg.sent_at || msg.created_at || row.created_at,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('[customer360Service] email_messages query failed', err);
+      }
+
+      try {
+        const { data: unified } = await supabase
+          .from('unified_messages')
+          .select('id, subject, body, sent_at, created_at')
+          .eq('tenant_id', tenantId)
+          .or(`to_address.ilike.${email},from_address.ilike.${email}`)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        for (const u of unified || []) {
+          results.push({
+            id: u.id,
+            content: u.subject || u.body || '',
+            created_at: u.sent_at || u.created_at,
+          });
+        }
+      } catch {
+        // non-fatal
+      }
+    }
+
+    if (userIds.length > 0) {
+      try {
+        const { data: contactMsgs } = await supabase
+          .from('unified_messages')
+          .select('id, subject, body, sent_at, created_at')
+          .eq('tenant_id', tenantId)
+          .in('contact_id', userIds)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        for (const m of contactMsgs || []) {
+          results.push({
+            id: m.id,
+            content: m.subject || m.body || '',
+            created_at: m.sent_at || m.created_at,
+          });
+        }
+      } catch {
+        // non-fatal
+      }
+    }
+
+    const seen = new Set<string>();
+    return results.filter((item) => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
   }
 
   private async fetchMeetings(supabase: SupabaseClient, tenantId: string, userIds: string[], email: string): Promise<any[]> {

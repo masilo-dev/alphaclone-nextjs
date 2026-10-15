@@ -55,6 +55,7 @@ export type ExecuteDomainExternalWriteParams<TResult> = {
 
 export type ExecuteDomainExternalWriteResult<TResult> = {
   ok: boolean;
+  replayed?: boolean;
   actionId: string;
   auditLogId: string | null;
   idempotencyKey: string;
@@ -230,11 +231,14 @@ export async function executeDomainExternalWrite<TResult>(
       if (existingCanonical === 'succeeded' && existing.sanitized_output) {
         return {
           ok: true,
+          replayed: true,
           actionId: String(existing.action_id || actionId),
           auditLogId: String(existing.id || ''),
           idempotencyKey,
           status: 'succeeded',
-          result: existing.sanitized_output as TResult,
+          result: (typeof existing.sanitized_output === 'object' && existing.sanitized_output !== null
+            ? { ...(existing.sanitized_output as any), replayed: true }
+            : existing.sanitized_output) as TResult,
           receipt: {
             action_id: String(existing.action_id || actionId),
             execution_id: String(existing.action_id || actionId),

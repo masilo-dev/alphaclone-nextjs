@@ -5,6 +5,8 @@ import { guardDomainCapability } from '@/lib/execution/domainCapabilityGuard';
 import { contractSendIdempotencyKey } from '@/lib/execution/domainIdempotencyKeys';
 import { domainResultFromGateway, type DomainExecutionResult } from '@/lib/execution/domainExecutionResult';
 
+import { randomUUID } from 'node:crypto';
+
 export type ContractSendResult = {
   success: boolean;
   error?: string;
@@ -21,6 +23,7 @@ export type ContractSendCommandParams = {
   message?: string;
   resendForSignature?: boolean;
   version?: string | number;
+  attemptId?: string;
   idempotencyKey?: string;
   executionSource: PolicySource | 'api' | 'worker' | 'cron';
   skipPolicyEvaluation?: boolean;
@@ -43,6 +46,9 @@ export async function executeContractSendCommand(
 ): Promise<DomainExecutionResult<ContractSendResult>> {
   const executionSource = resolveSource(params.executionSource);
   const recipient = firstRecipient(params.recipients);
+  const attemptId =
+    params.attemptId ||
+    (params.resendForSignature && !params.idempotencyKey ? randomUUID() : undefined);
   const idempotencyKey =
     params.idempotencyKey?.trim() ||
     contractSendIdempotencyKey({
@@ -50,6 +56,7 @@ export async function executeContractSendCommand(
       contractId: params.contractId,
       recipient,
       version: params.version,
+      attemptId,
     });
 
   const guard = await guardDomainCapability({
@@ -97,6 +104,7 @@ export async function executeContractSendCommand(
       contractId: params.contractId,
       recipients: params.recipients,
       resendForSignature: params.resendForSignature,
+      attemptId,
     },
     execute: async () => {
       const { sendContract } = await import('@/app/api/contracts/management/route');
@@ -108,6 +116,7 @@ export async function executeContractSendCommand(
           subject: params.subject,
           message: params.message,
           resendForSignature: params.resendForSignature,
+          attemptId,
           ...(params.config || {}),
           idempotencyKey,
         },

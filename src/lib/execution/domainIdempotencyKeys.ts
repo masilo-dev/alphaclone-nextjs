@@ -8,18 +8,22 @@ export function invoiceSendIdempotencyKey(params: {
   tenantId: string;
   invoiceId: string;
   recipients: string[];
+  attemptId?: string;
 }): string {
   const recipients = [...new Set(params.recipients.map((e) => e.trim().toLowerCase()))].sort();
-  return `invoice-send:${params.tenantId}:${params.invoiceId}:${hashParts(recipients)}`;
+  const attempt = params.attemptId ? `:attempt:${params.attemptId}` : '';
+  return `invoice-send:${params.tenantId}:${params.invoiceId}:${hashParts(recipients)}${attempt}`;
 }
 
 export function quoteSendIdempotencyKey(params: {
   tenantId: string;
   quoteId: string;
   recipients: string[];
+  attemptId?: string;
 }): string {
   const recipients = [...new Set(params.recipients.map((e) => e.trim().toLowerCase()))].sort();
-  return `quote-send:${params.tenantId}:${params.quoteId}:${hashParts(recipients)}`;
+  const attempt = params.attemptId ? `:attempt:${params.attemptId}` : '';
+  return `quote-send:${params.tenantId}:${params.quoteId}:${hashParts(recipients)}${attempt}`;
 }
 
 export function socialPublishIdempotencyKey(params: {
@@ -35,6 +39,8 @@ export function contractSendIdempotencyKey(params: {
   contractId: string;
   recipient: string;
   version?: string | number;
+  attemptId?: string;
 }): string {
-  return `contract-send:${params.tenantId}:${params.contractId}:${params.recipient.toLowerCase()}:v${params.version ?? 'latest'}`;
+  const attempt = params.attemptId ? `:attempt:${params.attemptId}` : '';
+  return `contract-send:${params.tenantId}:${params.contractId}:${params.recipient.toLowerCase()}:v${params.version ?? 'latest'}${attempt}`;
 }
