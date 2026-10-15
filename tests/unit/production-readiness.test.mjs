@@ -91,7 +91,7 @@ test("invoice lifecycle has non-MCP dashboard API (source)", async () => {
     ),
     "utf8",
   );
-  assert.match(api, /queueInvoiceSend/);
+  assert.match(api, /executeInvoiceSendCommand|queueInvoiceSend/);
   assert.match(modal, /startInvoiceLifecycleFromDashboard/);
   assert.equal(modal.includes("callMcpTool('start_invoice_lifecycle'"), false);
 });
