@@ -15,14 +15,19 @@ export function stripRouteQueryAndHash(path: string): string {
 export function normalizeBusinessRoute(path: string, role?: string): string {
     if (!path) return '/dashboard';
 
-    // Check for query param ?tab=xxx or ?tab=xxx&... on the base dashboard
+    // Check for query param ?tab=xxx or ?module=xxx on the base dashboard
     const tabMatch = path.match(/[?&]tab=([^&#]+)/i);
-    const tabParam = tabMatch ? decodeURIComponent(tabMatch[1]).toLowerCase() : null;
+    const moduleMatch = path.match(/[?&]module=([^&#]+)/i);
+    const targetParam = tabMatch
+        ? decodeURIComponent(tabMatch[1]).toLowerCase()
+        : moduleMatch
+            ? decodeURIComponent(moduleMatch[1]).toLowerCase()
+            : null;
 
     let base = stripRouteQueryAndHash(path);
 
-    // If on base dashboard route but a ?tab= parameter was specified, resolve it to the dedicated destination
-    if ((base === '/dashboard' || base === '/dashboard/business') && tabParam) {
+    // If on base dashboard route but a ?tab= or ?module= parameter was specified, resolve it to the dedicated destination
+    if ((base === '/dashboard' || base === '/dashboard/business') && targetParam) {
         const tabParamMap: Record<string, string> = {
             contracts: '/dashboard/business/contracts',
             projects: '/dashboard/business/projects',
@@ -66,8 +71,8 @@ export function normalizeBusinessRoute(path: string, role?: string): string {
             tickets: '/dashboard/business/tickets',
             whatsapp: '/dashboard/business/whatsapp',
         };
-        if (tabParamMap[tabParam]) {
-            base = tabParamMap[tabParam];
+        if (tabParamMap[targetParam]) {
+            base = tabParamMap[targetParam];
         }
     }
 

@@ -14,7 +14,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 const Cal = dynamic(() => import('@calcom/embed-react'), { ssr: false });
 
-const READY_TIMEOUT_MS = 12_000;
+const READY_TIMEOUT_MS = 6_000;
 
 type CalComEmbedProps = {
   bookingUrl?: string;

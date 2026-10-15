@@ -121,7 +121,9 @@ export function UnifiedActionCenter() {
       {renderQueueSection(
         HUMAN_LABELS.actionQueue,
         extraItems,
-        'No urgent customer, billing, or follow-up items right now.',
+        approvalItems.length === 0
+          ? 'No urgent customer, billing, or follow-up items right now.'
+          : undefined,
       )}
       {renderQueueSection(
         HUMAN_LABELS.pendingApprovals,

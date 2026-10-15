@@ -27,8 +27,9 @@ import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
 import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '@/services/universalServiceCatalog';
 import { getTaxRateForCountry } from '@/lib/tax/taxRules';
 import toast from 'react-hot-toast';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { getTrialEntitlement } from '@/lib/billing/trialEntitlement';
 
 // Integration subcomponents
 import CalendlySettings from './business/CalendlySettings';
@@ -1096,20 +1097,27 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Subscription tier summary */}
-                    <div className="p-4 flex justify-between items-center bg-[var(--ws-canvas)]">
-                        <div>
-                            <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase">{translate('Current active tier')}</span>
-                            <h4 className="type-ui font-black text-[var(--ws-text-primary)] capitalize">{currentTenant?.subscription_plan || 'free'} plan</h4>
-                            {currentTenant?.subscription_status === 'trial' && (
-                                <p className="type-card-description text-teal-400 mt-1">
-                                    {translate('Premium trial active · full access · no daily limits')}
-                                </p>
-                            )}
-                        </div>
-                        <span className={`type-caption font-black uppercase px-2 py-0.5 border rounded-lg ${statusColors[currentTenant?.subscription_status || ''] || 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border-transparent'}`}>
-                            {currentTenant?.subscription_status || 'active'}
-                        </span>
-                    </div>
+                    {(() => {
+                        const trialInfo = getTrialEntitlement(currentTenant);
+                        return (
+                            <div className="p-4 flex justify-between items-center bg-[var(--ws-canvas)]">
+                                <div>
+                                    <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase">{translate('Current active tier')}</span>
+                                    <h4 className="type-ui font-black text-[var(--ws-text-primary)] capitalize">{currentTenant?.subscription_plan || 'free'} plan</h4>
+                                    {trialInfo.isTrial && (
+                                        <p className={`type-card-description mt-1 ${trialInfo.isExpired ? 'text-amber-400 font-semibold' : 'text-teal-400'}`}>
+                                            {trialInfo.isExpired
+                                                ? translate('Trial expired — upgrade to continue executing business workflows')
+                                                : translate('Premium trial active · full access · no daily limits')}
+                                        </p>
+                                    )}
+                                </div>
+                                <span className={`type-caption font-black uppercase px-2 py-0.5 border rounded-lg ${trialInfo.isExpired ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : statusColors[currentTenant?.subscription_status || ''] || 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border-transparent'}`}>
+                                    {trialInfo.isExpired ? 'expired' : currentTenant?.subscription_status || 'active'}
+                                </span>
+                            </div>
+                        );
+                    })()}
 
                     {/* Pricing Grid */}
                     <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[var(--ws-canvas)]">

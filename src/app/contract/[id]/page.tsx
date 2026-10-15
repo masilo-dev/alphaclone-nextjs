@@ -55,7 +55,7 @@ export default function PublicContractPage() {
             const partySigned = matchingParty?.signature_status === 'signed';
             const legacySigned = parties.length === 0 && Boolean(
                 payload.signer?.role === 'client' ? payload.contract.client_signed_at : payload.contract.admin_signed_at);
-            setSigned(payload.contract.status === 'fully_signed' || partySigned || legacySigned);
+            setSigned(payload.contract.status === 'fully_signed' || partySigned || legacySigned || Boolean(payload.tokenStatus?.usedAt));
             const candidateName = matchingParty?.party_snapshot?.name || payload.contract.metadata?.client_name || '';
             if (candidateName) {
                 setLegalName((prev) => prev || candidateName);

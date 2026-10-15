@@ -4,18 +4,27 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 export default function PublicStatusPill() {
-  const [status, setStatus] = useState<'healthy' | 'degraded' | 'unhealthy' | 'unknown'>('unknown');
+  const [status, setStatus] = useState<'operational' | 'degraded' | 'unhealthy' | 'unknown'>('unknown');
 
   useEffect(() => {
     let isMounted = true;
-    fetch('/api/health')
+    fetch('/api/platform-status', { cache: 'no-store' })
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
         if (!isMounted) return;
-        if (data?.status === 'healthy') setStatus('healthy');
-        else if (data?.status === 'degraded') setStatus('degraded');
-        else if (data?.status === 'unhealthy') setStatus('unhealthy');
-        else setStatus('unknown');
+        if (data?.overall === 'operational') setStatus('operational');
+        else if (data?.overall === 'degraded' || data?.overall === 'partial_outage') setStatus('degraded');
+        else if (data?.overall === 'major_outage') setStatus('unhealthy');
+        else {
+          // Fallback probe to basic liveness
+          return fetch('/api/health')
+            .then((res) => res.ok ? res.json() : null)
+            .then((hData) => {
+              if (!isMounted) return;
+              if (hData?.status === 'healthy') setStatus('operational');
+              else setStatus('unknown');
+            });
+        }
       })
       .catch(() => {
         if (isMounted) setStatus('unknown');
@@ -26,15 +35,15 @@ export default function PublicStatusPill() {
   }, []);
 
   const colorClass =
-    status === 'healthy'
+    status === 'operational'
       ? 'bg-[var(--success-500)]'
       : status === 'degraded'
         ? 'bg-[var(--warning-500)]'
         : status === 'unhealthy' ? 'bg-[var(--error-500)]' : 'bg-slate-400';
 
   const labelText =
-    status === 'healthy'
-      ? 'Web App Responding'
+    status === 'operational'
+      ? 'All Systems Operational'
       : status === 'degraded'
         ? 'Degraded Performance'
         : status === 'unhealthy' ? 'System Disruption' : 'Status Unavailable';

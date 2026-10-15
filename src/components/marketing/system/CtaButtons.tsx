@@ -123,11 +123,11 @@ export function SecondaryCTA({
   );
 }
 
-export function CtaPair({ className = '' }: { className?: string }) {
+export function CtaPair({ className = '', workflowHref = EXECUTION_LAYER.workflowPath }: { className?: string; workflowHref?: string }) {
   return (
     <div className={`flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 ${className}`.trim()}>
       <PrimaryCTA href={DEMO_HREF} className="w-full sm:w-auto mkt-btn-large">Book a demo</PrimaryCTA>
-      <SecondaryCTA href={EXECUTION_LAYER.workflowPath} className="w-full sm:w-auto mkt-btn-large">See a 30-second workflow</SecondaryCTA>
+      <SecondaryCTA href={workflowHref} className="w-full sm:w-auto mkt-btn-large">See a 30-second workflow</SecondaryCTA>
     </div>
   );
 }

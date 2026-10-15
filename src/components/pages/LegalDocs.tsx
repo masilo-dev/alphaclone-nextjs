@@ -1020,7 +1020,7 @@ export function DPA() {
                 <p>Upon termination or expiry of the subscription, AlphaClone will, at the Customer's election:</p>
                 <BulletList items={[
                     'Return all personal data to the Customer in CSV/JSON format within 30 days of a written request',
-                    'Securely delete all personal data within 90 days of account deletion',
+                    'Securely delete all personal data within 90 days of subscription termination (or within 72 hours of an explicit erasure or account deletion request pursuant to Section 6 of our Privacy Policy)',
                     'Provide written confirmation of deletion upon request',
                     'Backup snapshots containing personal data are purged within 30 days of account deletion',
                 ]} />

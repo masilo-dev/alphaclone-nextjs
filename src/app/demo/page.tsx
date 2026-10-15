@@ -18,6 +18,8 @@ export default function DemoPage() {
     }, []);
     const external = isExternalHref(bookingHref);
 
+    const [iframeLoaded, setIframeLoaded] = useState(false);
+
     return (
         <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-500/20 relative overflow-x-hidden">
             <div className="relative z-10 py-8 pb-24 px-4">
@@ -48,18 +50,40 @@ export default function DemoPage() {
                         transition={{ duration: 0.8, delay: 0.2 }}
                         className="relative group mx-auto max-w-[900px]"
                     >
-                        <div className="relative bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl overflow-hidden shadow-xl">
-                            {/* Loom Player Wrapper */}
-                            <div className="aspect-video w-full">
+                        <div className="relative bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+                            {/* Loom Player Wrapper with Loading Skeleton */}
+                            <div className="relative aspect-video w-full bg-slate-900 flex items-center justify-center">
+                                {!iframeLoaded && (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-3 bg-slate-950/80 backdrop-blur-sm z-10 animate-pulse">
+                                        <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                                            <Play className="w-8 h-8 text-blue-400 ml-1 fill-blue-400/20" />
+                                        </div>
+                                        <span className="text-sm font-medium text-slate-300">Loading recorded walkthrough...</span>
+                                    </div>
+                                )}
                                 <iframe 
                                     src="https://www.loom.com/embed/3a7000c925c145b7882089688b0ceb5d?hide_owner=true&hide_share=true&hide_title=true&hide_embed_params=true" 
                                     allowFullScreen={true}
                                     style={{ width: '100%', height: '100%', border: 'none' }}
-                                    className="absolute inset-0"
+                                    className="absolute inset-0 w-full h-full"
                                     title="AlphaClone recorded product demonstration"
-                                    loading="lazy"
+                                    loading="eager"
+                                    onLoad={() => setIframeLoaded(true)}
                                 />
                             </div>
+                        </div>
+
+                        {/* Direct Link Fallback / Clarification */}
+                        <div className="mt-3 flex items-center justify-between text-xs text-slate-500 px-1">
+                            <span>Recorded walkthrough (approx. 2 min)</span>
+                            <a
+                                href="https://www.loom.com/share/3a7000c925c145b7882089688b0ceb5d"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                            >
+                                Can&apos;t load video? Watch on Loom <ArrowRight className="w-3 h-3" />
+                            </a>
                         </div>
                     </motion.div>
 

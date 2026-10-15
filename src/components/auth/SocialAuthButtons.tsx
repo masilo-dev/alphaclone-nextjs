@@ -50,7 +50,7 @@ export default function SocialAuthButtons({
   return (
     <div className={className}>
       <p className="type-card-description text-center text-[var(--ws-text-muted)] mb-2">
-        Workspace created automatically — no form required
+        {t("Fast 1-click workspace setup with your business account")}
       </p>
       <div className="flex items-stretch gap-2">
         <button

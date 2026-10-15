@@ -183,9 +183,10 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             exit={{ scale: 0 }}
-                            className="absolute -top-0.5 -right-0.5 bg-gradient-to-br from-teal-400 to-violet-500 text-[var(--text-inverse)] type-caption font-black rounded-full w-4 h-4 flex items-center justify-center shadow-lg shadow-teal-500/30"
+                            className="absolute -top-0.5 -right-0.5 bg-gradient-to-br from-teal-400 to-violet-500 text-[var(--text-inverse)] text-[10px] leading-none font-bold rounded-full min-w-4 h-4 px-1 flex items-center justify-center shadow-lg shadow-teal-500/30"
+                            aria-label={`${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`}
                         >
-                            {unreadCount > 9 ? '9+' : unreadCount}
+                            {unreadCount > 99 ? '99+' : unreadCount}
                         </motion.span>
                     )}
                 </AnimatePresence>

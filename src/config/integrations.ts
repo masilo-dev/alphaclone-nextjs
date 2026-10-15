@@ -49,7 +49,7 @@ export const PUBLIC_INTEGRATIONS: PublicIntegration[] = [
   integration('calcom', 'Cal.com', 'Scheduling connection for booking pages', 'COMING_SOON', 'scheduling'),
   integration('linkedin', 'LinkedIn', 'OAuth, posting, and lead forms', 'AVAILABLE', 'social'),
   integration('facebook', 'Facebook', 'Pages, posts, and lead capture', 'AVAILABLE', 'social'),
-  integration('stripe', 'Stripe', 'Payment processing and connected billing', 'COMING_SOON', 'payments'),
+  integration('stripe', 'Stripe', 'Payment processing and connected billing', 'AVAILABLE', 'payments'),
   integration('microsoft365', 'Outlook', 'Outlook mail, calendar, and tasks', 'AVAILABLE', 'productivity'),
   integration('gmail', 'Gmail', 'Inbox read, compose, and reply', 'COMING_SOON', 'communication'),
   integration('zoho', 'Zoho', 'CRM and Mail integration', 'AVAILABLE', 'crm'),

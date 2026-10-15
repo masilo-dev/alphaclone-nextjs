@@ -45,16 +45,23 @@ export function NotificationBell() {
 
     async function fetchNotifications() {
       const supabase = createSupabaseBrowserClient();
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .order('created_at', { ascending: false })
-        .limit(10);
+      const [{ data }, { count }] = await Promise.all([
+        supabase
+          .from('notifications')
+          .select('*')
+          .eq('tenant_id', tenantId)
+          .order('created_at', { ascending: false })
+          .limit(10),
+        supabase
+          .from('notifications')
+          .select('id', { count: 'exact', head: true })
+          .eq('tenant_id', tenantId)
+          .eq('read', false),
+      ]);
 
       if (data) {
         setNotifications(data);
-        setUnreadCount(data.filter((n: Notification) => !n.read).length);
+        setUnreadCount(count ?? data.filter((n: Notification) => !n.read).length);
       }
     }
 
@@ -76,16 +83,19 @@ export function NotificationBell() {
               position="absolute"
               top="-2px"
               right="-2px"
-              w={4}
-              h={4}
+              minW="16px"
+              h="16px"
+              px="3px"
               borderRadius="full"
               bg="red.500"
               display="flex"
               alignItems="center"
               justifyContent="center"
+              title={`${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`}
+              aria-label={`${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`}
             >
-              <Text fontSize="var(--type-caption-size)" fontWeight="bold" color="white">
-                {unreadCount > 9 ? '9+' : unreadCount}
+              <Text fontSize="10px" lineHeight="1" fontWeight="bold" color="white">
+                {unreadCount > 99 ? '99+' : unreadCount}
               </Text>
             </Box>
           )}

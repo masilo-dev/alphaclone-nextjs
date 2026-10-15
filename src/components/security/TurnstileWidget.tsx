@@ -63,7 +63,7 @@ function loadTurnstileScript(): Promise<void> {
       scriptPromise = null;
       script.remove();
       reject(new Error('Turnstile script timed out'));
-    }, 7000);
+    }, 15000);
     script.onload = () => {
       window.clearTimeout(loadTimeout);
       resolve();
@@ -78,6 +78,15 @@ function loadTurnstileScript(): Promise<void> {
   });
 
   return scriptPromise;
+}
+
+/** Reset cached script promise so retry can re-attempt loading if network was temporarily down. */
+export function resetTurnstileScriptCache(): void {
+  scriptPromise = null;
+  if (typeof document !== 'undefined') {
+    const existing = document.getElementById(TURNSTILE_SCRIPT_ID);
+    if (existing) existing.remove();
+  }
 }
 
 interface TurnstileWidgetProps {
@@ -128,7 +137,7 @@ export default function TurnstileWidget({
     let cancelled = false;
 
     /**
-     * Timeout safety net: if Cloudflare Turnstile hangs for > 8s without
+     * Timeout safety net: if Cloudflare Turnstile hangs for > 15s without
      * rendering, either bypass (if opted-in) or fire onError so the caller
      * can surface a clear "security check unavailable" message.
      * We intentionally do NOT emit a fake truthy token here — that would
@@ -143,7 +152,7 @@ export default function TurnstileWidget({
           onErrorRef.current?.();
         }
       }
-    }, 8000);
+    }, 15000);
 
     void loadTurnstileScript()
       .then(() => {

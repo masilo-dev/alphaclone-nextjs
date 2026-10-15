@@ -445,3 +445,14 @@ test('13. globals.css does not trap .ac-business-root in overflow: hidden or 100
   assert.ok(!cssSource.includes('.ac-dashboard-root,\n.ac-business-root {\n  height: 100dvh'), 'ac-business-root must not share 100dvh rule with dashboard-root');
   assert.ok(cssSource.includes('.ac-business-root {\n  width: 100%;\n  min-height: 100%;'), 'ac-business-root must allow natural document height');
 });
+
+// ----------------------------------------------------------------------------
+// Test 14: GET /api/contracts/sign allows viewing signed agreements without 410
+// ----------------------------------------------------------------------------
+test('14. /api/contracts/sign GET allows signers to view signed contracts and reports usedAt', () => {
+  const routeSource = fs.readFileSync(new URL('../../src/app/api/contracts/sign/route.ts', import.meta.url), 'utf8');
+  assert.ok(!routeSource.includes("if (signingToken.used_at) {\n            return NextResponse.json({ error: 'This signing link has already been used' }, { status: 410 });"), 'GET must not block used tokens with 410');
+  assert.ok(routeSource.includes("usedAt: signingToken.used_at || null"), 'tokenStatus must expose usedAt');
+  const pageSource = fs.readFileSync(new URL('../../src/app/contract/[id]/page.tsx', import.meta.url), 'utf8');
+  assert.ok(pageSource.includes("Boolean(payload.tokenStatus?.usedAt)"), 'contract page must recognize usedAt as signed');
+});

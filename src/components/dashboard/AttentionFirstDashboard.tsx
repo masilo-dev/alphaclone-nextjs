@@ -231,7 +231,7 @@ export function AttentionFirstDashboard() {
     attentionItems.push({
       id: 'tasks',
       label: HUMAN_LABELS.taskBacklog,
-      detail: `${openTasks} open`,
+      detail: `${openTasks} ${openTasks === 1 ? 'task' : 'tasks'} in backlog`,
       href: '/dashboard/tasks',
       severity: 'medium',
       icon: Target,
@@ -324,7 +324,7 @@ export function AttentionFirstDashboard() {
           </h3>
           {attentionItems.length > 0 ? (
             <span className="type-ui font-medium text-[var(--ws-text-tertiary)] tabular-nums">
-              {Math.min(attentionItems.length, 6)} open
+              {attentionItems.length} {attentionItems.length === 1 ? t('item') : t('items')}
             </span>
           ) : null}
         </div>

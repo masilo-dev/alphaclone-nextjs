@@ -18,7 +18,7 @@ import { getPostAuthDashboardPath } from '@/lib/auth/postAuthRedirect';
 import { sanitizeInternalRedirect } from '@/lib/security/safeRedirect';
 import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 import { bootstrapTenantViaApi } from '@/lib/tenant/bootstrapTenantClient';
-import TurnstileWidget from '@/components/security/TurnstileWidget';
+import TurnstileWidget, { resetTurnstileScriptCache } from '@/components/security/TurnstileWidget';
 import DevSetupBanner from '@/components/auth/DevSetupBanner';
 import PublicStatusPill from '@/components/status/PublicStatusPill';
 
@@ -511,6 +511,14 @@ function LoginContent() {
         );
     }
 
+    const PLAN_DETAILS: Record<SubscriptionPlan, { name: string; price: string }> = {
+        free: { name: 'Free', price: '$0/mo' },
+        starter: { name: 'Starter', price: '$15/mo' },
+        pro: { name: 'Pro', price: '$45/mo' },
+        enterprise: { name: 'Enterprise', price: '$85/mo' },
+        custom: { name: 'Custom', price: 'Custom' },
+    };
+
     return (
         <main className="ac-auth-canvas ac-signin-layout min-h-[100dvh] relative overflow-x-hidden">
             <div className="ac-auth-card ac-signin-form w-full max-w-md p-4 sm:p-5 relative z-10 my-auto">
@@ -550,6 +558,22 @@ function LoginContent() {
                 </div>
 
                 <DevSetupBanner />
+
+                {isRegistering && (
+                    <div className="mb-3 p-3 rounded-xl border border-teal-500/30 bg-teal-500/10 text-left">
+                        <div className="flex items-center justify-between gap-2">
+                            <span className="type-caption font-bold text-teal-400 uppercase tracking-wider">
+                                {PLAN_DETAILS[selectedPlan]?.name || 'Starter'} Plan Selected
+                            </span>
+                            <span className="type-caption font-extrabold text-[var(--color-text-primary)]">
+                                {PLAN_DETAILS[selectedPlan]?.price || '$15/mo'}
+                            </span>
+                        </div>
+                        <p className="type-card-description text-[var(--color-text-secondary)] mt-1">
+                            {t("14-day free trial · No card required today · Cancel anytime before trial ends")}
+                        </p>
+                    </div>
+                )}
 
                 <SocialAuthButtons
                     isLoading={isLoading}
@@ -743,13 +767,25 @@ function LoginContent() {
                                 }}
                             />
                             {turnstileError && (
-                                <div role="alert" className="type-card-description text-amber-400 text-center">
-                                    <p>{t("Security check unavailable. Please try the check again.")}</p>
-                                    <button type="button" className="mt-2 underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" onClick={() => {
-                                        setTurnstileToken('');
-                                        setTurnstileError(false);
-                                        setTurnstileNonce((nonce) => nonce + 1);
-                                    }}>{t("Retry security check")}</button>
+                                <div role="alert" className="type-card-description text-amber-400 text-center p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-2">
+                                    <p className="font-medium">{t("Security check unavailable. Please try the check again.")}</p>
+                                    <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                                        <button
+                                            type="button"
+                                            className="px-3 py-1 text-xs font-semibold rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 transition-colors focus-visible:outline focus-visible:outline-2"
+                                            onClick={() => {
+                                                setTurnstileToken('');
+                                                setTurnstileError(false);
+                                                resetTurnstileScriptCache();
+                                                setTurnstileNonce((nonce) => nonce + 1);
+                                            }}
+                                        >
+                                            {t("Retry security check")}
+                                        </button>
+                                    </div>
+                                    <p className="text-[11px] text-[var(--ws-text-muted)]">
+                                        {t("Using a privacy extension or ad blocker? Please allow challenges.cloudflare.com or sign in with Google.")}
+                                    </p>
                                 </div>
                             )}
                         </div>

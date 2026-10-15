@@ -245,7 +245,7 @@ export default function PricingPage() {
                   <th scope="col" className="p-4 text-left font-bold text-[var(--marketing-text-primary)] w-2/5">{t('Execution Capability')}</th>
                   <th scope="col" className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Starter (${billingPeriod === 'annual' ? `144${t('/year')}` : `15${t('/month')}`})</th>
                   <th scope="col" className="p-4 text-center font-bold text-[var(--marketing-accent-hover)] bg-[var(--marketing-accent-soft)]">Pro (${billingPeriod === 'annual' ? `432${t('/year')}` : `45${t('/month')}`})</th>
-                  <th scope="col" className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Enterprise (${billingPeriod === 'annual' ? `768${t('/year')}` : `80${t('/month')}`})</th>
+                  <th scope="col" className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Enterprise (${billingPeriod === 'annual' ? `768${t('/year')}` : `85${t('/month')}`})</th>
                 </tr>
               </thead>
               {detailedComparison.map((cat) => (

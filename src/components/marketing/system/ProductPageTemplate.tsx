@@ -49,7 +49,7 @@ export default function ProductPageTemplate({ feature }: ProductPageTemplateProp
             <p className="mx-auto mt-5 max-w-3xl text-lg sm:text-xl text-[var(--marketing-text-secondary)] font-normal">
               {t(feature.summary)}
             </p>
-            <CtaPair className="mt-8 justify-center" />
+            <CtaPair className="mt-8 justify-center" workflowHref="#workflow" />
           </div>
 
           <div className="mx-auto mt-12 max-w-5xl">

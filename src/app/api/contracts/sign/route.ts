@@ -44,10 +44,7 @@ export async function GET(req: NextRequest) {
         if (tokenError || !signingToken) {
             return NextResponse.json({ error: 'Invalid signing link' }, { status: 404 });
         }
-        if (signingToken.used_at) {
-            return NextResponse.json({ error: 'This signing link has already been used' }, { status: 410 });
-        }
-        if (!Number.isFinite(Date.parse(signingToken.expires_at)) || Date.parse(signingToken.expires_at) <= Date.now()) {
+        if (!signingToken.used_at && (!Number.isFinite(Date.parse(signingToken.expires_at)) || Date.parse(signingToken.expires_at) <= Date.now())) {
             return NextResponse.json({ error: 'This signing link has expired' }, { status: 410 });
         }
 
@@ -92,41 +89,47 @@ export async function GET(req: NextRequest) {
             .contains('party_snapshot', { email: signerEmail })
             .maybeSingle();
 
-        await Promise.all([
-            admin.from('contract_signature_events').insert({
-                tenant_id: signingToken.tenant_id,
-                contract_id: signingToken.contract_id,
-                party_id: party?.id || null,
-                event_type: 'viewed',
-                signer_email: signerEmail,
-                signing_order: party?.signing_order || null,
-                provider: 'bonnie_esign',
-                ip_address: getClientIpAddress(req),
-                user_agent: req.headers.get('user-agent') || 'unknown',
-                evidence: { token_expires_at: signingToken.expires_at },
-                occurred_at: now,
-            }),
-            admin.from('contract_audit_trail').insert({
-                contract_id: signingToken.contract_id,
-                action: 'viewed',
-                details: { tenant_id: signingToken.tenant_id },
-                actor_role: signingToken.signer_role,
-                actor_email: signerEmail,
-                ip_address: getClientIpAddress(req),
-                user_agent: req.headers.get('user-agent') || 'unknown',
-            }),
-            admin.from('contracts').update({
-                viewed_at: contract.client_signed_at ? undefined : now,
-                lifecycle_status: ['draft', 'review', 'sent'].includes(String(contract.status)) ? 'viewed' : undefined,
-            }).eq('id', signingToken.contract_id).eq('tenant_id', signingToken.tenant_id),
-        ]);
+        if (!signingToken.used_at) {
+            await Promise.all([
+                admin.from('contract_signature_events').insert({
+                    tenant_id: signingToken.tenant_id,
+                    contract_id: signingToken.contract_id,
+                    party_id: party?.id || null,
+                    event_type: 'viewed',
+                    signer_email: signerEmail,
+                    signing_order: party?.signing_order || null,
+                    provider: 'bonnie_esign',
+                    ip_address: getClientIpAddress(req),
+                    user_agent: req.headers.get('user-agent') || 'unknown',
+                    evidence: { token_expires_at: signingToken.expires_at },
+                    occurred_at: now,
+                }),
+                admin.from('contract_audit_trail').insert({
+                    contract_id: signingToken.contract_id,
+                    action: 'viewed',
+                    details: { tenant_id: signingToken.tenant_id },
+                    actor_role: signingToken.signer_role,
+                    actor_email: signerEmail,
+                    ip_address: getClientIpAddress(req),
+                    user_agent: req.headers.get('user-agent') || 'unknown',
+                }),
+                admin.from('contracts').update({
+                    viewed_at: contract.client_signed_at ? undefined : now,
+                    lifecycle_status: ['draft', 'review', 'sent'].includes(String(contract.status)) ? 'viewed' : undefined,
+                }).eq('id', signingToken.contract_id).eq('tenant_id', signingToken.tenant_id),
+            ]);
+        }
 
         return NextResponse.json({
             success: true,
             token,
             signer: { email: signingToken.signer_email, role: signingToken.signer_role },
             review_only: signingToken.metadata?.review_only === true,
-            tokenStatus: { expiresAt: signingToken.expires_at, serverTime: new Date().toISOString() },
+            tokenStatus: {
+                expiresAt: signingToken.expires_at,
+                usedAt: signingToken.used_at || null,
+                serverTime: new Date().toISOString()
+            },
             contract: publicContract,
         });
     } catch (error: any) {

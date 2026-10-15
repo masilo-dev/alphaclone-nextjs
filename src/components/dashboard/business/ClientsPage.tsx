@@ -197,7 +197,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
     const searchParams = useSearchParams();
     const stageParam = searchParams?.get('stage');
-    const contactParam = searchParams?.get('clientId') ?? searchParams?.get('client') ?? searchParams?.get('contact') ?? searchParams?.get('contactId');
+    const contactParam = searchParams?.get('clientId') ?? searchParams?.get('client') ?? searchParams?.get('contact') ?? searchParams?.get('contactId') ?? searchParams?.get('lead') ?? searchParams?.get('leadId');
     const clientTabParam = searchParams?.get('clientTab');
     const directoryParam = searchParams?.get('directory');
     const PAGE_SIZE = 50;
