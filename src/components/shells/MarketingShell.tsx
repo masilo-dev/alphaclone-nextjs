@@ -26,7 +26,7 @@ export default function MarketingShell({ children }: { children: React.ReactNode
   }, [isDashboardOrApp]);
 
   if (isDashboardOrApp) {
-    return <div className="ac-business-root min-h-screen">{children}</div>;
+    return <div className="ac-business-root min-h-screen w-full">{children}</div>;
   }
 
   return (

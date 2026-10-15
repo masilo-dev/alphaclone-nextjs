@@ -435,3 +435,13 @@ test('12. Additive migration provisions invoice-documents bucket with RLS and co
   assert.ok(migrationSource.includes("pdf_storage_path"), 'Must ensure pdf_storage_path column exists');
   assert.ok(migrationSource.includes("pdf_generated_at"), 'Must ensure pdf_generated_at column exists');
 });
+
+// ----------------------------------------------------------------------------
+// Test 13: globals.css does not trap .ac-business-root in overflow: hidden or 100dvh
+// ----------------------------------------------------------------------------
+test('13. globals.css does not trap .ac-business-root in overflow: hidden or 100dvh', () => {
+  const cssSource = fs.readFileSync(new URL('../../src/app/globals.css', import.meta.url), 'utf8');
+  assert.ok(!cssSource.includes('.ac-business-root {\n  height: 100dvh;\n  height: 100svh;\n  overflow: hidden;'), 'ac-business-root must not have fixed 100dvh + overflow: hidden');
+  assert.ok(!cssSource.includes('.ac-dashboard-root,\n.ac-business-root {\n  height: 100dvh'), 'ac-business-root must not share 100dvh rule with dashboard-root');
+  assert.ok(cssSource.includes('.ac-business-root {\n  width: 100%;\n  min-height: 100%;'), 'ac-business-root must allow natural document height');
+});
