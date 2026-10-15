@@ -32,9 +32,8 @@ COPY scripts ./scripts
 RUN npm ci --legacy-peer-deps
 
 # Stage 2: Build Next.js application
-FROM base AS builder
+FROM deps AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Ensure stale app/ directory is removed before building Next.js routes
@@ -85,7 +84,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV SERWIST_SUPPRESS_TURBOPACK_WARNING=1
 ENV NODE_OPTIONS="--max-old-space-size=12288"
 
-RUN npm run build
+# Build caches are not needed by next start. Remove them before exporting
+# the builder snapshot and copying the production image.
+RUN npm run build && rm -rf .next/cache
 
 # Stage 3: Production Runner
 FROM base AS runner
