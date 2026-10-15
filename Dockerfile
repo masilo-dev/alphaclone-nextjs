@@ -98,6 +98,8 @@ ENV PATH="/app/node_modules/.bin:$PATH"
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 COPY --from=builder /app/package.json ./package.json
+# tsx workers need the @/* path mapping at runtime.
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
