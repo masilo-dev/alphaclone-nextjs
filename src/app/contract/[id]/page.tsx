@@ -56,6 +56,10 @@ export default function PublicContractPage() {
             const legacySigned = parties.length === 0 && Boolean(
                 payload.signer?.role === 'client' ? payload.contract.client_signed_at : payload.contract.admin_signed_at);
             setSigned(payload.contract.status === 'fully_signed' || partySigned || legacySigned);
+            const candidateName = matchingParty?.party_snapshot?.name || payload.contract.metadata?.client_name || '';
+            if (candidateName) {
+                setLegalName((prev) => prev || candidateName);
+            }
             if (payload.contract.status === 'rejected') {
                 setDeclined(true);
             }
@@ -163,7 +167,7 @@ export default function PublicContractPage() {
     return (
         <div className="min-h-screen bg-[var(--ws-canvas)] text-[var(--ws-text-secondary)] py-3 sm:py-8 px-0 sm:px-4 pb-[max(12px,env(safe-area-inset-bottom))]">
             <Toaster position="top-center" />
-            <div className="max-w-4xl mx-auto bg-[var(--ws-panel)] border border-[var(--ws-border)] sm:rounded-2xl overflow-hidden shadow-2xl">
+            <div className="max-w-4xl mx-auto bg-[var(--ws-panel)] border border-[var(--ws-border)] sm:rounded-2xl shadow-2xl">
                 {/* Header */}
                 <div className="bg-[var(--ws-canvas)] p-6 border-b border-[var(--ws-border)] flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
@@ -227,8 +231,9 @@ export default function PublicContractPage() {
                         </div>
 
                         <label className="block type-caption font-bold text-white mb-4 uppercase tracking-wider">Sign Below to Accept</label>
-                        <div className={`overflow-hidden bg-white rounded-xl transition-opacity ${!consentAccepted ? 'opacity-50 grayscale pointer-events-none' : 'opacity-100'}`}>
+                        <div className={`rounded-xl transition-opacity ${!consentAccepted ? 'opacity-50 grayscale pointer-events-none' : 'opacity-100'}`}>
                             <SignaturePad
+                                initialFullName={legalName}
                                 onSave={(data, fullName) => {
                                     setSignatureData(data);
                                     setLegalName(fullName);

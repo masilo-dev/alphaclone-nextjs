@@ -23,6 +23,37 @@ export type InvoiceLifecycleInput = {
   message?: string;
 };
 
+export const INVOICE_DOCUMENTS_BUCKET = 'invoice-documents';
+
+let bucketEnsurePromise: Promise<void> | null = null;
+
+export async function ensureInvoiceDocumentsBucket(admin: any): Promise<void> {
+  if (bucketEnsurePromise) {
+    return bucketEnsurePromise;
+  }
+  bucketEnsurePromise = (async () => {
+    try {
+      const { data: bucket, error: getError } = await admin.storage.getBucket(INVOICE_DOCUMENTS_BUCKET);
+      if (bucket && !getError) return;
+
+      const { error: createError } = await admin.storage.createBucket(INVOICE_DOCUMENTS_BUCKET, {
+        public: false,
+        fileSizeLimit: 15728640,
+        allowedMimeTypes: ['application/pdf'],
+      });
+      if (createError) {
+        const msg = String(createError.message || '').toLowerCase();
+        if (!msg.includes('already exists') && !msg.includes('duplicate')) {
+          console.warn('[invoice-lifecycle] Bucket creation notice:', createError.message);
+        }
+      }
+    } catch (err) {
+      console.warn('[invoice-lifecycle] Bucket ensure fallback notice:', err);
+    }
+  })();
+  return bucketEnsurePromise;
+}
+
 export async function loadInvoiceForLifecycle(invoiceId: string, tenantId: string) {
   const { invoice, error } = await businessInvoiceService.getInvoiceWithDetails(invoiceId, tenantId);
   if (error || !invoice) throw new Error(`Invoice not found: ${error || invoiceId}`);
@@ -36,6 +67,8 @@ export async function generateAndStoreInvoicePdf(
 ): Promise<{ storagePath: string }> {
   const invoice = await loadInvoiceForLifecycle(invoiceId, tenantId);
   const admin = createSupabaseAdminClient();
+
+  await ensureInvoiceDocumentsBucket(admin);
 
   const { data: items, error: itemsError } = await admin
     .from('invoice_line_items')
@@ -57,25 +90,57 @@ export async function generateAndStoreInvoicePdf(
     tenant,
     invoice.client ? { name: invoice.client.name, email: invoice.client.email } : undefined
   );
-  const storagePath = `${tenantId}/${invoiceId}/invoice.pdf`;
+  const storagePath = `tenant/${tenantId}/invoices/${invoiceId}.pdf`;
 
-  const { error: uploadError } = await admin.storage
-    .from('invoice-documents')
+  let { error: uploadError } = await admin.storage
+    .from(INVOICE_DOCUMENTS_BUCKET)
     .upload(storagePath, pdf, { contentType: 'application/pdf', upsert: true });
+
+  if (uploadError && String(uploadError.message || '').toLowerCase().includes('bucket not found')) {
+    bucketEnsurePromise = null;
+    await ensureInvoiceDocumentsBucket(admin);
+    const retry = await admin.storage
+      .from(INVOICE_DOCUMENTS_BUCKET)
+      .upload(storagePath, pdf, { contentType: 'application/pdf', upsert: true });
+    uploadError = retry.error;
+  }
   if (uploadError) throw new Error(`Invoice PDF could not be stored: ${uploadError.message}`);
 
+  const nowIso = new Date().toISOString();
   const { error: updateError } = await admin
     .from('business_invoices')
     .update({
       pdf_storage_path: storagePath,
-      pdf_generated_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      pdf_generated_at: nowIso,
+      updated_at: nowIso,
     })
     .eq('tenant_id', tenantId)
     .eq('id', invoiceId);
+
   if (updateError) {
-    await admin.storage.from('invoice-documents').remove([storagePath]).catch(() => undefined);
-    throw updateError;
+    const isColumnMissing = updateError.code === '42703' || String(updateError.message || '').includes('pdf_storage_path');
+    if (isColumnMissing) {
+      const existingMeta = (invoice.metadata || {}) as Record<string, unknown>;
+      const { error: metaUpdateError } = await admin
+        .from('business_invoices')
+        .update({
+          metadata: {
+            ...existingMeta,
+            pdf_storage_path: storagePath,
+            pdf_generated_at: nowIso,
+          },
+          updated_at: nowIso,
+        })
+        .eq('tenant_id', tenantId)
+        .eq('id', invoiceId);
+      if (metaUpdateError) {
+        await admin.storage.from(INVOICE_DOCUMENTS_BUCKET).remove([storagePath]).catch(() => undefined);
+        throw metaUpdateError;
+      }
+    } else {
+      await admin.storage.from(INVOICE_DOCUMENTS_BUCKET).remove([storagePath]).catch(() => undefined);
+      throw updateError;
+    }
   }
 
   const { data: invoiceRow } = await admin
@@ -91,7 +156,7 @@ export async function generateAndStoreInvoicePdf(
       userId: actorUserId,
       invoice: invoiceRow,
       storagePath,
-      storageBucket: 'invoice-documents',
+      storageBucket: INVOICE_DOCUMENTS_BUCKET,
       sizeBytes: pdf.byteLength,
     }).catch((error) =>
       console.error('[invoice-lifecycle] catalog filing failed', error instanceof Error ? error.message : error)
@@ -109,14 +174,41 @@ export async function sendInvoiceEmailPhase(
     ? input.recipients
     : [invoice.client?.email].filter(Boolean);
   if (!recipients.length) throw new Error(`Invoice ${input.invoiceId} has no recipient email`);
-  if (!invoice.pdf_storage_path) throw new Error('Invoice PDF has not been generated');
 
   const admin = createSupabaseAdminClient();
-  const { data: storedPdf, error: downloadError } = await admin.storage
-    .from('invoice-documents')
-    .download(invoice.pdf_storage_path);
-  if (downloadError || !storedPdf) {
-    throw new Error(`Stored invoice PDF could not be loaded: ${downloadError?.message || 'not found'}`);
+  let storagePath = (invoice.pdf_storage_path || (invoice.metadata as any)?.pdf_storage_path) as string | undefined;
+
+  let storedPdf: any = null;
+  if (storagePath) {
+    const { data, error } = await admin.storage
+      .from(INVOICE_DOCUMENTS_BUCKET)
+      .download(storagePath);
+    if (!error && data) {
+      storedPdf = data;
+    } else {
+      const altPath = storagePath.startsWith('tenant/')
+        ? `${input.tenantId}/${input.invoiceId}/invoice.pdf`
+        : `tenant/${input.tenantId}/invoices/${input.invoiceId}.pdf`;
+      const { data: altData, error: altError } = await admin.storage
+        .from(INVOICE_DOCUMENTS_BUCKET)
+        .download(altPath);
+      if (!altError && altData) {
+        storedPdf = altData;
+        storagePath = altPath;
+      }
+    }
+  }
+
+  if (!storedPdf) {
+    const generated = await generateAndStoreInvoicePdf(input.invoiceId, input.tenantId, input.actorUserId);
+    storagePath = generated.storagePath;
+    const { data: freshPdf, error: dlErr } = await admin.storage
+      .from(INVOICE_DOCUMENTS_BUCKET)
+      .download(storagePath);
+    if (dlErr || !freshPdf) {
+      throw new Error(`Stored invoice PDF could not be loaded: ${dlErr?.message || 'not found'}`);
+    }
+    storedPdf = freshPdf;
   }
 
   const invoiceNumber = invoice.invoice_number || invoice.invoiceNumber;

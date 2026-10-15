@@ -1,5 +1,5 @@
 import { Input as AlphaCloneInput } from '@/components/ui/input';
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { X, Check, PenTool, RotateCcw, Loader2, BookmarkCheck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -41,6 +41,12 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
     const [modalSignatureData, setModalSignatureData] = useState<string | null>(null);
     const [rememberSignature, setRememberSignature] = useState(Boolean(onRememberSignature));
     const [applyingSaved, setApplyingSaved] = useState(false);
+
+    useEffect(() => {
+        if (initialFullName && !fullName) {
+            setFullName(initialFullName);
+        }
+    }, [initialFullName, fullName]);
 
     const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
         setIsDrawing(true);

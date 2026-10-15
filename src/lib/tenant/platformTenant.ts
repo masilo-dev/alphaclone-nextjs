@@ -248,7 +248,7 @@ export function assertTenantStoragePath(params: {
     throw new PlatformTenantError('Invalid storage path', 'NOT_FOUND');
   }
   const expectedPrefix = `tenant/${params.tenantId}/`;
-  if (path.startsWith(expectedPrefix)) return;
+  if (path.startsWith(expectedPrefix) || path.startsWith(`${params.tenantId}/`)) return;
 
   if (
     params.allowLegacyUserPaths &&

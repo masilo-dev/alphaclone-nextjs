@@ -75,7 +75,11 @@ function PublicInvoiceContent() {
     const handleDownloadPDF = async () => {
         if (!invoice) return;
         try {
-            const response = await fetch(`/api/pdf/invoice/${invoice.id}`);
+            const token = invoice.publicToken || publicToken;
+            const qs = new URLSearchParams();
+            if (token) qs.set('token', token);
+            qs.set('download', 'true');
+            const response = await fetch(`/api/invoices/${invoice.id}/pdf?${qs.toString()}`);
             if (!response.ok) throw new Error('Failed to generate PDF');
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);

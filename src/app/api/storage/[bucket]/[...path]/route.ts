@@ -30,7 +30,7 @@ export async function GET(
         } = await supabase.auth.getUser();
 
         // Private buckets require an authenticated tenant member and a tenant path.
-        const privateBuckets = new Set(['uploads', 'documents', 'media', 'private']);
+        const privateBuckets = new Set(['uploads', 'documents', 'media', 'private', 'invoice-documents']);
         if (privateBuckets.has(bucket) || filePath.startsWith('tenant/')) {
             if (!user) {
                 return new NextResponse('Unauthorized', { status: 401 });

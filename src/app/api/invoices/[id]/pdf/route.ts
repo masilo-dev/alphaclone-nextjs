@@ -34,13 +34,30 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
       ({ admin } = await requireTenantAccess(tenantId, req));
     } else if (publicToken) {
       admin = await resolveSupabaseAdminClient();
-      const { data: byMetadata } = await admin
+      let { data: byMetadata } = await admin
         .from('business_invoices')
         .select('*, tenant:tenants(*)')
         .eq('id', id)
         .eq('metadata->>public_token', publicToken)
         .eq('is_public', true)
         .maybeSingle();
+
+      if (!byMetadata) {
+        try {
+          const decoded = Buffer.from(publicToken, 'base64url').toString('utf8');
+          if (decoded === id) {
+            const { data: legacyRow } = await admin
+              .from('business_invoices')
+              .select('*, tenant:tenants(*)')
+              .eq('id', id)
+              .eq('is_public', true)
+              .maybeSingle();
+            byMetadata = legacyRow;
+          }
+        } catch {
+          // ignore invalid base64
+        }
+      }
 
       if (!byMetadata) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
