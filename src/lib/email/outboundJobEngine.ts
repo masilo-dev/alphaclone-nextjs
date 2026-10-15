@@ -1,12 +1,5 @@
-import { createHash, randomUUID } from 'node:crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import type { ResolvedEmailRoute } from '@/lib/email/resolveEmailRoute';
-
-function deliveryKey(input: { tenantId: string; campaignId: string; recipientId: string; campaignVersion: string }): string {
-  return createHash('sha256').update([
-    input.tenantId, input.campaignId, input.recipientId, input.campaignVersion,
-  ].join('|')).digest('hex');
-}
 
 /**
  * Creates canonical message + recipient + durable job rows. The queue is the
@@ -25,11 +18,15 @@ export async function enqueueCampaignRecipientJob(input: {
   scheduledFor?: string | null;
   priority?: number;
 }): Promise<{ jobId: string; messageId: string; created: boolean; idempotencyKey: string }> {
+  "use step";
+  // Node crypto and database writes belong to the step runtime, never the
+  // deterministic workflow bundle. Keep the key format stable across retries.
+  const { createHash, randomUUID } = await import('node:crypto');
   const admin = createSupabaseAdminClient();
-  const idempotencyKey = deliveryKey({
-    tenantId: input.tenantId, campaignId: input.campaignId, recipientId: input.recipient.id,
-    campaignVersion: String(input.campaignVersion || 1),
-  });
+  const idempotencyKey = createHash('sha256').update([
+    input.tenantId, input.campaignId, input.recipient.id,
+    String(input.campaignVersion || 1),
+  ].join('|')).digest('hex');
   const { data: existing, error: existingError } = await admin.from('email_outbound_jobs')
     .select('id, message_id').eq('tenant_id', input.tenantId).eq('idempotency_key', idempotencyKey).maybeSingle();
   if (existingError) throw new Error(`EMAIL_JOB_LOOKUP_FAILED: ${existingError.message}`);
