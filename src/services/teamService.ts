@@ -69,9 +69,8 @@ export const teamService = {
                 error: null
             };
 
-        } catch (err) {
-            console.error('Error fetching team members:', err);
-            return { team: [], error: err instanceof Error ? err.message : 'Unknown error' };
+        } catch (err: any) {
+            return { team: [], error: err?.message || (err instanceof Error ? err.message : 'Unknown error') };
         }
     },
     async updateMemberStatus(memberId: string, status: string): Promise<{ error: string | null }> {

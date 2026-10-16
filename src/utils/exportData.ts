@@ -1,5 +1,19 @@
 import { format } from 'date-fns';
 
+export function sanitizeCsvField(value: unknown): string {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'object') return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
+    let stringValue = String(value);
+    // Neutralize formula triggers to prevent CSV injection (OWASP)
+    if (/^[=+\-@\t\r]/.test(stringValue)) {
+        stringValue = `'${stringValue}`;
+    }
+    if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n') || stringValue.includes('\r')) {
+        return `"${stringValue.replace(/"/g, '""')}"`;
+    }
+    return stringValue;
+}
+
 /**
  * Export data to CSV format
  */
@@ -24,18 +38,7 @@ export function exportToCSV<T extends Record<string, any>>(
     // Create CSV rows
     const rows = data.map(row =>
         cols
-            .map(col => {
-                const value = row[col.key];
-                // Handle different value types
-                if (value === null || value === undefined) return '';
-                if (typeof value === 'object') return JSON.stringify(value);
-                // Escape quotes and wrap in quotes if contains comma
-                const stringValue = String(value);
-                if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-                    return `"${stringValue.replace(/"/g, '""')}"`;
-                }
-                return stringValue;
-            })
+            .map(col => sanitizeCsvField(row[col.key]))
             .join(',')
     );
 
