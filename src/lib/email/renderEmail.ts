@@ -8,6 +8,7 @@ import {
   resolveEmailLogoUrl,
   getLegalUrls,
 } from '@/lib/email/emailConfig';
+import { EMAIL_SYSTEM_FONTS } from '@/lib/email/emailLayout';
 
 export type EmailTemplateType =
   | 'transactional'
@@ -100,19 +101,20 @@ function defaultReason(type: EmailTemplateType, tenantName?: string): string {
   }
 }
 
-function renderEmailHeader(logoUrl: string): string {
+function renderEmailHeader(logoUrl: string, tenantName?: string): string {
   const w = EMAIL_DESIGN.logoDisplayWidth;
+  const brandName = tenantName && tenantName.trim().length > 0 ? tenantName.trim() : 'AlphaClone Systems';
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-<tr><td align="center" style="padding:28px 32px 20px 32px;background:${EMAIL_DESIGN.cardBackground};border-bottom:1px solid ${EMAIL_DESIGN.border};">
+<tr><td class="email-header-cell" align="center" style="padding:24px 32px 16px 32px;background:${EMAIL_DESIGN.cardBackground};border-bottom:1px solid ${EMAIL_DESIGN.border};">
   <a href="${escapeHtml(EMAIL_BRAND_HOME_URL)}" target="_blank" style="text-decoration:none;display:inline-block;">
     <img
       src="${escapeHtml(logoUrl)}"
       width="${w}"
-      alt="AlphaClone Systems"
+      alt="${escapeHtml(brandName)}"
       border="0"
-      style="display:block;width:${w}px;max-width:${w}px;height:auto;margin:0 auto 10px auto;border:0;outline:none;text-decoration:none;"
+      style="display:block;width:${w}px;max-width:${w}px;height:auto;max-height:36px;margin:0 auto 8px auto;border:0;outline:none;text-decoration:none;"
     />
-    <span style="display:block;font-family:${EMAIL_DESIGN.fontStack};font-size:15px;font-weight:700;letter-spacing:0.04em;color:${EMAIL_DESIGN.textPrimary};text-align:center;">AlphaClone Systems</span>
+    <span style="display:block;font-family:${EMAIL_SYSTEM_FONTS};font-size:16px;font-weight:700;letter-spacing:0.02em;color:${EMAIL_DESIGN.textPrimary};text-align:center;">${escapeHtml(brandName)}</span>
   </a>
 </td></tr></table>`;
 }
@@ -122,6 +124,7 @@ function renderEmailFooter(input: {
   reasonText: string;
   unsubscribeUrl?: string;
   preferencesUrl?: string;
+  tenantName?: string;
 }): { html: string; text: string } {
   const legal = getLegalUrls();
   const prefUrl = input.preferencesUrl || legal.preferences;
@@ -153,13 +156,16 @@ function renderEmailFooter(input: {
 
   const linkRow = links.join(' &nbsp;&bull;&nbsp; ');
   const address = formatLegalAddress();
+  const companyDisplayName = input.tenantName && input.tenantName.trim().length > 0 && input.tenantName !== 'AlphaClone Systems'
+    ? input.tenantName
+    : COMPANY_LEGAL.legalName;
 
   const html = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-<tr><td align="center" style="padding:28px 24px 32px 24px;background:${EMAIL_DESIGN.footerBackground};border-top:1px solid ${EMAIL_DESIGN.border};font-family:${EMAIL_DESIGN.fontStack};font-size:12px;line-height:1.7;color:${EMAIL_DESIGN.textMuted};text-align:center;">
-  <p style="margin:0 0 12px;font-size:12px;line-height:1.6;color:${EMAIL_DESIGN.textSecondary};text-align:center;">${escapeHtml(input.reasonText)}</p>
-  <p style="margin:0 0 14px;text-align:center;">${linkRow}</p>
-  <p style="margin:0 0 6px;font-weight:600;color:${EMAIL_DESIGN.textPrimary};text-align:center;">${escapeHtml(COMPANY_LEGAL.legalName)}</p>
-  <p style="margin:0 0 12px;text-align:center;">${escapeHtml(address)}</p>
+<tr><td class="email-footer-cell" align="center" style="padding:24px 24px 28px 24px;background:${EMAIL_DESIGN.footerBackground};border-top:1px solid ${EMAIL_DESIGN.border};font-family:${EMAIL_SYSTEM_FONTS},${EMAIL_DESIGN.fontStack};font-size:12px;line-height:1.7;color:${EMAIL_DESIGN.textMuted};text-align:center;">
+  <p style="margin:0 0 10px;font-size:12px;line-height:1.6;color:${EMAIL_DESIGN.textSecondary};text-align:center;">${escapeHtml(input.reasonText)}</p>
+  <p style="margin:0 0 12px;text-align:center;">${linkRow}</p>
+  <p style="margin:0 0 4px;font-weight:600;color:${EMAIL_DESIGN.textPrimary};text-align:center;">${escapeHtml(companyDisplayName)}</p>
+  <p style="margin:0 0 10px;text-align:center;">${escapeHtml(address)}</p>
   <p style="margin:0;font-size:11px;color:${EMAIL_DESIGN.textMuted};text-align:center;">If you received this email in error, please disregard and delete it.</p>
 </td></tr></table>`;
 
@@ -168,7 +174,7 @@ function renderEmailFooter(input: {
     '',
     ...links.map((l) => l.replace(/<[^>]+>/g, '')),
     '',
-    COMPANY_LEGAL.legalName,
+    companyDisplayName,
     address,
   ].join('\n');
 
@@ -178,7 +184,7 @@ function renderEmailFooter(input: {
 function renderInfoPanel(html: string): string {
   if (!html.trim()) return '';
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 0 0;">
-<tr><td style="padding:16px 18px;background:#F8FAFC;border:1px solid ${EMAIL_DESIGN.border};border-radius:8px;font-family:${EMAIL_DESIGN.fontStack};font-size:14px;line-height:1.6;color:${EMAIL_DESIGN.textSecondary};">
+<tr><td style="padding:16px 18px;background:#F8FAFC;border:1px solid ${EMAIL_DESIGN.border};border-radius:8px;font-family:${EMAIL_SYSTEM_FONTS},${EMAIL_DESIGN.fontStack};font-size:14px;line-height:1.6;color:${EMAIL_DESIGN.textSecondary};">
 ${html}
 </td></tr></table>`;
 }
@@ -226,6 +232,7 @@ export function renderEmail(input: RenderEmailInput): { html: string; text: stri
     reasonText,
     unsubscribeUrl: input.unsubscribeUrl,
     preferencesUrl: input.preferencesUrl,
+    tenantName: input.tenantName,
   });
 
   const html = `<!doctype html>
@@ -235,6 +242,8 @@ export function renderEmail(input: RenderEmailInput): { html: string; text: stri
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
 <title>${escapeHtml(input.subject)}</title>
 <!--[if mso]>
 <noscript>
@@ -252,20 +261,75 @@ export function renderEmail(input: RenderEmailInput): { html: string; text: stri
   }
 </style>
 <![endif]-->
+<style type="text/css">
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+  .email-container {
+    width: 100% !important;
+    max-width: ${EMAIL_DESIGN.maxWidth}px !important;
+  }
+  @media only screen and (max-width: 620px) {
+    .email-container {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    .email-outer-cell {
+      padding: 12px 8px !important;
+    }
+    .email-content-cell, .ac-email-body td {
+      padding: 20px 16px !important;
+    }
+    .email-header-cell {
+      padding: 16px 16px 12px 16px !important;
+    }
+    .email-footer-cell {
+      padding: 16px 16px 20px 16px !important;
+    }
+    .email-btn {
+      display: block !important;
+      width: 100% !important;
+      text-align: center !important;
+      box-sizing: border-box !important;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    .email-body-bg {
+      background-color: #0b0f17 !important;
+    }
+    .email-card-bg {
+      background-color: #111827 !important;
+      border-color: #1f2937 !important;
+    }
+    .email-text-primary {
+      color: #f1f5f9 !important;
+    }
+    .email-text-secondary {
+      color: #cbd5e1 !important;
+    }
+    .email-text-muted {
+      color: #94a3b8 !important;
+    }
+  }
+</style>
 </head>
-<body style="margin:0;padding:0;background:${EMAIL_DESIGN.pageBackground};-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+<body class="email-body-bg" style="margin:0;padding:0;background:${EMAIL_DESIGN.pageBackground};-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:${EMAIL_DESIGN.pageBackground};">${escapeHtml(preheader)}</div>
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;background:${EMAIL_DESIGN.pageBackground};">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="email-body-bg" style="width:100%;border-collapse:collapse;background:${EMAIL_DESIGN.pageBackground};">
 <tr>
-<td align="center" style="padding:24px 12px;">
+<td class="email-outer-cell" align="center" style="padding:24px 12px;">
 <!--[if mso]>
 <table role="presentation" width="${EMAIL_DESIGN.maxWidth}" cellspacing="0" cellpadding="0" border="0" align="center"><tr><td>
 <![endif]-->
-<table role="presentation" width="${EMAIL_DESIGN.maxWidth}" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:${EMAIL_DESIGN.maxWidth}px;margin:0 auto;background:${EMAIL_DESIGN.cardBackground};border:1px solid ${EMAIL_DESIGN.border};border-radius:8px;border-collapse:separate;">
+<table role="presentation" width="${EMAIL_DESIGN.maxWidth}" class="email-container email-card-bg" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:${EMAIL_DESIGN.maxWidth}px;margin:0 auto;background:${EMAIL_DESIGN.cardBackground};border:1px solid ${EMAIL_DESIGN.border};border-radius:8px;border-collapse:separate;">
 <tr><td>
-${renderEmailHeader(logoUrl)}
+${renderEmailHeader(logoUrl, input.tenantName)}
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="ac-email-body" style="border-collapse:collapse;">
-<tr><td style="padding:28px 32px 8px 32px;font-family:${EMAIL_DESIGN.fontStack};font-size:15px;line-height:1.65;color:${EMAIL_DESIGN.textPrimary};">
+<tr><td class="email-content-cell email-text-primary" style="padding:28px 32px 12px 32px;font-family:${EMAIL_SYSTEM_FONTS},${EMAIL_DESIGN.fontStack};font-size:16px;line-height:1.6;color:${EMAIL_DESIGN.textPrimary};word-break:break-word;overflow-wrap:break-word;">
 ${innerContentHtml}
 </td></tr>
 </table>

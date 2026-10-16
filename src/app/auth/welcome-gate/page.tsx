@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Lock, CheckCircle, AlertCircle, Loader2, ArrowRight } from 'lucide-react';
+import { Shield, Lock, CheckCircle, AlertCircle, Loader2, ArrowRight, RotateCcw } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import Image from 'next/image';
 import { LOGO_URL } from '@/constants';
@@ -17,46 +17,62 @@ function WelcomeGateContent() {
     const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
     const [error, setError] = useState<string | null>(null);
     const [progress, setProgress] = useState(0);
+    const [retryCount, setRetryCount] = useState(0);
 
-    useEffect(() => {
+    const verify = useCallback(async () => {
         if (!token) {
             setStatus('error');
             setError('Missing security token. Access denied.');
             return;
         }
 
-        const verify = async () => {
-            const supabase = createSupabaseBrowserClient();
-            
-            const interval = setInterval(() => {
-                setProgress(prev => (prev < 90 ? prev + 15 : prev));
-            }, 300);
+        setStatus('verifying');
+        setError(null);
+        setProgress(10);
 
-            try {
-                const response = await fetch(`/api/auth/verify-token?token=${token}`);
-                const result = await response.json();
+        const interval = setInterval(() => {
+            setProgress(prev => (prev < 90 ? prev + 15 : prev));
+        }, 300);
 
-                clearInterval(interval);
-                setProgress(100);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+            controller.abort();
+        }, 12000); // Bounded 12-second security timeout
 
-                if (!response.ok || result.error) {
-                    setStatus('error');
-                    setError(result.error || 'Verification failed');
-                } else {
-                    setStatus('success');
-                    setTimeout(() => {
-                        router.push('/dashboard/business');
-                    }, 2000);
-                }
-            } catch (err) {
-                clearInterval(interval);
+        try {
+            const response = await fetch(`/api/auth/verify-token?token=${token}`, {
+                signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+            const result = await response.json().catch(() => ({}));
+
+            clearInterval(interval);
+            setProgress(100);
+
+            if (!response.ok || result.error) {
                 setStatus('error');
-                setError('A secure connection could not be established.');
+                setError(result.error || 'Security verification failed. Please try again.');
+            } else {
+                setStatus('success');
+                setTimeout(() => {
+                    router.push('/dashboard/business');
+                }, 1500);
             }
-        };
-
-        verify();
+        } catch (err: any) {
+            clearTimeout(timeoutId);
+            clearInterval(interval);
+            setStatus('error');
+            if (err?.name === 'AbortError') {
+                setError('Verification timed out after 12 seconds. The security server is responding slowly.');
+            } else {
+                setError('A secure connection could not be established. Please retry.');
+            }
+        }
     }, [token, router]);
+
+    useEffect(() => {
+        verify();
+    }, [verify, retryCount]);
 
     return (
         <div className="min-h-screen bg-[var(--brand-violet-950)] flex flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -136,14 +152,40 @@ function WelcomeGateContent() {
                                     <AlertCircle className="w-10 h-10" />
                                 </div>
                                 <h2 className="text-xl font-bold text-white mb-2">Access Denied</h2>
-                                <p className="text-rose-400 text-center type-card-description mb-8">{error || 'The security token has expired or is invalid.'}</p>
+                                <p className="text-rose-400 text-center type-card-description mb-6">{error || 'The security token has expired or is invalid.'}</p>
                                 
-                                <Button 
-                                    onClick={() => router.push('/auth/login')}
-                                    className="w-full bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white py-4 rounded-2xl flex items-center justify-center gap-2"
-                                >
-                                    Return to Login <ArrowRight className="w-4 h-4" />
-                                </Button>
+                                <div className="w-full space-y-3">
+                                    <Button 
+                                        onClick={() => setRetryCount((c) => c + 1)}
+                                        className="w-full bg-teal-600 hover:bg-teal-500 text-white py-3.5 rounded-2xl flex items-center justify-center gap-2 font-semibold shadow-lg shadow-teal-500/20"
+                                    >
+                                        <RotateCcw className="w-4 h-4" /> Retry Verification
+                                    </Button>
+
+                                    <Button 
+                                        onClick={() => router.push('/auth/login')}
+                                        className="w-full bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white py-3.5 rounded-2xl flex items-center justify-center gap-2"
+                                    >
+                                        Return to Login <ArrowRight className="w-4 h-4" />
+                                    </Button>
+                                </div>
+
+                                <div className="mt-4 text-center text-xs text-slate-400 space-y-1">
+                                    <p>Having trouble verifying your session?</p>
+                                    <p>
+                                        <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 underline hover:text-teal-300">
+                                            Contact Support
+                                        </a>
+                                        {' '}&bull;{' '}
+                                        <button
+                                            type="button"
+                                            onClick={() => router.push('/auth/login')}
+                                            className="text-teal-400 underline hover:text-teal-300"
+                                        >
+                                            Request Magic Link
+                                        </button>
+                                    </p>
+                                </div>
                             </motion.div>
                         )}
                     </AnimatePresence>

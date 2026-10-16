@@ -17,8 +17,13 @@ import {
   ListTodo,
   Flag,
   GanttChartSquare,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  RotateCcw,
 } from 'lucide-react';
 import { User, Project as BusinessProject, ProjectStage } from '@/types';
+import { STAGE_LIFECYCLE_STEP, toCanonicalProjectStage, CanonicalProjectStage } from '@/lib/projects/projectEnums';
 import { projectService } from '@/services/projectService';
 import { milestoneService } from '@/services/milestoneService';
 import { businessClientService } from '@/services/businessClientService';
@@ -56,21 +61,12 @@ export interface ProjectWorkspaceDrawerProps {
   onClose: () => void;
   onEdit: (project: BusinessProject) => void;
   onProgressChange?: (projectId: string, progress: number) => void;
-  onStageChange?: (projectId: string, stage: ProjectStage) => void;
+  onStageChange?: (projectId: string, stage: ProjectStage) => Promise<{ success: boolean; error?: string; transition?: any } | void> | void;
 }
 
 function getNormalizedStage(stage: string | undefined): ProjectStage {
   if (!stage) return 'Initiation';
-  const legacyMap: Record<string, ProjectStage> = {
-    Discovery: 'Initiation',
-    Design: 'Planning',
-    Development: 'Execution',
-    Testing: 'Review',
-    Deployment: 'Closure',
-    Completed: 'Closure',
-    Maintenance: 'Closure',
-  };
-  return (legacyMap[stage] || stage) as ProjectStage;
+  return toCanonicalProjectStage(stage) as ProjectStage;
 }
 
 export function ProjectWorkspaceDrawer({
@@ -124,6 +120,27 @@ export function ProjectWorkspaceDrawer({
   const [tasksRefreshKey, setTasksRefreshKey] = useState(0);
 
   const normalizedStage = getNormalizedStage(project.currentStage);
+  const canonicalStage = toCanonicalProjectStage(project.currentStage);
+  const lifecycleStepInfo = STAGE_LIFECYCLE_STEP[canonicalStage];
+
+  type StageSaveStatus = 'saved' | 'saving' | 'not_saved' | 'blocked';
+  const [stageSaveStatus, setStageSaveStatus] = useState<StageSaveStatus>('saved');
+  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
+  const [blockedInfo, setBlockedInfo] = useState<{
+    targetStage: ProjectStage;
+    reason?: string;
+    missingRequirements?: Array<{ field: string; label: string; tab?: WorkspaceTab }>;
+  } | null>(null);
+  const [unsavedStageAttempt, setUnsavedStageAttempt] = useState<ProjectStage | null>(null);
+  const [selectedStage, setSelectedStage] = useState<ProjectStage>(normalizedStage);
+
+  useEffect(() => {
+    setSelectedStage(normalizedStage);
+    setUnsavedStageAttempt(null);
+    setBlockedInfo(null);
+    setStageSaveStatus('saved');
+  }, [normalizedStage]);
+
   const teamList = project.team && project.team.length > 0 ? project.team : [];
   const availableStages = useMemo(
     () => projectStageService.getAvailableStages(normalizedStage, project),
@@ -293,23 +310,78 @@ export function ProjectWorkspaceDrawer({
     }
   };
 
-  const handleStageSelect = async (newStage: ProjectStage) => {
-    if (newStage === normalizedStage) return;
-    if (onStageChange) {
-      onStageChange(project.id, newStage);
+  const handleStageSelect = async (newStage: ProjectStage, isRetry: boolean = false) => {
+    if (newStage === normalizedStage && !isRetry) return;
+
+    // Validate transition first
+    const transition = projectStageService.validateTransition(normalizedStage, newStage, project);
+    if (!transition.allowed) {
+      setStageSaveStatus('blocked');
+      setBlockedInfo({
+        targetStage: newStage,
+        reason: transition.reason,
+        missingRequirements: (transition.missingRequirements || []).map((r) => ({
+          field: r.field,
+          label: r.label,
+          tab: (r.tab as WorkspaceTab) || 'overview',
+        })),
+      });
+      setSelectedStage(normalizedStage);
+      toast.error(transition.reason || 'Stage transition blocked');
       return;
     }
-    let result = await projectStageService.updateProjectStage(project.id, newStage, currentUser.id);
-    if (!result.success && result.transition?.requiresConfirmation) {
-      const ok = window.confirm(`Move this project back to ${newStage}?`);
-      if (!ok) return;
-      result = await projectStageService.updateProjectStage(project.id, newStage, currentUser.id, undefined, true);
+
+    // Require explicit confirmation for consequential actions
+    if (transition.requiresConfirmation) {
+      const confirmMsg = newStage === 'Closure'
+        ? 'Are you ready to close this project? This completes the project lifecycle and notifies stakeholders.'
+        : `Move this project to ${newStage}?`;
+      if (!window.confirm(confirmMsg)) {
+        setSelectedStage(normalizedStage);
+        return;
+      }
     }
-    if (!result.success) {
-      toast.error(result.error || 'Stage change blocked');
-      return;
+
+    setStageSaveStatus('saving');
+    setBlockedInfo(null);
+    setUnsavedStageAttempt(newStage);
+
+    try {
+      let result: any;
+      if (onStageChange) {
+        result = await onStageChange(project.id, newStage);
+      } else {
+        result = await projectStageService.updateProjectStage(
+          project.id,
+          newStage,
+          currentUser.id,
+          undefined,
+          true,
+          (project as any).updated_at
+        );
+      }
+
+      if (result && result.success === false) {
+        setStageSaveStatus('not_saved');
+        setUnsavedStageAttempt(newStage);
+        setSelectedStage(normalizedStage);
+        toast.error(result.error || 'Failed to save stage change');
+        return;
+      }
+
+      // Confirmed success
+      setSelectedStage(newStage);
+      setStageSaveStatus('saved');
+      setUnsavedStageAttempt(null);
+      setBlockedInfo(null);
+      setLastSavedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      await refreshProgress();
+    } catch (err: any) {
+      setStageSaveStatus('not_saved');
+      setUnsavedStageAttempt(newStage);
+      setSelectedStage(normalizedStage);
+      toast.error(err?.message || 'Network error saving stage');
     }
-    toast.success(`Stage updated to ${newStage}`);
   };
 
   const radius = 36;
@@ -578,24 +650,101 @@ export function ProjectWorkspaceDrawer({
                 )}
               </div>
 
-              <div className="space-y-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
-                <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Lifecycle stage</span>
-                <p className="type-card-description text-[var(--ws-text-primary)] font-semibold">{project.currentStage || normalizedStage}</p>
+              <div className="space-y-3 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Lifecycle stage</span>
+                    <span className="text-xs px-2 py-0.5 rounded font-medium bg-[var(--brand-blue-500)]/15 text-[var(--brand-blue-300)] border border-[var(--brand-blue-500)]/30">
+                      {lifecycleStepInfo?.label || 'Step 1/5'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    {stageSaveStatus === 'saving' && (
+                      <span className="inline-flex items-center gap-1 text-[var(--brand-blue-400)]">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...
+                      </span>
+                    )}
+                    {stageSaveStatus === 'saved' && (
+                      <span className="inline-flex items-center gap-1 text-emerald-400">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Saved {lastSavedTime ? `at ${lastSavedTime}` : ''}
+                      </span>
+                    )}
+                    {stageSaveStatus === 'not_saved' && (
+                      <span className="inline-flex items-center gap-1 text-amber-400">
+                        <AlertCircle className="w-3.5 h-3.5" /> Not saved
+                        {unsavedStageAttempt && (
+                          <button
+                            type="button"
+                            onClick={() => void handleStageSelect(unsavedStageAttempt, true)}
+                            className="inline-flex items-center gap-1 ml-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 underline"
+                          >
+                            <RotateCcw className="w-3 h-3" /> Retry {unsavedStageAttempt}
+                          </button>
+                        )}
+                      </span>
+                    )}
+                    {stageSaveStatus === 'blocked' && (
+                      <span className="inline-flex items-center gap-1 text-rose-400">
+                        <AlertCircle className="w-3.5 h-3.5" /> Blocked
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-[var(--ws-text-muted)]">
+                  <span>Current: <strong className="text-[var(--ws-text-primary)]">{selectedStage}</strong></span>
+                  <span>Operational status: <strong className="text-[var(--ws-text-primary)]">{project.status || 'Active'}</strong></span>
+                </div>
+
                 <AlphaCloneSelect
-                  value={normalizedStage}
+                  value={selectedStage}
                   onChange={(e) => void handleStageSelect(e.target.value as ProjectStage)}
                   className="w-full mt-2 px-3 py-2"
+                  disabled={stageSaveStatus === 'saving'}
                 >
-                  {PROJECT_STAGES_ORDER.map((stage) => (
-                    <option key={stage} value={stage} disabled={!availableStages.includes(stage) && stage !== normalizedStage}>
-                      {stage}
-                      {!availableStages.includes(stage) && stage !== normalizedStage ? ' (blocked)' : ''}
-                    </option>
-                  ))}
-                  <option value="On Hold">On Hold</option>
+                  {PROJECT_STAGES_ORDER.map((stage) => {
+                    const isAvail = availableStages.includes(stage) || stage === normalizedStage;
+                    const stepNumber = STAGE_LIFECYCLE_STEP[stage as CanonicalProjectStage]?.step;
+                    return (
+                      <option key={stage} value={stage} disabled={!isAvail}>
+                        {stepNumber ? `Step ${stepNumber}/5: ` : ''}{stage}{!isAvail ? ' (blocked)' : ''}
+                      </option>
+                    );
+                  })}
+                  <option value="On Hold">On Hold (requires hold reason)</option>
                 </AlphaCloneSelect>
-                <p className="type-card-description text-[var(--ws-text-muted)] mt-2">
-                  Stage changes are validated — missing requirements block forward moves.
+
+                {blockedInfo && (
+                  <div className="p-3 rounded-lg border border-rose-500/30 bg-rose-500/10 text-xs space-y-1.5">
+                    <p className="font-semibold text-rose-300">
+                      Cannot move to {blockedInfo.targetStage}:
+                    </p>
+                    <p className="text-rose-200/80">{blockedInfo.reason || 'Missing required checklist requirements.'}</p>
+                    {blockedInfo.missingRequirements && blockedInfo.missingRequirements.length > 0 && (
+                      <div className="pt-1 space-y-1">
+                        <p className="font-medium text-rose-300">Required fields to resolve:</p>
+                        <ul className="list-disc pl-4 space-y-0.5">
+                          {blockedInfo.missingRequirements.map((req) => (
+                            <li key={req.field}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (req.tab) setTab(req.tab);
+                                }}
+                                className="text-[var(--brand-blue-300)] underline hover:text-[var(--brand-blue-200)]"
+                              >
+                                {req.label} (go to {req.tab || 'overview'} tab)
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
+                  Stage transitions are server-validated. Consequential steps (like Closure) prompt for confirmation.
                 </p>
               </div>
 

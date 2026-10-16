@@ -127,16 +127,16 @@ export function insertBeforeEmailFooter(html: string, blockHtml: string): string
   const isHtml = /<[a-z][\s\S]*>/i.test(body);
 
   if (isHtml && isFullEmailDocument(body)) {
-    const footerRowMatch = body.match(/<tr>\s*<td[^>]*>\s*<table[^>]+role=["']presentation["']/i);
+    const footerRowMatch = body.match(/<tr>\s*<td[^>]*(?:class="[^"]*email-footer-cell"|>\s*<table[^>]+role=["']presentation["'])/i);
     if (footerRowMatch?.index != null) {
       const insertAt = footerRowMatch.index;
-      const attachmentRow = `<tr><td style="padding:16px 24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#334155;">${block}</td></tr>`;
+      const attachmentRow = `<tr><td class="email-content-cell" style="padding:16px 32px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#334155;">${block}</td></tr>`;
       return `${body.slice(0, insertAt)}${attachmentRow}${body.slice(insertAt)}`;
     }
   }
 
   if (isHtml && hasEmailComplianceFooter(body)) {
-    const footerDivMatch = body.match(/<div style="[^"]*border-top:1px solid #e2e8f0/i);
+    const footerDivMatch = body.match(/<div style="[^"]*border-top:\s*1px\s+solid\s+#e2e8f0/i);
     if (footerDivMatch?.index != null) {
       return `${body.slice(0, footerDivMatch.index)}<div style="margin:16px 0;">${block}</div>${body.slice(footerDivMatch.index)}`;
     }

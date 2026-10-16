@@ -3,13 +3,22 @@ import { auditLoggingService } from './auditLoggingService';
 import { tenantService } from './tenancy/TenantService';
 import { projectService } from './projectService';
 
+export interface StageRequirement {
+    field: string;
+    label: string;
+    tab?: 'overview' | 'tasks' | 'milestones' | 'timeline' | 'team';
+    reason?: string;
+}
+
 export interface StageTransition {
     from: string;
     to: string;
     allowed: boolean;
     requiresConfirmation: boolean;
     requiredChecklist?: string[];
+    missingRequirements?: StageRequirement[];
     reason?: string;
+    targetLifecycleStep?: { step: number; total: 5; label: string };
 }
 
 export interface ProjectStage {
@@ -20,41 +29,52 @@ export interface ProjectStage {
     previousStages: string[];
 }
 
+const FIELD_METADATA: Record<string, { label: string; tab: 'overview' | 'tasks' | 'milestones' | 'timeline' | 'team' }> = {
+    name: { label: 'Project Name', tab: 'overview' },
+    description: { label: 'Project Description', tab: 'overview' },
+    clientId: { label: 'Client / Account', tab: 'overview' },
+    client_id: { label: 'Client / Account', tab: 'overview' },
+    budget: { label: 'Budget', tab: 'overview' },
+    startDate: { label: 'Start Date', tab: 'overview' },
+    dueDate: { label: 'Due Date', tab: 'overview' },
+    hold_reason: { label: 'Hold Reason', tab: 'overview' },
+};
+
 const PROJECT_STAGES: Record<string, ProjectStage> = {
     'Initiation': {
         name: 'Initiation',
         order: 1,
         requiredFields: ['name', 'description'],
-        nextStages: ['Planning', 'On Hold', 'Closure'],
+        nextStages: ['Planning', 'Execution', 'Review', 'Closure', 'On Hold'],
         previousStages: [],
     },
     'Planning': {
         name: 'Planning',
         order: 2,
         requiredFields: ['name', 'description'],
-        nextStages: ['Execution', 'On Hold', 'Closure'],
+        nextStages: ['Execution', 'Review', 'Closure', 'On Hold'],
         previousStages: ['Initiation'],
     },
     'Execution': {
         name: 'Execution',
         order: 3,
         requiredFields: ['name', 'description'],
-        nextStages: ['Review', 'Planning', 'On Hold', 'Closure'],
-        previousStages: ['Planning'],
+        nextStages: ['Review', 'Closure', 'On Hold'],
+        previousStages: ['Planning', 'Initiation'],
     },
     'Review': {
         name: 'Review',
         order: 4,
         requiredFields: ['name', 'description'],
-        nextStages: ['Closure', 'Execution', 'On Hold'],
-        previousStages: ['Execution'],
+        nextStages: ['Closure', 'On Hold'],
+        previousStages: ['Execution', 'Planning', 'Initiation'],
     },
     'Closure': {
         name: 'Closure',
         order: 5,
         requiredFields: ['name'],
-        nextStages: [],
-        previousStages: ['Review'],
+        nextStages: ['Initiation', 'Planning', 'Execution', 'Review'],
+        previousStages: ['Review', 'Execution', 'Planning', 'Initiation'],
     },
     'On Hold': {
         name: 'On Hold',
@@ -74,18 +94,20 @@ class ProjectStageService {
         newStage: string,
         project: any
     ): StageTransition {
-        const current = PROJECT_STAGES[currentStage];
+        const current = PROJECT_STAGES[currentStage] || PROJECT_STAGES['Initiation'];
         const target = PROJECT_STAGES[newStage];
 
-        if (!current || !target) {
+        if (!target) {
             return {
                 from: currentStage,
                 to: newStage,
                 allowed: false,
                 requiresConfirmation: false,
-                reason: 'Invalid stage name',
+                reason: `Invalid stage: ${newStage}`,
             };
         }
+
+        const targetStep = target.order > 0 ? { step: target.order, total: 5 as const, label: `Step ${target.order}/5` } : undefined;
 
         // Same stage - no change
         if (currentStage === newStage) {
@@ -94,38 +116,21 @@ class ProjectStageService {
                 to: newStage,
                 allowed: true,
                 requiresConfirmation: false,
+                targetLifecycleStep: targetStep,
             };
         }
 
-        // Check if transition is in allowed next stages
-        const isForward = current.nextStages.includes(newStage);
-        const isBackward = target.nextStages.includes(currentStage);
-
-        if (!isForward && !isBackward) {
-            return {
-                from: currentStage,
-                to: newStage,
-                allowed: false,
-                requiresConfirmation: false,
-                reason: `Cannot move from ${currentStage} to ${newStage}. Allowed stages: ${current.nextStages.join(', ')}`,
-            };
-        }
-
-        // Backward transitions require confirmation
-        if (isBackward) {
-            return {
-                from: currentStage,
-                to: newStage,
-                allowed: true,
-                requiresConfirmation: true,
-                reason: 'Moving backwards requires confirmation',
-            };
-        }
-
-        // Check required fields for forward transitions
+        // Check required fields for target transition
         const missingFields = target.requiredFields.filter(
-            (field) => !project[field] || project[field] === ''
+            (field) => !project[field] || String(project[field]).trim() === ''
         );
+
+        const missingRequirements: StageRequirement[] = missingFields.map((field) => ({
+            field,
+            label: FIELD_METADATA[field]?.label || field,
+            tab: FIELD_METADATA[field]?.tab || 'overview',
+            reason: `Required to enter ${newStage}`,
+        }));
 
         if (missingFields.length > 0) {
             return {
@@ -133,8 +138,35 @@ class ProjectStageService {
                 to: newStage,
                 allowed: false,
                 requiresConfirmation: false,
-                reason: `Missing required fields: ${missingFields.join(', ')}`,
+                reason: `Missing required requirements: ${missingRequirements.map((r) => r.label).join(', ')}`,
                 requiredChecklist: missingFields,
+                missingRequirements,
+                targetLifecycleStep: targetStep,
+            };
+        }
+
+        // Closure has consequential effects (client communication, project wrap-up) -> requires confirmation
+        if (newStage === 'Closure') {
+            return {
+                from: currentStage,
+                to: newStage,
+                allowed: true,
+                requiresConfirmation: true,
+                reason: 'Closing this project will notify stakeholders and complete the project lifecycle.',
+                targetLifecycleStep: targetStep,
+            };
+        }
+
+        // Backward transitions require confirmation
+        const isBackward = current.order > 0 && target.order > 0 && target.order < current.order;
+        if (isBackward) {
+            return {
+                from: currentStage,
+                to: newStage,
+                allowed: true,
+                requiresConfirmation: true,
+                reason: `Moving backwards from ${currentStage} (Step ${current.order}/5) to ${newStage} (Step ${target.order}/5) requires confirmation.`,
+                targetLifecycleStep: targetStep,
             };
         }
 
@@ -143,6 +175,7 @@ class ProjectStageService {
             to: newStage,
             allowed: true,
             requiresConfirmation: false,
+            targetLifecycleStep: targetStep,
         };
     }
 
@@ -154,8 +187,16 @@ class ProjectStageService {
         newStage: string,
         userId: string,
         reason?: string,
-        forceUpdate: boolean = false
-    ): Promise<{ success: boolean; error?: string; transition?: StageTransition }> {
+        forceUpdate: boolean = false,
+        expectedUpdatedAt?: string
+    ): Promise<{
+        success: boolean;
+        error?: string;
+        transition?: StageTransition;
+        recalculatedProgress?: number;
+        persistedStage?: string;
+        lifecycleStep?: { step: number; total: 5; label: string };
+    }> {
         try {
             const tenantId = tenantService.getCurrentTenantId();
             if (!tenantId) return { success: false, error: 'Select a workspace first' };
@@ -169,6 +210,15 @@ class ProjectStageService {
 
             if (fetchError || !project) {
                 return { success: false, error: 'Project not found' };
+            }
+
+            // Concurrency conflict detection: if expectedUpdatedAt was supplied, check for collision
+            if (expectedUpdatedAt && project.updated_at && project.updated_at !== expectedUpdatedAt) {
+                return {
+                    success: false,
+                    error: 'This project was updated concurrently by another session. Please reload to review the latest state.',
+                    transition: this.validateTransition(project.current_stage || 'Initiation', newStage, project),
+                };
             }
 
             const currentStage = project.current_stage || 'Initiation';
@@ -188,13 +238,25 @@ class ProjectStageService {
                 };
             }
 
-            // Closure is "mark as finished" — persist Completed/100% so the
-            // list stops saying the project is still open.
+            // Recalculate progress according to its actual definition (milestones & tasks)
+            let finalProgress = project.progress || 0;
+            if (newStage === 'Closure') {
+                const { computeProjectProgressPercent } = await import('../lib/projects/projectEnums');
+                const { data: dbTasks } = await supabase.from('tasks').select('status').eq('project_id', projectId);
+                const { data: dbMilestones } = await supabase.from('milestones').select('status').eq('project_id', projectId);
+                finalProgress = computeProjectProgressPercent({
+                    currentStage: newStage,
+                    status: 'Completed',
+                    tasks: dbTasks || [],
+                    milestones: dbMilestones || [],
+                });
+            }
+
             const { error: updateError } = await projectService.updateProject(projectId, {
                 currentStage: newStage as any,
-                ...(newStage === 'Closure' ? { status: 'Completed' as const, progress: 100 } : {}),
+                ...(newStage === 'Closure' ? { status: 'Completed' as const, progress: finalProgress } : {}),
             });
-            if (updateError) return { success: false, error: updateError };
+            if (updateError) return { success: false, error: updateError, transition };
 
             // Log to audit trail
             await auditLoggingService.logAction(
@@ -216,7 +278,13 @@ class ProjectStageService {
             // Internal owner notification (in-app + review email)
             await this.notifyInternalOwnerOfStageChange(project, currentStage, newStage);
 
-            return { success: true, transition };
+            return {
+                success: true,
+                transition,
+                recalculatedProgress: finalProgress,
+                persistedStage: newStage,
+                lifecycleStep: transition.targetLifecycleStep,
+            };
         } catch (error) {
             console.error('Error updating project stage:', error);
             return { success: false, error: String(error) };

@@ -44,6 +44,27 @@ const STATUS_ALIASES: Record<string, (typeof PROJECT_STATUSES)[number]> = {
   done: "done",
 };
 
+export const CANONICAL_PROJECT_STAGES = [
+  "Initiation",
+  "Planning",
+  "Execution",
+  "Review",
+  "Closure",
+] as const;
+
+export type CanonicalProjectStage = (typeof CANONICAL_PROJECT_STAGES)[number];
+
+export const STAGE_LIFECYCLE_STEP: Record<
+  CanonicalProjectStage,
+  { step: number; total: 5; label: string; order: number }
+> = {
+  Initiation: { step: 1, total: 5, label: "Step 1/5", order: 1 },
+  Planning: { step: 2, total: 5, label: "Step 2/5", order: 2 },
+  Execution: { step: 3, total: 5, label: "Step 3/5", order: 3 },
+  Review: { step: 4, total: 5, label: "Step 4/5", order: 4 },
+  Closure: { step: 5, total: 5, label: "Step 5/5", order: 5 },
+};
+
 const STAGE_ALIASES: Record<string, (typeof PROJECT_STAGES)[number]> = {
   discovery: "Discovery",
   design: "Design",
@@ -60,6 +81,35 @@ const STAGE_ALIASES: Record<string, (typeof PROJECT_STAGES)[number]> = {
   closure: "Closure",
   proposal: "Proposal",
 };
+
+/**
+ * Maps any legacy or template stage to its canonical 5-step lifecycle stage.
+ * Explicitly separates project status ('Active', 'Pending', etc.) from lifecycle stage.
+ */
+export function toCanonicalProjectStage(
+  stage?: string | null,
+): CanonicalProjectStage {
+  if (!stage) return "Initiation";
+  const trimmed = stage.trim().toLowerCase();
+  const canonicalMap: Record<string, CanonicalProjectStage> = {
+    initiation: "Initiation",
+    discovery: "Initiation",
+    proposal: "Initiation",
+    kickoff: "Initiation",
+    "kick off": "Initiation",
+    planning: "Planning",
+    design: "Planning",
+    execution: "Execution",
+    development: "Execution",
+    review: "Review",
+    testing: "Review",
+    closure: "Closure",
+    deployment: "Closure",
+    completed: "Closure",
+    maintenance: "Closure",
+  };
+  return canonicalMap[trimmed] || "Initiation";
+}
 
 export function normalizeProjectStatus(value: string): string | null {
   const trimmed = value.trim();

@@ -121,14 +121,14 @@ export function UnifiedActionCenter() {
       {renderQueueSection(
         HUMAN_LABELS.actionQueue,
         extraItems,
-        approvalItems.length === 0
-          ? 'No urgent customer, billing, or follow-up items right now.'
+        extraItems.length === 0
+          ? 'No customer, billing, or follow-up items queued right now.'
           : undefined,
       )}
       {renderQueueSection(
         HUMAN_LABELS.pendingApprovals,
         approvalItems,
-        pendingCount === 0 ? 'Bonnie has no high-risk actions waiting for sign-off.' : undefined,
+        approvalItems.length === 0 ? 'Bonnie has no high-risk actions waiting for sign-off.' : undefined,
       )}
       <ApprovalCenter />
     </div>

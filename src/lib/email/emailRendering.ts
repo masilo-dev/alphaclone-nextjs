@@ -1,6 +1,7 @@
 import sanitizeHtml from 'sanitize-html';
 import { OUTBOUND_EMAIL_SANITIZE_OPTIONS } from '@/lib/email/sanitizeEmailHtmlServer';
 import { decodeHtmlEntities } from '@/lib/email/decodeHtmlEntities';
+import { hasEmailLayoutContainer, EMAIL_SYSTEM_FONTS } from '@/lib/email/emailLayout';
 
 export interface OutboundEmailRenderResult {
   html: string;
@@ -14,6 +15,7 @@ export interface RenderOutboundEmailParams {
   preserveContent?: boolean;
   unsubscribeUrl?: string;
   includeFooter?: boolean;
+  tenantName?: string;
 }
 
 function escapeAttribute(value: string): string {
@@ -201,22 +203,22 @@ export function convertMarkdownToEmailHtml(markdown: string): string {
         const leadLines = lines.slice(0, firstUnorderedIdx).filter((l) => l.trim().length > 0);
         if (leadLines.length > 0) {
           const paraHtml = leadLines.map((l) => renderInlineMarkdown(escapeHtmlText(l))).join('<br />\n');
-          renderedBlocks.push(`<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${paraHtml}</p>`);
+          renderedBlocks.push(`<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 16px; text-align: left;">${paraHtml}</p>`);
         }
       }
       const listLines = lines.slice(firstUnorderedIdx, lastUnorderedIdx + 1);
       const items = listLines.map((l) => {
         const itemText = l.trim().replace(/^[-*]\s+/, '');
-        return `<li style="margin-bottom: 6px;">${renderInlineMarkdown(escapeHtmlText(itemText))}</li>`;
+        return `<li style="margin-bottom: 6px; font-size: 16px; line-height: 1.6;">${renderInlineMarkdown(escapeHtmlText(itemText))}</li>`;
       });
       renderedBlocks.push(
-        `<ul style="margin: 0 0 16px 0; padding-left: 24px; color: #1e293b; line-height: 1.6;">${items.join('')}</ul>`
+        `<ul style="margin: 0 0 16px 0; padding-left: 24px; color: #1e293b; line-height: 1.6; font-size: 16px;">${items.join('')}</ul>`
       );
       if (lastUnorderedIdx + 1 < lines.length) {
         const trailLines = lines.slice(lastUnorderedIdx + 1).filter((l) => l.trim().length > 0);
         if (trailLines.length > 0) {
           const paraHtml = trailLines.map((l) => renderInlineMarkdown(escapeHtmlText(l))).join('<br />\n');
-          renderedBlocks.push(`<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${paraHtml}</p>`);
+          renderedBlocks.push(`<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 16px; text-align: left;">${paraHtml}</p>`);
         }
       }
       continue;
@@ -233,22 +235,22 @@ export function convertMarkdownToEmailHtml(markdown: string): string {
         const leadLines = lines.slice(0, firstOrderedIdx).filter((l) => l.trim().length > 0);
         if (leadLines.length > 0) {
           const paraHtml = leadLines.map((l) => renderInlineMarkdown(escapeHtmlText(l))).join('<br />\n');
-          renderedBlocks.push(`<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${paraHtml}</p>`);
+          renderedBlocks.push(`<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 16px; text-align: left;">${paraHtml}</p>`);
         }
       }
       const listLines = lines.slice(firstOrderedIdx, lastOrderedIdx + 1);
       const items = listLines.map((l) => {
         const itemText = l.trim().replace(/^\d+\.\s+/, '');
-        return `<li style="margin-bottom: 6px;">${renderInlineMarkdown(escapeHtmlText(itemText))}</li>`;
+        return `<li style="margin-bottom: 6px; font-size: 16px; line-height: 1.6;">${renderInlineMarkdown(escapeHtmlText(itemText))}</li>`;
       });
       renderedBlocks.push(
-        `<ol style="margin: 0 0 16px 0; padding-left: 24px; color: #1e293b; line-height: 1.6;">${items.join('')}</ol>`
+        `<ol style="margin: 0 0 16px 0; padding-left: 24px; color: #1e293b; line-height: 1.6; font-size: 16px;">${items.join('')}</ol>`
       );
       if (lastOrderedIdx + 1 < lines.length) {
         const trailLines = lines.slice(lastOrderedIdx + 1).filter((l) => l.trim().length > 0);
         if (trailLines.length > 0) {
           const paraHtml = trailLines.map((l) => renderInlineMarkdown(escapeHtmlText(l))).join('<br />\n');
-          renderedBlocks.push(`<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${paraHtml}</p>`);
+          renderedBlocks.push(`<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 16px; text-align: left;">${paraHtml}</p>`);
         }
       }
       continue;
@@ -259,12 +261,18 @@ export function convertMarkdownToEmailHtml(markdown: string): string {
       .map((line) => renderInlineMarkdown(escapeHtmlText(line)))
       .join('<br />\n');
     renderedBlocks.push(
-      `<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${paraHtml}</p>`
+      `<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 16px; text-align: left;">${paraHtml}</p>`
     );
   }
 
-  // Wrap in a clean, email-client-friendly container without promotional clutter
-  return `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.6; color: #1e293b; max-width: 600px;">\n${renderedBlocks.join('\n')}\n</div>`;
+  // Wrap in a centered, email-safe presentation table container (max-width: 600px, margin: 0 auto)
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; width: 100%; margin: 0 auto; border-collapse: collapse; text-align: left;">
+  <tr>
+    <td align="left" style="font-family: ${EMAIL_SYSTEM_FONTS}; font-size: 16px; line-height: 1.6; color: #1e293b; text-align: left; word-break: break-word; overflow-wrap: break-word;">
+${renderedBlocks.join('\n')}
+    </td>
+  </tr>
+</table>`;
 }
 
 /**
@@ -400,8 +408,7 @@ export function hasComplianceFooterMarkers(content: string): boolean {
   if (!text.trim()) return false;
 
   // HTML structural footer containers or anchors
-  if (/<div[^>]+border-top:\s*1px\s+solid/i.test(text) && (/privacy-policy/i.test(text) || /unsubscribe/i.test(text))) return true;
-  if (/<table[^>]+role=["']presentation["']/i.test(text) && (/privacy-policy/i.test(text) || /unsubscribe/i.test(text))) return true;
+  if (/<(?:div|td|table)[^>]+(?:border-top:\s*1px\s+solid|class="[^"]*email-footer)[^>]*>[\s\S]*(?:\/privacy-policy|\/unsubscribe|privacy-policy|unsubscribe)/i.test(text)) return true;
   if (/<a[^>]+href=["'][^"']*\/privacy-policy/i.test(text) && /<a[^>]+href=["'][^"']*(?:\/unsubscribe|\/api\/unsubscribe|\{\{\{unsubscribe_url\}\}\})/i.test(text)) return true;
 
   // Plain text footer markers (must be structured footer prefixes, not casual body mentions)
@@ -431,7 +438,17 @@ export function renderOutboundEmail(params: RenderOutboundEmailParams): Outbound
   // Case 1: HTML is provided and actually contains HTML tags
   if (rawHtml && isHtmlContent(rawHtml)) {
     const sanitizedHtml = sanitizeHtml(rawHtml, OUTBOUND_EMAIL_SANITIZE_OPTIONS);
-    resultHtml = sanitizedHtml;
+    if (!hasEmailLayoutContainer(sanitizedHtml)) {
+      resultHtml = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width:600px;width:100%;margin:0 auto;border-collapse:collapse;text-align:left;">
+  <tr>
+    <td align="left" style="font-family:${EMAIL_SYSTEM_FONTS};font-size:16px;line-height:1.6;color:#1e293b;text-align:left;word-break:break-word;overflow-wrap:break-word;">
+${sanitizedHtml}
+    </td>
+  </tr>
+</table>`;
+    } else {
+      resultHtml = sanitizedHtml;
+    }
     resultText = rawText || convertHtmlToPlainText(sanitizedHtml);
     isMarkdownConverted = false;
   } else {
@@ -462,7 +479,11 @@ export function renderOutboundEmail(params: RenderOutboundEmailParams): Outbound
         unsubscribeUrl: params.unsubscribeUrl,
       });
 
-      if (resultHtml.endsWith('</div>')) {
+      if (resultHtml.includes('</td>\n  </tr>\n</table>')) {
+        resultHtml = resultHtml.replace('</td>\n  </tr>\n</table>', `\n${footer.html}\n    </td>\n  </tr>\n</table>`);
+      } else if (resultHtml.includes('</td></tr></table>')) {
+        resultHtml = resultHtml.replace('</td></tr></table>', `\n${footer.html}\n</td></tr></table>`);
+      } else if (resultHtml.endsWith('</div>')) {
         resultHtml = `${resultHtml.slice(0, -6)}\n${footer.html}\n</div>`;
       } else {
         resultHtml = `${resultHtml}\n${footer.html}`;

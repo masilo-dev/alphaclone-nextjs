@@ -281,34 +281,38 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         }
     }, [currentTenant, editingProject, user, queryClient, router]);
 
-    const handleStageUpdate = useCallback(async (projectId: string, newStage: ProjectStage) => {
-        if (!currentTenant) return;
+    const handleStageUpdate = useCallback(async (projectId: string, newStage: ProjectStage): Promise<{ success: boolean; error?: string; transition?: any }> => {
+        if (!currentTenant) return { success: false, error: 'No workspace active' };
 
         let result = await projectStageService.updateProjectStage(projectId, newStage, user.id);
         if (!result.success && result.transition?.requiresConfirmation) {
-            const ok = window.confirm(`Move this project back to ${newStage}?`);
-            if (!ok) return;
+            const ok = window.confirm(newStage === 'Closure' ? 'Close this project? This marks the lifecycle as Closure and notifies stakeholders.' : `Move this project to ${newStage}?`);
+            if (!ok) return { success: false, error: 'Cancelled' };
             result = await projectStageService.updateProjectStage(projectId, newStage, user.id, undefined, true);
         }
 
         if (!result.success) {
             toast.error(result.error || 'Stage change blocked');
-            return;
+            return result;
         }
 
         const finished = newStage === 'Closure';
+        const progressVal = result.recalculatedProgress !== undefined ? result.recalculatedProgress : (finished ? 100 : undefined);
         setProjects((prev) => prev.map((p) => (p.id === projectId ? {
             ...p,
             currentStage: newStage,
-            ...(finished ? { status: 'Completed' as const, progress: 100 } : {}),
+            ...(finished ? { status: 'Completed' as const } : {}),
+            ...(progressVal !== undefined ? { progress: progressVal } : {}),
         } : p)));
         setViewingProject((prev) => (prev?.id === projectId ? {
             ...prev,
             currentStage: newStage,
-            ...(finished ? { status: 'Completed' as const, progress: 100 } : {}),
+            ...(finished ? { status: 'Completed' as const } : {}),
+            ...(progressVal !== undefined ? { progress: progressVal } : {}),
         } : prev));
         void invalidateTenantProjects(queryClient, currentTenant.id);
         toast.success(finished ? 'Project marked finished' : `Stage updated to ${newStage}`);
+        return result;
     }, [currentTenant, user.id, queryClient]);
 
     const handleDeleteProject = useCallback(async (projectId: string) => {
