@@ -34,7 +34,7 @@ class ClientLifecycleService {
                     .select('id, status')
                     .eq('client_id', clientId)
                     .eq('tenant_id', tenantId)
-                    .eq('status', 'signed')
+                    .or('status.in.(signed,completed),lifecycle_status.in.(signed,completed)')
                     .limit(1),
                 supabase
                     .from('activity_log')

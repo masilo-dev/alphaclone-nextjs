@@ -188,7 +188,7 @@ export async function GET(req: NextRequest) {
                     .from('bookings')
                     .select('start_time, end_time')
                     .eq('tenant_id', tenantId)
-                    .neq('status', 'cancelled')
+                    .not('status', 'in', '(cancelled,canceled,no_show)')
                     .or(`and(start_time.lte.${dayEnd.toISOString()},end_time.gte.${dayStart.toISOString()})`),
                 supabaseAdmin
                     .from('video_calls')

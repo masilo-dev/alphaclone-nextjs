@@ -38,6 +38,7 @@ export const teamService = {
                         error: null
                     };
                 }
+                return { team: [], error: null };
             }
 
             // Fallback to profiles with roles that are not 'client' or 'visitor'
