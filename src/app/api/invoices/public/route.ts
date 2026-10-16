@@ -62,7 +62,7 @@ function mapPublicInvoice(row: Record<string, unknown>, lineItems: Record<string
   };
 }
 
-export async function authorizePublicInvoice(
+async function authorizePublicInvoice(
   admin: ReturnType<typeof createSupabaseAdminClient>,
   invoiceId: string,
   token?: string | null
