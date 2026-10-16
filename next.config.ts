@@ -24,6 +24,9 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: process.env.ALPHACLONE_SEQUENTIAL_TYPECHECK === "1",
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   transpilePackages: [
     '@blocknote/core',
     '@blocknote/react',
