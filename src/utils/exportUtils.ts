@@ -19,6 +19,7 @@ export const exportToCSV = (data: any[], fileName: string) => {
         headers.join(','), // header row
         ...data.map(row => {
             return headers.map(header => {
+                const val = row[header];
                 // Handle null/undefined
                 if (val === null || val === undefined) return '""';
 
