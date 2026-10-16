@@ -108,6 +108,14 @@ export default function EnhancedInvoiceModal({
   const [isSending, setIsSending] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [attachments, setAttachments] = useState<Array<{
+    name: string;
+    storage_path: string;
+    content_type?: string;
+    size?: number;
+  }>>([]);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const attachmentInputRef = React.useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<InvoiceFormData>({
     clientId: '',
@@ -150,13 +158,33 @@ export default function EnhancedInvoiceModal({
   useEffect(() => {
     if (!invoice?.id || !isOpen) return;
     const metadata = businessInvoiceService.parseMetadata(invoice.notes);
+    const rawMeta = invoice.metadata && typeof invoice.metadata === 'object' ? invoice.metadata : {};
     const displayNotes = String(invoice.notes || '').replace(/---METADATA---[\s\S]*?---METADATA---\s*/, '').trim();
+    const initialAttachments = Array.isArray(invoice.attachments)
+      ? invoice.attachments
+      : Array.isArray(rawMeta.attachments)
+        ? rawMeta.attachments
+        : Array.isArray(metadata?.attachments)
+          ? metadata.attachments
+          : [];
+    setAttachments(initialAttachments);
     setFormData((prev) => ({
       ...prev,
       clientId: invoice.clientId || invoice.client_id || prev.clientId,
       contractId: invoice.contractId || invoice.contract_id || prev.contractId,
-      clientName: metadata?.clientName || invoice.clientName || prev.clientName,
-      clientEmail: metadata?.clientEmail || metadata?.email || invoice.clientEmail || prev.clientEmail,
+      clientName:
+        invoice.clientName ||
+        invoice.client_name ||
+        metadata?.clientName ||
+        rawMeta?.clientName ||
+        prev.clientName,
+      clientEmail:
+        invoice.clientEmail ||
+        invoice.client_email ||
+        metadata?.clientEmail ||
+        metadata?.email ||
+        rawMeta?.clientEmail ||
+        prev.clientEmail,
       dueDate: invoice.dueDate || invoice.due_date ? String(invoice.dueDate || invoice.due_date).slice(0, 10) : prev.dueDate,
       notes: displayNotes,
       template: resolveDocumentThemeId(metadata),
@@ -185,7 +213,7 @@ export default function EnhancedInvoiceModal({
         subtotal: formData.subtotal,
         tax: formData.tax,
         total: formData.total,
-        status: 'draft',
+        status: invoice?.status || 'draft',
         metadata: { document_theme: formData.template },
       },
       formData.items.map((item) => ({
@@ -204,10 +232,12 @@ export default function EnhancedInvoiceModal({
       document_theme: formData.template,
       clientName: formData.clientName,
       clientEmail: formData.clientEmail,
+      attachments,
     });
 
   useEffect(() => {
-    if (!draftInvoiceId || !currentTenant?.id || mode === 'send') return;
+    const currentStatus = String(invoice?.status || 'draft').toLowerCase();
+    if (!draftInvoiceId || !currentTenant?.id || mode === 'send' || currentStatus !== 'draft') return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
 
     autoSaveTimerRef.current = setTimeout(async () => {
@@ -218,12 +248,16 @@ export default function EnhancedInvoiceModal({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             tenantId: currentTenant.id,
+            client_id: formData.clientId || null,
+            client_name: formData.clientName || undefined,
+            client_email: formData.clientEmail || undefined,
             subtotal: formData.subtotal,
             tax: formData.tax,
             total: formData.total,
             due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : undefined,
             contract_id: formData.contractId || null,
             notes: buildPersistedNotes(),
+            attachments,
             line_items: formData.items.map((item) => ({
               description: item.description,
               quantity: item.quantity,
@@ -241,7 +275,7 @@ export default function EnhancedInvoiceModal({
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [formData, draftInvoiceId, currentTenant?.id, mode]);
+  }, [formData, attachments, draftInvoiceId, currentTenant?.id, mode, invoice?.status]);
 
   const [clients, setClients] = useState<any[]>([]);
   const [contracts, setContracts] = useState<Array<{ id: string; title: string; status: string; client_id?: string | null }>>([]);
@@ -250,6 +284,18 @@ export default function EnhancedInvoiceModal({
   const [searchQuery, setSearchQuery] = useState('');
   const [showContactDropdown, setShowContactDropdown] = useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Backfill clientName and clientEmail from loaded clients if invoice had clientId but missing name/email
+  useEffect(() => {
+    if (!formData.clientId || clients.length === 0) return;
+    const matched = clients.find((c) => c.id === formData.clientId);
+    if (!matched) return;
+    setFormData((prev) => ({
+      ...prev,
+      clientName: prev.clientName || matched.name || '',
+      clientEmail: prev.clientEmail || matched.email || '',
+    }));
+  }, [formData.clientId, clients]);
 
   // Load clients, contracts, projects
   useEffect(() => {
@@ -311,11 +357,16 @@ export default function EnhancedInvoiceModal({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Calculate totals
+  // Calculate totals while preserving existing tax ratio when editing an invoice
   useEffect(() => {
     const subtotal = formData.items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
-    const tax = subtotal * 0.15; // 15% tax
-    const total = subtotal + tax;
+    const existingSub = Number(invoice?.subtotal ?? 0);
+    const existingTax = Number(invoice?.tax ?? 0);
+    const effectiveTaxRatio = invoice?.id
+      ? (existingSub > 0 ? existingTax / existingSub : 0)
+      : 0;
+    const tax = Number((subtotal * effectiveTaxRatio).toFixed(2));
+    const total = Number((subtotal + tax).toFixed(2));
 
     setFormData(prev => ({
       ...prev,
@@ -323,7 +374,7 @@ export default function EnhancedInvoiceModal({
       tax,
       total
     }));
-  }, [formData.items]);
+  }, [formData.items, invoice?.id, invoice?.subtotal, invoice?.tax]);
 
   const handleAddItem = () => {
     setFormData(prev => ({
@@ -348,9 +399,52 @@ export default function EnhancedInvoiceModal({
     }));
   };
 
-  const handleClientSearch = async (query: string) => {
-    // Implement client search functionality
-    console.log('Searching clients:', query);
+  const handleAttachmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !currentTenant?.id) return;
+    const targetId = draftInvoiceId || invoice?.id || 'draft';
+
+    setIsUploadingAttachment(true);
+    try {
+      for (const file of Array.from(files)) {
+        const fd = new FormData();
+        fd.append('tenantId', currentTenant.id);
+        fd.append('file', file);
+        const res = await fetch(`/api/invoices/${encodeURIComponent(targetId)}/attachments`, {
+          method: 'POST',
+          body: fd,
+        });
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok || !payload?.attachment) {
+          throw new Error(payload?.error || `Failed to upload ${file.name}`);
+        }
+        setAttachments((prev) => [...prev, payload.attachment]);
+      }
+      toast.success('Attachment uploaded');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to upload attachment');
+    } finally {
+      setIsUploadingAttachment(false);
+      if (attachmentInputRef.current) attachmentInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveAttachment = async (att: { name: string; storage_path: string }) => {
+    setAttachments((prev) => prev.filter((item) => item.storage_path !== att.storage_path));
+    if (!currentTenant?.id) return;
+    const targetId = draftInvoiceId || invoice?.id || 'draft';
+    try {
+      await fetch(`/api/invoices/${encodeURIComponent(targetId)}/attachments`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          storagePath: att.storage_path,
+        }),
+      });
+    } catch {
+      // non-fatal cleanup
+    }
   };
 
   const handleSaveDraft = async () => {
@@ -360,15 +454,16 @@ export default function EnhancedInvoiceModal({
         ...formData,
         contractId: formData.contractId || undefined,
         notes: buildPersistedNotes(),
+        attachments,
         lineItems: formData.items,
-        status: 'draft' as const,
-        isPublic: false,
+        status: (invoice?.status && invoice.status !== 'draft' ? invoice.status : 'draft') as any,
+        isPublic: Boolean(invoice?.isPublic),
         tenantId: currentTenant?.id,
         createdBy: user?.id
       };
 
       let finalInvoice;
-      if (mode === 'edit' && invoice) {
+      if ((mode === 'edit' || mode === 'send') && invoice?.id) {
         const result = await businessInvoiceService.updateInvoice(invoice.id, invoiceData as any);
         if (result.error) throw new Error(result.error);
         finalInvoice = { ...invoice, ...invoiceData, id: invoice.id };
@@ -380,44 +475,51 @@ export default function EnhancedInvoiceModal({
         if (finalInvoice?.id) setDraftInvoiceId(finalInvoice.id);
       }
 
-      toast.success("Invoice saved as draft");
+      toast.success("Invoice saved");
 
       onSuccess?.(finalInvoice);
       onClose();
       if (mode === 'create') {
         showInvoiceCreatedWithSendPrompt((path) => router.push(path));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving draft:', error);
-      toast.error("Failed to save invoice draft");
+      toast.error(error?.message || "Failed to save invoice");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSendInvoice = async () => {
-    if (!formData.clientEmail) {
-      toast.error("Client email is required to send invoice");
+    const recipients = String(formData.clientEmail || '')
+      .split(/[,\s;]+/)
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (recipients.length === 0 || !recipients.every((e) => emailRe.test(e))) {
+      toast.error("Please enter a valid recipient email address before sending");
       return;
     }
 
     setIsSending(true);
     const toastId = toast.loading("Finalizing and sending invoice...");
     try {
-      // Create or update invoice with sent status
+      // Save invoice details first WITHOUT prematurely flipping status to 'sent'
+      const preservedStatus = invoice?.status && invoice.status !== 'draft' ? invoice.status : 'draft';
       const invoiceData = {
         ...formData,
         contractId: formData.contractId || undefined,
         notes: buildPersistedNotes(),
+        attachments,
         lineItems: formData.items,
-        status: 'sent' as const,
+        status: preservedStatus as any,
         isPublic: true,
         tenantId: currentTenant?.id,
         createdBy: user?.id
       };
 
       let finalInvoice;
-      if (mode === 'edit' && invoice) {
+      if ((mode === 'edit' || mode === 'send') && invoice?.id) {
         const result = await businessInvoiceService.updateInvoice(invoice.id, invoiceData as any);
         if (result.error) throw new Error(result.error);
         finalInvoice = { ...invoice, ...invoiceData, id: invoice.id };
@@ -431,29 +533,35 @@ export default function EnhancedInvoiceModal({
 
       if (!finalInvoice) throw new Error("Failed to retrieve invoice information");
 
-      // Trigger durable invoice lifecycle (PDF -> send -> reminders -> overdue)
-      // Prefer authenticated API — does not require MCP/AI availability.
-      try {
-        const tenantId = currentTenant?.id;
-        if (!tenantId) throw new Error('Active workspace required');
-        const { startInvoiceLifecycleFromDashboard } = await import(
-          '@/lib/invoices/startInvoiceLifecycleFromDashboard'
-        );
-        const lifecycle = await startInvoiceLifecycleFromDashboard({
-          tenantId,
-          invoiceId: finalInvoice.id,
-        });
-        toast.success(lifecycle.message, { id: toastId });
-      } catch (dispatchError: any) {
-        console.error('Invoice lifecycle Error:', dispatchError);
-        toast.error(`Invoice saved, but lifecycle automation failed: ${dispatchError.message}`, { id: toastId });
+      const tenantId = currentTenant?.id;
+      if (!tenantId) throw new Error('Active workspace required');
+      const { startInvoiceLifecycleFromDashboard } = await import(
+        '@/lib/invoices/startInvoiceLifecycleFromDashboard'
+      );
+      const isResend = ['sent', 'overdue', 'partially_paid'].includes(String(invoice?.status || '').toLowerCase());
+      const lifecycle = await startInvoiceLifecycleFromDashboard({
+        tenantId,
+        invoiceId: finalInvoice.id,
+        recipients,
+        attachments,
+        resend: isResend,
+      });
+
+      if (!lifecycle.ok) {
+        toast.error(`Invoice saved, but email delivery failed: ${lifecycle.message}`, { id: toastId });
+        return;
       }
 
-      onSuccess?.(finalInvoice);
+      toast.success(lifecycle.message, { id: toastId });
+      onSuccess?.({
+        ...finalInvoice,
+        status: lifecycle.status === 'sent' ? 'sent' : finalInvoice.status,
+        canonicalDeliveryStatus: lifecycle.canonicalDeliveryStatus,
+      });
       onClose();
     } catch (error: any) {
       console.error('Error sending invoice:', error);
-      toast.error(`Failed to finalize invoice: ${error.message}`, { id: toastId });
+      toast.error(`Failed to send invoice: ${error.message}`, { id: toastId });
     } finally {
       setIsSending(false);
     }
@@ -723,6 +831,60 @@ export default function EnhancedInvoiceModal({
           rows={3}
           placeholder="Additional notes..."
         />
+      </div>
+
+      {/* Invoice Attachments */}
+      <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-4">
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <div>
+            <h4 className="text-[var(--ws-text-primary)] font-bold type-ui flex items-center gap-2">
+              <Upload className="w-4 h-4 text-teal-400" />
+              Invoice Attachments (Optional)
+            </h4>
+            <p className="text-[var(--ws-text-muted)] type-card-description mt-0.5">
+              Attach supporting documents (PDF, PNG, JPG, DOCX, XLSX, CSV) to include with the invoice email.
+            </p>
+          </div>
+          <div>
+            <input
+              ref={attachmentInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.csv,.doc,.docx,.xls,.xlsx"
+              onChange={handleAttachmentUpload}
+              className="hidden"
+            />
+            <button
+              type="button"
+              disabled={isUploadingAttachment}
+              onClick={() => attachmentInputRef.current?.click()}
+              className="px-3 py-1.5 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] hover:bg-[var(--ws-hover)] text-[var(--ws-text-primary)] type-caption font-semibold flex items-center gap-2 transition-colors"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              {isUploadingAttachment ? 'Uploading...' : 'Attach Files'}
+            </button>
+          </div>
+        </div>
+        {attachments.length > 0 && (
+          <div className="space-y-1.5 mt-3">
+            {attachments.map((att) => (
+              <div
+                key={att.storage_path}
+                className="flex items-center justify-between px-3 py-2 rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] type-ui"
+              >
+                <span className="truncate text-[var(--ws-text-primary)]">{att.name}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveAttachment(att)}
+                  className="text-rose-400 hover:text-rose-300 p-1"
+                  title="Remove attachment"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1075,16 +1237,24 @@ export default function EnhancedInvoiceModal({
 
             <button
               onClick={handleSendInvoice}
-              disabled={isSending || !formData.clientName}
+              disabled={isSending || (!formData.clientName && !formData.clientId) || !formData.clientEmail}
               className={cn(
                 "flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition-colors",
-                isSending || !formData.clientName
+                isSending || (!formData.clientName && !formData.clientId) || !formData.clientEmail
                   ? "bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] cursor-not-allowed border border-[var(--ws-border)]"
                   : "bg-teal-600 text-[var(--text-inverse)] hover:bg-teal-500"
               )}
             >
-              <Check className="w-4 h-4" />
-              <span>{mode === 'send' ? 'Finalize Invoice' : 'Finalize'}</span>
+              <Send className="w-4 h-4" />
+              <span>
+                {isSending
+                  ? 'Sending...'
+                  : ['sent', 'overdue', 'partially_paid'].includes(String(invoice?.status || '').toLowerCase())
+                    ? 'Save & Resend Invoice'
+                    : mode === 'send'
+                      ? 'Finalize & Send Invoice'
+                      : 'Save & Send Invoice'}
+              </span>
             </button>
           </div>
         </div>

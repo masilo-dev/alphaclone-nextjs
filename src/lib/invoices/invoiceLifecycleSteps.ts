@@ -2,17 +2,26 @@
  * Shared invoice lifecycle steps — used by Workflow SDK and Bonnie durable runtime.
  */
 
-import { businessInvoiceService } from '@/services/businessInvoiceService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { invoiceEmailTemplates } from '@/lib/email/invoiceEmailTemplates';
 import { getPublicInvoicePaymentUrl } from '@/lib/invoices/publicInvoiceAccess';
+import { ensureInvoicePaymentLink } from '@/lib/invoicing/invoicePaymentLink';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
 import { generateThemedInvoicePdfBuffer } from '@/lib/documents/themedDocumentPdf';
 import { recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 import { fileInvoiceDocument } from '@/lib/documents/fileDocument';
 import { postInvoiceIssueJournalServer } from '@/lib/invoices/postInvoiceIssueJournalServer';
 import { scheduleInvoiceLifecycleFollowUp } from '@/lib/invoices/invoiceLifecycleFollowUp';
+
+export type InvoiceAttachmentItem = {
+  name: string;
+  storagePath?: string;
+  storage_path?: string;
+  contentType?: string;
+  content_type?: string;
+  size?: number;
+};
 
 export type InvoiceLifecycleInput = {
   invoiceId: string;
@@ -21,9 +30,23 @@ export type InvoiceLifecycleInput = {
   recipients?: string[];
   subject?: string;
   message?: string;
+  attachments?: InvoiceAttachmentItem[];
 };
 
 export const INVOICE_DOCUMENTS_BUCKET = 'invoice-documents';
+
+const ALLOWED_ATTACHMENT_MIME_TYPES = [
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'text/csv',
+  'text/plain',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+];
 
 let bucketEnsurePromise: Promise<void> | null = null;
 
@@ -34,12 +57,27 @@ export async function ensureInvoiceDocumentsBucket(admin: any): Promise<void> {
   bucketEnsurePromise = (async () => {
     try {
       const { data: bucket, error: getError } = await admin.storage.getBucket(INVOICE_DOCUMENTS_BUCKET);
-      if (bucket && !getError) return;
+      if (bucket && !getError) {
+        const existingAllowed: string[] = Array.isArray(bucket.allowed_mime_types)
+          ? bucket.allowed_mime_types
+          : [];
+        const needsUpdate = ALLOWED_ATTACHMENT_MIME_TYPES.some(
+          (mime) => !existingAllowed.includes(mime)
+        );
+        if (needsUpdate) {
+          await admin.storage.updateBucket(INVOICE_DOCUMENTS_BUCKET, {
+            public: false,
+            fileSizeLimit: 15728640,
+            allowedMimeTypes: ALLOWED_ATTACHMENT_MIME_TYPES,
+          });
+        }
+        return;
+      }
 
       const { error: createError } = await admin.storage.createBucket(INVOICE_DOCUMENTS_BUCKET, {
         public: false,
         fileSizeLimit: 15728640,
-        allowedMimeTypes: ['application/pdf'],
+        allowedMimeTypes: ALLOWED_ATTACHMENT_MIME_TYPES,
       });
       if (createError) {
         const msg = String(createError.message || '').toLowerCase();
@@ -54,10 +92,117 @@ export async function ensureInvoiceDocumentsBucket(admin: any): Promise<void> {
   return bucketEnsurePromise;
 }
 
+function cleanInvoiceNotes(rawNotes?: string | null): string | undefined {
+  if (!rawNotes) return undefined;
+  const cleaned = String(rawNotes).split('---METADATA---')[0]?.trim();
+  return cleaned || undefined;
+}
+
 export async function loadInvoiceForLifecycle(invoiceId: string, tenantId: string) {
-  const { invoice, error } = await businessInvoiceService.getInvoiceWithDetails(invoiceId, tenantId);
-  if (error || !invoice) throw new Error(`Invoice not found: ${error || invoiceId}`);
-  return invoice;
+  const admin = createSupabaseAdminClient();
+  const { data: row, error } = await admin
+    .from('business_invoices')
+    .select(`
+      *,
+      client:client_id(id, name, email, phone, company, location),
+      project:project_id(id, name)
+    `)
+    .eq('id', invoiceId)
+    .eq('tenant_id', tenantId)
+    .maybeSingle();
+
+  if (error || !row) {
+    throw new Error(`Invoice not found: ${error?.message || invoiceId}`);
+  }
+
+  const [{ data: tenant }, { data: businessSettings }, { data: lineItems }] = await Promise.all([
+    admin
+      .from('tenants')
+      .select('id, name, legal_name, slug, logo_url, settings')
+      .eq('id', tenantId)
+      .maybeSingle(),
+    admin
+      .from('business_settings')
+      .select('trading_name, business_name, logo_url, brand_color, support_email')
+      .eq('tenant_id', tenantId)
+      .maybeSingle(),
+    admin
+      .from('invoice_line_items')
+      .select('*')
+      .eq('invoice_id', invoiceId)
+      .order('created_at', { ascending: true }),
+  ]);
+
+  const metadata = ((row.metadata && typeof row.metadata === 'object') ? row.metadata : {}) as Record<string, any>;
+  let legacyMeta: Record<string, any> = {};
+  if (typeof row.notes === 'string' && row.notes.includes('---METADATA---')) {
+    try {
+      const parts = row.notes.split('---METADATA---');
+      legacyMeta = JSON.parse(parts[1].trim());
+    } catch {
+      // ignore malformed legacy notes metadata
+    }
+  }
+
+  const clientRel = Array.isArray(row.client) ? row.client[0] : row.client;
+  const resolvedClientName =
+    String(
+      row.client_name ||
+        clientRel?.name ||
+        metadata.clientName ||
+        metadata.client_name ||
+        legacyMeta.clientName ||
+        ''
+    ).trim() || 'Valued Client';
+
+  const resolvedClientEmail = String(
+    row.client_email ||
+      clientRel?.email ||
+      metadata.clientEmail ||
+      metadata.client_email ||
+      legacyMeta.clientEmail ||
+      ''
+  ).trim();
+
+  const resolvedTenantName =
+    String(
+      businessSettings?.trading_name ||
+        businessSettings?.business_name ||
+        tenant?.name ||
+        tenant?.legal_name ||
+        ''
+    ).trim() || 'AlphaClone Systems';
+
+  return {
+    ...row,
+    invoiceNumber: row.invoice_number,
+    issueDate: row.issue_date,
+    dueDate: row.due_date,
+    taxRate: Number(row.tax_rate ?? metadata.taxRate ?? legacyMeta.taxRate ?? 0),
+    discountAmount: Number(row.discount_amount ?? metadata.discountAmount ?? legacyMeta.discountAmount ?? 0),
+    lineItems: (lineItems || []).map((li: any) => ({
+      id: li.id,
+      description: li.description,
+      quantity: Number(li.quantity || 1),
+      rate: Number(li.unit_price ?? li.rate ?? 0),
+      unit_price: Number(li.unit_price ?? li.rate ?? 0),
+      amount: Number(li.amount || 0),
+    })),
+    client: {
+      id: clientRel?.id || row.client_id || null,
+      name: resolvedClientName,
+      email: resolvedClientEmail,
+      phone: clientRel?.phone || null,
+      address: clientRel?.location || null,
+    },
+    tenant: {
+      ...(tenant || {}),
+      name: resolvedTenantName,
+      logo_url: businessSettings?.logo_url || tenant?.logo_url || null,
+    },
+    businessSettings: businessSettings || null,
+    metadata,
+  };
 }
 
 export async function generateAndStoreInvoicePdf(
@@ -70,24 +215,13 @@ export async function generateAndStoreInvoicePdf(
 
   await ensureInvoiceDocumentsBucket(admin);
 
-  const { data: items, error: itemsError } = await admin
-    .from('invoice_line_items')
-    .select('*')
-    .eq('invoice_id', invoiceId)
-    .order('created_at', { ascending: true });
-  if (itemsError) throw itemsError;
-
-  const { data: tenant, error: tenantError } = await admin
-    .from('tenants')
-    .select('name, logo_url, settings')
-    .eq('id', tenantId)
-    .maybeSingle();
-  if (tenantError) throw tenantError;
+  const items = invoice.lineItems || [];
+  const tenant = invoice.tenant;
 
   const pdf = await generateThemedInvoicePdfBuffer(
-    invoice,
-    items || [],
-    tenant,
+    invoice as any,
+    items as any,
+    tenant as any,
     invoice.client ? { name: invoice.client.name, email: invoice.client.email } : undefined
   );
   const storagePath = `tenant/${tenantId}/invoices/${invoiceId}.pdf`;
@@ -107,40 +241,22 @@ export async function generateAndStoreInvoicePdf(
   if (uploadError) throw new Error(`Invoice PDF could not be stored: ${uploadError.message}`);
 
   const nowIso = new Date().toISOString();
-  const { error: updateError } = await admin
+  const existingMeta = (invoice.metadata || {}) as Record<string, unknown>;
+  const { error: metaUpdateError } = await admin
     .from('business_invoices')
     .update({
-      pdf_storage_path: storagePath,
-      pdf_generated_at: nowIso,
+      metadata: {
+        ...existingMeta,
+        pdf_storage_path: storagePath,
+        pdf_generated_at: nowIso,
+      },
       updated_at: nowIso,
     })
     .eq('tenant_id', tenantId)
     .eq('id', invoiceId);
 
-  if (updateError) {
-    const isColumnMissing = updateError.code === '42703' || String(updateError.message || '').includes('pdf_storage_path');
-    if (isColumnMissing) {
-      const existingMeta = (invoice.metadata || {}) as Record<string, unknown>;
-      const { error: metaUpdateError } = await admin
-        .from('business_invoices')
-        .update({
-          metadata: {
-            ...existingMeta,
-            pdf_storage_path: storagePath,
-            pdf_generated_at: nowIso,
-          },
-          updated_at: nowIso,
-        })
-        .eq('tenant_id', tenantId)
-        .eq('id', invoiceId);
-      if (metaUpdateError) {
-        await admin.storage.from(INVOICE_DOCUMENTS_BUCKET).remove([storagePath]).catch(() => undefined);
-        throw metaUpdateError;
-      }
-    } else {
-      await admin.storage.from(INVOICE_DOCUMENTS_BUCKET).remove([storagePath]).catch(() => undefined);
-      throw updateError;
-    }
+  if (metaUpdateError) {
+    throw new Error(`Failed to record invoice PDF metadata: ${metaUpdateError.message}`);
   }
 
   const { data: invoiceRow } = await admin
@@ -168,12 +284,19 @@ export async function generateAndStoreInvoicePdf(
 
 export async function sendInvoiceEmailPhase(
   input: InvoiceLifecycleInput
-): Promise<{ provider: string | null; emailId: string | null }> {
+): Promise<{ provider: string | null; emailId: string | null; recipients: string[]; actionUrl: string }> {
   const invoice = await loadInvoiceForLifecycle(input.invoiceId, input.tenantId);
-  const recipients = input.recipients?.length
-    ? input.recipients
-    : [invoice.client?.email].filter(Boolean);
-  if (!recipients.length) throw new Error(`Invoice ${input.invoiceId} has no recipient email`);
+  const explicitRecipients = (input.recipients || [])
+    .flatMap((r) => String(r || '').split(','))
+    .map((r) => r.trim())
+    .filter(Boolean);
+  const recipients = explicitRecipients.length
+    ? explicitRecipients
+    : [invoice.client?.email].map((r) => String(r || '').trim()).filter(Boolean);
+
+  if (!recipients.length) {
+    throw new Error(`Invoice ${input.invoiceId} has no recipient email`);
+  }
 
   const admin = createSupabaseAdminClient();
   let storagePath = (invoice.pdf_storage_path || (invoice.metadata as any)?.pdf_storage_path) as string | undefined;
@@ -212,12 +335,50 @@ export async function sendInvoiceEmailPhase(
   }
 
   const invoiceNumber = invoice.invoice_number || invoice.invoiceNumber;
+  await ensureInvoicePaymentLink({ tenantId: input.tenantId, invoiceId: input.invoiceId }).catch(() => undefined);
   const actionUrl = await getPublicInvoicePaymentUrl(admin, input.invoiceId, input.tenantId);
+
+  const emailAttachments: Array<{ filename: string; content: string; contentType: string }> = [
+    {
+      filename: `Invoice_${invoiceNumber}.pdf`,
+      content: Buffer.from(await storedPdf.arrayBuffer()).toString('base64'),
+      contentType: 'application/pdf',
+    },
+  ];
+
+  const metaAttachments = Array.isArray((invoice.metadata as any)?.attachments)
+    ? ((invoice.metadata as any).attachments as InvoiceAttachmentItem[])
+    : [];
+  const requestedAttachments = input.attachments?.length ? input.attachments : metaAttachments;
+  const seenPaths = new Set<string>();
+
+  for (const att of requestedAttachments) {
+    const path = String(att?.storagePath || att?.storage_path || '').trim();
+    if (!path || seenPaths.has(path)) continue;
+    if (!path.startsWith(`tenant/${input.tenantId}/`)) {
+      console.warn(`[invoice-lifecycle] Skipping attachment outside tenant prefix: ${path}`);
+      continue;
+    }
+    seenPaths.add(path);
+    const { data: attBlob, error: attErr } = await admin.storage
+      .from(INVOICE_DOCUMENTS_BUCKET)
+      .download(path);
+    if (attErr || !attBlob) {
+      console.warn(`[invoice-lifecycle] Could not download attachment ${path}:`, attErr?.message);
+      continue;
+    }
+    emailAttachments.push({
+      filename: att.name || path.split('/').pop() || 'attachment',
+      content: Buffer.from(await attBlob.arrayBuffer()).toString('base64'),
+      contentType: att.contentType || att.content_type || 'application/octet-stream',
+    });
+  }
+
   const result = await sendEmailServer({
     tenantId: input.tenantId,
     userId: input.actorUserId,
     to: recipients,
-    subject: input.subject || `Invoice ${invoiceNumber}`,
+    subject: input.subject || `Invoice ${invoiceNumber} from ${invoice.tenant?.name || 'AlphaClone Systems'}`,
     html: invoiceEmailTemplates.invoiceSent({
       recipientName: invoice.client?.name || 'Valued Client',
       recipientEmail: recipients[0],
@@ -228,15 +389,9 @@ export async function sendInvoiceEmailPhase(
       dueDate: invoice.due_date,
       actionUrl,
       workspaceName: invoice.tenant?.name || 'AlphaClone Systems',
-      notes: input.message || invoice.notes || undefined,
+      notes: input.message || cleanInvoiceNotes(invoice.notes),
     }),
-    attachments: [
-      {
-        filename: `Invoice_${invoiceNumber}.pdf`,
-        content: Buffer.from(await storedPdf.arrayBuffer()).toString('base64'),
-        contentType: 'application/pdf',
-      },
-    ],
+    attachments: emailAttachments,
     templateName: 'invoiceLifecycleSent',
     skipFooter: true,
   });
@@ -255,41 +410,74 @@ export async function sendInvoiceEmailPhase(
       delivery_status: 'PENDING',
     }))
   );
-  if (deliveryError) throw deliveryError;
+  if (deliveryError) throw new Error(`Failed to record invoice delivery log: ${deliveryError.message}`);
 
-  return { provider: result.provider ?? null, emailId: result.emailId ?? null };
+  return {
+    provider: result.provider ?? null,
+    emailId: result.emailId ?? null,
+    recipients,
+    actionUrl,
+  };
 }
 
-export async function markInvoiceSentPhase(input: InvoiceLifecycleInput): Promise<void> {
+export async function markInvoiceSentPhase(
+  input: InvoiceLifecycleInput,
+  deliveryMeta?: { provider?: string | null; emailId?: string | null; recipients?: string[] }
+): Promise<void> {
   const admin = createSupabaseAdminClient();
   const now = new Date().toISOString();
-  const { data: invoice, error } = await admin
+
+  const { data: current, error: currentError } = await admin
     .from('business_invoices')
-    .update({
-      status: 'sent',
-      lifecycle_status: 'sent',
-      sent_at: now,
-      is_public: true,
-      updated_at: now,
-    })
+    .select('id, invoice_number, status, client_email, client_name, metadata')
     .eq('tenant_id', input.tenantId)
     .eq('id', input.invoiceId)
-    .in('status', ['draft', 'approved', 'sent'])
+    .maybeSingle();
+
+  if (currentError || !current) {
+    throw new Error(`Invoice could not be loaded for sent transition: ${currentError?.message || input.invoiceId}`);
+  }
+
+  if (['paid', 'void', 'cancelled'].includes(current.status)) {
+    throw new Error(`Invoice in status '${current.status}' cannot transition to sent`);
+  }
+
+  const nextStatus = ['draft', 'approved'].includes(current.status) ? 'sent' : current.status;
+  const primaryRecipient = deliveryMeta?.recipients?.[0] || input.recipients?.[0] || current.client_email || null;
+  const existingMeta = ((current.metadata && typeof current.metadata === 'object') ? current.metadata : {}) as Record<string, unknown>;
+
+  const updatePayload: Record<string, unknown> = {
+    status: nextStatus,
+    lifecycle_status: nextStatus === 'sent' ? 'sent' : current.status,
+    sent_at: now,
+    is_public: true,
+    delivery_status: 'PENDING',
+    canonical_delivery_status: 'sent',
+    updated_at: now,
+    metadata: {
+      ...existingMeta,
+      last_sent_at: now,
+      last_email_provider: deliveryMeta?.provider || null,
+      last_email_id: deliveryMeta?.emailId || null,
+      last_sent_recipients: deliveryMeta?.recipients || input.recipients || (primaryRecipient ? [primaryRecipient] : []),
+      email_delivery_status: 'provider_accepted',
+    },
+  };
+
+  if (primaryRecipient) {
+    updatePayload.client_email = primaryRecipient;
+  }
+
+  const { data: invoice, error } = await admin
+    .from('business_invoices')
+    .update(updatePayload)
+    .eq('tenant_id', input.tenantId)
+    .eq('id', input.invoiceId)
     .select('id,invoice_number,status')
     .maybeSingle();
-  if (error) throw error;
+  if (error) throw new Error(`Failed to update invoice sent status: ${error.message}`);
   if (!invoice) {
-    const { data: current, error: currentError } = await admin
-      .from('business_invoices')
-      .select('status')
-      .eq('tenant_id', input.tenantId)
-      .eq('id', input.invoiceId)
-      .maybeSingle();
-    if (currentError) throw currentError;
-    if (!current || !['paid', 'partially_paid', 'viewed', 'overdue'].includes(current.status)) {
-      throw new Error('Invoice could not transition to sent');
-    }
-    return;
+    throw new Error('Invoice could not transition to sent');
   }
 
   if (input.actorUserId) {
@@ -307,7 +495,12 @@ export async function markInvoiceSentPhase(input: InvoiceLifecycleInput): Promis
       invoiceId: input.invoiceId,
       tenantId: input.tenantId,
       eventType: 'sent',
-      eventData: { invoiceNumber: invoice.invoice_number },
+      eventData: {
+        invoiceNumber: invoice.invoice_number,
+        provider: deliveryMeta?.provider || null,
+        emailId: deliveryMeta?.emailId || null,
+        recipients: deliveryMeta?.recipients || input.recipients || [],
+      },
       performedBy: input.actorUserId || 'system',
     }),
     admin
@@ -319,6 +512,8 @@ export async function markInvoiceSentPhase(input: InvoiceLifecycleInput): Promis
           invoiceId: input.invoiceId,
           invoiceNumber: invoice.invoice_number,
           actorUserId: input.actorUserId || null,
+          provider: deliveryMeta?.provider || null,
+          emailId: deliveryMeta?.emailId || null,
         },
       })
       .then(({ error: eventError }: { error: Error | null }) => {
@@ -330,11 +525,16 @@ export async function markInvoiceSentPhase(input: InvoiceLifecycleInput): Promis
         tenant_id: input.tenantId,
         invoice_id: input.invoiceId,
         event_type: 'status_sent',
-        from_status: 'draft',
-        to_status: 'sent',
+        from_status: current.status,
+        to_status: nextStatus,
         actor_user_id: input.actorUserId || null,
         source: 'invoice_lifecycle',
-        evidence: { delivery_state: 'provider_accepted_unverified' },
+        evidence: {
+          delivery_state: 'provider_accepted',
+          provider: deliveryMeta?.provider || null,
+          email_id: deliveryMeta?.emailId || null,
+          recipients: deliveryMeta?.recipients || input.recipients || [],
+        },
       })
       .then(({ error: lifecycleError }: { error: Error | null }) => {
         if (lifecycleError) throw lifecycleError;
@@ -365,6 +565,8 @@ export async function runInvoiceInitialSend(input: InvoiceLifecycleInput): Promi
   storagePath: string;
   provider: string | null;
   emailId: string | null;
+  recipients: string[];
+  actionUrl: string;
 }> {
   const { storagePath } = await generateAndStoreInvoicePdf(
     input.invoiceId,
@@ -372,7 +574,7 @@ export async function runInvoiceInitialSend(input: InvoiceLifecycleInput): Promi
     input.actorUserId
   );
   const email = await sendInvoiceEmailPhase(input);
-  await markInvoiceSentPhase(input);
+  await markInvoiceSentPhase(input, email);
   await scheduleInvoiceLifecycleFollowUp({
     tenantId: input.tenantId,
     invoiceId: input.invoiceId,

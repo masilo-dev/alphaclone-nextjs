@@ -6,6 +6,7 @@ import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
 import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 import { fileInvoiceDocument } from '@/lib/documents/fileDocument';
 import { appendWorkspaceActivity } from '@/services/finance/workspaceActivityService';
+import { ensureInvoicePaymentLink } from '@/lib/invoicing/invoicePaymentLink';
 
 const lineItemSchema = z.object({
   description: z.string().trim().min(1).max(2000),
@@ -13,9 +14,19 @@ const lineItemSchema = z.object({
   rate: z.coerce.number().min(0).max(1_000_000_000),
   amount: z.coerce.number().min(0).max(1_000_000_000).optional(),
 });
+
+const attachmentSchema = z.object({
+  name: z.string().trim().min(1).max(300),
+  storagePath: z.string().trim().min(1).max(1000),
+  contentType: z.string().trim().max(200).optional(),
+  size: z.number().min(0).max(20_000_000).optional(),
+});
+
 const schema = z.object({
   tenantId: z.string().uuid(),
   clientId: z.string().uuid().nullable().optional(),
+  clientName: z.string().trim().max(300).nullable().optional(),
+  clientEmail: z.string().trim().max(500).nullable().optional(),
   contractId: z.string().uuid().nullable().optional(),
   projectId: z.string().uuid().nullable().optional(),
   invoiceNumber: z.string().trim().max(100).optional(),
@@ -29,13 +40,15 @@ const schema = z.object({
   total: z.coerce.number().min(0).max(1_000_000_000).default(0),
   lineItems: z.array(lineItemSchema).max(500).default([]),
   notes: z.string().max(20_000).nullable().optional(),
-  isPublic: z.boolean().default(false),
+  isPublic: z.boolean().default(true),
   senderName: z.string().max(300).nullable().optional(),
   bankDetails: z.string().max(10_000).nullable().optional(),
   mobilePaymentDetails: z.string().max(10_000).nullable().optional(),
   signature: z.union([z.string().max(2_000_000), z.object({ type: z.enum(['draw', 'type']), data: z.string().max(2_000_000) }), z.null()]).optional(),
   currency: z.string().trim().max(10).default('USD'),
   currencyCode: z.string().trim().max(10).optional(),
+  attachments: z.array(attachmentSchema).max(20).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 function emptyToNull(value: unknown): unknown {
@@ -46,6 +59,8 @@ function normalizeInvoicePayload(raw: unknown) {
   if (!raw || typeof raw !== 'object') return raw;
   const body = { ...(raw as Record<string, unknown>) };
   body.clientId = emptyToNull(body.clientId);
+  body.clientName = emptyToNull(body.clientName ?? body.client_name);
+  body.clientEmail = emptyToNull(body.clientEmail ?? body.client_email);
   body.contractId = emptyToNull(body.contractId);
   body.projectId = emptyToNull(body.projectId);
   if (body.dueDate === '') delete body.dueDate;
@@ -99,6 +114,22 @@ export async function POST(req: NextRequest) {
     if (value.status !== 'draft') {
       await validateDailyResourceQuota(value.tenantId, user.id, 'invoices');
     }
+
+    let resolvedClientName = value.clientName || null;
+    let resolvedClientEmail = value.clientEmail || null;
+    if (value.clientId && (!resolvedClientName || !resolvedClientEmail)) {
+      const { data: clientRow } = await admin
+        .from('business_clients')
+        .select('name, email')
+        .eq('tenant_id', value.tenantId)
+        .eq('id', value.clientId)
+        .maybeSingle();
+      if (clientRow) {
+        if (!resolvedClientName && clientRow.name) resolvedClientName = clientRow.name;
+        if (!resolvedClientEmail && clientRow.email) resolvedClientEmail = clientRow.email;
+      }
+    }
+
     const issueDate = (value.issueDate || new Date().toISOString()).slice(0, 10);
     const defaultDue = new Date(`${issueDate}T00:00:00.000Z`); defaultDue.setUTCDate(defaultDue.getUTCDate() + 14);
     const dueDate = (value.dueDate || defaultDue.toISOString()).slice(0, 10);
@@ -106,18 +137,51 @@ export async function POST(req: NextRequest) {
     const subtotal = value.lineItems.length ? lineSubtotal : value.subtotal;
     const tax = value.tax || subtotal * value.taxRate / 100;
     const total = Math.max(0, value.lineItems.length ? subtotal + tax - value.discountAmount : value.total);
+
+    const publicToken = crypto.randomUUID();
+    const validAttachments = (value.attachments || []).filter((att) =>
+      att.storagePath.startsWith(`tenant/${value.tenantId}/`)
+    );
+    const initialMetadata: Record<string, unknown> = {
+      ...(value.metadata || {}),
+      public_token: publicToken,
+      taxRate: value.taxRate,
+      discountAmount: value.discountAmount,
+      ...(resolvedClientName ? { clientName: resolvedClientName } : {}),
+      ...(resolvedClientEmail ? { clientEmail: resolvedClientEmail } : {}),
+      ...(validAttachments.length ? { attachments: validAttachments } : {}),
+    };
+
     let invoice: any = null;
     for (let attempt = 0; attempt < 6; attempt += 1) {
       const number = value.invoiceNumber || `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
       const currencyCode = (value.currencyCode || value.currency || 'USD').toUpperCase();
       const { data, error } = await admin.from('business_invoices').insert({
-        tenant_id: value.tenantId, client_id: value.clientId || null, project_id: value.projectId || null,
-        contract_id: value.contractId || null, invoice_number: number,
-        issue_date: issueDate, due_date: dueDate, status: value.status, subtotal, tax_rate: value.taxRate, tax,
-        discount_amount: value.discountAmount, total, line_items: value.lineItems, notes: value.notes || null,
-        currency: currencyCode, currency_code: currencyCode,
-        is_public: value.isPublic, sender_name: value.senderName || null, bank_details: value.bankDetails || null,
-        mobile_payment_details: value.mobilePaymentDetails || null, signature: value.signature || null,
+        tenant_id: value.tenantId,
+        client_id: value.clientId || null,
+        client_name: resolvedClientName,
+        client_email: resolvedClientEmail,
+        project_id: value.projectId || null,
+        contract_id: value.contractId || null,
+        invoice_number: number,
+        issue_date: issueDate,
+        due_date: dueDate,
+        status: value.status,
+        subtotal,
+        tax_rate: value.taxRate,
+        tax,
+        discount_amount: value.discountAmount,
+        total,
+        line_items: value.lineItems,
+        notes: value.notes || null,
+        currency: currencyCode,
+        currency_code: currencyCode,
+        is_public: value.isPublic,
+        sender_name: value.senderName || null,
+        bank_details: value.bankDetails || null,
+        mobile_payment_details: value.mobilePaymentDetails || null,
+        signature: value.signature || null,
+        metadata: initialMetadata,
       }).select('*').single();
       if (!error) { invoice = data; break; }
       if (error.code !== '23505' || value.invoiceNumber || attempt === 5) throw error;
@@ -127,6 +191,17 @@ export async function POST(req: NextRequest) {
       const { error } = await admin.from('invoice_line_items').insert(value.lineItems.map((item) => ({ invoice_id: invoice.id, tenant_id: value.tenantId, description: item.description, quantity: item.quantity, unit_price: item.rate })));
       if (error) { await admin.from('business_invoices').delete().eq('id', invoice.id).eq('tenant_id', value.tenantId); throw error; }
     }
+
+    if (value.isPublic) {
+      const linkInfo = await ensureInvoicePaymentLink({
+        tenantId: value.tenantId,
+        invoiceId: invoice.id,
+      }).catch(() => null);
+      if (linkInfo?.payment_link) {
+        invoice.payment_link = linkInfo.payment_link;
+      }
+    }
+
     await logInvoiceEvent({ invoiceId: invoice.id, tenantId: value.tenantId, eventType: 'created', eventData: { status: invoice.status, total: invoice.total }, performedBy: user.id }).catch((error) => console.error('[invoices] create audit failed', error));
 
     void appendWorkspaceActivity(admin, {

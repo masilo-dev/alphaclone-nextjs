@@ -4562,7 +4562,6 @@ class AlphaCloneMCPServer {
           const tenant_id = String(this.requireTenant(a) || '').trim();
           const user_id = String(this.requireProfileUser(a) || '').trim();
           const recipient_email = typeof a.recipient_email === 'string' ? a.recipient_email.trim() : '';
-          const preferredProvider = a.preferredProvider || a.provider;
           const invoice_id = String(a.invoice_id || '').trim();
           if (!isUuidString(invoice_id)) {
             throw new Error('invoice_id must be a valid invoice UUID');
@@ -4571,66 +4570,51 @@ class AlphaCloneMCPServer {
           const { invoice, error: fetchErr } = await getInvoiceWithDetailsAdmin(supabaseAdmin, invoice_id, tenant_id);
           if (fetchErr || !invoice) throw new Error(`Invoice not found: ${fetchErr || 'Unknown error'}`);
 
-          // Generate PDF
-          const doc = businessInvoiceService.generatePDF(invoice, invoice.tenant, invoice.client);
-          const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
-          const pdfBase64 = pdfBuffer.toString('base64');
-
-          const to = recipient_email || invoice.client?.email;
-          if (!to) throw new Error('Recipient email is required (not found on client record)');
-
-          const amount = `${invoice.currency || '$'}${Number(invoice.total).toFixed(2)}`;
-          const pdfUrl = await getPublicInvoicePaymentUrl(supabaseAdmin, invoice_id, tenant_id);
-
-          const dispatch = await sendEmailServer({
-            tenantId: tenant_id,
-            userId: user_id || undefined,
-            preferredProvider: preferredProvider as any,
-            to,
-            subject: `Invoice ${invoice.invoice_number} — ${amount}`,
-            fromName: invoice.tenant?.name || 'AlphaClone',
-            html: invoiceEmailTemplates.invoiceSent({
-              recipientName: invoice.client?.name || 'Valued Client',
-              recipientEmail: to,
-              tenantId: tenant_id,
-              invoiceNumber: invoice.invoice_number,
-              amount: Number(invoice.total || 0),
-              currency: invoice.currency || 'USD',
-              dueDate: invoice.due_date,
-              actionUrl: pdfUrl,
-              workspaceName: invoice.tenant?.name || 'AlphaClone Systems',
-              notes: invoice.notes || undefined,
-            }),
-            attachments: [{
-              filename: `Invoice_${invoice.invoice_number}.pdf`,
-              content: pdfBase64,
-              contentType: 'application/pdf',
-            }],
-            templateName: 'mcpInvoiceSent',
-            skipFooter: true,
-          });
-
-          if (!dispatch.success) {
-            throw new Error(`Invoice email delivery failed: ${dispatch.error || 'unknown error'} ${JSON.stringify(dispatch.errorDetails || [])}`);
+          const blockedStatuses = ['paid', 'void', 'cancelled'];
+          if (blockedStatuses.includes(String(invoice.status || '').toLowerCase())) {
+            throw new Error(`Invoices in '${invoice.status}' status cannot be sent.`);
           }
 
-          const { error: updateError } = await supabaseAdmin
-            .from('business_invoices')
-            .update({
-              status: 'sent',
-              is_public: true,
-              sent_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-            .eq('tenant_id', tenant_id)
-            .eq('id', invoice_id);
-          if (updateError) throw supabaseErrorToMcpClientError('send_invoice', updateError.message);
+          const meta = ((invoice as any).metadata || {}) as Record<string, unknown>;
+          const to = String(
+            recipient_email ||
+              (invoice as any).client_email ||
+              invoice.client?.email ||
+              meta.clientEmail ||
+              meta.client_email ||
+              ''
+          ).trim();
+          if (!to) throw new Error('Recipient email is required (not found on invoice or client record)');
+
+          await validateDailyResourceQuota(tenant_id, user_id, 'invoices');
+
+          const queued = await queueInvoiceSend({
+            tenantId: tenant_id,
+            userId: user_id,
+            invoiceId: invoice_id,
+            recipients: to.split(/[;,]/).map((e) => e.trim()).filter(Boolean),
+            subject: typeof a.subject === 'string' ? a.subject : undefined,
+            message: typeof a.message === 'string' ? a.message : undefined,
+          });
+
+          const isSent = queued.status === 'sent' || queued.canonical_delivery_status === 'provider_accepted';
 
           result = { content: [{ type: 'text', text: JSON.stringify({
-            status: 'sent',
-            message: `Invoice lifecycle started successfully via background workflow.`,
+            status: queued.status,
+            canonical_delivery_status: queued.canonical_delivery_status,
+            sent: isSent,
+            message: isSent
+              ? `Invoice ${invoice.invoice_number} sent to ${to}${queued.provider ? ` via ${queued.provider}` : ''}.`
+              : `Invoice ${invoice.invoice_number} queued for background delivery.`,
             invoice_id,
-            provider: dispatch.provider || preferredProvider || null
+            invoice_number: invoice.invoice_number,
+            recipients: queued.recipients || [to],
+            provider: queued.provider || null,
+            email_id: queued.email_id || null,
+            action_url: queued.action_url || null,
+            storage_path: queued.storage_path || null,
+            run_id: queued.run_id,
+            task_id: queued.task_id,
           }, null, 2) }] };
           break;
         }
@@ -7688,24 +7672,48 @@ Return ONLY a JSON array of 60 objects:
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
-          const { invoice_id } = a;
+          const { invoice_id, recipient_email } = a;
           if (!isUuidString(invoice_id)) throw new Error('invoice_id must be a valid invoice UUID');
           const { data: invoice, error: invoiceError } = await supabaseAdmin
             .from('business_invoices')
-            .select('id,status')
+            .select('id, status, invoice_number, client_email, metadata, clients:client_id(email)')
             .eq('tenant_id', tenant_id)
             .eq('id', invoice_id)
             .maybeSingle();
           if (invoiceError) throw invoiceError;
           if (!invoice) throw new Error('Invoice not found');
-          if (invoice.status !== 'draft') throw new Error(`Only draft invoices can be sent. This invoice is ${invoice.status}.`);
+          if (['paid', 'void', 'cancelled'].includes(String(invoice.status || '').toLowerCase())) {
+            throw new Error(`Invoices in '${invoice.status}' status cannot be sent.`);
+          }
           await validateDailyResourceQuota(tenant_id, user_id, 'invoices');
+          const clientRel = Array.isArray((invoice as any).clients) ? (invoice as any).clients[0] : (invoice as any).clients;
+          const meta = ((invoice as any).metadata || {}) as Record<string, unknown>;
+          const resolvedEmail = String(
+            recipient_email ||
+              invoice.client_email ||
+              clientRel?.email ||
+              meta.clientEmail ||
+              meta.client_email ||
+              ''
+          ).trim();
           const queued = await queueInvoiceSend({
             tenantId: tenant_id,
             userId: user_id,
             invoiceId: invoice_id,
+            recipients: resolvedEmail ? [resolvedEmail] : undefined,
           });
-          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId: queued.run_id, durable: queued.durable, poll_tool: queued.poll_tool }, null, 2) }] };
+          result = { content: [{ type: 'text', text: JSON.stringify({
+            success: true,
+            status: queued.status,
+            canonical_delivery_status: queued.canonical_delivery_status,
+            provider: queued.provider || null,
+            email_id: queued.email_id || null,
+            action_url: queued.action_url || null,
+            runId: queued.run_id,
+            taskId: queued.task_id,
+            durable: queued.durable,
+            poll_tool: queued.poll_tool,
+          }, null, 2) }] };
           break;
         }
 

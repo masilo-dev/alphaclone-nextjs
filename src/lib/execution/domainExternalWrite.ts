@@ -228,7 +228,16 @@ export async function executeDomainExternalWrite<TResult>(
           }),
         };
       }
-      if (existingCanonical === 'succeeded' && existing.sanitized_output) {
+      const existingOutput =
+        typeof existing.sanitized_output === 'object' && existing.sanitized_output !== null
+          ? (existing.sanitized_output as Record<string, unknown>)
+          : null;
+      const isUnverifiedQueuedInvoiceReceipt =
+        params.capability === 'send_invoice' &&
+        existingOutput?.status === 'queued' &&
+        !existingOutput?.email_id;
+
+      if (existingCanonical === 'succeeded' && existing.sanitized_output && !isUnverifiedQueuedInvoiceReceipt) {
         return {
           ok: true,
           replayed: true,

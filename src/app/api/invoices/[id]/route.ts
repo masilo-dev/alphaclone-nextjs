@@ -9,6 +9,13 @@ const invoiceRouteSchema = z.object({
     tenantId: z.string().uuid(),
 });
 
+const attachmentSchema = z.object({
+    name: z.string().trim().min(1).max(300),
+    storagePath: z.string().trim().min(1).max(1000),
+    contentType: z.string().trim().max(200).optional(),
+    size: z.number().min(0).max(20_000_000).optional(),
+});
+
 const UpdateInvoiceSchema = z.object({
     total: z.number().min(0, 'Total cannot be negative').optional(),
     subtotal: z.number().min(0).optional(),
@@ -23,6 +30,8 @@ const UpdateInvoiceSchema = z.object({
         unit_price: z.number().min(0),
     })).optional(),
     client_id: z.string().uuid().nullable().optional(),
+    client_name: z.string().trim().max(300).nullable().optional(),
+    client_email: z.string().trim().max(500).nullable().optional(),
     project_id: z.string().uuid().nullable().optional(),
     contract_id: z.string().uuid().nullable().optional(),
     tax_rate: z.number().min(0).max(100).optional(),
@@ -32,6 +41,8 @@ const UpdateInvoiceSchema = z.object({
     bank_details: z.string().max(10_000).nullable().optional(),
     mobile_payment_details: z.string().max(10_000).nullable().optional(),
     signature: z.union([z.string().max(2_000_000), z.object({ type: z.enum(['draw', 'type']), data: z.string().max(2_000_000) }), z.null()]).optional(),
+    attachments: z.array(attachmentSchema).max(20).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
     tenantId: z.string().uuid(),
 });
 
@@ -44,7 +55,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
             return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 422 });
         }
 
-        const { tenantId, ...updatePayload } = parsed.data;
+        const { tenantId, attachments, metadata, client_name, client_email, ...updatePayload } = parsed.data;
         const { user } = await requireTenantAccess(tenantId, req);
         const admin = createAdminSupabaseClientOrThrow();
 
@@ -59,9 +70,15 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
         if (fetchError || !existing) {
             return NextResponse.json({ error: 'Invoice not found', code: 'NOT_FOUND' }, { status: 404 });
         }
+
+        let resolvedClientName = client_name !== undefined ? client_name : existing.client_name;
+        let resolvedClientEmail = client_email !== undefined ? client_email : existing.client_email;
+
         if (updatePayload.client_id) {
-            const { data } = await admin.from('business_clients').select('id').eq('id', updatePayload.client_id).eq('tenant_id', tenantId).maybeSingle();
-            if (!data) return NextResponse.json({ error: 'Client is not in this workspace' }, { status: 422 });
+            const { data: clientRow } = await admin.from('business_clients').select('id, name, email').eq('id', updatePayload.client_id).eq('tenant_id', tenantId).maybeSingle();
+            if (!clientRow) return NextResponse.json({ error: 'Client is not in this workspace' }, { status: 422 });
+            if (!resolvedClientName && clientRow.name) resolvedClientName = clientRow.name;
+            if (!resolvedClientEmail && clientRow.email) resolvedClientEmail = clientRow.email;
         }
         if (updatePayload.project_id) {
             const { data } = await admin.from('projects').select('id').eq('id', updatePayload.project_id).eq('tenant_id', tenantId).maybeSingle();
@@ -74,7 +91,10 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
 
         // 2. Security Guards
         const lockedStatuses = ['sent', 'paid', 'overdue'];
-        const isModifyingTotals = updatePayload.total !== undefined || updatePayload.subtotal !== undefined || updatePayload.tax !== undefined;
+        const totalChanged = updatePayload.total !== undefined && Math.abs(Number(updatePayload.total) - Number(existing.total || 0)) > 0.009;
+        const subtotalChanged = updatePayload.subtotal !== undefined && Math.abs(Number(updatePayload.subtotal) - Number(existing.subtotal || 0)) > 0.009;
+        const taxChanged = updatePayload.tax !== undefined && Math.abs(Number(updatePayload.tax) - Number(existing.tax || 0)) > 0.009;
+        const isModifyingTotals = totalChanged || subtotalChanged || taxChanged;
 
         if (lockedStatuses.includes(existing.status) && isModifyingTotals) {
             return NextResponse.json(
@@ -113,7 +133,37 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
         });
 
         if (updateError) throw updateError;
-        const updated = Array.isArray(rows) ? rows[0] : rows;
+        let updated = Array.isArray(rows) ? rows[0] : rows;
+
+        // 5. Persist client_name, client_email, and metadata (including attachments) explicitly
+        const existingMeta = ((existing.metadata && typeof existing.metadata === 'object') ? existing.metadata : {}) as Record<string, unknown>;
+        const validAttachments = attachments
+            ? attachments.filter((att) => att.storagePath.startsWith(`tenant/${tenantId}/`))
+            : undefined;
+        const mergedMetadata: Record<string, unknown> = {
+            ...existingMeta,
+            ...(metadata || {}),
+            ...(resolvedClientName ? { clientName: resolvedClientName } : {}),
+            ...(resolvedClientEmail ? { clientEmail: resolvedClientEmail } : {}),
+            ...(validAttachments !== undefined ? { attachments: validAttachments } : {}),
+        };
+
+        const extraPatch: Record<string, unknown> = {
+            metadata: mergedMetadata,
+            updated_at: new Date().toISOString(),
+        };
+        if (resolvedClientName !== undefined) extraPatch.client_name = resolvedClientName;
+        if (resolvedClientEmail !== undefined) extraPatch.client_email = resolvedClientEmail;
+
+        const { data: refreshed } = await admin
+            .from('business_invoices')
+            .update(extraPatch)
+            .eq('id', id)
+            .eq('tenant_id', tenantId)
+            .select('*')
+            .maybeSingle();
+        if (refreshed) updated = refreshed;
+
         if (existing.status === 'draft' && updatePayload.status && updatePayload.status !== 'draft') {
             await recordDailyResourceQuota(tenantId, user.id, 'invoices', 1, `invoice-send:${id}`);
         }

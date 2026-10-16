@@ -14,16 +14,34 @@ function drawWrappedText(doc: any, text: string, x: number, y: number, maxWidth:
 }
 
 export interface InvoiceLineItem { description: string; quantity: number; rate: number; amount: number }
+export interface InvoiceAttachment {
+    name: string;
+    storagePath: string;
+    contentType?: string;
+    size?: number;
+}
 export interface BusinessInvoice {
     id: string;
     tenantId: string;
     clientId?: string;
+    clientName?: string;
+    clientEmail?: string;
     projectId?: string;
     contractId?: string;
     invoiceNumber: string;
     issueDate: string;
     dueDate: string;
     status: 'draft' | 'sent' | 'viewed' | 'partially_paid' | 'paid' | 'overdue' | 'disputed' | 'void' | 'cancelled';
+    deliveryStatus?: string;
+    canonicalDeliveryStatus?: string;
+    deliveryVerifiedAt?: string;
+    paymentLink?: string;
+    pdfStoragePath?: string;
+    attachments?: InvoiceAttachment[];
+    metadata?: Record<string, any>;
+    sentAt?: string;
+    viewedAt?: string;
+    paidAt?: string;
     subtotal: number;
     taxRate: number;
     tax: number;
@@ -52,16 +70,60 @@ function mapInvoice(row: any): BusinessInvoice {
     const effectiveStatus = (isSettled && row.status !== 'draft' && row.status !== 'void' && row.status !== 'cancelled')
         ? 'paid'
         : row.status;
+    const meta = (row.metadata && typeof row.metadata === 'object') ? row.metadata : {};
+    const clientRel = Array.isArray(row.client) ? row.client[0] : row.client;
+    let legacyMeta: any = {};
+    if (typeof row.notes === 'string' && row.notes.includes('---METADATA---')) {
+        try {
+            const parts = row.notes.split('---METADATA---');
+            legacyMeta = JSON.parse(parts[1].trim());
+        } catch {
+            // ignore
+        }
+    }
+
+    const clientName = row.client_name || clientRel?.name || meta.clientName || meta.client_name || legacyMeta.clientName || undefined;
+    const clientEmail = row.client_email || clientRel?.email || meta.clientEmail || meta.client_email || legacyMeta.clientEmail || undefined;
+
     return {
-        id: row.id, tenantId: row.tenant_id, clientId: row.client_id, projectId: row.project_id, contractId: row.contract_id,
-        invoiceNumber: row.invoice_number, issueDate: row.issue_date, dueDate: row.due_date, status: effectiveStatus,
-        subtotal: Number(row.subtotal || 0), taxRate: Number(row.tax_rate || 0), tax: Number(row.tax || 0),
-        discountAmount: Number(row.discount_amount || 0), total, amountPaid,
+        id: row.id,
+        tenantId: row.tenant_id,
+        clientId: row.client_id,
+        clientName,
+        clientEmail,
+        projectId: row.project_id,
+        contractId: row.contract_id,
+        invoiceNumber: row.invoice_number,
+        issueDate: row.issue_date,
+        dueDate: row.due_date,
+        status: effectiveStatus,
+        deliveryStatus: row.delivery_status || undefined,
+        canonicalDeliveryStatus: row.canonical_delivery_status || undefined,
+        deliveryVerifiedAt: row.delivery_verified_at || undefined,
+        paymentLink: row.payment_link || undefined,
+        pdfStoragePath: row.pdf_storage_path || meta.pdf_storage_path || undefined,
+        attachments: Array.isArray(meta.attachments) ? meta.attachments : [],
+        metadata: meta,
+        sentAt: row.sent_at || undefined,
+        viewedAt: row.viewed_at || undefined,
+        paidAt: row.paid_at || undefined,
+        subtotal: Number(row.subtotal || 0),
+        taxRate: Number(row.tax_rate ?? meta.taxRate ?? legacyMeta.taxRate ?? 0),
+        tax: Number(row.tax || 0),
+        discountAmount: Number(row.discount_amount ?? meta.discountAmount ?? legacyMeta.discountAmount ?? 0),
+        total,
+        amountPaid,
         balanceDue: isSettled ? 0 : Math.max(0, rawBalance),
         autoFollowupEnabled: isSettled ? false : row.auto_followup_enabled !== false,
         lineItems: lineRows.map((item: any) => ({ description: item.description, quantity: Number(item.quantity || 0), rate: Number(item.rate ?? item.unit_price ?? 0), amount: Number(item.amount ?? Number(item.quantity || 0) * Number(item.rate ?? item.unit_price ?? 0)) })),
-        notes: row.notes, isPublic: Boolean(row.is_public), senderName: row.sender_name, bankDetails: row.bank_details,
-        mobilePaymentDetails: row.mobile_payment_details, signature: row.signature, createdAt: row.created_at, updatedAt: row.updated_at,
+        notes: row.notes,
+        isPublic: Boolean(row.is_public),
+        senderName: row.sender_name || legacyMeta.senderName,
+        bankDetails: row.bank_details || legacyMeta.bankDetails,
+        mobilePaymentDetails: row.mobile_payment_details || legacyMeta.mobileDetails,
+        signature: row.signature,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
     };
 }
 
@@ -78,7 +140,11 @@ export const businessInvoiceService = {
 
     async getInvoices(tenantId: string): Promise<{ invoices: BusinessInvoice[]; error: string | null }> {
         try {
-            const { data, error } = await supabase.from('business_invoices').select('*, invoice_line_items(*)').eq('tenant_id', tenantId).order('created_at', { ascending: false });
+            const { data, error } = await supabase
+                .from('business_invoices')
+                .select('*, invoice_line_items(*), client:client_id(id, name, email)')
+                .eq('tenant_id', tenantId)
+                .order('created_at', { ascending: false });
             if (error) throw error;
             return { invoices: (data || []).map(mapInvoice), error: null };
         } catch (error) { return { invoices: [], error: error instanceof Error ? error.message : 'Invoices could not be loaded' }; }
@@ -102,7 +168,22 @@ export const businessInvoiceService = {
             const tenantId = tenantService.getCurrentTenantId();
             if (!tenantId) return { error: 'Select a workspace before updating an invoice' };
             const body: Record<string, unknown> = { tenantId };
-            const mapping: Record<string, string> = { clientId: 'client_id', projectId: 'project_id', contractId: 'contract_id', issueDate: 'issue_date', dueDate: 'due_date', taxRate: 'tax_rate', discountAmount: 'discount_amount', lineItems: 'line_items', isPublic: 'is_public', senderName: 'sender_name', bankDetails: 'bank_details', mobilePaymentDetails: 'mobile_payment_details' };
+            const mapping: Record<string, string> = {
+                clientId: 'client_id',
+                clientName: 'client_name',
+                clientEmail: 'client_email',
+                projectId: 'project_id',
+                contractId: 'contract_id',
+                issueDate: 'issue_date',
+                dueDate: 'due_date',
+                taxRate: 'tax_rate',
+                discountAmount: 'discount_amount',
+                lineItems: 'line_items',
+                isPublic: 'is_public',
+                senderName: 'sender_name',
+                bankDetails: 'bank_details',
+                mobilePaymentDetails: 'mobile_payment_details',
+            };
             for (const [key, value] of Object.entries(updates)) {
                 if (value === undefined || ['id', 'tenantId', 'invoiceNumber', 'createdAt', 'updatedAt'].includes(key)) continue;
                 body[mapping[key] || key] = key === 'lineItems' && Array.isArray(value)

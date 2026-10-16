@@ -8,7 +8,7 @@ import { Textarea as AlphaCloneTextarea } from '@/components/ui/textarea';
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy, List, Plus, Users, Search, CheckCircle2, Send, Mail, AlertCircle, Building2, ChevronDown, Sparkles, Eye } from 'lucide-react';
+import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy, List, Plus, Users, Search, CheckCircle2, Send, Mail, AlertCircle, Building2, ChevronDown, Sparkles, Eye, Paperclip, Upload, Trash2, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from '../ui/UIComponents';
 import { Project } from '../../types';
@@ -21,7 +21,32 @@ import { supabase } from '@/lib/supabase';
 import { getTaxRateForCountry } from '@/lib/tax/taxRules';
 import { WORKSPACE } from '@/constants/design';
 import { PaymentRailBanner } from '@/components/dashboard/payments/PaymentRailBanner';
+import { startInvoiceLifecycleFromDashboard } from '@/lib/invoices/startInvoiceLifecycleFromDashboard';
+import type { InvoiceAttachment } from '@/services/businessInvoiceService';
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function parseRecipientEmails(raw: string): string[] {
+    return [
+        ...new Set(
+            String(raw || '')
+                .split(/[;,]/)
+                .map((s) => s.trim().toLowerCase())
+                .filter(Boolean)
+        ),
+    ];
+}
+
+function areAllEmailsValid(raw: string): boolean {
+    const list = parseRecipientEmails(raw);
+    return list.length > 0 && list.every((e) => EMAIL_REGEX.test(e));
+}
+
+function defaultDueDateIso(): string {
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    return d.toISOString().slice(0, 10);
+}
 
 interface LineItem {
     description: string;
@@ -49,7 +74,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [lineItems, setLineItems] = useState<LineItem[]>([{ description: '', quantity: 1, rate: 0 }]);
     const [selectedProjectId, setSelectedProjectId] = useState('');
     const [selectedClientId, setSelectedClientId] = useState('');
-    const [dueDate, setDueDate] = useState('');
+    const [clientName, setClientName] = useState('');
+    const [clientEmail, setClientEmail] = useState('');
+    const [dueDate, setDueDate] = useState(defaultDueDateIso);
+    const [notes, setNotes] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'bank' | 'mobile_money'>('stripe');
     const [bankDetails, setBankDetails] = useState('');
     const [mobileDetails, setMobileDetails] = useState('');
@@ -57,9 +85,18 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [taxCountry, setTaxCountry] = useState<string>('ZW');
     const [discountAmount, setDiscountAmount] = useState<number>(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSending, setIsSending] = useState(false);
     const [clients, setClients] = useState<any[]>([]);
     const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
     const [createdInvoice, setCreatedInvoice] = useState<any | null>(null);
+    const [sendOutcome, setSendOutcome] = useState<{
+        sent: boolean;
+        status?: string;
+        provider?: string | null;
+        emailId?: string | null;
+        actionUrl?: string;
+        message?: string;
+    } | null>(null);
     const [signatureData, setSignatureData] = useState<string | null>(null);
     const [signatureType, setSignatureType] = useState<'draw' | 'type'>('draw');
     const [typedSignature, setTypedSignature] = useState('');
@@ -68,8 +105,14 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [showServiceDropdown, setShowServiceDropdown] = useState<{ index: number; open: boolean }>({ index: -1, open: false });
     const [searchQuery, setSearchQuery] = useState('');
     const [showContactDropdown, setShowContactDropdown] = useState(false);
+    const [highlightedClientIndex, setHighlightedClientIndex] = useState<number>(0);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const attachmentInputRef = useRef<HTMLInputElement>(null);
+
+    // Attachments state
+    const [attachments, setAttachments] = useState<InvoiceAttachment[]>([]);
+    const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
 
     // Service selection state
     const [selectedIndustry, setSelectedIndustry] = useState<string>('');
@@ -78,9 +121,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [industrySearchQuery, setIndustrySearchQuery] = useState('');
     const [serviceSearchQuery, setServiceSearchQuery] = useState('');
 
-    // Missing state variables
-    const [clientEmail, setClientEmail] = useState('');
-    const [enablePaymentLinks, setEnablePaymentLinks] = useState(false);
+    const [enablePaymentLinks, setEnablePaymentLinks] = useState(true);
 
     // Set default bank and mobile money details from tenant
     const tenantSettings = currentTenant?.settings as {
@@ -245,17 +286,21 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         loadUserServices();
     }, []);
 
-    // Update client email when client is selected
+    // Update client name and email when client is selected
     React.useEffect(() => {
+        if (!selectedClientId) return;
         const selectedClient = clients.find(c => c.id === selectedClientId);
-        if (selectedClient?.email) {
-            setClientEmail(selectedClient.email);
+        if (selectedClient) {
+            if (selectedClient.name) setClientName(selectedClient.name);
+            setClientEmail(selectedClient.email || '');
+            setSearchQuery(selectedClient.name || '');
         }
     }, [selectedClientId, clients]);
 
     // Pre-select project and client when modal opens
     React.useEffect(() => {
         if (!isOpen) return;
+        if (!dueDate) setDueDate(defaultDueDateIso());
         if (preselectProjectId) {
             setSelectedProjectId(preselectProjectId);
             const project = projects.find(p => p.id === preselectProjectId);
@@ -266,7 +311,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         if (preselectClientId && !preselectProjectId) {
             setSelectedClientId(preselectClientId);
         }
-    }, [isOpen, preselectProjectId, preselectClientId, projects]);
+    }, [isOpen, preselectProjectId, preselectClientId, projects, dueDate]);
 
     // Auto-fill client when project is selected
     React.useEffect(() => {
@@ -294,6 +339,87 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         }
     }, [selectedIndustry]);
 
+    const filteredClients = React.useMemo(() => {
+        const q = searchQuery.trim().toLowerCase();
+        if (!q) return clients;
+        return clients.filter(
+            (c) =>
+                c.name?.toLowerCase().includes(q) ||
+                c.email?.toLowerCase().includes(q) ||
+                c.company?.toLowerCase().includes(q)
+        );
+    }, [clients, searchQuery]);
+
+    const handleSelectClient = (client: any) => {
+        setSelectedClientId(client.id);
+        setClientName(client.name || '');
+        setClientEmail(client.email || '');
+        setSearchQuery(client.name || '');
+        setShowContactDropdown(false);
+    };
+
+    const handleUploadAttachment = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0 || !currentTenant?.id) return;
+
+        setIsUploadingAttachment(true);
+        try {
+            const uploadedItems: InvoiceAttachment[] = [];
+            for (const file of Array.from(files)) {
+                if (file.size > 10 * 1024 * 1024) {
+                    toast.error(`${file.name} exceeds the 10 MB limit`);
+                    continue;
+                }
+                const formData = new FormData();
+                formData.append('tenantId', currentTenant.id);
+                formData.append('file', file);
+
+                const targetId = createdInvoiceId || 'draft';
+                const res = await fetch(`/api/invoices/${encodeURIComponent(targetId)}/attachments`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                const payload = await res.json().catch(() => ({}));
+                if (!res.ok || !payload.attachment) {
+                    throw new Error(payload.error || `Failed to upload ${file.name}`);
+                }
+                uploadedItems.push(payload.attachment);
+            }
+            if (uploadedItems.length > 0) {
+                setAttachments((prev) => [...prev, ...uploadedItems]);
+                toast.success(
+                    uploadedItems.length === 1
+                        ? `Attached ${uploadedItems[0].name}`
+                        : `Attached ${uploadedItems.length} files`
+                );
+            }
+        } catch (err: any) {
+            console.error('Attachment upload failed:', err);
+            toast.error(err?.message || 'Failed to upload attachment');
+        } finally {
+            setIsUploadingAttachment(false);
+            if (attachmentInputRef.current) attachmentInputRef.current.value = '';
+        }
+    };
+
+    const handleRemoveAttachment = async (att: InvoiceAttachment) => {
+        if (!currentTenant?.id) return;
+        setAttachments((prev) => prev.filter((item) => item.storagePath !== att.storagePath));
+        try {
+            const targetId = createdInvoiceId || 'draft';
+            await fetch(`/api/invoices/${encodeURIComponent(targetId)}/attachments`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    storagePath: att.storagePath,
+                }),
+            });
+        } catch {
+            // non-blocking cleanup
+        }
+    };
+
     const addLineItem = () => {
         setLineItems([...lineItems, { description: '', quantity: 1, rate: 0 }]);
     };
@@ -318,55 +444,140 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         return calculateSubtotal() + calculateTax() - discountAmount;
     };
 
-    const handleSubmit = async () => {
-        setIsSubmitting(true);
-        try {
-            const { businessInvoiceService } = await import('../../services/businessInvoiceService');
+    const buildInvoicePayload = () => {
+        const resolvedName = clientName.trim() || searchQuery.trim() || clients.find((c) => c.id === selectedClientId)?.name || '';
+        const recipients = parseRecipientEmails(clientEmail);
+        return {
+            clientId: selectedClientId || null,
+            clientName: resolvedName || null,
+            clientEmail: recipients[0] || clientEmail.trim() || null,
+            projectId: selectedProjectId || null,
+            lineItems: lineItems.filter((item) => item.description.trim()),
+            dueDate: dueDate || defaultDueDateIso(),
+            notes: notes.trim() || null,
+            paymentMethod,
+            bankDetails: paymentMethod === 'bank' ? bankDetails : '',
+            mobileDetails: paymentMethod === 'mobile_money' ? mobileDetails : '',
+            taxRate,
+            discountAmount,
+            subtotal: calculateSubtotal(),
+            tax: calculateTax(),
+            total: calculateTotal(),
+            template: selectedTemplate,
+            signature: signatureData,
+            signatureType,
+            typedSignature,
+            status: 'draft',
+            isPublic: enablePaymentLinks,
+            enablePaymentLinks,
+            attachments,
+        };
+    };
 
-            const invoiceData = {
-                clientId: selectedClientId,
-                projectId: selectedProjectId,
-                lineItems: lineItems.filter(item => item.description.trim()),
-                dueDate: dueDate,
-                paymentMethod: paymentMethod,
-                bankDetails: paymentMethod === 'bank' ? bankDetails : '',
-                mobileDetails: paymentMethod === 'mobile_money' ? mobileDetails : '',
-                taxRate: taxRate,
-                discountAmount: discountAmount,
-                subtotal: calculateSubtotal(),
-                tax: calculateTax(),
-                total: calculateTotal(),
-                template: selectedTemplate,
-                signature: signatureData,
-                signatureType: signatureType,
-                typedSignature: typedSignature,
-                status: 'draft',
-                isPublic: enablePaymentLinks, // Only make public if payment links are enabled
-                enablePaymentLinks: enablePaymentLinks // Explicitly set payment links status
-            };
-
-            const { invoice, error } = await businessInvoiceService.createInvoice(currentTenant?.id || '', invoiceData as any);
-
-            if (error || !invoice) {
-                toast.error(error || 'Failed to create invoice');
+    const handleSubmit = async (sendImmediately = false) => {
+        if (!currentTenant?.id) {
+            toast.error('No active workspace selected');
+            return;
+        }
+        const validLines = lineItems.filter((item) => item.description.trim());
+        if (validLines.length === 0 || calculateTotal() <= 0) {
+            toast.error('Add at least one line item with a positive amount');
+            return;
+        }
+        const recipients = parseRecipientEmails(clientEmail);
+        if (sendImmediately) {
+            if (recipients.length === 0) {
+                toast.error('Enter a valid recipient email address to send this invoice');
                 return;
             }
+            if (!areAllEmailsValid(clientEmail)) {
+                toast.error('Please check the recipient email format');
+                return;
+            }
+        }
 
-            setCreatedInvoiceId(invoice.id);
-            setCreatedInvoice(invoice);
+        setIsSubmitting(true);
+        if (sendImmediately) setIsSending(true);
+        try {
+            const { businessInvoiceService } = await import('../../services/businessInvoiceService');
+            let invoice = createdInvoice;
+
+            if (!invoice) {
+                const invoiceData = buildInvoicePayload();
+                const res = await businessInvoiceService.createInvoice(currentTenant.id, invoiceData as any);
+                if (res.error || !res.invoice) {
+                    toast.error(res.error || 'Failed to create invoice');
+                    return;
+                }
+                invoice = res.invoice;
+                setCreatedInvoiceId(invoice.id);
+                setCreatedInvoice(invoice);
+            }
+
+            if (sendImmediately) {
+                const lifecycleRes = await startInvoiceLifecycleFromDashboard({
+                    tenantId: currentTenant.id,
+                    invoiceId: invoice.id,
+                    recipients,
+                    attachments,
+                });
+                setSendOutcome({
+                    sent: lifecycleRes.status === 'sent',
+                    status: lifecycleRes.canonicalDeliveryStatus,
+                    provider: lifecycleRes.provider,
+                    emailId: lifecycleRes.emailId,
+                    actionUrl: lifecycleRes.actionUrl,
+                    message: lifecycleRes.message,
+                });
+                toast.success(lifecycleRes.message);
+            } else {
+                setSendOutcome(null);
+                toast.success('Invoice saved as draft');
+                showInvoiceCreatedWithSendPrompt((path) => router.push(path));
+            }
+
             setStep('success');
-            toast.success('Invoice created');
-            showInvoiceCreatedWithSendPrompt((path) => router.push(path));
             onInvoiceCreated();
-
-        } catch (error) {
-            console.error('Failed to create invoice:', error);
-            toast.error('Failed to create invoice');
+        } catch (error: any) {
+            console.error('Failed to process invoice:', error);
+            toast.error(error?.message || 'Failed to process invoice');
         } finally {
             setIsSubmitting(false);
+            setIsSending(false);
         }
     };
 
+    const handleSendCreatedInvoice = async () => {
+        if (!currentTenant?.id || !createdInvoiceId) return;
+        const recipients = parseRecipientEmails(clientEmail);
+        if (recipients.length === 0 || !areAllEmailsValid(clientEmail)) {
+            toast.error('Enter a valid recipient email address before sending');
+            return;
+        }
+        setIsSending(true);
+        try {
+            const lifecycleRes = await startInvoiceLifecycleFromDashboard({
+                tenantId: currentTenant.id,
+                invoiceId: createdInvoiceId,
+                recipients,
+                attachments,
+            });
+            setSendOutcome({
+                sent: lifecycleRes.status === 'sent',
+                status: lifecycleRes.canonicalDeliveryStatus,
+                provider: lifecycleRes.provider,
+                emailId: lifecycleRes.emailId,
+                actionUrl: lifecycleRes.actionUrl,
+                message: lifecycleRes.message,
+            });
+            toast.success(lifecycleRes.message);
+            onInvoiceCreated();
+        } catch (err: any) {
+            toast.error(err?.message || 'Failed to send invoice email');
+        } finally {
+            setIsSending(false);
+        }
+    };
 
     const getPaymentInstructions = () => {
         switch (paymentMethod) {
@@ -385,7 +596,11 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         setLineItems([{ description: '', quantity: 1, rate: 0 }]);
         setSelectedProjectId('');
         setSelectedClientId('');
-        setDueDate('');
+        setClientName('');
+        setClientEmail('');
+        setSearchQuery('');
+        setDueDate(defaultDueDateIso());
+        setNotes('');
         setPaymentMethod('stripe');
         setBankDetails(tenantDefaults.bank);
         setMobileDetails(tenantDefaults.mobile);
@@ -394,8 +609,11 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         setSignatureData(null);
         setSignatureType('draw');
         setTypedSignature('');
-        setEnablePaymentLinks(false);
-        setClientEmail('');
+        setEnablePaymentLinks(true);
+        setAttachments([]);
+        setCreatedInvoiceId(null);
+        setCreatedInvoice(null);
+        setSendOutcome(null);
         setStep('edit');
     };
 
@@ -406,7 +624,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             const doc = businessInvoiceService.generatePDF(
                 createdInvoice,
                 currentTenant,
-                selectedClient,
+                selectedClient || { name: clientName || searchQuery || 'Valued Client', email: clientEmail },
                 signatureData ? { type: signatureType, data: signatureData } : undefined
             );
             doc.save(`Invoice-${createdInvoice.invoiceNumber}.pdf`);
@@ -418,15 +636,17 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     };
 
     const handleCopyPaymentLink = async () => {
-        if (!createdInvoiceId || !enablePaymentLinks) return;
+        if (!createdInvoiceId || !currentTenant?.id) return;
         try {
-            const origin = window.location.origin;
-            // Enable public access by marking as public first
-            const { businessInvoiceService } = await import('../../services/businessInvoiceService');
-            await businessInvoiceService.updateInvoice(createdInvoiceId, { isPublic: true, status: 'sent' });
-            const paymentUrl = `${origin}/invoice/${createdInvoiceId}`;
+            const response = await fetch(`/api/invoices/${encodeURIComponent(createdInvoiceId)}/public-link`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId: currentTenant.id }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            const paymentUrl = payload?.url || sendOutcome?.actionUrl || `${window.location.origin}/invoice/${createdInvoiceId}`;
             await navigator.clipboard.writeText(paymentUrl);
-            toast.success('Payment link copied to clipboard! Share it with your client.');
+            toast.success('Public invoice link copied to clipboard!');
         } catch (err) {
             console.error('Failed to copy payment link:', err);
             toast.error('Failed to copy link');
@@ -442,6 +662,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
     const selectedProject = projects.find(p => p.id === selectedProjectId);
     const selectedClient = clients.find(c => c.id === selectedClientId);
+    const effectiveClientName = selectedClient?.name || clientName.trim() || searchQuery.trim();
+    const canProceedFromEdit = Boolean(effectiveClientName) && Boolean(dueDate) && calculateTotal() > 0;
+    const canSendDirectly = canProceedFromEdit && areAllEmailsValid(clientEmail);
 
     return (
         <div className="fixed inset-0 ac-layer-modal flex items-center justify-center bg-black/90 p-4">
@@ -454,9 +677,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             {currentTenant?.name || 'Business'} Invoice
                         </h2>
                         <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
-                            {step === 'edit' && 'Fill in invoice details'}
-                            {step === 'preview' && 'Review invoice before saving'}
-                            {step === 'success' && 'Invoice created successfully'}
+                            {step === 'edit' && 'Select recipient, attach documents, and configure invoice details'}
+                            {step === 'preview' && 'Review invoice, recipient email, and attachments before sending'}
+                            {step === 'success' && (sendOutcome?.sent ? 'Invoice sent and accepted by email provider' : 'Invoice saved')}
                         </p>
                     </div>
                     <button onClick={handleClose} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors">
@@ -469,38 +692,27 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     {step === 'edit' && (
                         <div className="space-y-6">
                             <PaymentRailBanner compact />
-                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 flex items-start gap-3 border-teal-500/20`}>
-                                <Edit3 className="w-5 h-5 text-teal-400 mt-0.5" />
-                                <div>
-                                    <h3 className="text-teal-400 font-bold type-ui">Invoice Details</h3>
-                                    <p className="text-[var(--ws-text-muted)] type-card-description mt-1">
-                                        Fill in the invoice information. You'll see a preview before saving.
-                                    </p>
-                                </div>
-                            </div>
 
-                            {/* Payment Links Warning */}
-                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 border-yellow-500/20`}>
-                                <div className="flex items-start gap-3">
-                                    <AlertCircle className="w-5 h-5 text-yellow-400 mt-0.5" />
-                                    <div className="flex-1">
-                                        <h3 className="text-yellow-400 font-bold type-ui">Payment Links</h3>
-                                        <p className="text-[var(--ws-text-muted)] type-card-description mt-1">
-                                            Payment links are currently disabled for security. Enable only if needed.
+                            {/* Public Invoice & Payment Link Toggle */}
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 border-teal-500/20`}>
+                                <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <h3 className="text-teal-400 font-bold type-ui">Public Invoice & Online Payment Link</h3>
+                                        <p className="text-[var(--ws-text-muted)] type-card-description mt-0.5">
+                                            Allows your client to view the invoice online, download the PDF, and pay without logging in.
                                         </p>
-                                        <label className="flex items-center mt-3 space-x-2">
-                                            <input
-                                                type="checkbox"
-                                                checked={enablePaymentLinks}
-                                                onChange={(e) => setEnablePaymentLinks(e.target.checked)}
-                                                className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                                            />
-                                            <span className="type-ui text-[var(--ws-text-primary)]">Enable payment links</span>
-                                        </label>
                                     </div>
+                                    <label className="flex items-center space-x-2 shrink-0 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={enablePaymentLinks}
+                                            onChange={(e) => setEnablePaymentLinks(e.target.checked)}
+                                            className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                                        />
+                                        <span className="type-ui text-[var(--ws-text-primary)] font-medium">Enabled</span>
+                                    </label>
                                 </div>
                             </div>
-
 
                             {/* Template Selector */}
                             <div className="border-b border-[var(--ws-border)] pb-6">
@@ -518,6 +730,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     ].map((t) => (
                                         <button
                                             key={t.id}
+                                            type="button"
                                             onClick={() => setSelectedTemplate(t.id as any)}
                                             className={`relative aspect-[3/4] rounded-lg border-2 transition-all overflow-hidden group ${selectedTemplate === t.id ? 'border-teal-500 ring-2 ring-teal-500/20' : 'border-[var(--ws-border)] hover:border-slate-500'}`}
                                         >
@@ -532,33 +745,69 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 </div>
                             </div>
 
-                            {/* Client and Project Selection */}
+                            {/* Client, Recipient Email, and Project Selection */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="relative" ref={dropdownRef}>
                                     <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Client *</label>
                                     <div className="relative">
-                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted)]">
+                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted)] pointer-events-none">
                                             <Users size={16} />
                                         </div>
                                         <AlphaCloneInput
                                             type="text"
-                                            value={selectedClientId ? clients.find(c => c.id === selectedClientId)?.name || '' : searchQuery}
+                                            value={searchQuery}
                                             onChange={(e) => {
-                                                setSearchQuery(e.target.value);
+                                                const val = e.target.value;
+                                                setSearchQuery(val);
+                                                setClientName(val);
                                                 setShowContactDropdown(true);
-                                                if (selectedClientId) setSelectedClientId('');
+                                                setHighlightedClientIndex(0);
+                                                if (selectedClientId) {
+                                                    const current = clients.find((c) => c.id === selectedClientId);
+                                                    if (current && current.name !== val) {
+                                                        setSelectedClientId('');
+                                                    }
+                                                }
                                             }}
                                             onFocus={() => setShowContactDropdown(true)}
-                                            placeholder="Search existing contacts..."
-                                            className="w-full pl-10 pr-3 py-2"
+                                            onKeyDown={(e) => {
+                                                if (!showContactDropdown) {
+                                                    if (e.key === 'ArrowDown') setShowContactDropdown(true);
+                                                    return;
+                                                }
+                                                if (e.key === 'ArrowDown') {
+                                                    e.preventDefault();
+                                                    setHighlightedClientIndex((prev) =>
+                                                        filteredClients.length > 0 ? (prev + 1) % filteredClients.length : 0
+                                                    );
+                                                } else if (e.key === 'ArrowUp') {
+                                                    e.preventDefault();
+                                                    setHighlightedClientIndex((prev) =>
+                                                        filteredClients.length > 0
+                                                            ? (prev - 1 + filteredClients.length) % filteredClients.length
+                                                            : 0
+                                                    );
+                                                } else if (e.key === 'Enter' && filteredClients[highlightedClientIndex]) {
+                                                    e.preventDefault();
+                                                    handleSelectClient(filteredClients[highlightedClientIndex]);
+                                                } else if (e.key === 'Escape') {
+                                                    setShowContactDropdown(false);
+                                                }
+                                            }}
+                                            placeholder="Search existing clients or type a client name..."
+                                            className="w-full pl-10 pr-8 py-2"
                                         />
-                                        {selectedClientId && (
-                                            <button 
+                                        {(selectedClientId || searchQuery) && (
+                                            <button
+                                                type="button"
                                                 onClick={() => {
                                                     setSelectedClientId('');
+                                                    setClientName('');
+                                                    setClientEmail('');
                                                     setSearchQuery('');
                                                 }}
                                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
+                                                title="Clear client"
                                             >
                                                 <X size={14} />
                                             </button>
@@ -572,45 +821,37 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                 exit={{ opacity: 0, y: -10 }}
                                                 className={`absolute z-[100] mt-2 max-h-60 w-full overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-700 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} shadow-none`}
                                             >
-                                                {clients.filter(c => 
-                                                    !searchQuery || 
-                                                    c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                                    c.email?.toLowerCase().includes(searchQuery.toLowerCase())
-                                                ).length > 0 ? (
-                                                    clients
-                                                        .filter(c => 
-                                                            !searchQuery || 
-                                                            c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                                            c.email?.toLowerCase().includes(searchQuery.toLowerCase())
-                                                        )
-                                                        .map(c => (
-                                                            <button
-                                                                key={c.id}
-                                                                onClick={() => {
-                                                                    setSelectedClientId(c.id);
-                                                                    setShowContactDropdown(false);
-                                                                    setSearchQuery('');
-                                                                }}
-                                                                className="w-full text-left p-3 rounded-lg hover:bg-[var(--ws-hover)] flex items-center gap-3 transition-colors group"
-                                                            >
-                                                                <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center border border-teal-500/20 group-hover:bg-teal-500/20 transition-all">
-                                                                    <span className="text-teal-400 type-caption font-black">{c.name?.charAt(0).toUpperCase()}</span>
-                                                                </div>
-                                                                <div className="flex flex-col">
-                                                                    <span className="type-ui font-bold text-[var(--ws-text-secondary)]">{c.name}</span>
-                                                                    <span className="type-caption text-[var(--ws-text-muted)] font-medium uppercase tracking-tight">{c.email}</span>
-                                                                </div>
-                                                            </button>
-                                                        ))
-                                                ) : (
-                                                    <div className="p-4 text-center">
-                                                        <p className="type-card-description text-[var(--ws-text-muted)] font-medium italic">No matches found.</p>
-                                                        <button 
-                                                            onClick={onClose} // Redirect to clients tab or just keep it simple
-                                                            className="mt-2 type-caption font-black uppercase tracking-widest text-teal-400 hover:text-[var(--brand-blue-300)] transition-all border border-teal-500/30 px-3 py-1.5 rounded-md hover:bg-teal-500/10"
+                                                {filteredClients.length > 0 ? (
+                                                    filteredClients.map((c, idx) => (
+                                                        <button
+                                                            key={c.id}
+                                                            type="button"
+                                                            onClick={() => handleSelectClient(c)}
+                                                            className={`w-full text-left p-2.5 rounded-lg flex items-center gap-3 transition-colors group ${
+                                                                idx === highlightedClientIndex || c.id === selectedClientId
+                                                                    ? 'bg-teal-500/15 border border-teal-500/30'
+                                                                    : 'hover:bg-[var(--ws-hover)]'
+                                                            }`}
                                                         >
-                                                            Add New Client
+                                                            <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center border border-teal-500/20 shrink-0">
+                                                                <span className="text-teal-400 type-caption font-black">{c.name?.charAt(0)?.toUpperCase() || 'C'}</span>
+                                                            </div>
+                                                            <div className="flex flex-col min-w-0 flex-1">
+                                                                <span className="type-ui font-bold text-[var(--ws-text-primary)] truncate">{c.name}</span>
+                                                                <span className="type-caption text-[var(--ws-text-muted)] truncate">
+                                                                    {c.email || 'No email on file'}
+                                                                </span>
+                                                            </div>
+                                                            {c.id === selectedClientId && (
+                                                                <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
+                                                            )}
                                                         </button>
+                                                    ))
+                                                ) : (
+                                                    <div className="p-3 text-center">
+                                                        <p className="type-card-description text-[var(--ws-text-muted)]">
+                                                            Using custom client: <span className="text-[var(--ws-text-primary)] font-semibold">{searchQuery}</span>
+                                                        </p>
                                                     </div>
                                                 )}
                                             </motion.div>
@@ -618,6 +859,39 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     </AnimatePresence>
                                 </div>
 
+                                <div>
+                                    <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
+                                        Recipient Email(s) *
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted)] pointer-events-none">
+                                            <Mail size={16} />
+                                        </div>
+                                        <AlphaCloneInput
+                                            type="text"
+                                            value={clientEmail}
+                                            onChange={(e) => setClientEmail(e.target.value)}
+                                            placeholder="client@company.com (comma-separated for multiple)"
+                                            className="w-full pl-10 pr-3 py-2"
+                                        />
+                                    </div>
+                                    {selectedClientId && !clientEmail.trim() && (
+                                        <p className="type-caption text-amber-400 mt-1 flex items-center gap-1">
+                                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                            Selected client has no email on file — enter a recipient email above.
+                                        </p>
+                                    )}
+                                    {clientEmail.trim() && !areAllEmailsValid(clientEmail) && (
+                                        <p className="type-caption text-red-400 mt-1 flex items-center gap-1">
+                                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                            Enter valid email address(es), separated by commas.
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Project and Due Date */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Project (Optional)</label>
                                     <AlphaCloneSelect
@@ -633,17 +907,86 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                         ))}
                                     </AlphaCloneSelect>
                                 </div>
+
+                                <div>
+                                    <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Due Date *</label>
+                                    <AlphaCloneInput
+                                        type="date"
+                                        value={dueDate}
+                                        onChange={(e) => setDueDate(e.target.value)}
+                                        className="w-full px-3 py-2"
+                                    />
+                                </div>
                             </div>
 
-                            {/* Due Date */}
-                            <div>
-                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Due Date *</label>
-                                <AlphaCloneInput
-                                    type="date"
-                                    value={dueDate}
-                                    onChange={(e) => setDueDate(e.target.value)}
-                                    className="w-full px-3 py-2"
-                                />
+                            {/* Attachments Section */}
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4`}>
+                                <div className="flex items-center justify-between mb-3">
+                                    <div>
+                                        <h3 className="text-[var(--ws-text-primary)] font-bold type-ui flex items-center gap-2">
+                                            <Paperclip className="w-4 h-4 text-teal-400" />
+                                            Invoice Attachments
+                                        </h3>
+                                        <p className="type-caption text-[var(--ws-text-muted)] mt-0.5">
+                                            The formatted Invoice PDF is always attached automatically. Add supporting documents if needed (max 10 MB each).
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <input
+                                            ref={attachmentInputRef}
+                                            type="file"
+                                            multiple
+                                            accept=".pdf,.png,.jpg,.jpeg,.webp,.csv,.txt,.doc,.docx,.xls,.xlsx"
+                                            onChange={handleUploadAttachment}
+                                            className="hidden"
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() => attachmentInputRef.current?.click()}
+                                            disabled={isUploadingAttachment}
+                                            className="flex items-center gap-2 text-xs py-1.5 px-3"
+                                        >
+                                            <Upload className="w-3.5 h-3.5" />
+                                            {isUploadingAttachment ? 'Uploading...' : 'Add Attachment'}
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-teal-500/10 border border-teal-500/20">
+                                        <div className="flex items-center gap-2 text-xs text-teal-300 font-medium">
+                                            <FileText className="w-4 h-4 text-teal-400 shrink-0" />
+                                            <span>Invoice PDF (Generated automatically on send)</span>
+                                        </div>
+                                        <span className="type-caption text-teal-400 font-semibold uppercase">Auto-attached</span>
+                                    </div>
+
+                                    {attachments.map((att) => (
+                                        <div
+                                            key={att.storagePath}
+                                            className="flex items-center justify-between px-3 py-2 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)]"
+                                        >
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <Paperclip className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" />
+                                                <span className="type-ui text-[var(--ws-text-primary)] truncate">{att.name}</span>
+                                                {att.size ? (
+                                                    <span className="type-caption text-[var(--ws-text-muted)] shrink-0">
+                                                        ({(att.size / 1024).toFixed(1)} KB)
+                                                    </span>
+                                                ) : null}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveAttachment(att)}
+                                                className="text-red-400 hover:text-red-300 p-1"
+                                                title="Remove attachment"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
                             {/* Payment Method */}
@@ -998,7 +1341,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 <div>
                                     <h3 className="text-teal-400 font-bold type-ui">Invoice Preview</h3>
                                     <p className="text-[var(--ws-text-muted)] type-card-description mt-1">
-                                        Review your invoice details before creating it.
+                                        Review your invoice details, recipient email, and attachments before saving or sending.
                                     </p>
                                 </div>
                             </div>
@@ -1016,11 +1359,11 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-6 mb-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                     <div>
                                         <h3 className="font-bold mb-2">Bill To:</h3>
-                                        <p>{selectedClient?.name || 'Client Name'}</p>
-                                        <p className="text-[var(--ws-text-muted)]">{selectedClient?.email || 'client@example.com'}</p>
+                                        <p>{effectiveClientName || 'Client Name'}</p>
+                                        <p className="text-[var(--ws-text-muted)]">{clientEmail || selectedClient?.email || 'No email specified'}</p>
                                     </div>
                                     <div>
                                         <h3 className="font-bold mb-2">Project:</h3>
@@ -1101,23 +1444,28 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 )}
                             </div>
 
-                            {/* Status Summary */}
+                            {/* Delivery & Attachments Summary */}
                             <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4`}>
-                                <h4 className="text-[var(--ws-text-primary)] font-bold mb-2">Invoice Status</h4>
-                                <div className="space-y-1 type-ui text-[var(--ws-text-secondary)]">
+                                <h4 className="text-[var(--ws-text-primary)] font-bold mb-2">Delivery & Attachments Summary</h4>
+                                <div className="space-y-2 type-ui text-[var(--ws-text-secondary)]">
                                     <div className="flex justify-between">
-                                        <span>Status:</span>
-                                        <span className="text-yellow-400">
-                                            Saved (Not Sent)
+                                        <span>Recipient Email:</span>
+                                        <span className={areAllEmailsValid(clientEmail) ? "text-teal-400 font-medium" : "text-amber-400"}>
+                                            {clientEmail.trim() || 'No email specified (Draft only)'}
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span>Payment Links:</span>
+                                        <span>Attachments Included:</span>
+                                        <span className="text-[var(--ws-text-primary)]">
+                                            Invoice PDF{attachments.length > 0 ? ` + ${attachments.length} file(s)` : ''}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Public Invoice & Payment Link:</span>
                                         <span className={enablePaymentLinks ? "text-green-400" : "text-red-400"}>
                                             {enablePaymentLinks ? "Enabled" : "Disabled"}
                                         </span>
                                     </div>
-
                                 </div>
                             </div>
                         </div>
@@ -1129,22 +1477,86 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-6 mx-auto">
                                 <CheckCircle className="w-10 h-10 text-green-400" />
                             </div>
-                            <h3 className="text-2xl font-bold text-[var(--ws-text-primary)] mb-2">Invoice Created Successfully!</h3>
-                            <p className="text-[var(--ws-text-muted)] max-w-md mx-auto mb-8">
-                                Your invoice has been saved successfully. You can download the PDF to send it manually to your client.
+                            <h3 className="text-2xl font-bold text-[var(--ws-text-primary)] mb-2">
+                                {sendOutcome?.sent
+                                    ? 'Invoice Sent to Client!'
+                                    : sendOutcome?.status === 'queued'
+                                        ? 'Invoice Queued for Delivery'
+                                        : 'Invoice Saved as Draft'}
+                            </h3>
+                            <p className="text-[var(--ws-text-muted)] max-w-md mx-auto mb-6">
+                                {sendOutcome?.sent
+                                    ? `Invoice #${createdInvoice?.invoiceNumber || ''} was emailed to ${clientEmail} with the PDF${attachments.length > 0 ? ` and ${attachments.length} attachment(s)` : ''}.`
+                                    : sendOutcome?.status === 'queued'
+                                        ? `Invoice #${createdInvoice?.invoiceNumber || ''} is queued for email delivery to ${clientEmail}.`
+                                        : `Invoice #${createdInvoice?.invoiceNumber || ''} has been saved. You can send it via email now or download the PDF.`}
                             </p>
+
+                            {sendOutcome && (
+                                <div className="max-w-md mx-auto rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] p-3 text-left type-caption space-y-1">
+                                    <div className="flex justify-between">
+                                        <span className="text-[var(--ws-text-muted)]">Invoice Status:</span>
+                                        <span className="text-[var(--ws-text-primary)] font-semibold uppercase">
+                                            {sendOutcome.sent ? 'SENT' : 'DRAFT'}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-[var(--ws-text-muted)]">Email Delivery Status:</span>
+                                        <span className={sendOutcome.sent ? 'text-teal-400 font-semibold uppercase' : 'text-amber-400 font-semibold uppercase'}>
+                                            {sendOutcome.status || (sendOutcome.sent ? 'PROVIDER_ACCEPTED' : 'NOT_SENT')}
+                                        </span>
+                                    </div>
+                                    {sendOutcome.provider && (
+                                        <div className="flex justify-between">
+                                            <span className="text-[var(--ws-text-muted)]">Email Provider:</span>
+                                            <span className="text-[var(--ws-text-secondary)]">{sendOutcome.provider}</span>
+                                        </div>
+                                    )}
+                                    {sendOutcome.emailId && (
+                                        <div className="flex justify-between">
+                                            <span className="text-[var(--ws-text-muted)]">Provider Message ID:</span>
+                                            <span className="text-[var(--ws-text-secondary)] truncate max-w-[200px]">{sendOutcome.emailId}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Send Now if saved as draft */}
+                            {!sendOutcome?.sent && createdInvoiceId && (
+                                <div className="w-full max-w-sm mx-auto">
+                                    <Button
+                                        onClick={handleSendCreatedInvoice}
+                                        disabled={isSending || !areAllEmailsValid(clientEmail)}
+                                        className="w-full py-3 bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] font-bold rounded-lg flex items-center justify-center gap-2"
+                                    >
+                                        {isSending ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                Sending Invoice Email...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Send className="w-4 h-4" />
+                                                Send Invoice via Email ({clientEmail || 'Add email first'})
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            )}
 
                             {/* Payment Link - Only show if enabled */}
                             {enablePaymentLinks && (
                                 <div className="w-full max-w-sm mb-6 mx-auto">
                                     <button
                                         onClick={handleCopyPaymentLink}
-                                        className="w-full py-3 bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] font-bold rounded-lg flex items-center justify-center gap-2 transition-all"
+                                        className="w-full py-3 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] font-bold rounded-lg flex items-center justify-center gap-2 transition-all"
                                     >
                                         <Copy className="w-4 h-4" />
-                                        Copy & Share Invoice Link
+                                        Copy Public Invoice & Payment Link
                                     </button>
-                                    <p className="type-card-description text-[var(--ws-text-muted)] text-center mt-2">Clients can view the invoice and pay via bank or mobile money</p>
+                                    <p className="type-card-description text-[var(--ws-text-muted)] text-center mt-2">
+                                        Clients can view the invoice and pay without a portal login
+                                    </p>
                                 </div>
                             )}
 
@@ -1157,26 +1569,16 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     Done
                                 </Button>
                             </div>
-
-                            {/* Next Steps */}
-                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 text-left`}>
-                                <h4 className="text-[var(--ws-text-primary)] font-bold mb-2">Next Steps</h4>
-                                <ul className="text-[var(--ws-text-secondary)] type-ui space-y-1">
-                                    <li>• Download the PDF and send it to your client</li>
-                                    <li>• Copy the payment link if enabled and send it manually</li>
-                                    <li>• You can mark it as paid later when payment is received</li>
-                                </ul>
-                            </div>
                         </div>
                     )}
                 </div>
 
                 {/* Footer — always visible */}
-                <div className="flex shrink-0 items-center justify-between border-t border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 sm:p-6">
+                <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 sm:p-6">
                     <div className="type-ui text-[var(--ws-text-muted)]">
                         Total: <span className="text-[var(--ws-text-primary)] font-bold">${calculateTotal().toFixed(2)}</span>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-2 sm:gap-3">
                         {step === 'edit' && (
                             <>
                                 <Button
@@ -1186,42 +1588,79 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     Cancel
                                 </Button>
                                 <Button
+                                    variant="outline"
                                     onClick={() => setStep('preview')}
-                                    disabled={!selectedClientId || !dueDate || calculateTotal() <= 0}
+                                    disabled={!canProceedFromEdit}
                                     className="flex items-center gap-2"
                                 >
                                     <Eye className="w-4 h-4" />
-                                    Preview Invoice
+                                    Preview
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => handleSubmit(false)}
+                                    disabled={isSubmitting || !canProceedFromEdit}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Save className="w-4 h-4" />
+                                    Save Draft
+                                </Button>
+                                <Button
+                                    onClick={() => handleSubmit(true)}
+                                    disabled={isSubmitting || !canSendDirectly}
+                                    className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white"
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Send className="w-4 h-4" />
+                                            Send Invoice
+                                        </>
+                                    )}
                                 </Button>
                             </>
                         )}
                         {step === 'preview' && (
-                            <Button
-                                variant="outline"
-                                onClick={() => setStep('edit')}
-                            >
-                                <Edit3 className="w-4 h-4 mr-2" />
-                                Edit
-                            </Button>
-                        )}
-                        {step === 'preview' && (
-                            <Button
-                                onClick={handleSubmit}
-                                disabled={isSubmitting || !selectedClientId || !dueDate || calculateTotal() <= 0}
-                                className="flex items-center gap-2"
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                                        Creating...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save className="w-4 h-4" />
-                                        Save Invoice
-                                    </>
-                                )}
-                            </Button>
+                            <>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setStep('edit')}
+                                    disabled={isSubmitting}
+                                >
+                                    <Edit3 className="w-4 h-4 mr-2" />
+                                    Back to Edit
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => handleSubmit(false)}
+                                    disabled={isSubmitting || !canProceedFromEdit}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Save className="w-4 h-4" />
+                                    Save Draft
+                                </Button>
+                                <Button
+                                    onClick={() => handleSubmit(true)}
+                                    disabled={isSubmitting || !canSendDirectly}
+                                    className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white"
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Sending...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Send className="w-4 h-4" />
+                                            Send Invoice Now
+                                        </>
+                                    )}
+                                </Button>
+                            </>
                         )}
                         {step === 'success' && (
                             <Button onClick={handleClose}>

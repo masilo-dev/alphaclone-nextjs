@@ -300,17 +300,53 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         }
     };
 
+    const getInvoiceClientDisplayName = (inv: BusinessInvoice): string => {
+        if (inv.clientId && clientMap[inv.clientId]?.name) {
+            return clientMap[inv.clientId].name;
+        }
+        if (inv.clientName?.trim()) {
+            return inv.clientName.trim();
+        }
+        const metadata = businessInvoiceService.parseMetadata(inv.notes);
+        if (metadata?.clientName && String(metadata.clientName).trim()) {
+            return String(metadata.clientName).trim();
+        }
+        return 'Walk-in Client';
+    };
+
     const resolveInvoiceRecipient = (inv: BusinessInvoice): EmailRecipient | null => {
         const metadata = businessInvoiceService.parseMetadata(inv.notes);
         const clientInfo = inv.clientId ? clientMap[inv.clientId] : null;
-        const email = clientInfo?.email || metadata?.clientEmail || metadata?.email;
+        const email =
+            inv.clientEmail?.trim() ||
+            clientInfo?.email ||
+            metadata?.clientEmail ||
+            metadata?.email;
         if (!email) return null;
         return {
             id: inv.clientId,
-            name: clientInfo?.name || metadata?.clientName || 'Client',
+            name: getInvoiceClientDisplayName(inv),
             email,
             description: `Invoice ${inv.invoiceNumber} — ${inv.total.toFixed(2)} due ${inv.dueDate}`,
         };
+    };
+
+    const getDeliveryStatusBadge = (inv: BusinessInvoice): { label: string; style: string } | null => {
+        const canonical = String(inv.canonicalDeliveryStatus || '').toLowerCase();
+        const raw = String(inv.deliveryStatus || '').toUpperCase();
+        if (canonical === 'delivered' || raw === 'DELIVERED') {
+            return { label: 'Email: Delivered', style: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' };
+        }
+        if (canonical === 'provider_accepted' || (inv.status !== 'draft' && raw === 'PENDING')) {
+            return { label: 'Email: Accepted', style: 'border-teal-500/30 bg-teal-500/10 text-teal-300' };
+        }
+        if (canonical === 'processing' || canonical === 'queued') {
+            return { label: `Email: ${canonical}`, style: 'border-amber-500/30 bg-amber-500/10 text-amber-300' };
+        }
+        if (canonical === 'failed' || raw === 'FAILED' || raw === 'BOUNCED') {
+            return { label: 'Email: Failed', style: 'border-rose-500/30 bg-rose-500/10 text-rose-300' };
+        }
+        return null;
     };
 
     const openInvoiceCompose = (inv: BusinessInvoice) => {
@@ -860,7 +896,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                         <TableCell>
                                             <div className="min-w-0">
                                                 <p className="font-semibold type-card-description text-[var(--ws-text-primary)] truncate">
-                                                    {inv.clientId && clientMap[inv.clientId]?.name ? clientMap[inv.clientId].name : 'Walk-in Client'}
+                                                    {getInvoiceClientDisplayName(inv)}
                                                 </p>
                                                 {inv.projectId && (
                                                     <span className="inline-flex items-center gap-1 type-ui text-[var(--ws-text-muted)]">
@@ -876,9 +912,19 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             </span>
                                         </TableCell>
                                         <TableCell>
-                                            <span className={`type-caption font-bold uppercase px-2 py-0.5 rounded-full border whitespace-nowrap ${getStatusStyles(inv.status)}`}>
-                                                {inv.status}
-                                            </span>
+                                            <div className="flex flex-wrap items-center gap-1.5">
+                                                <span className={`type-caption font-bold uppercase px-2 py-0.5 rounded-full border whitespace-nowrap ${getStatusStyles(inv.status)}`}>
+                                                    {inv.status}
+                                                </span>
+                                                {(() => {
+                                                    const deliveryBadge = getDeliveryStatusBadge(inv);
+                                                    return deliveryBadge ? (
+                                                        <span className={`type-caption font-semibold uppercase px-2 py-0.5 rounded-full border whitespace-nowrap ${deliveryBadge.style}`}>
+                                                            {deliveryBadge.label}
+                                                        </span>
+                                                    ) : null;
+                                                })()}
+                                            </div>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <p className="font-mono font-bold type-card-description text-[var(--ws-text-primary)]">
@@ -952,7 +998,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     <div className={`p-2 rounded-full bg-[var(--ws-hover)] ${getStatusStyles(inv.status)}`}><FileText size={14} /></div>
                                     <div className="min-w-0">
                                         <p className="type-card-description font-black text-[var(--ws-text-primary)]">{inv.invoiceNumber}</p>
-                                        <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-caps">{inv.clientId && clientMap[inv.clientId]?.name ? clientMap[inv.clientId].name : 'Walk-in Client'}</p>
+                                        <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-caps">{getInvoiceClientDisplayName(inv)}</p>
                                         {inv.projectId ? (
                                             <button
                                                 type="button"
@@ -973,7 +1019,17 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                         )}
                                     </div>
                                 </div>
-                                <span className={`type-caption font-black uppercase px-2 py-0.5 rounded-full border ${getStatusStyles(inv.status)}`}>{inv.status}</span>
+                                <div className="flex flex-col items-end gap-1">
+                                    <span className={`type-caption font-black uppercase px-2 py-0.5 rounded-full border ${getStatusStyles(inv.status)}`}>{inv.status}</span>
+                                    {(() => {
+                                        const deliveryBadge = getDeliveryStatusBadge(inv);
+                                        return deliveryBadge ? (
+                                            <span className={`type-caption font-semibold uppercase px-2 py-0.5 rounded-full border ${deliveryBadge.style}`}>
+                                                {deliveryBadge.label}
+                                            </span>
+                                        ) : null;
+                                    })()}
+                                </div>
                             </div>
                             <div className="flex justify-between items-end">
                                 <div>
@@ -1024,7 +1080,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             {selectedInvoiceForOptions.invoiceNumber}
                                         </h3>
                                         <p className="type-card-description text-[var(--ws-text-secondary)] mt-1">
-                                            Client: {selectedInvoiceForOptions.clientId && clientMap[selectedInvoiceForOptions.clientId]?.name ? clientMap[selectedInvoiceForOptions.clientId].name : 'Walk-in Client'}
+                                            Client: {getInvoiceClientDisplayName(selectedInvoiceForOptions)}
                                         </p>
                                     </div>
                                     <button onClick={() => setIsOptionsOpen(false)} className="h-8 w-8 p-0 rounded-full bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] transition-colors flex items-center justify-center">
@@ -1049,11 +1105,19 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             </div>
                                         </div>
                                     )}
-                                    <div className="mt-3 flex justify-center">
+                                    <div className="mt-3 flex flex-wrap justify-center gap-2">
                                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full type-caption font-bold uppercase tracking-wider border ${getStatusStyles(selectedInvoiceForOptions.status)}`}>
                                             <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
                                             {selectedInvoiceForOptions.status}
                                         </span>
+                                        {(() => {
+                                            const deliveryBadge = getDeliveryStatusBadge(selectedInvoiceForOptions);
+                                            return deliveryBadge ? (
+                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full type-caption font-semibold uppercase tracking-wider border ${deliveryBadge.style}`}>
+                                                    {deliveryBadge.label}
+                                                </span>
+                                            ) : null;
+                                        })()}
                                     </div>
                                     <p className="mt-3 type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">
                                         Auto follow-ups: {selectedInvoiceForOptions.autoFollowupEnabled === false ? 'Off' : 'On'}
@@ -1229,27 +1293,40 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     <button
                                         onClick={async () => {
                                             if (!selectedInvoiceForOptions) return;
+                                            const invToSend = selectedInvoiceForOptions;
                                             setIsOptionsOpen(false);
-                                            const toastId = toast.loading('Starting invoice lifecycle...');
+                                            const toastId = toast.loading('Sending invoice email to client...');
                                             try {
                                                 if (!currentTenant?.id) throw new Error('Active workspace required');
                                                 const { startInvoiceLifecycleFromDashboard } = await import(
                                                     '@/lib/invoices/startInvoiceLifecycleFromDashboard'
                                                 );
+                                                const isResend = ['sent', 'overdue', 'partially_paid'].includes(
+                                                    String(invToSend.status || '').toLowerCase()
+                                                );
+                                                const recipient = resolveInvoiceRecipient(invToSend);
                                                 const lifecycle = await startInvoiceLifecycleFromDashboard({
                                                     tenantId: currentTenant.id,
-                                                    invoiceId: selectedInvoiceForOptions.id,
+                                                    invoiceId: invToSend.id,
+                                                    recipients: recipient?.email ? [recipient.email] : undefined,
+                                                    attachments: invToSend.attachments,
+                                                    resend: isResend,
                                                 });
+                                                if (!lifecycle.ok) {
+                                                    toast.error(lifecycle.message, { id: toastId });
+                                                    return;
+                                                }
                                                 toast.success(lifecycle.message, { id: toastId });
+                                                void loadInvoices(true);
                                             } catch (err: any) {
-                                                toast.error(`Failed to start lifecycle: ${err.message}`, { id: toastId });
+                                                toast.error(`Failed to send invoice: ${err.message}`, { id: toastId });
                                             }
                                         }}
                                         className="w-full flex items-center justify-between p-3.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl transition-all text-left type-ui text-[var(--ws-text-primary)]"
                                     >
                                         <span className="flex items-center gap-2.5">
                                             <Send className="w-4 h-4 text-[var(--info-text)]" />
-                                            <span>Email Invoice to Client</span>
+                                            <span>{['sent', 'overdue', 'partially_paid'].includes(String(selectedInvoiceForOptions.status || '').toLowerCase()) ? 'Resend Invoice Email to Client' : 'Email Invoice to Client'}</span>
                                         </span>
                                         <span className="type-ui text-[var(--ws-text-muted)] font-mono">EMAIL DISPATCH</span>
                                     </button>

@@ -502,7 +502,7 @@ export class ZohoMailService extends ZohoService {
                     const fallbackResponse = await this.callZohoAPI(`${base}/messages/attachments?fileName=${encodeURIComponent(filename)}&isInline=false`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': contentType,
+                            'Content-Type': 'application/octet-stream',
                             Accept: 'application/json',
                         },
                         body: new Uint8Array(buffer),

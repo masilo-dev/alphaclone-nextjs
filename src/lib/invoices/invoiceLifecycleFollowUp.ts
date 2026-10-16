@@ -67,8 +67,9 @@ async function scheduleNextPhase(params: {
     tenantId: params.tenantId,
     runId: params.runId || null,
     executeAt: next.executeAt.toISOString(),
-    timerType: 'invoice.lifecycle',
+    timerType: 'schedule',
     payload: {
+      kind: 'invoice.lifecycle',
       phase: next.phase,
       invoice_id: params.invoiceId,
       tenant_id: params.tenantId,
@@ -99,8 +100,9 @@ export async function scheduleInvoiceLifecycleFollowUp(params: {
     tenantId: params.tenantId,
     runId: params.runId || null,
     executeAt: initial.executeAt.toISOString(),
-    timerType: 'invoice.lifecycle',
+    timerType: 'schedule',
     payload: {
+      kind: 'invoice.lifecycle',
       phase: initial.phase,
       invoice_id: params.invoiceId,
       tenant_id: params.tenantId,

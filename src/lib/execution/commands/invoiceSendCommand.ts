@@ -1,5 +1,6 @@
 import type { PolicySource } from '@/lib/ai/ToolPolicyGate';
 import { queueInvoiceSend, type QueueInvoiceSendResult } from '@/lib/invoices/durableInvoiceRouter';
+import type { InvoiceAttachmentItem } from '@/lib/invoices/invoiceLifecycleSteps';
 import { executeDomainExternalWrite } from '@/lib/execution/domainExternalWrite';
 import { guardDomainCapability } from '@/lib/execution/domainCapabilityGuard';
 import { invoiceSendIdempotencyKey } from '@/lib/execution/domainIdempotencyKeys';
@@ -12,6 +13,8 @@ export type InvoiceSendCommandParams = {
   recipients: string[];
   subject?: string;
   message?: string;
+  attachments?: InvoiceAttachmentItem[];
+  attemptId?: string;
   idempotencyKey?: string;
   executionSource: PolicySource | 'api' | 'worker' | 'cron';
   skipPolicyEvaluation?: boolean;
@@ -28,6 +31,7 @@ export async function executeInvoiceSendCommand(
       tenantId: params.tenantId,
       invoiceId: params.invoiceId,
       recipients: params.recipients,
+      attemptId: params.attemptId,
     });
 
   const guard = await guardDomainCapability({
@@ -72,6 +76,7 @@ export async function executeInvoiceSendCommand(
     payload: {
       invoiceId: params.invoiceId,
       recipients: params.recipients,
+      attachmentsCount: params.attachments?.length || 0,
     },
     execute: async () =>
       queueInvoiceSend({
@@ -81,16 +86,19 @@ export async function executeInvoiceSendCommand(
         recipients: params.recipients,
         subject: params.subject,
         message: params.message,
+        attachments: params.attachments,
         idempotencyKey,
       }),
-    isSuccess: (r) => r.status === 'queued',
+    isSuccess: (r) => r.status === 'sent' || r.status === 'queued',
     buildReceipt: (r) => ({
       action_id: '',
-      status: 'queued',
+      status: r.status === 'sent' ? 'succeeded' : 'queued',
       timestamp: new Date().toISOString(),
       entity_type: 'invoice',
       entity_id: params.invoiceId,
-      provider_reference: r.run_id,
+      provider: r.provider || undefined,
+      provider_reference: r.email_id || r.run_id,
+      live_url: r.action_url || undefined,
     }),
   });
 

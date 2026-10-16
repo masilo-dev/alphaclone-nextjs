@@ -17,8 +17,9 @@ export async function scheduleSocialEngagementCheck(params: {
     tenantId: params.tenantId,
     runId: params.runId || null,
     executeAt: new Date(Date.now() + TWENTY_FOUR_HOURS_MS).toISOString(),
-    timerType: 'social.engagement_check',
+    timerType: 'schedule',
     payload: {
+      kind: 'social.engagement_check',
       post_id: params.postId,
       tenant_id: params.tenantId,
     },

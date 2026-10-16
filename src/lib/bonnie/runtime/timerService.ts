@@ -63,10 +63,20 @@ export async function fireDueTimers(limit = 50): Promise<{ fired: number }> {
     if (!claim.data) continue;
 
     try {
-      if (timer.timer_type === 'invoice.lifecycle' && !timer.task_id) {
+      const payload = (timer.payload || {}) as Record<string, unknown>;
+      const isInvoiceLifecycle =
+        timer.timer_type === 'invoice.lifecycle' ||
+        (timer.timer_type === 'schedule' &&
+          (payload.kind === 'invoice.lifecycle' || payload.source === 'invoice.lifecycle'));
+      const isSocialEngagement =
+        timer.timer_type === 'social.engagement_check' ||
+        (timer.timer_type === 'schedule' &&
+          (payload.kind === 'social.engagement_check' || payload.source === 'social.engagement_check'));
+
+      if (isInvoiceLifecycle && !timer.task_id) {
         const { handleInvoiceLifecycleTimer } = await import('@/lib/invoices/invoiceLifecycleFollowUp');
         await handleInvoiceLifecycleTimer(timer);
-      } else if (timer.timer_type === 'social.engagement_check' && !timer.task_id) {
+      } else if (isSocialEngagement && !timer.task_id) {
         const { handleSocialEngagementTimer } = await import('@/lib/social/socialEngagementFollowUp');
         await handleSocialEngagementTimer(timer);
       } else if (timer.task_id) {

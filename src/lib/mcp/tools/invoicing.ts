@@ -301,10 +301,20 @@ registerTool('invoicing', {
 
     if (error || !invoice) throw new Error('Invoice not found');
 
-    const toEmail =
+    const blockedStatuses = ['paid', 'void', 'cancelled'];
+    if (blockedStatuses.includes(String(invoice.status || '').toLowerCase())) {
+      throw new Error(`Invoices in '${invoice.status}' status cannot be sent.`);
+    }
+
+    const meta = ((invoice as any).metadata || {}) as Record<string, unknown>;
+    const toEmail = String(
       args.recipient_email ||
-      (invoice as any).client?.email ||
-      (invoice as any).client_email;
+        (invoice as any).client_email ||
+        (invoice as any).client?.email ||
+        meta.clientEmail ||
+        meta.client_email ||
+        ''
+    ).trim();
     if (!toEmail) throw new Error('Recipient email is required');
 
     const queued = await queueInvoiceSend({
@@ -315,20 +325,27 @@ registerTool('invoicing', {
       idempotencyKey: args.idempotency_key,
     });
 
+    const isSent = queued.status === 'sent' || queued.canonical_delivery_status === 'provider_accepted';
+
     return {
-      status: 'queued',
-      sent: false,
-      queued: true,
-      provider_accepted: false,
+      status: queued.status,
+      canonical_delivery_status: queued.canonical_delivery_status,
+      sent: isSent,
+      queued: !isSent,
+      provider_accepted: isSent,
+      provider: queued.provider || null,
+      email_id: queued.email_id || null,
       durable: queued.durable,
       sent_to: toEmail,
+      sent_at: isSent ? new Date().toISOString() : null,
       queued_at: new Date().toISOString(),
       run_id: queued.run_id,
       task_id: queued.task_id,
       poll_tool: queued.poll_tool,
       opened: Boolean(invoice.viewed_at),
       opened_at: invoice.viewed_at || null,
-      payment_link: invoice.payment_link || null,
+      payment_link: queued.action_url || invoice.payment_link || null,
+      storage_path: queued.storage_path || null,
     };
   },
 });
