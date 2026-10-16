@@ -1001,13 +1001,436 @@
       "function": "sync_ticket_waiting_responsibility",
       "securityDefiner": false,
       "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260729130000_guard_convert_lead_to_contact_membership.sql",
+      "function": "convert_lead_to_contact",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260801114000_contract_audit_tenant_hardening.sql",
+      "function": "enforce_contract_audit_tenant",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260817_autonomous_os_schema.sql",
+      "function": "claim_next_durable_job",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260823120000_super_admin_hardening.sql",
+      "function": "is_super_admin",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260823120000_super_admin_hardening.sql",
+      "function": "guard_profile_self_promotion",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260823120000_super_admin_hardening.sql",
+      "function": "auto_assign_super_admin_on_insert",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260824000000_alphaclone_pricing_and_quotas.sql",
+      "function": "consume_daily_resource_quota",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260824000000_alphaclone_pricing_and_quotas.sql",
+      "function": "release_daily_resource_quota",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260824210000_universal_14_day_trial.sql",
+      "function": "create_tenant_idempotent",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260825000000_pricing_system_supplement.sql",
+      "function": "get_tenant_billing_summary",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260826120000_email_quota_metrics_and_audit.sql",
+      "function": "consume_daily_resource_quota",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260826120000_email_quota_metrics_and_audit.sql",
+      "function": "release_daily_resource_quota",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260826140000_unified_plan_entitlements.sql",
+      "function": "consume_daily_resource_quota",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260826140000_unified_plan_entitlements.sql",
+      "function": "release_daily_resource_quota",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260826210000_usage_metering_architecture.sql",
+      "function": "resolve_tenant_quota_limit",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260826210000_usage_metering_architecture.sql",
+      "function": "check_daily_resource_quota",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260826210000_usage_metering_architecture.sql",
+      "function": "record_metered_usage_idempotent",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260826210000_usage_metering_architecture.sql",
+      "function": "consume_daily_resource_quota",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260828160000_invoice_payment_ar_journal.sql",
+      "function": "record_business_invoice_payment",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260828170000_invoice_issue_ar_journal.sql",
+      "function": "post_business_invoice_issue_journal",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260828180000_journal_fingerprint_extensions.sql",
+      "function": "generate_record_fingerprint",
+      "securityDefiner": false,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260901120000_bonnie_durable_runtime_supabase_cron.sql",
+      "function": "invoke_app_cron",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260901123300_fix_invoke_app_cron_get.sql",
+      "function": "invoke_app_cron",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260902120000_extend_trial_30_days_unlimited.sql",
+      "function": "create_tenant_idempotent",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260902140000_production_stabilization_schema.sql",
+      "function": "record_metered_usage_idempotent",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260909120000_notification_digest_engine.sql",
+      "function": "check_internal_notification_budget",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260909160000_lead_qualification_intelligence.sql",
+      "function": "get_top_lead_opportunities",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260911062116_secure_materialized_view_access.sql",
+      "function": "get_general_ledger_entries",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260911083000_task_dependency_integrity.sql",
+      "function": "enforce_task_dependency_integrity",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260911090000_project_template_foundation.sql",
+      "function": "seed_default_project_templates",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260911090000_project_template_foundation.sql",
+      "function": "seed_project_templates_after_tenant_insert",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260911100000_project_client_approvals.sql",
+      "function": "project_client_approval_history_append_only",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260911100000_project_client_approvals.sql",
+      "function": "project_client_approval_history_from_status",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260911103000_apply_project_template.sql",
+      "function": "apply_project_template",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260912114314_email_multitenant_execution_hardening_v4.sql",
+      "function": "assert_email_execution_schema_contract",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260912160000_media_assets_canonical_schema.sql",
+      "function": "assert_media_assets_schema",
+      "securityDefiner": false,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260912180500_email_legacy_read_model_bridge.sql",
+      "function": "bridge_canonical_outbound_email_recipient",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260914110000_canonical_payment_projection_and_collection_state.sql",
+      "function": "prevent_payment_from_forging_delivery_state",
+      "securityDefiner": false,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260914110000_canonical_payment_projection_and_collection_state.sql",
+      "function": "project_legacy_invoice_payment_to_canonical",
+      "securityDefiner": false,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260914120000_lead_validation_and_evidence_hardening.sql",
+      "function": "prevent_lead_evidence_mutation",
+      "securityDefiner": false,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260924110000_database_performance_and_reliability_repair.sql",
+      "function": "is_super_admin",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260924130000_optimize_tenant_lookup_and_worker_leases.sql",
+      "function": "get_user_tenant_ids",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260926093000_reapply_convert_lead_to_contact_fix.sql",
+      "function": "convert_lead_to_contact",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261006140000_stripe_invoice_attempt_reservations.sql",
+      "function": "claim_stripe_invoice_attempt",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261006140000_stripe_invoice_attempt_reservations.sql",
+      "function": "release_stripe_invoice_attempt",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261006141000_stripe_invoice_refund_reconciliation.sql",
+      "function": "reconcile_stripe_invoice_refund",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261006142000_stripe_refund_cumulative_tax_rounding.sql",
+      "function": "reconcile_stripe_invoice_refund",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261006144000_stripe_payment_accounting_preflight.sql",
+      "function": "claim_stripe_invoice_attempt",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261007183254_platform_status_monitoring.sql",
+      "function": "platform_monitor_claim",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261007183254_platform_status_monitoring.sql",
+      "function": "platform_monitor_database_probe",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261007183254_platform_status_monitoring.sql",
+      "function": "platform_monitor_save",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261007183254_platform_status_monitoring.sql",
+      "function": "invoke_platform_monitor",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261008090000_mcp_mailbox_sync.sql",
+      "function": "ingest_mailbox_message",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261008090001_mcp_mailbox_thread_identity.sql",
+      "function": "ingest_mailbox_message",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261010210000_unified_kanban_engine.sql",
+      "function": "enforce_board_transition_logs_append_only",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20261013062931_user_approved_scheduled_actions.sql",
+      "function": "claim_due_scheduled_mcp_actions",
+      "securityDefiner": false,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261014105959_atomic_contract_signing.sql",
+      "function": "record_contract_signature_atomic",
+      "securityDefiner": false,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261014120548_project_lifecycle_consistency.sql",
+      "function": "recalculate_project_lifecycle",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261014120548_project_lifecycle_consistency.sql",
+      "function": "synchronize_project_task",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261014120548_project_lifecycle_consistency.sql",
+      "function": "record_project_task_change",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261014120548_project_lifecycle_consistency.sql",
+      "function": "record_project_lifecycle",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261014120548_project_lifecycle_consistency.sql",
+      "function": "record_project_milestone_change",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261014120548_project_lifecycle_consistency.sql",
+      "function": "create_project_lifecycle",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261014120548_project_lifecycle_consistency.sql",
+      "function": "enqueue_project_notification",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261014120548_project_lifecycle_consistency.sql",
+      "function": "recalculate_after_milestone_change",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261014120548_project_lifecycle_consistency.sql",
+      "function": "record_project_approval_request",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261014120548_project_lifecycle_consistency.sql",
+      "function": "record_project_shared_relationship",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261014120548_project_lifecycle_consistency.sql",
+      "function": "record_project_client_message",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261014120548_project_lifecycle_consistency.sql",
+      "function": "validate_project_activity_tenant",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261014162000_saved_contract_signature_hash_guard.sql",
+      "function": "record_contract_signature_atomic",
+      "securityDefiner": false,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20261015160000_extend_all_trials_45_days.sql",
+      "function": "create_tenant_idempotent",
+      "securityDefiner": true,
+      "explicitSearchPath": true
     }
   ],
   "edge": [
-    "supabase/functions/get-acs-token/index.ts",
-    "supabase/functions/get-teams-token/index.ts",
     "supabase/functions/microsoft-oauth-exchange/index.ts",
-    "supabase/functions/microsoft-token-refresh/index.ts",
     "supabase/functions/workflow-engine/index.ts"
   ]
 }

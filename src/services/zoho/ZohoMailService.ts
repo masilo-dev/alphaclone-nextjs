@@ -499,12 +499,13 @@ export class ZohoMailService extends ZohoService {
                 const is415 = err?.status === 415 || String(err?.message || '').includes('415') || String(err?.message || '').includes('UNSUPPORTED_MEDIA_TYPE');
                 if (is415) {
                     console.warn(`[ZohoMailService] Multipart upload returned 415 for ${filename}; falling back to raw binary endpoint`);
+                    const fallbackHeaders: Record<string, string> = {
+                        'Content-Type': 'application/octet-stream',
+                        Accept: 'application/json',
+                    };
                     const fallbackResponse = await this.callZohoAPI(`${base}/messages/attachments?fileName=${encodeURIComponent(filename)}&isInline=false`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/octet-stream',
-                            Accept: 'application/json',
-                        },
+                        headers: fallbackHeaders,
                         body: new Uint8Array(buffer),
                     });
                     const fbData = Array.isArray(fallbackResponse.data) ? fallbackResponse.data[0] : fallbackResponse.data;

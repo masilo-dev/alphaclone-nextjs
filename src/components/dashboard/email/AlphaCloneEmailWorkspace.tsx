@@ -556,7 +556,7 @@ export default function AlphaCloneEmailWorkspace() {
   };
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] text-[var(--ws-text-primary)] shadow-2xl">
+    <div className="flex h-[calc(100dvh-5.5rem)] min-h-0 w-full flex-col overflow-hidden rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] text-[var(--ws-text-primary)] shadow-2xl">
       
       {/* ------------------------------------------------------------- */}
       {/* TOP HEADER: UNIVERSAL SEARCH & SYSTEM ENGINE CONTROL */}

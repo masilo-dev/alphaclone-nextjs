@@ -28,6 +28,21 @@ import { PlatformKpiGrid, MetricDateRangeSelector, ModuleKpiRichSections } from 
 import { platformKpiFromNumbers } from '@/lib/metrics/metricPresentation';
 import { useMetricDateRange } from '@/hooks/useMetricDateRange';
 import { useDashboardStats, useDashboardRead } from '@/hooks/useDashboardStats';
+import { useOnTabVisible } from '@/lib/sync/tabFocusCoordinator';
+
+function dashboardStatsCacheKey(tenantId: string, period: string): string {
+  return `alphaclone:dashboard-stats:${tenantId}:${period}`;
+}
+
+export function readDashboardStatsCache(tenantId: string | undefined, period: string): Record<string, unknown> | null {
+  if (typeof window === 'undefined' || !tenantId) return null;
+  try {
+    const raw = window.sessionStorage.getItem(dashboardStatsCacheKey(tenantId, period));
+    return raw ? (JSON.parse(raw) as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
 
 function greetingForHour(hour: number): string {
   if (hour < 12) return 'Good morning';
@@ -65,11 +80,23 @@ export function OperatingSystemHome() {
   const { brief } = useBonnieMorningBrief(currentTenant?.id);
   const { preset, setPeriod, comparisonLabel } = useMetricDateRange('last_30_days');
   const { data: overviewRich } = useDashboardStats(currentTenant?.id, '/api/dashboard/overview', preset);
+  const [cachedStats] = useState<Record<string, unknown> | null>(() => readDashboardStatsCache(currentTenant?.id, 'last_30_days'));
+  const [loading, setLoading] = useState(() => !readDashboardStatsCache(currentTenant?.id, 'last_30_days'));
   const dashboard = useDashboardRead<Record<string, unknown>>(currentTenant?.id, '/api/dashboard/stats', preset);
-  const stats = dashboard.data ?? null;
-  const loading = dashboard.isPending;
+  const stats = dashboard.data ?? cachedStats ?? null;
   const loadError = dashboard.error?.message || null;
   const retry = () => dashboard.refetch();
+
+  useEffect(() => {
+    if (!dashboard.isPending || stats) {
+      setLoading(false);
+    }
+  }, [dashboard.isPending, stats]);
+
+  useOnTabVisible(() => {
+    if (!currentTenant?.id || !user?.id) return;
+    void dashboard.refetch();
+  }, { cooldownMs: 10_000, enabled: Boolean(currentTenant?.id && user?.id) });
 
   const firstName =
     user?.name?.split(' ')[0] ||

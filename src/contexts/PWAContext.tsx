@@ -78,6 +78,7 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
 
         installEventOwner(window);
         const synchronizeInstall = () => {
+            if (pwaActive) return;
             const current = installEventOwner(window);
             setDeferredPrompt(current.event);
             setIsInstalled(current.installed || isPWA());
@@ -93,7 +94,10 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
             setIsPwaMode(currentPwa);
             setIsInstalled(currentPwa);
             setAppSurface(getAppSurface(currentPwa));
-            if (currentPwa) setCanInstall(false);
+            if (currentPwa) {
+                setCanInstall(false);
+                setDeferredPrompt(null);
+            }
         };
 
         standaloneQuery.addEventListener?.('change', onDisplayModeChange);

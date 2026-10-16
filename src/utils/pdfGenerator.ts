@@ -849,6 +849,30 @@ export interface ContractPdfData {
     signer_name?: string | null;
     signer_email?: string | null;
     created_at?: string;
+    metadata?: Record<string, unknown>;
+}
+
+/**
+ * Strips HTML tags and decodes common entities for plain text PDF rendering.
+ */
+function sanitizeHtmlForPdf(html: string): string {
+    if (!html) return '';
+    return html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<\/h[1-6]>/gi, '\n\n')
+        .replace(/<li>/gi, '• ')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
 }
 
 export const generateContractPDF = (contract: ContractPdfData, tenant: Tenant) => {
@@ -858,45 +882,129 @@ export const generateContractPDF = (contract: ContractPdfData, tenant: Tenant) =
     const branding = extractTenantBranding(tenant);
     const brandColor = branding.primaryBrandColor || branding.primaryColor || '#0f172a';
 
+    const leftMargin = 20;
+    const rightMargin = 20;
+    const topMargin = 25;
+    const bottomMargin = 25;
+    const usableWidth = pageWidth - leftMargin - rightMargin;
+    const lineHeight = 5.5;
+
+    // --- First Page Header Banner ---
     doc.setFillColor(15, 23, 42);
     doc.rect(0, 0, pageWidth, 34, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text('CONTRACT', pageWidth - 20, 18, { align: 'right' });
+    doc.text('CONTRACT', pageWidth - rightMargin, 18, { align: 'right' });
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
-    doc.text(contract.title || 'Agreement', 20, 20);
+    const headerTitle = contract.title || 'Agreement';
+    doc.text(headerTitle.length > 45 ? `${headerTitle.slice(0, 42)}...` : headerTitle, leftMargin, 20);
 
+    // --- Metadata Block ---
     doc.setTextColor(15, 23, 42);
-    doc.setFontSize(10);
-    let y = 48;
-    doc.text(`Status: ${contract.status || 'draft'}`, 20, y);
-    y += 7;
+    doc.setFontSize(9.5);
+    let currentY = 46;
+    doc.text(`Status: ${(contract.status || 'draft').toUpperCase()}`, leftMargin, currentY);
+    currentY += 6;
+
     if (contract.signer_name) {
-        doc.text(`Signer: ${contract.signer_name}`, 20, y);
-        y += 7;
+        doc.text(`Signer: ${contract.signer_name}`, leftMargin, currentY);
+        currentY += 6;
     }
     if (contract.signer_email) {
-        doc.text(`Email: ${contract.signer_email}`, 20, y);
-        y += 7;
+        doc.text(`Email: ${contract.signer_email}`, leftMargin, currentY);
+        currentY += 6;
     }
     if (contract.signed_at) {
-        doc.text(`Signed: ${new Date(contract.signed_at).toLocaleString()}`, 20, y);
-        y += 7;
+        doc.text(`Signed: ${new Date(contract.signed_at).toLocaleString()}`, leftMargin, currentY);
+        currentY += 6;
     }
 
+    // --- Agreement Body Section ---
+    currentY += 4;
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(brandColor);
-    doc.text('Agreement', 20, y + 10);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(60, 60, 60);
-    const body = String(contract.content || 'No content available.');
-    const lines = doc.splitTextToSize(body, pageWidth - 40);
-    doc.text(lines, 20, y + 18);
+    doc.text('Agreement Terms & Conditions', leftMargin, currentY);
+    currentY += 8;
 
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(60, 60, 60);
+
+    const rawContent = String(contract.content || 'No content available.');
+    const plainText = sanitizeHtmlForPdf(rawContent);
+    const paragraphs = plainText.split('\n');
+
+    for (const paragraph of paragraphs) {
+        if (!paragraph.trim()) {
+            currentY += lineHeight * 0.7;
+            continue;
+        }
+
+        const lines = doc.splitTextToSize(paragraph, usableWidth);
+        const safeLines = Array.isArray(lines) ? lines : [String(lines || '')];
+
+        for (const line of safeLines) {
+            if (currentY + lineHeight > pageHeight - bottomMargin) {
+                doc.addPage();
+                currentY = topMargin;
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9.5);
+                doc.setTextColor(60, 60, 60);
+            }
+            doc.text(line, leftMargin, currentY);
+            currentY += lineHeight;
+        }
+    }
+
+    // --- Execution & Signature Verification Block ---
+    const isSigned = Boolean(contract.signed_at || contract.signer_name || (contract.status && ['signed', 'fully_signed', 'completed'].includes(contract.status)));
+    const sigBlockHeight = 40;
+
+    if (currentY + sigBlockHeight > pageHeight - bottomMargin) {
+        doc.addPage();
+        currentY = topMargin;
+    } else {
+        currentY += 12;
+    }
+
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.5);
+    doc.line(leftMargin, currentY, pageWidth - rightMargin, currentY);
+    currentY += 8;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('EXECUTION RECORD & SIGNATURE EVIDENCE', leftMargin, currentY);
+    currentY += 6;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(71, 85, 105);
+
+    if (isSigned) {
+        doc.text(`Signatory: ${contract.signer_name || 'Authorized Signatory'}`, leftMargin, currentY);
+        currentY += 5;
+        if (contract.signer_email) {
+            doc.text(`Signer Email: ${contract.signer_email}`, leftMargin, currentY);
+            currentY += 5;
+        }
+        if (contract.signed_at) {
+            doc.text(`Timestamp: ${new Date(contract.signed_at).toUTCString()}`, leftMargin, currentY);
+            currentY += 5;
+        }
+        doc.text('Verification: Electronically executed via AlphaClone Systems Secure Signing Protocol.', leftMargin, currentY);
+    } else {
+        doc.text(`Execution Status: PENDING SIGNATURE (${(contract.status || 'draft').toUpperCase()})`, leftMargin, currentY);
+        currentY += 5;
+        doc.text('Awaiting formal electronic signature and cryptographic verification seal.', leftMargin, currentY);
+    }
+
+    // Add page numbers and tenant footer to all pages
     addFooter(doc, pageWidth, pageHeight, branding);
     return doc;
 };
+

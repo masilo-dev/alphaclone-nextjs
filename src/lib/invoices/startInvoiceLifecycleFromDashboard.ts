@@ -66,18 +66,21 @@ export async function startInvoiceLifecycleFromDashboard(params: {
   const isSent =
     payload?.status === 'sent' || payload?.canonical_delivery_status === 'provider_accepted';
 
+  const runId = payload?.run_id || payload?.runId;
+  const baseMessage =
+    payload?.message ||
+    (isSent
+      ? 'Invoice sent and accepted by the email provider.'
+      : 'Invoice queued for background delivery; email acceptance is not yet confirmed.');
+
   return {
     ok: true,
-    runId: payload?.run_id || payload?.runId,
+    runId,
     status: isSent ? 'sent' : 'queued',
     canonicalDeliveryStatus: isSent ? 'provider_accepted' : 'queued',
     provider: payload?.provider ?? null,
     emailId: payload?.email_id ?? null,
     actionUrl: payload?.action_url ?? undefined,
-    message:
-      payload?.message ||
-      (isSent
-        ? 'Invoice sent and accepted by the email provider.'
-        : 'Invoice queued for background delivery; email acceptance is not yet confirmed.'),
+    message: runId && !baseMessage.includes(runId) ? `${baseMessage} (Run: ${runId})` : baseMessage,
   };
 }

@@ -56,22 +56,28 @@ registerTool('projects', {
 });
 
 // 2. create_project
+const optionalUuidOrEmpty = z.union([z.string().uuid(), z.literal(''), z.null()]).optional().transform((v) => (v && v.length > 0 ? v : undefined));
+
 registerTool('projects', {
   name: 'create_project',
   description: 'Create a new project linked to an optional client.',
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
     name: z.string().trim().min(1),
-    client_id: z.string().uuid().optional(),
+    client_id: optionalUuidOrEmpty,
+    owner_id: optionalUuidOrEmpty,
+    current_stage: z.string().optional().default('Initiation'),
     status: z.string().optional().default('pending'),
-    template_id:z.string().uuid().optional(),
-    contract_id:z.string().uuid().optional(),
-    project_type:z.string().optional(),
-    progress_method:z.enum(['task_based','weighted_tasks','milestones','manual']).optional(),
-    is_test_data:z.boolean().optional(),
-    historical_import:z.boolean().optional(),
+    template_id: optionalUuidOrEmpty,
+    contract_id: optionalUuidOrEmpty,
+    project_type: z.string().optional(),
+    progress_method: z.enum(['task_based','weighted_tasks','milestones','manual']).optional(),
+    is_test_data: z.boolean().optional(),
+    historical_import: z.boolean().optional(),
     description: z.string().optional(),
     due_date: z.string().optional(),
+    portal_enabled: z.boolean().optional(),
+    is_public: z.boolean().optional(),
     idempotency_key: z.string().min(1).optional(),
   }),
   jsonSchema: {
@@ -80,11 +86,20 @@ registerTool('projects', {
       tenant_id: { type: 'string', format: 'uuid' },
       name: { type: 'string' },
       client_id: { type: 'string', format: 'uuid' },
+      owner_id: { type: 'string', format: 'uuid' },
+      current_stage: { type: 'string', default: 'Initiation' },
       status: { type: 'string', default: 'pending' },
-      template_id:{type:'string',format:'uuid'},contract_id:{type:'string',format:'uuid'},project_type:{type:'string'},progress_method:{type:'string',enum:['task_based','weighted_tasks','milestones','manual']},is_test_data:{type:'boolean'},historical_import:{type:'boolean'},
+      template_id: { type: 'string', format: 'uuid' },
+      contract_id: { type: 'string', format: 'uuid' },
+      project_type: { type: 'string' },
+      progress_method: { type: 'string', enum: ['task_based','weighted_tasks','milestones','manual'] },
+      is_test_data: { type: 'boolean' },
+      historical_import: { type: 'boolean' },
       description: { type: 'string' },
       due_date: { type: 'string', format: 'date-time' },
-      idempotency_key: {type: 'string'},
+      portal_enabled: { type: 'boolean' },
+      is_public: { type: 'boolean' },
+      idempotency_key: { type: 'string' },
     },
     required: ['tenant_id', 'name'],
   },
@@ -94,7 +109,7 @@ registerTool('projects', {
     );
     const execution = await executeProjectCreateCommand({
       tenantId: args.tenant_id,
-      userId: context.userId || '',
+      userId: args.owner_id || context.userId || '',
       executionSource: 'mcp',
       skipPolicyEvaluation: true,
       idempotencyKey:
@@ -103,10 +118,22 @@ registerTool('projects', {
           : undefined,
       input: {
         name: args.name,
-        clientId: args.client_id, contractId:args.contract_id,
+        clientId: args.client_id,
+        contractId: args.contract_id,
+        ownerId: args.owner_id || context.userId || undefined,
+        currentStage: args.current_stage || 'Initiation',
         status: args.status,
         description: args.description,
-        dueDate: args.due_date, templateId:args.template_id, projectType:args.project_type,progressMethod:args.progress_method,isTestData:args.is_test_data,historicalImport:args.historical_import,
+        dueDate: args.due_date,
+        templateId: args.template_id,
+        projectType: args.project_type,
+        progressMethod: args.progress_method,
+        isTestData: args.is_test_data,
+        historicalImport: args.historical_import,
+        extras: {
+          portal_enabled: args.portal_enabled ?? (Boolean(args.client_id)),
+          is_public: args.is_public ?? (Boolean(args.client_id)),
+        },
       },
     });
     if (!execution.ok || !execution.result) {
@@ -136,7 +163,7 @@ registerTool('projects', {
       name: z.string().optional(),
       status: z.string().optional(),
       description: z.string().optional(),
-      client_id: z.string().uuid().optional(),
+      client_id: optionalUuidOrEmpty,
       due_date: z.string().optional(),
     }),
   }),

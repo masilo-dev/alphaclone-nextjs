@@ -53,7 +53,13 @@ import { ProjectWorkspaceDrawer } from '@/components/dashboard/projects/ProjectW
 import { PlatformExecutionWelcome } from '@/components/dashboard/PlatformExecutionWelcome';
 import { HelpDisclosure } from '@/components/ui/workspace/HelpDisclosure';
 import { CardSkeleton } from '@/components/ui/workspace';
-import { isFinishedProject } from '@/lib/projects/projectEnums';
+import {
+  isFinishedProject,
+  toCanonicalProjectStage,
+  STAGE_LIFECYCLE_STEP,
+  CANONICAL_PROJECT_STAGES,
+  CanonicalProjectStage,
+} from '@/lib/projects/projectEnums';
 import CreateInvoiceModal from '../CreateInvoiceModal';
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -67,23 +73,8 @@ type ViewMode = 'list' | 'timeline' | 'health';
 
 const PROJECT_STAGES_ORDER: ProjectStage[] = ['Initiation', 'Planning', 'Execution', 'Review', 'Closure'];
 
-// Helper to handle legacy stages since we migrated to 5-stage lifecycle
-const getNormalizedStage = (stage: string | undefined): ProjectStage => {
-    if (!stage) return 'Initiation';
-
-    // Map legacy stages to new ones
-    const legacyMap: Record<string, ProjectStage> = {
-        'Discovery': 'Initiation',
-        'Design': 'Planning',
-        'Development': 'Execution',
-        'Testing': 'Review',
-        'Deployment': 'Closure',
-        'Completed': 'Closure',
-        'Maintenance': 'Closure'
-    };
-
-    return (legacyMap[stage] || stage) as ProjectStage;
-};
+// Helper to handle stages using the canonical 5-stage lifecycle
+const getNormalizedStage = (stage: string | undefined): ProjectStage => toCanonicalProjectStage(stage) as ProjectStage;
 
 const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const router = useRouter();
@@ -292,26 +283,33 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         }
 
         if (!result.success) {
-            toast.error(result.error || 'Stage change blocked');
+            const missing = result.transition?.missingRequirements;
+            if (missing && missing.length > 0) {
+                toast.error(`Stage transition blocked: Missing ${missing.map((r: any) => r.label).join(', ')}`, { duration: 6000 });
+            } else {
+                toast.error(result.error || 'Stage change blocked');
+            }
             return result;
         }
 
         const finished = newStage === 'Closure';
+        const effectiveStatus = finished ? ('Completed' as const) : ('Active' as const);
         const progressVal = result.recalculatedProgress !== undefined ? result.recalculatedProgress : (finished ? 100 : undefined);
         setProjects((prev) => prev.map((p) => (p.id === projectId ? {
             ...p,
             currentStage: newStage,
-            ...(finished ? { status: 'Completed' as const } : {}),
+            status: effectiveStatus,
             ...(progressVal !== undefined ? { progress: progressVal } : {}),
         } : p)));
         setViewingProject((prev) => (prev?.id === projectId ? {
             ...prev,
             currentStage: newStage,
-            ...(finished ? { status: 'Completed' as const } : {}),
+            status: effectiveStatus,
             ...(progressVal !== undefined ? { progress: progressVal } : {}),
         } : prev));
         void invalidateTenantProjects(queryClient, currentTenant.id);
-        toast.success(finished ? 'Project marked finished' : `Stage updated to ${newStage}`);
+        const stepInfo = STAGE_LIFECYCLE_STEP[toCanonicalProjectStage(newStage)];
+        toast.success(finished ? 'Project marked finished (Closure)' : `Stage saved: ${stepInfo?.label || ''} ${newStage}`);
         return result;
     }, [currentTenant, user.id, queryClient]);
 
@@ -673,21 +671,23 @@ const ProjectListRow = ({
                         </div>
                         <div className="flex justify-between items-center type-caption text-[var(--ws-text-muted)]">
                             <AlphaCloneSelect
-                                value={getNormalizedStage(project.currentStage)}
+                                value={toCanonicalProjectStage(project.currentStage)}
                                 onChange={(e) => onStageChange(project.id, e.target.value as ProjectStage)}
                                 className={`bg-transparent ${project.currentStage ? 'text-[var(--brand-blue-400)]' : ''} font-medium hover:text-[var(--ws-text-primary)] cursor-pointer outline-none appearance-none`}
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 {PROJECT_STAGES_ORDER.map((stage, idx) => {
-                                    const currentIdx = PROJECT_STAGES_ORDER.indexOf(getNormalizedStage(project.currentStage));
+                                    const currentStage = toCanonicalProjectStage(project.currentStage);
+                                    const currentIdx = PROJECT_STAGES_ORDER.indexOf(currentStage as any);
+                                    const isBackward = idx < currentIdx;
                                     return (
-                                        <option key={stage} value={stage} disabled={idx < currentIdx} className="bg-[var(--ws-panel)] text-[var(--ws-text-secondary)]">
-                                            {stage}
+                                        <option key={stage} value={stage} className="bg-[var(--ws-panel)] text-[var(--ws-text-secondary)]">
+                                            {stage} {isBackward ? '(Back)' : ''}
                                         </option>
                                     );
                                 })}
                             </AlphaCloneSelect>
-                            <span>Step {PROJECT_STAGES_ORDER.indexOf(getNormalizedStage(project.currentStage)) + 1}/5</span>
+                            <span>{STAGE_LIFECYCLE_STEP[toCanonicalProjectStage(project.currentStage)]?.label || 'Step 1/5'}</span>
                         </div>
                     </div>
                 </div>
@@ -763,7 +763,7 @@ const ProjectListRow = ({
                     project.status === 'in_progress' ? 'bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' :
                         'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border-[var(--ws-border)]'
                     }`}>
-                    {statusLabel}
+                    Status: {statusLabel}
                 </span>
             </div>
 

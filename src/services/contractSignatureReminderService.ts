@@ -19,12 +19,26 @@ export async function sendOrderedContractSignatureReminders(options: {
     .maybeSingle();
   if (error) throw error;
   if (!contract) throw new Error("Contract not found");
+  const normalizedStatus = String(contract.lifecycle_status || contract.status || '').toLowerCase().trim();
   if (
-    ["fully_signed", "signed", "active", "terminated"].includes(
-      String(contract.lifecycle_status || contract.status),
-    )
-  )
+    [
+      "draft",
+      "prepared",
+      "fully_signed",
+      "signed",
+      "active",
+      "completed",
+      "terminated",
+      "declined",
+      "rejected",
+      "expired",
+      "voided",
+      "cancelled",
+      "canceled",
+    ].includes(normalizedStatus)
+  ) {
     return { sent: 0, skipped: 0, complete: true };
+  }
   const { data: parties, error: partyError } = await db
     .from("contract_parties")
     .select("*")
@@ -200,8 +214,8 @@ export async function processAutomaticContractSignatureReminders(limit = 100) {
   const db = createSupabaseAdminClient();
   const { data, error } = await db
     .from("contracts")
-    .select("id,tenant_id")
-    .in("lifecycle_status", ["sent", "viewed", "negotiating"])
+    .select("id,tenant_id,status,lifecycle_status")
+    .or("lifecycle_status.in.(sent,viewed,negotiating),status.in.(sent,viewed,pending_signature)")
     .order("updated_at")
     .limit(limit);
   if (error) throw error;

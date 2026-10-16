@@ -90,3 +90,61 @@ export async function processProjectNotificationOutbox(limit=20, db: SupabaseCli
   }
   return counts;
 }
+
+export async function enqueueProjectNotification(params: {
+  db?: SupabaseClient;
+  tenantId: string;
+  projectId: string;
+  eventType: string;
+  action: string;
+  payload?: Record<string, unknown>;
+  newValue?: Record<string, unknown>;
+  previousValue?: Record<string, unknown>;
+}): Promise<{ eventId: string | null; outboxId: string | null; error?: string }> {
+  const db = params.db || createSupabaseAdminClient();
+  const now = new Date().toISOString();
+  try {
+    const activityInsert = await db
+      .from('project_activity')
+      .insert({
+        tenant_id: params.tenantId,
+        project_id: params.projectId,
+        action: params.action,
+        new_value: params.newValue || params.payload || {},
+        previous_value: params.previousValue || null,
+        created_at: now,
+      })
+      .select('id')
+      .single();
+
+    if (activityInsert.error) {
+      return { eventId: null, outboxId: null, error: activityInsert.error.message };
+    }
+
+    const eventId = activityInsert.data.id;
+    const outboxInsert = await db
+      .from('project_notification_outbox')
+      .insert({
+        tenant_id: params.tenantId,
+        project_id: params.projectId,
+        event_id: eventId,
+        event_type: params.eventType,
+        status: 'queued',
+        attempts: 0,
+        next_attempt_at: now,
+        created_at: now,
+        updated_at: now,
+      })
+      .select('id')
+      .single();
+
+    if (outboxInsert.error) {
+      return { eventId, outboxId: null, error: outboxInsert.error.message };
+    }
+
+    return { eventId, outboxId: outboxInsert.data.id };
+  } catch (error) {
+    return { eventId: null, outboxId: null, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+

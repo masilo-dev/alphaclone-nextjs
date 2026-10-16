@@ -7,7 +7,8 @@ export async function loadClientProjects(admin: SupabaseClient, tenantId: string
     // The legacy table may not exist. Other failures must never look like emptiness.
     if (result.error && !['42P01', 'PGRST205'].includes(result.error.code)) throw result.error;
     for (const row of result.data || []) {
-      if (row.deleted_at || row.metadata?.client_visible !== true || rows.has(row.id)) continue;
+      const isClientVisible = row.metadata?.client_visible === true || (Boolean(row.portal_enabled) && row.metadata?.client_visible !== false);
+      if (row.deleted_at || !isClientVisible || rows.has(row.id)) continue;
       rows.set(row.id, row);
     }
   }

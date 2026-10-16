@@ -10,6 +10,8 @@ const querySchema = z.object({
   search: z.string().trim().max(200).optional(),
   stage: z.string().trim().max(100).optional(),
   status: z.string().trim().max(100).optional(),
+  includeConverted: z.coerce.boolean().optional(),
+  is_test_data: z.coerce.boolean().optional(),
 });
 
 type LeadCursor = { createdAt: string; id: string };
@@ -34,16 +36,24 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
       return NextResponse.json({ error: 'Invalid lead query', fields: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    const { limit, search, stage, status } = parsed.data;
+    const { limit, search, stage, status, includeConverted, is_test_data: isTestData } = parsed.data;
     const cursor = decodeCursor(parsed.data.cursor);
     const admin = createSupabaseAdminClient();
 
     let query = admin
       .from('leads')
       .select('*', { count: 'exact' })
-      .eq('tenant_id', tenantId)
-      .is('client_id', null)
-      .neq('stage', 'converted');
+      .eq('tenant_id', tenantId);
+
+    if (!includeConverted && stage !== 'converted') {
+      query = query.is('client_id', null).neq('stage', 'converted');
+    }
+
+    if (isTestData === true) {
+      query = query.eq('is_test_data', true);
+    } else if (isTestData === false) {
+      query = query.or('is_test_data.is.null,is_test_data.eq.false');
+    }
 
     if (stage) query = query.eq('stage', stage);
     if (status) query = query.eq('status', status);

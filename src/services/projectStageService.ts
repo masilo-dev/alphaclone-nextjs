@@ -239,24 +239,48 @@ class ProjectStageService {
             }
 
             // Recalculate progress according to its actual definition (milestones & tasks)
-            let finalProgress = project.progress || 0;
-            if (newStage === 'Closure') {
-                const { computeProjectProgressPercent } = await import('../lib/projects/projectEnums');
-                const { data: dbTasks } = await supabase.from('tasks').select('status').eq('project_id', projectId);
-                const { data: dbMilestones } = await supabase.from('milestones').select('status').eq('project_id', projectId);
-                finalProgress = computeProjectProgressPercent({
-                    currentStage: newStage,
-                    status: 'Completed',
-                    tasks: dbTasks || [],
-                    milestones: dbMilestones || [],
-                });
+            const { computeProjectProgressPercent, toCanonicalProjectStage } = await import('../lib/projects/projectEnums');
+            const { data: dbTasks } = await supabase.from('tasks').select('status').eq('project_id', projectId);
+            const { data: dbMilestones } = await supabase.from('milestones').select('status').eq('project_id', projectId);
+            const effectiveStatus = newStage === 'Closure' ? 'Completed' : (project.status === 'Completed' ? 'Active' : (project.status || 'Active'));
+            let finalProgress = computeProjectProgressPercent({
+                currentStage: newStage,
+                status: effectiveStatus,
+                tasks: dbTasks || [],
+                milestones: dbMilestones || [],
+            });
+            // If no tasks or milestones exist yet, give sensible stage baseline so step & progress agree
+            if ((!dbTasks || dbTasks.length === 0) && (!dbMilestones || dbMilestones.length === 0)) {
+                const stageOrder = transition.targetLifecycleStep?.step || 1;
+                finalProgress = Math.round((stageOrder / 5) * 100);
             }
 
             const { error: updateError } = await projectService.updateProject(projectId, {
                 currentStage: newStage as any,
-                ...(newStage === 'Closure' ? { status: 'Completed' as const, progress: finalProgress } : {}),
+                status: effectiveStatus as any,
+                progress: finalProgress,
             });
             if (updateError) return { success: false, error: updateError, transition };
+
+            // Log to workspace activity so client portal and dashboard stay synchronized
+            try {
+                const { appendWorkspaceActivity } = await import('./finance/workspaceActivityService');
+                await appendWorkspaceActivity(supabase as any, {
+                    tenant_id: tenantId,
+                    project_id: projectId,
+                    client_id: project.client_id || null,
+                    invoice_id: null,
+                    contract_id: null,
+                    actor_type: 'team_user',
+                    actor_id: userId,
+                    actor_display_name: 'Workspace team',
+                    event_type: 'project.stage_changed',
+                    summary: `Project "${project.name}" moved from ${currentStage} to ${newStage}`,
+                    metadata: { projectId, oldStage: currentStage, newStage, reason },
+                });
+            } catch (actErr) {
+                console.warn('[projectStageService] activity log error:', actErr);
+            }
 
             // Log to audit trail
             await auditLoggingService.logAction(

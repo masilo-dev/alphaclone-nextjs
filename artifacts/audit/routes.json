@@ -8,6 +8,10 @@
     "file": "src/app/account/privacy/page.tsx"
   },
   {
+    "route": "/admin/platform-monitoring",
+    "file": "src/app/admin/platform-monitoring/page.tsx"
+  },
+  {
     "route": "/ai-agents",
     "file": "src/app/ai-agents/page.tsx"
   },
@@ -38,6 +42,10 @@
   {
     "route": "/authorize",
     "file": "src/app/authorize/page.tsx"
+  },
+  {
+    "route": "/billing",
+    "file": "src/app/billing/page.tsx"
   },
   {
     "route": "/billing/upgrade",
@@ -116,8 +124,20 @@
     "file": "src/app/dashboard/call/[roomId]/page.tsx"
   },
   {
+    "route": "/dashboard/internal/email-gallery",
+    "file": "src/app/dashboard/internal/email-gallery/page.tsx"
+  },
+  {
+    "route": "/dashboard/share-intake",
+    "file": "src/app/dashboard/share-intake/page.tsx"
+  },
+  {
     "route": "/data-deletion",
     "file": "src/app/data-deletion/page.tsx"
+  },
+  {
+    "route": "/data-room/[token]",
+    "file": "src/app/data-room/[token]/page.tsx"
   },
   {
     "route": "/demo",
@@ -132,8 +152,16 @@
     "file": "src/app/dpa/page.tsx"
   },
   {
+    "route": "/ecosystem/[id]",
+    "file": "src/app/ecosystem/[id]/page.tsx"
+  },
+  {
     "route": "/ecosystem",
     "file": "src/app/ecosystem/page.tsx"
+  },
+  {
+    "route": "/execution-session",
+    "file": "src/app/execution-session/page.tsx"
   },
   {
     "route": "/faq",
@@ -152,6 +180,10 @@
     "file": "src/app/guide/page.tsx"
   },
   {
+    "route": "/how-it-works",
+    "file": "src/app/how-it-works/page.tsx"
+  },
+  {
     "route": "/invite/[token]",
     "file": "src/app/invite/[token]/page.tsx"
   },
@@ -166,6 +198,10 @@
   {
     "route": "/legal/acceptable-use",
     "file": "src/app/legal/acceptable-use/page.tsx"
+  },
+  {
+    "route": "/legal/ai-data-processing",
+    "file": "src/app/legal/ai-data-processing/page.tsx"
   },
   {
     "route": "/legal/ai-disclaimer",
@@ -204,12 +240,20 @@
     "file": "src/app/legal/sla/page.tsx"
   },
   {
+    "route": "/legal/subprocessors",
+    "file": "src/app/legal/subprocessors/page.tsx"
+  },
+  {
     "route": "/legal/terms",
     "file": "src/app/legal/terms/page.tsx"
   },
   {
     "route": "/login",
     "file": "src/app/login/page.tsx"
+  },
+  {
+    "route": "/mail",
+    "file": "src/app/mail/page.tsx"
   },
   {
     "route": "/maintenance",
@@ -248,12 +292,24 @@
     "file": "src/app/page.tsx"
   },
   {
+    "route": "/platform-status/history",
+    "file": "src/app/platform-status/history/page.tsx"
+  },
+  {
     "route": "/platform-status",
     "file": "src/app/platform-status/page.tsx"
   },
   {
     "route": "/portal/[token]",
     "file": "src/app/portal/[token]/page.tsx"
+  },
+  {
+    "route": "/portal-login",
+    "file": "src/app/portal-login/page.tsx"
+  },
+  {
+    "route": "/preferences/email",
+    "file": "src/app/preferences/email/page.tsx"
   },
   {
     "route": "/pricing",
@@ -304,6 +360,10 @@
     "file": "src/app/quote/[token]/page.tsx"
   },
   {
+    "route": "/reliability",
+    "file": "src/app/reliability/page.tsx"
+  },
+  {
     "route": "/reset-password",
     "file": "src/app/reset-password/page.tsx"
   },
@@ -322,6 +382,10 @@
   {
     "route": "/services",
     "file": "src/app/services/page.tsx"
+  },
+  {
+    "route": "/set-password",
+    "file": "src/app/set-password/page.tsx"
   },
   {
     "route": "/settings/legal/[[...section]]",
@@ -354,6 +418,10 @@
   {
     "route": "/solutions/solo-founders",
     "file": "src/app/solutions/solo-founders/page.tsx"
+  },
+  {
+    "route": "/support",
+    "file": "src/app/support/page.tsx"
   },
   {
     "route": "/terms-of-service",

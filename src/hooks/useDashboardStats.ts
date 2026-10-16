@@ -7,6 +7,11 @@ import { resolveHubFromEndpoint, type SlimHubStats } from '@/lib/dashboard/hubKp
 import { useAuth } from '@/contexts/AuthContext';
 import { loadSavedStats, readSavedStats, statsRequestKey } from '@/lib/dashboard/clientStatsCache';
 
+import { useOnTabVisible } from '@/lib/sync/tabFocusCoordinator';
+
+// Shared in-flight deduplication map so simultaneous callers share a single request
+export const inFlightRequests = new Map<string, Promise<unknown>>();
+
 function statsUrl(endpoint: string, tenantId: string, period: string): string {
   const hub = resolveHubFromEndpoint(endpoint);
   if (hub) return `/api/dashboard/hub-stats?hub=${encodeURIComponent(hub)}&tenantId=${encodeURIComponent(tenantId)}&period=${encodeURIComponent(period)}`;
@@ -37,6 +42,24 @@ export function useDashboardRead<T>(tenantId: string | undefined, endpoint: stri
 
 export function useDashboardStats(tenantId: string | undefined, endpoint: string, period = 'last_30_days') {
   const query = useDashboardRead<SlimHubStats | OverviewStatsResponse>(tenantId, endpoint, period);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !tenantId) return;
+    const onInvalidate = (event: Event) => {
+      const detail = (event as CustomEvent<{ tenantId?: string }>).detail;
+      if (!detail?.tenantId || detail.tenantId === tenantId) {
+        void query.refetch();
+      }
+    };
+    window.addEventListener('ac:crm-stats-invalidate', onInvalidate);
+    return () => window.removeEventListener('ac:crm-stats-invalidate', onInvalidate);
+  }, [tenantId, query]);
+
+  useOnTabVisible(() => {
+    if (!tenantId) return;
+    void query.refetch();
+  }, { cooldownMs: 10_000, enabled: Boolean(tenantId) });
+
   const data = useMemo(() => query.data ? { ...query.data,
     breakdown: query.data.breakdown ?? [], donut: query.data.donut ?? [],
     pills: query.data.pills ?? [], feed: query.data.feed ?? [],

@@ -5,6 +5,7 @@ import { requireTenantAccess, routeErrorResponse } from "@/lib/apiAuth";
 import {
   normalizeProjectStage,
   normalizeProjectStatus,
+  toCanonicalProjectStage,
 } from "@/lib/projects/projectEnums";
 import { appendWorkspaceActivity } from "@/services/finance/workspaceActivityService";
 import { notifyProjectClientDetails } from '@/lib/projects/projectClientNotification';
@@ -19,7 +20,7 @@ const schema = z.object({
   isTestData:z.boolean().optional(),historicalImport:z.boolean().optional(),projectType:z.string().optional(),progressMethod:z.enum(['task_based','weighted_tasks','milestones','manual']).optional(),
   name: z.string().trim().min(1).max(200), ownerId: optionalUuid, ownerName: z.string().trim().max(300).optional(),
   category: z.string().trim().max(120).default("General"), status: z.string().trim().min(1).max(80).default("Pending"),
-  currentStage: z.string().trim().min(1).max(120).default("Discovery"), progress: z.union([z.number(), z.string().transform((v) => parseFloat(v))]).default(0),
+  currentStage: z.string().trim().min(1).max(120).default("Initiation"), progress: z.union([z.number(), z.string().transform((v) => parseFloat(v))]).default(0),
   dueDate: optionalDate, startDate: optionalDate,
   team: z.union([z.array(z.string()), z.null()]).optional().default([]).transform((arr) => (arr || []).filter((id) => Boolean(id) && z.string().uuid().safeParse(id.trim()).success)),
   image: optionalUrl, description: z.string().max(10_000).nullable().optional(), contractStatus: z.string().max(80).default("None"),
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
     if (!parsed.success) return NextResponse.json({ error: "Invalid project details", fields: parsed.error.flatten().fieldErrors }, { status: 400 });
     const input = parsed.data;
     const status = normalizeProjectStatus(input.status) || "Pending";
-    const currentStage = normalizeProjectStage(input.currentStage) || "Discovery";
+    const currentStage = toCanonicalProjectStage(input.currentStage);
     const ownerId = input.ownerId || user.id;
     const admin = createSupabaseAdminClient();
     const headerKey = req.headers.get('idempotency-key') || req.headers.get('Idempotency-Key');

@@ -265,6 +265,29 @@ async function kickoffProjectStep(contractId: string, tenantId: string,templateI
   return project;
 }
 
+export async function createDefaultTasksStep(projectId: string, tenantId: string, contractId?: string) {
+  const supabase = createSupabaseAdminClient();
+  await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+  const defaultTasks = [
+    { project_id: projectId, title: 'Kickoff Meeting', status: 'todo' },
+    { project_id: projectId, title: 'Requirements Gathering', status: 'todo' },
+  ];
+  const { data: existing } = await supabase
+    .from('tasks')
+    .select('title')
+    .eq('tenant_id', tenantId)
+    .eq('project_id', projectId);
+  const have = new Set((existing || []).map((t: any) => t.title));
+  const toInsert = defaultTasks.filter((task) => !have.has(task.title));
+  if (toInsert.length) {
+    await supabase.from('tasks').insert(toInsert.map((t) => ({ ...t, tenant_id: tenantId })));
+  }
+}
+
+async function sendWelcomePackageStep(projectId: string, tenantId: string) {
+  console.log(`[contract-signed] Welcome package queued for project ${projectId} (tenant ${tenantId})`);
+}
+
 async function syncDealStatusStep(contractId: string, tenantId: string) {
   const supabase = createSupabaseAdminClient();
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
@@ -318,8 +341,9 @@ export async function runContractSignedFlow(
     await connectInvoiceToContractStep(contractId, invoice.id, project?.id || null, tenantId);
   }
 
-  if (project) {
-    // Configured templates and the durable notification outbox are owned by project creation.
+  if (project?.id) {
+    await createDefaultTasksStep(project.id, tenantId, contractId);
+    await sendWelcomePackageStep(project.id, tenantId);
   }
 
   await syncDealStatusStep(contractId, tenantId);

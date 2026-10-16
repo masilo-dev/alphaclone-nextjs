@@ -13,6 +13,7 @@ import { recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 import { fileInvoiceDocument } from '@/lib/documents/fileDocument';
 import { postInvoiceIssueJournalServer } from '@/lib/invoices/postInvoiceIssueJournalServer';
 import { scheduleInvoiceLifecycleFollowUp } from '@/lib/invoices/invoiceLifecycleFollowUp';
+import { businessInvoiceService } from '@/services/businessInvoiceService';
 
 export type InvoiceAttachmentItem = {
   name: string;
@@ -35,18 +36,7 @@ export type InvoiceLifecycleInput = {
 
 export const INVOICE_DOCUMENTS_BUCKET = 'invoice-documents';
 
-const ALLOWED_ATTACHMENT_MIME_TYPES = [
-  'application/pdf',
-  'image/png',
-  'image/jpeg',
-  'image/webp',
-  'text/csv',
-  'text/plain',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-];
+const ALLOWED_ATTACHMENT_MIME_TYPES = ['application/pdf'];
 
 let bucketEnsurePromise: Promise<void> | null = null;
 
@@ -64,7 +54,7 @@ export async function ensureInvoiceDocumentsBucket(admin: any): Promise<void> {
         const needsUpdate = ALLOWED_ATTACHMENT_MIME_TYPES.some(
           (mime) => !existingAllowed.includes(mime)
         );
-        if (needsUpdate) {
+        if (needsUpdate && typeof admin.storage?.updateBucket === 'function') {
           await admin.storage.updateBucket(INVOICE_DOCUMENTS_BUCKET, {
             public: false,
             fileSizeLimit: 15728640,
@@ -99,6 +89,56 @@ function cleanInvoiceNotes(rawNotes?: string | null): string | undefined {
 }
 
 export async function loadInvoiceForLifecycle(invoiceId: string, tenantId: string) {
+  try {
+    const { invoice, error: detailError } = await businessInvoiceService.getInvoiceWithDetails(invoiceId, tenantId);
+    if (!detailError && invoice) {
+      const metadata = ((invoice.metadata && typeof invoice.metadata === 'object') ? invoice.metadata : {}) as Record<string, any>;
+      const clientRel = Array.isArray(invoice.client) ? invoice.client[0] : invoice.client;
+      const resolvedClientName = String(
+        invoice.client_name ||
+          clientRel?.name ||
+          metadata.clientName ||
+          metadata.client_name ||
+          ''
+      ).trim() || 'Valued Client';
+      const resolvedClientEmail = String(
+        invoice.client_email ||
+          clientRel?.email ||
+          metadata.clientEmail ||
+          metadata.client_email ||
+          ''
+      ).trim();
+      const resolvedTenantName = String(
+        invoice.tenant?.trading_name ||
+          invoice.tenant?.name ||
+          invoice.tenant?.legal_name ||
+          ''
+      ).trim() || 'AlphaClone Systems';
+
+      return {
+        ...invoice,
+        invoiceNumber: invoice.invoice_number || invoice.invoiceNumber,
+        issueDate: invoice.issue_date || invoice.issueDate,
+        dueDate: invoice.due_date || invoice.dueDate,
+        client: {
+          id: clientRel?.id || invoice.client_id || null,
+          name: resolvedClientName,
+          email: resolvedClientEmail,
+          phone: clientRel?.phone || null,
+          address: clientRel?.location || null,
+        },
+        tenant: {
+          ...(invoice.tenant || {}),
+          name: resolvedTenantName,
+        },
+        metadata,
+        lineItems: invoice.lineItems || invoice.items || [],
+      };
+    }
+  } catch {
+    // continue to direct admin query fallback
+  }
+
   const admin = createSupabaseAdminClient();
   const { data: row, error } = await admin
     .from('business_invoices')
@@ -241,22 +281,38 @@ export async function generateAndStoreInvoicePdf(
   if (uploadError) throw new Error(`Invoice PDF could not be stored: ${uploadError.message}`);
 
   const nowIso = new Date().toISOString();
-  const existingMeta = (invoice.metadata || {}) as Record<string, unknown>;
-  const { error: metaUpdateError } = await admin
+  const { error: updateError } = await admin
     .from('business_invoices')
     .update({
-      metadata: {
-        ...existingMeta,
-        pdf_storage_path: storagePath,
-        pdf_generated_at: nowIso,
-      },
+      pdf_storage_path: storagePath,
+      pdf_generated_at: nowIso,
       updated_at: nowIso,
     })
     .eq('tenant_id', tenantId)
     .eq('id', invoiceId);
 
-  if (metaUpdateError) {
-    throw new Error(`Failed to record invoice PDF metadata: ${metaUpdateError.message}`);
+  if (updateError) {
+    const isColumnMissing = updateError.code === '42703' || String(updateError.message || '').includes('pdf_storage_path');
+    if (isColumnMissing) {
+      const existingMeta = (invoice.metadata || {}) as Record<string, unknown>;
+      const { error: metaUpdateError } = await admin
+        .from('business_invoices')
+        .update({
+          metadata: {
+            ...existingMeta,
+            pdf_storage_path: storagePath,
+            pdf_generated_at: nowIso,
+          },
+          updated_at: nowIso,
+        })
+        .eq('tenant_id', tenantId)
+        .eq('id', invoiceId);
+      if (metaUpdateError) {
+        throw new Error(`Failed to record invoice PDF metadata: ${metaUpdateError.message}`);
+      }
+    } else {
+      throw new Error(`Failed to record invoice PDF storage path: ${updateError.message}`);
+    }
   }
 
   const { data: invoiceRow } = await admin
@@ -335,7 +391,9 @@ export async function sendInvoiceEmailPhase(
   }
 
   const invoiceNumber = invoice.invoice_number || invoice.invoiceNumber;
-  await ensureInvoicePaymentLink({ tenantId: input.tenantId, invoiceId: input.invoiceId }).catch(() => undefined);
+  if (typeof ensureInvoicePaymentLink === 'function') {
+    await ensureInvoicePaymentLink({ tenantId: input.tenantId, invoiceId: input.invoiceId }).catch(() => undefined);
+  }
   const actionUrl = await getPublicInvoicePaymentUrl(admin, input.invoiceId, input.tenantId);
 
   const emailAttachments: Array<{ filename: string; content: string; contentType: string }> = [

@@ -426,9 +426,9 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
   const showTotalBox = input.total != null && !isAgreement;
 
   const logoOrWordmarkHtml = branding.logoUrl
-    ? `<div style="min-height:36px;display:flex;align-items:center;">
-        <img src="${escapeHtml(branding.logoUrl)}" alt="${escapeHtml(branding.name || '')}" style="max-height:36px;max-width:160px;width:auto;height:auto;object-fit:contain;object-position:left;" />
-       <div style="font-size:14px;font-weight:700;">${escapeHtml(branding.legalName || branding.name || 'Business')}</div></div>`
+    ? `<div style="min-height:38px;display:flex;align-items:center;">
+        <img src="${escapeHtml(branding.logoUrl)}" alt="${escapeHtml(branding.name || 'Company Logo')}" style="max-height:40px;max-width:180px;width:auto;height:auto;object-fit:contain;object-position:left;display:block;" />
+      </div>`
     : `<div style="min-height:36px;display:flex;align-items:center;font-size:18px;font-weight:700;letter-spacing:-0.01em;color:${primary};">
         ${escapeHtml(branding.name || 'Unconfigured Business')}
        </div>`;
@@ -437,6 +437,7 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
       <div style="max-width:55%;">
         ${logoOrWordmarkHtml}
         <div style="margin-top:8px;font-size:11px;color:#64748b;line-height:1.5;">
+          ${branding.logoUrl && branding.name ? `<div style="font-weight:700;font-size:12px;color:#1e293b;">${escapeHtml(branding.name)}</div>` : ''}
           ${branding.legalName && branding.legalName !== branding.name ? `<div style="font-weight:600;color:#334155;">${escapeHtml(branding.legalName)}</div>` : ''}
           ${branding.businessAddress ? `<div>${escapeHtml(branding.businessAddress).replace(/\n/g, '<br/>')}</div>` : ''}
           ${branding.taxNumber || branding.taxId ? `<div>Tax ID: ${escapeHtml(branding.taxNumber || branding.taxId || '')}</div>` : ''}

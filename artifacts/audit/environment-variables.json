@@ -1,11 +1,31 @@
 [
   {
-    "name": "ACS_CONNECTION_STRING",
+    "name": "AC_BASE_URL",
     "public": false,
     "valueIncluded": false
   },
   {
-    "name": "AI_ALLOW_MULTI_PROVIDER",
+    "name": "AC_TENANT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "AC_TEST_TO",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "AC_USER_EMAIL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "AC_USER_PASSWORD",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "AI_TASK_BATCH_SIZE",
     "public": false,
     "valueIncluded": false
   },
@@ -20,12 +40,57 @@
     "valueIncluded": false
   },
   {
+    "name": "ALPHACLONE_BASE_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ALPHACLONE_SEQUENTIAL_TYPECHECK",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ALPHACLONE_TEST_BEARER",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ALPHACLONE_TEST_CLIENT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ALPHACLONE_TEST_PROJECT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ALPHACLONE_TEST_TENANT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "ANTHROPIC_API_KEY",
     "public": false,
     "valueIncluded": false
   },
   {
     "name": "ANTHROPIC_MODEL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "APIFY_API_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "APIFY_MOCK_TEST",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "APIFY_TOKEN",
     "public": false,
     "valueIncluded": false
   },
@@ -45,6 +110,11 @@
     "valueIncluded": false
   },
   {
+    "name": "AUTH_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "AZURE_CLIENT_ID",
     "public": false,
     "valueIncluded": false
@@ -60,7 +130,22 @@
     "valueIncluded": false
   },
   {
+    "name": "BACKGROUND_JOB_HEAP_REJECT_MB",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "BASE_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BONNIE_AGENT_RUNTIME",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BONNIE_CONTINUOUS_TENANT_BATCH",
     "public": false,
     "valueIncluded": false
   },
@@ -81,6 +166,11 @@
   },
   {
     "name": "BONNIE_MAX_AGENT_ROUNDS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BONNIE_MAX_AGENT_TOOLS",
     "public": false,
     "valueIncluded": false
   },
@@ -106,6 +196,11 @@
   },
   {
     "name": "BONNIE_MAX_TOOLS_PER_ROUND",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BONNIE_WORKER_CLAIM_LIMIT",
     "public": false,
     "valueIncluded": false
   },
@@ -140,6 +235,11 @@
     "valueIncluded": false
   },
   {
+    "name": "BREVO_PLATFORM_FROM_NAME",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "BROWSERBASE_API_KEY",
     "public": false,
     "valueIncluded": false
@@ -156,6 +256,16 @@
   },
   {
     "name": "BUILTWITH_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CALCOM_SELF_SERVE_ENABLED",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CALCOM_WEBHOOK_SECRET",
     "public": false,
     "valueIncluded": false
   },
@@ -180,12 +290,72 @@
     "valueIncluded": false
   },
   {
+    "name": "CAL_BASE_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CAL_OAUTH_CLIENT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CAL_OAUTH_CLIENT_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CAL_OAUTH_REDIRECT_URI",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CAL_WEBHOOK_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CHASER_CRM_SCAN_CHUNK",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CHASER_STANDALONE_OWNER_EMAILS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CHATWOOT_ACCOUNT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CHATWOOT_API_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CHATWOOT_API_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "CHROME_EXECUTABLE_PATH",
     "public": false,
     "valueIncluded": false
   },
   {
     "name": "CI",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CIRCUIT_BREAKER_COOLDOWN_MS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CIRCUIT_BREAKER_THRESHOLD",
     "public": false,
     "valueIncluded": false
   },
@@ -205,12 +375,17 @@
     "valueIncluded": false
   },
   {
+    "name": "CLIENT_PORTAL_SESSION_SIGNING_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "COMPLIANCE_TOKEN_SECRET",
     "public": false,
     "valueIncluded": false
   },
   {
-    "name": "CONTACT_SALES_INBOX_EMAIL",
+    "name": "CONSENT_IP_HASH_SECRET",
     "public": false,
     "valueIncluded": false
   },
@@ -221,6 +396,26 @@
   },
   {
     "name": "CONTRACT_ENCRYPTION_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CRM_MIGRATE_ALLOW_SECRET_IN_PROD",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CRM_MIGRATE_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CRON_JOB_BUDGET_MS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CRON_LOCAL_LOCK_WHEN_REDIS_DOWN",
     "public": false,
     "valueIncluded": false
   },
@@ -245,17 +440,17 @@
     "valueIncluded": false
   },
   {
-    "name": "DEBUG",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "DEBUG_FILE",
+    "name": "DEEPSEEK_AGENT_MODEL",
     "public": false,
     "valueIncluded": false
   },
   {
     "name": "DEEPSEEK_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DEEPSEEK_BASE_URL",
     "public": false,
     "valueIncluded": false
   },
@@ -275,12 +470,57 @@
     "valueIncluded": false
   },
   {
+    "name": "DEFAULT_TENANT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DEV_MIGRATE_ALLOW_SECRET_IN_PROD",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "DEV_MIGRATE_SECRET",
     "public": false,
     "valueIncluded": false
   },
   {
-    "name": "DOTENV_KEY",
+    "name": "DISABLE_CRON_DISTRIBUTED_LOCK",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DISABLE_CRON_MEMORY_GUARD",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DISABLE_MEMORY_TELEMETRY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DOCUMENSO_API_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DOCUMENSO_WEBHOOK_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DOCUMENT_CHROMIUM_PATH",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DOCUMENT_TEST_DEV",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DOCUMENT_TEST_OUTPUT",
     "public": false,
     "valueIncluded": false
   },
@@ -305,12 +545,42 @@
     "valueIncluded": false
   },
   {
+    "name": "EMAIL_CONCURRENCY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "EMAIL_FROM",
     "public": false,
     "valueIncluded": false
   },
   {
+    "name": "EMAIL_LOGO_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "EMAIL_PROVIDER_SEND_TIMEOUT_MS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "EMAIL_PUBLIC_ORIGIN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "EMAIL_TRACKING_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "EMAIL_UNSUBSCRIBE_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "EMAIL_WEBHOOK_ACCOUNT_SECRET",
     "public": false,
     "valueIncluded": false
   },
@@ -321,6 +591,11 @@
   },
   {
     "name": "EMAIL_WEBHOOK_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ENABLE_HEAP_SNAPSHOT",
     "public": false,
     "valueIncluded": false
   },
@@ -365,6 +640,11 @@
     "valueIncluded": false
   },
   {
+    "name": "FINANCE_E2E_TENANT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "FIRECRAWL_API_KEY",
     "public": false,
     "valueIncluded": false
@@ -391,16 +671,6 @@
   },
   {
     "name": "GEMINI_MODEL",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "GITHUB_ACTION",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "GITHUB_ACTIONS",
     "public": false,
     "valueIncluded": false
   },
@@ -440,12 +710,12 @@
     "valueIncluded": false
   },
   {
-    "name": "GOOGLE_WORKSPACE_MCP_URL",
+    "name": "GOOGLE_GENERATIVE_AI_KEY",
     "public": false,
     "valueIncluded": false
   },
   {
-    "name": "GRACEFUL_FS_PLATFORM",
+    "name": "GOOGLE_WORKSPACE_MCP_URL",
     "public": false,
     "valueIncluded": false
   },
@@ -460,12 +730,32 @@
     "valueIncluded": false
   },
   {
+    "name": "HEAP_SNAPSHOT_DIR",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "HERE_API_KEY",
     "public": false,
     "valueIncluded": false
   },
   {
-    "name": "HOMEDRIVE",
+    "name": "HERMES_GLOBAL_DISABLED",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "HERMES_INTERNAL_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "HERMES_INTERNAL_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "HERMES_LOCAL_MODE",
     "public": false,
     "valueIncluded": false
   },
@@ -486,11 +776,6 @@
   },
   {
     "name": "HUBSPOT_CLIENT_SECRET",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "HUBSPOT_MCP_URL",
     "public": false,
     "valueIncluded": false
   },
@@ -530,12 +815,27 @@
     "valueIncluded": false
   },
   {
+    "name": "IN_MEMORY_CACHE_MAX_ENTRIES",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "JEST_WORKER_ID",
     "public": false,
     "valueIncluded": false
   },
   {
-    "name": "LD_LIBRARY_PATH",
+    "name": "LEAD_WEBHOOK_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "LEGACY_INBOX_DIGEST_EMAIL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "LEGAL_SITE_TENANT_ID",
     "public": false,
     "valueIncluded": false
   },
@@ -560,6 +860,21 @@
     "valueIncluded": false
   },
   {
+    "name": "LISTMONK_API_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "LISTMONK_API_USER",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "LISTMONK_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "LIVEKIT_API_KEY",
     "public": false,
     "valueIncluded": false
@@ -575,7 +890,12 @@
     "valueIncluded": false
   },
   {
-    "name": "LOCALAPPDATA",
+    "name": "LOAD_CONCURRENCY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "LOAD_REQUESTS",
     "public": false,
     "valueIncluded": false
   },
@@ -595,7 +915,22 @@
     "valueIncluded": false
   },
   {
-    "name": "MAX_LOG_LENGTH",
+    "name": "MAUTIC_API_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MAUTIC_PUBLIC_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MAUTIC_SECRET_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MCP_AI_CONCURRENCY",
     "public": false,
     "valueIncluded": false
   },
@@ -605,7 +940,37 @@
     "valueIncluded": false
   },
   {
+    "name": "MCP_ATTACHMENT_ROOTS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MCP_AUDIT_TENANT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MCP_AUDIT_USER_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MCP_AUTO_EXECUTE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "MCP_BASE_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MCP_BULK_EMAIL_DURABLE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MCP_BULK_OUTREACH_DURABLE",
     "public": false,
     "valueIncluded": false
   },
@@ -615,7 +980,42 @@
     "valueIncluded": false
   },
   {
+    "name": "MCP_ENCRYPTION_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MCP_NOTIFY_EVERY_ACTION",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MCP_SEND_EMAIL_DURABLE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MCP_SYSTEM_USER_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "MCP_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MEMORY_LIMIT_MB",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MEMORY_PRESSURE_PCT",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MEMORY_TELEMETRY_INTERVAL_MS",
     "public": false,
     "valueIncluded": false
   },
@@ -626,6 +1026,26 @@
   },
   {
     "name": "MICROSOFT_CLIENT_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MONITOR_AUTH_EMAIL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MONITOR_AUTH_PASSWORD",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MONITOR_MCP_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MONITOR_ZOHO_REGION",
     "public": false,
     "valueIncluded": false
   },
@@ -670,6 +1090,11 @@
     "valueIncluded": false
   },
   {
+    "name": "NEXT_PUBLIC_BOOKING_URL",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
     "name": "NEXT_PUBLIC_CALENDLY_CLIENT_ID",
     "public": true,
     "valueIncluded": false
@@ -685,6 +1110,21 @@
     "valueIncluded": false
   },
   {
+    "name": "NEXT_PUBLIC_CAL_BASE_URL",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_CAL_OAUTH_CLIENT_ID",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_CAL_OAUTH_REDIRECT_URI",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
     "name": "NEXT_PUBLIC_DAILY_DOMAIN",
     "public": true,
     "valueIncluded": false
@@ -695,12 +1135,12 @@
     "valueIncluded": false
   },
   {
-    "name": "NEXT_PUBLIC_ENABLE_PWA",
+    "name": "NEXT_PUBLIC_DEMO_BOOKING_URL",
     "public": true,
     "valueIncluded": false
   },
   {
-    "name": "NEXT_PUBLIC_ENABLE_SERWIST",
+    "name": "NEXT_PUBLIC_EMAIL_LOGO_URL",
     "public": true,
     "valueIncluded": false
   },
@@ -770,12 +1210,22 @@
     "valueIncluded": false
   },
   {
+    "name": "NEXT_PUBLIC_PROMO_PREMIUM_UNLIMITED",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
     "name": "NEXT_PUBLIC_RAILWAY_GIT_COMMIT_SHA",
     "public": true,
     "valueIncluded": false
   },
   {
     "name": "NEXT_PUBLIC_SENTRY_DSN",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_SESSION_IDLE_TIMEOUT_MINUTES",
     "public": true,
     "valueIncluded": false
   },
@@ -800,6 +1250,11 @@
     "valueIncluded": false
   },
   {
+    "name": "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
     "name": "NEXT_PUBLIC_SUPABASE_URL",
     "public": true,
     "valueIncluded": false
@@ -816,6 +1271,21 @@
   },
   {
     "name": "NEXT_PUBLIC_VAPID_PUBLIC_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_ZARAZ_ANALYTICS_PURPOSE_ID",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_ZARAZ_FUNCTIONAL_PURPOSE_ID",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_ZARAZ_MARKETING_PURPOSE_ID",
     "public": true,
     "valueIncluded": false
   },
@@ -840,12 +1310,12 @@
     "valueIncluded": false
   },
   {
-    "name": "NODE_DEBUG",
+    "name": "NODE_ENV",
     "public": false,
     "valueIncluded": false
   },
   {
-    "name": "NODE_ENV",
+    "name": "NODE_OPTIONS",
     "public": false,
     "valueIncluded": false
   },
@@ -866,6 +1336,11 @@
   },
   {
     "name": "OPENAI_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "OPENAI_APPS_CHALLENGE_TOKEN",
     "public": false,
     "valueIncluded": false
   },
@@ -905,57 +1380,67 @@
     "valueIncluded": false
   },
   {
+    "name": "PAPERLESS_API_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PAPERLESS_API_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PENPOT_ACCESS_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PENPOT_BASE_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PENPOT_TEAM_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PGLITE_MODULE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PGLITE_MODULE_PATH",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PHASE2_BROWSER_PATH",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PHASE2_QA_GROUP",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PHASE2_QA_ROUTES",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PHASE2_QA_WEBPACK",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "PLAYWRIGHT_BASE_URL",
     "public": false,
     "valueIncluded": false
   },
   {
-    "name": "PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PLAYWRIGHT_DISABLE_SERVICE_WORKER_CONSOLE",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PLAYWRIGHT_HOST_PLATFORM_OVERRIDE",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PLAYWRIGHT_LEGACY_SCREENSHOT",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PLAYWRIGHT_NO_UA_PLATFORM",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PLAYWRIGHT_PROXY_BYPASS_FOR_TESTING",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PLAYWRIGHT_SERVER_REGISTRY",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PLAYWRIGHT_SKIP_NAVIGATION_CHECK",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PLAYWRIGHT_SOCKETS_DIR",
+    "name": "PLAYWRIGHT_TEST_BASE_URL",
     "public": false,
     "valueIncluded": false
   },
@@ -965,7 +1450,7 @@
     "valueIncluded": false
   },
   {
-    "name": "PROGRAMFILES",
+    "name": "PORTAL_QA_CHROMIUM_MODULE",
     "public": false,
     "valueIncluded": false
   },
@@ -985,72 +1470,7 @@
     "valueIncluded": false
   },
   {
-    "name": "PWDEBUGIMPL",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PWTEST_CLI_HEADLESS",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PWTEST_PRINT_WS_ENDPOINT",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PWTEST_PROFILE_DIR",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PWTEST_SERVER_WS_HEADERS",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PW_CHROMIUM_ATTACH_TO_OTHER",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PW_CLI_DISPLAY_VERSION",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PW_CODEGEN_NO_INSPECTOR",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PW_DEBUG_CONTROLLER_HEADLESS",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PW_LANG_NAME",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PW_LANG_NAME_VERSION",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PW_TEST_CDN_THAT_SHOULD_WORK",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PW_TEST_SCREENSHOT_NO_FONTS_READY",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "PW_VERSION_OVERRIDE",
+    "name": "QA_BASE_URL",
     "public": false,
     "valueIncluded": false
   },
@@ -1075,16 +1495,6 @@
     "valueIncluded": false
   },
   {
-    "name": "QTS_DEBUG",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "RAILWAY_DEPLOYMENT_ID",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
     "name": "RAILWAY_ENVIRONMENT",
     "public": false,
     "valueIncluded": false
@@ -1100,12 +1510,17 @@
     "valueIncluded": false
   },
   {
-    "name": "RAILWAY_PROJECT_ID",
+    "name": "RAILWAY_MEMORY_LIMIT_MB",
     "public": false,
     "valueIncluded": false
   },
   {
-    "name": "RAILWAY_REGION",
+    "name": "RAILWAY_PRIVATE_DOMAIN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RAILWAY_PROJECT_ID",
     "public": false,
     "valueIncluded": false
   },
@@ -1116,6 +1531,16 @@
   },
   {
     "name": "RAILWAY_SCRAPER_SERVICE_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RAILWAY_SERVICE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RAILWAY_SERVICES",
     "public": false,
     "valueIncluded": false
   },
@@ -1145,12 +1570,72 @@
     "valueIncluded": false
   },
   {
+    "name": "READINESS_LIGHT_DB",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "REDISHOST",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "REDISPASSWORD",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "REDISPORT",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "REDISUSER",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "REDIS_COMMAND_TIMEOUT_MS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "REDIS_CONNECT_TIMEOUT_MS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "REDIS_HOST",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "REDIS_MAX_RECONNECT_DELAY_MS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "REDIS_PASSWORD",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "REDIS_PORT",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "REDIS_REQUIRED",
     "public": false,
     "valueIncluded": false
   },
   {
     "name": "REDIS_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "REQUIRE_REDIS",
     "public": false,
     "valueIncluded": false
   },
@@ -1185,17 +1670,12 @@
     "valueIncluded": false
   },
   {
-    "name": "SELENIUM_REMOTE_CAPABILITIES",
+    "name": "SEARXNG_BASE_URL",
     "public": false,
     "valueIncluded": false
   },
   {
-    "name": "SELENIUM_REMOTE_HEADERS",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "SELENIUM_REMOTE_URL",
+    "name": "SEARXNG_ENABLED",
     "public": false,
     "valueIncluded": false
   },
@@ -1220,6 +1700,11 @@
     "valueIncluded": false
   },
   {
+    "name": "SENTRY_AUTH_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "SENTRY_DSN",
     "public": false,
     "valueIncluded": false
@@ -1236,6 +1721,21 @@
   },
   {
     "name": "SERVICE_ROLE_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SHOWCASE_CHROMIUM_PATH",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SHOWCASE_FONT_DIR",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SHUTDOWN_DRAIN_MS",
     "public": false,
     "valueIncluded": false
   },
@@ -1290,7 +1790,17 @@
     "valueIncluded": false
   },
   {
+    "name": "SOCIAL_CONCURRENCY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "SOCIAL_LEGACY_SCHEDULED_POSTS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SOCIAL_MEDIA_MAX_UPLOAD_BYTES",
     "public": false,
     "valueIncluded": false
   },
@@ -1315,7 +1825,47 @@
     "valueIncluded": false
   },
   {
+    "name": "STRIPE_CONNECT_WEBHOOK_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "STRIPE_ENTERPRISE_ANNUAL_PRICE_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "STRIPE_ENTERPRISE_MONTHLY_PRICE_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "STRIPE_PLATFORM_ACCOUNT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "STRIPE_PRO_ANNUAL_PRICE_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "STRIPE_PRO_MONTHLY_PRICE_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "STRIPE_SECRET_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "STRIPE_STARTER_ANNUAL_PRICE_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "STRIPE_STARTER_MONTHLY_PRICE_ID",
     "public": false,
     "valueIncluded": false
   },
@@ -1325,12 +1875,32 @@
     "valueIncluded": false
   },
   {
+    "name": "SUPABASE_ACCESS_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "SUPABASE_ANON_KEY",
     "public": false,
     "valueIncluded": false
   },
   {
+    "name": "SUPABASE_DB_PASSWORD",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "SUPABASE_DB_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SUPABASE_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SUPABASE_PUBLISHABLE_KEY",
     "public": false,
     "valueIncluded": false
   },
@@ -1355,11 +1925,6 @@
     "valueIncluded": false
   },
   {
-    "name": "SYSTEMROOT",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
     "name": "SYSTEM_EMAIL_FOOTER",
     "public": false,
     "valueIncluded": false
@@ -1370,22 +1935,22 @@
     "valueIncluded": false
   },
   {
+    "name": "TENANT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "TENANT_PASSWORD",
     "public": false,
     "valueIncluded": false
   },
   {
-    "name": "TEST_GRACEFUL_FS_GLOBAL_PATCH",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "TEST_INSPECTOR_LANGUAGE",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
     "name": "TEST_MODE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TEST_TENANT_ID",
     "public": false,
     "valueIncluded": false
   },
@@ -1401,6 +1966,11 @@
   },
   {
     "name": "TOKEN_ENCRYPTION_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TURNSTILE_ALLOW_BYPASS",
     "public": false,
     "valueIncluded": false
   },
@@ -1445,6 +2015,21 @@
     "valueIncluded": false
   },
   {
+    "name": "UNIVERSAL_CHASER_DISABLED",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "UNIVERSAL_CHASER_MODE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "UNIVERSAL_CHASER_PHASE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
     "name": "UNSUBSCRIBE_SECRET",
     "public": false,
     "valueIncluded": false
@@ -1465,16 +2050,6 @@
     "valueIncluded": false
   },
   {
-    "name": "USER",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "USERNAME",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
     "name": "VALIDATE_ENV_WARN_ONLY",
     "public": false,
     "valueIncluded": false
@@ -1486,26 +2061,6 @@
   },
   {
     "name": "VAPID_PRIVATE_KEY",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "VERCEL",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "VERCEL_DEPLOYMENT_ID",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "VERCEL_GIT_COMMIT_SHA",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "VERCEL_REGION",
     "public": false,
     "valueIncluded": false
   },
@@ -1546,6 +2101,11 @@
   },
   {
     "name": "VITE_GEMINI_API_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "VITE_GOOGLE_API_KEY",
     "public": true,
     "valueIncluded": false
   },
@@ -1600,17 +2160,7 @@
     "valueIncluded": false
   },
   {
-    "name": "WK_DISABLE_FRAME_SESSIONS",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "WS_NO_BUFFER_UTIL",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "WS_NO_UTF_8_VALIDATE",
+    "name": "WORKER_MODE",
     "public": false,
     "valueIncluded": false
   },
@@ -1626,11 +2176,6 @@
   },
   {
     "name": "XAI_VIDEO_MODEL",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "XDG_CACHE_HOME",
     "public": false,
     "valueIncluded": false
   },
@@ -1661,11 +2206,6 @@
   },
   {
     "name": "X_CONSUMER_SECRET",
-    "public": false,
-    "valueIncluded": false
-  },
-  {
-    "name": "YARGS_MIN_NODE_VERSION",
     "public": false,
     "valueIncluded": false
   },

@@ -214,8 +214,9 @@ async function findLeadByDomainWithIdentity(
   domain: string,
   email: string | null,
   phone: string | null,
+  businessName?: string | null,
 ): Promise<LeadRow | null> {
-  if (!email && !phone) return null;
+  if (!domain) return null;
   const { data, error } = await admin
     .from('leads')
     .select('id, email, phone, business_name, contact_name, stage, status, notes, is_test_data, metadata, client_id, website, source, deleted_at')
@@ -223,12 +224,18 @@ async function findLeadByDomainWithIdentity(
     .ilike('website', `%${domain}%`)
     .is('deleted_at', null)
     .limit(20);
-  if (error) return null;
-  for (const row of data || []) {
+  if (error || !data?.length) return null;
+  for (const row of data) {
     const rowEmail = normalizeEmail(row.email);
     const rowPhone = normalizePhone(row.phone);
     if (email && rowEmail === email) return row as LeadRow;
     if (phone && rowPhone && rowPhone === phone) return row as LeadRow;
+    if (businessName && row.business_name && normalizeCompanyName(row.business_name) === normalizeCompanyName(businessName)) {
+      return row as LeadRow;
+    }
+  }
+  if (data.length === 1 && !/^(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|icloud\.com)$/i.test(domain)) {
+    return data[0] as LeadRow;
   }
   return null;
 }
@@ -448,13 +455,14 @@ export async function resolveOrCreateCRMIdentity(
     if (matched) matchReason = 'phone';
   }
 
-  if (!matched && normalizedDomain && (normalizedEmail || normalizedPhone)) {
+  if (!matched && normalizedDomain) {
     matched = await findLeadByDomainWithIdentity(
       admin,
       tenantId,
       normalizedDomain,
       normalizedEmail,
       normalizedPhone,
+      primaryName && primaryName !== 'Unknown' ? primaryName : null,
     );
     if (matched) matchReason = 'domain_with_identity';
   }

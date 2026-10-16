@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
         ...result,
         message: isSent
           ? `Invoice sent to ${recipients.join(', ')}${result.provider ? ` via ${result.provider}` : ''}.`
-          : 'Invoice queued for background delivery; email has not been confirmed by the provider yet.',
+          : 'Invoice queued for background delivery; no email has been confirmed by the provider yet.',
       },
       { status: isSent ? 200 : 202 }
     );

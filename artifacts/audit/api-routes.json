@@ -1,5 +1,9 @@
 [
   {
+    "route": "/api/[...unmatched]",
+    "file": "src/app/api/[...unmatched]/route.ts"
+  },
+  {
     "route": "/api/account/communication-prefs",
     "file": "src/app/api/account/communication-prefs/route.ts"
   },
@@ -36,12 +40,40 @@
     "file": "src/app/api/accounting/sales-receipts/route.ts"
   },
   {
+    "route": "/api/accounting/stats",
+    "file": "src/app/api/accounting/stats/route.ts"
+  },
+  {
     "route": "/api/adapters/operate",
     "file": "src/app/api/adapters/operate/route.ts"
   },
   {
+    "route": "/api/admin/audit",
+    "file": "src/app/api/admin/audit/route.ts"
+  },
+  {
+    "route": "/api/admin/control-center/failed-jobs",
+    "file": "src/app/api/admin/control-center/failed-jobs/route.ts"
+  },
+  {
+    "route": "/api/admin/control-center",
+    "file": "src/app/api/admin/control-center/route.ts"
+  },
+  {
+    "route": "/api/admin/dashboard",
+    "file": "src/app/api/admin/dashboard/route.ts"
+  },
+  {
+    "route": "/api/admin/mcp-sessions",
+    "file": "src/app/api/admin/mcp-sessions/route.ts"
+  },
+  {
     "route": "/api/admin/operations-brief",
     "file": "src/app/api/admin/operations-brief/route.ts"
+  },
+  {
+    "route": "/api/admin/platform-monitoring",
+    "file": "src/app/api/admin/platform-monitoring/route.ts"
   },
   {
     "route": "/api/admin/platform-settings",
@@ -56,6 +88,10 @@
     "file": "src/app/api/admin/security-logs/route.ts"
   },
   {
+    "route": "/api/admin/tenant-billing-summary",
+    "file": "src/app/api/admin/tenant-billing-summary/route.ts"
+  },
+  {
     "route": "/api/admin/tenants/[tenantId]",
     "file": "src/app/api/admin/tenants/[tenantId]/route.ts"
   },
@@ -64,8 +100,28 @@
     "file": "src/app/api/admin/tenants/route.ts"
   },
   {
+    "route": "/api/admin/users/delete",
+    "file": "src/app/api/admin/users/delete/route.ts"
+  },
+  {
+    "route": "/api/admin/users/role",
+    "file": "src/app/api/admin/users/role/route.ts"
+  },
+  {
     "route": "/api/admin/users",
     "file": "src/app/api/admin/users/route.ts"
+  },
+  {
+    "route": "/api/admin/users/transfer-ownership",
+    "file": "src/app/api/admin/users/transfer-ownership/route.ts"
+  },
+  {
+    "route": "/api/agents/tasks/[taskId]",
+    "file": "src/app/api/agents/tasks/[taskId]/route.ts"
+  },
+  {
+    "route": "/api/agents/tasks",
+    "file": "src/app/api/agents/tasks/route.ts"
   },
   {
     "route": "/api/ai/batches",
@@ -124,6 +180,18 @@
     "file": "src/app/api/alpha/support/route.ts"
   },
   {
+    "route": "/api/auth/cal/callback",
+    "file": "src/app/api/auth/cal/callback/route.ts"
+  },
+  {
+    "route": "/api/auth/cal/connect",
+    "file": "src/app/api/auth/cal/connect/route.ts"
+  },
+  {
+    "route": "/api/auth/cal/status",
+    "file": "src/app/api/auth/cal/status/route.ts"
+  },
+  {
     "route": "/api/auth/calendly/callback",
     "file": "src/app/api/auth/calendly/callback/route.ts"
   },
@@ -134,6 +202,10 @@
   {
     "route": "/api/auth/callback/x",
     "file": "src/app/api/auth/callback/x/route.ts"
+  },
+  {
+    "route": "/api/auth/change-password-required",
+    "file": "src/app/api/auth/change-password-required/route.ts"
   },
   {
     "route": "/api/auth/facebook/callback",
@@ -212,6 +284,10 @@
     "file": "src/app/api/auth/microsoft/refresh/route.ts"
   },
   {
+    "route": "/api/auth/registration-event",
+    "file": "src/app/api/auth/registration-event/route.ts"
+  },
+  {
     "route": "/api/auth/signup-eligibility",
     "file": "src/app/api/auth/signup-eligibility/route.ts"
   },
@@ -252,12 +328,24 @@
     "file": "src/app/api/autonomous/approve/route.ts"
   },
   {
+    "route": "/api/autonomous/deferred/cancel",
+    "file": "src/app/api/autonomous/deferred/cancel/route.ts"
+  },
+  {
+    "route": "/api/autonomous/dream/approve",
+    "file": "src/app/api/autonomous/dream/approve/route.ts"
+  },
+  {
     "route": "/api/autonomous/rules",
     "file": "src/app/api/autonomous/rules/route.ts"
   },
   {
     "route": "/api/autonomous/trigger",
     "file": "src/app/api/autonomous/trigger/route.ts"
+  },
+  {
+    "route": "/api/bonnie/analytics",
+    "file": "src/app/api/bonnie/analytics/route.ts"
   },
   {
     "route": "/api/bonnie/approvals",
@@ -280,6 +368,10 @@
     "file": "src/app/api/bonnie/dream/route.ts"
   },
   {
+    "route": "/api/bonnie/execution-assurance",
+    "file": "src/app/api/bonnie/execution-assurance/route.ts"
+  },
+  {
     "route": "/api/bonnie/goals/[id]",
     "file": "src/app/api/bonnie/goals/[id]/route.ts"
   },
@@ -298,6 +390,14 @@
   {
     "route": "/api/bonnie/os",
     "file": "src/app/api/bonnie/os/route.ts"
+  },
+  {
+    "route": "/api/bonnie/outcomes/execute",
+    "file": "src/app/api/bonnie/outcomes/execute/route.ts"
+  },
+  {
+    "route": "/api/bonnie/outcomes/list",
+    "file": "src/app/api/bonnie/outcomes/list/route.ts"
   },
   {
     "route": "/api/bonnie/outcomes",
@@ -348,8 +448,16 @@
     "file": "src/app/api/booking/slots/route.ts"
   },
   {
+    "route": "/api/booking/status",
+    "file": "src/app/api/booking/status/route.ts"
+  },
+  {
     "route": "/api/brevo/send",
     "file": "src/app/api/brevo/send/route.ts"
+  },
+  {
+    "route": "/api/calendar/stats",
+    "file": "src/app/api/calendar/stats/route.ts"
   },
   {
     "route": "/api/calendly/cancel",
@@ -388,8 +496,48 @@
     "file": "src/app/api/campaigns/send/route.ts"
   },
   {
+    "route": "/api/campaigns/stats",
+    "file": "src/app/api/campaigns/stats/route.ts"
+  },
+  {
+    "route": "/api/chase/action",
+    "file": "src/app/api/chase/action/route.ts"
+  },
+  {
     "route": "/api/client/feedback",
     "file": "src/app/api/client/feedback/route.ts"
+  },
+  {
+    "route": "/api/client-finance/activity",
+    "file": "src/app/api/client-finance/activity/route.ts"
+  },
+  {
+    "route": "/api/client-finance/approvals",
+    "file": "src/app/api/client-finance/approvals/route.ts"
+  },
+  {
+    "route": "/api/client-finance/contract",
+    "file": "src/app/api/client-finance/contract/route.ts"
+  },
+  {
+    "route": "/api/client-finance/document",
+    "file": "src/app/api/client-finance/document/route.ts"
+  },
+  {
+    "route": "/api/client-finance/grant-access",
+    "file": "src/app/api/client-finance/grant-access/route.ts"
+  },
+  {
+    "route": "/api/client-finance/invite/[clientId]",
+    "file": "src/app/api/client-finance/invite/[clientId]/route.ts"
+  },
+  {
+    "route": "/api/client-finance/invoice",
+    "file": "src/app/api/client-finance/invoice/route.ts"
+  },
+  {
+    "route": "/api/client-finance/messages",
+    "file": "src/app/api/client-finance/messages/route.ts"
   },
   {
     "route": "/api/client-finance/portal",
@@ -398,6 +546,26 @@
   {
     "route": "/api/client-finance/portal-link/[clientId]",
     "file": "src/app/api/client-finance/portal-link/[clientId]/route.ts"
+  },
+  {
+    "route": "/api/client-finance/project",
+    "file": "src/app/api/client-finance/project/route.ts"
+  },
+  {
+    "route": "/api/client-portal-auth/login",
+    "file": "src/app/api/client-portal-auth/login/route.ts"
+  },
+  {
+    "route": "/api/client-portal-auth/logout",
+    "file": "src/app/api/client-portal-auth/logout/route.ts"
+  },
+  {
+    "route": "/api/client-portal-auth/me",
+    "file": "src/app/api/client-portal-auth/me/route.ts"
+  },
+  {
+    "route": "/api/client-portal-auth/set-password",
+    "file": "src/app/api/client-portal-auth/set-password/route.ts"
   },
   {
     "route": "/api/communication-compliance/check",
@@ -416,6 +584,22 @@
     "file": "src/app/api/contracts/[id]/route.ts"
   },
   {
+    "route": "/api/contracts/[id]/workspace",
+    "file": "src/app/api/contracts/[id]/workspace/route.ts"
+  },
+  {
+    "route": "/api/contracts/clauses",
+    "file": "src/app/api/contracts/clauses/route.ts"
+  },
+  {
+    "route": "/api/contracts/file",
+    "file": "src/app/api/contracts/file/route.ts"
+  },
+  {
+    "route": "/api/contracts/logo",
+    "file": "src/app/api/contracts/logo/route.ts"
+  },
+  {
     "route": "/api/contracts/management",
     "file": "src/app/api/contracts/management/route.ts"
   },
@@ -430,6 +614,10 @@
   {
     "route": "/api/contracts/sign",
     "file": "src/app/api/contracts/sign/route.ts"
+  },
+  {
+    "route": "/api/contracts/signer-profile",
+    "file": "src/app/api/contracts/signer-profile/route.ts"
   },
   {
     "route": "/api/contracts/stats",
@@ -448,6 +636,10 @@
     "file": "src/app/api/crm/bridge/route.ts"
   },
   {
+    "route": "/api/crm/contacts/enrich",
+    "file": "src/app/api/crm/contacts/enrich/route.ts"
+  },
+  {
     "route": "/api/crm/follow-ups",
     "file": "src/app/api/crm/follow-ups/route.ts"
   },
@@ -456,8 +648,16 @@
     "file": "src/app/api/crm/follow-ups/schedule/route.ts"
   },
   {
+    "route": "/api/crm/import/jobs/[id]",
+    "file": "src/app/api/crm/import/jobs/[id]/route.ts"
+  },
+  {
     "route": "/api/crm/import",
     "file": "src/app/api/crm/import/route.ts"
+  },
+  {
+    "route": "/api/crm/leads",
+    "file": "src/app/api/crm/leads/route.ts"
   },
   {
     "route": "/api/crm/migrate",
@@ -474,6 +674,10 @@
   {
     "route": "/api/crm/sync/push",
     "file": "src/app/api/crm/sync/push/route.ts"
+  },
+  {
+    "route": "/api/cron/account-lifecycle",
+    "file": "src/app/api/cron/account-lifecycle/route.ts"
   },
   {
     "route": "/api/cron/activity-digest",
@@ -528,6 +732,10 @@
     "file": "src/app/api/cron/bonnie-runtime-worker/route.ts"
   },
   {
+    "route": "/api/cron/booking-automations",
+    "file": "src/app/api/cron/booking-automations/route.ts"
+  },
+  {
     "route": "/api/cron/calendly-sync",
     "file": "src/app/api/cron/calendly-sync/route.ts"
   },
@@ -540,8 +748,20 @@
     "file": "src/app/api/cron/contact-psychology/route.ts"
   },
   {
+    "route": "/api/cron/contract-signature-reminders",
+    "file": "src/app/api/cron/contract-signature-reminders/route.ts"
+  },
+  {
     "route": "/api/cron/daily",
     "file": "src/app/api/cron/daily/route.ts"
+  },
+  {
+    "route": "/api/cron/daily-business-digest",
+    "file": "src/app/api/cron/daily-business-digest/route.ts"
+  },
+  {
+    "route": "/api/cron/daily-business-summary",
+    "file": "src/app/api/cron/daily-business-summary/route.ts"
   },
   {
     "route": "/api/cron/deal-intelligence",
@@ -552,12 +772,20 @@
     "file": "src/app/api/cron/entanglement-model/route.ts"
   },
   {
+    "route": "/api/cron/follow-up-escalation",
+    "file": "src/app/api/cron/follow-up-escalation/route.ts"
+  },
+  {
     "route": "/api/cron/integration-token-health",
     "file": "src/app/api/cron/integration-token-health/route.ts"
   },
   {
     "route": "/api/cron/intelligence-snapshots",
     "file": "src/app/api/cron/intelligence-snapshots/route.ts"
+  },
+  {
+    "route": "/api/cron/lead-discovery-worker",
+    "file": "src/app/api/cron/lead-discovery-worker/route.ts"
   },
   {
     "route": "/api/cron/linkedin-inbox-sync",
@@ -572,8 +800,20 @@
     "file": "src/app/api/cron/meta-token-health/route.ts"
   },
   {
+    "route": "/api/cron/notification-digests",
+    "file": "src/app/api/cron/notification-digests/route.ts"
+  },
+  {
+    "route": "/api/cron/platform-monitoring",
+    "file": "src/app/api/cron/platform-monitoring/route.ts"
+  },
+  {
     "route": "/api/cron/process-campaigns",
     "file": "src/app/api/cron/process-campaigns/route.ts"
+  },
+  {
+    "route": "/api/cron/process-document-intelligence",
+    "file": "src/app/api/cron/process-document-intelligence/route.ts"
   },
   {
     "route": "/api/cron/process-events",
@@ -592,6 +832,10 @@
     "file": "src/app/api/cron/process-recurring-invoices/route.ts"
   },
   {
+    "route": "/api/cron/process-scheduled-actions",
+    "file": "src/app/api/cron/process-scheduled-actions/route.ts"
+  },
+  {
     "route": "/api/cron/process-scheduled-ai-tasks",
     "file": "src/app/api/cron/process-scheduled-ai-tasks/route.ts"
   },
@@ -608,6 +852,10 @@
     "file": "src/app/api/cron/publish-scheduled-posts/route.ts"
   },
   {
+    "route": "/api/cron/reconcile-external-actions",
+    "file": "src/app/api/cron/reconcile-external-actions/route.ts"
+  },
+  {
     "route": "/api/cron/reconcile-social-posts",
     "file": "src/app/api/cron/reconcile-social-posts/route.ts"
   },
@@ -620,6 +868,10 @@
     "file": "src/app/api/cron/retry-failed/route.ts"
   },
   {
+    "route": "/api/cron/revenue-lifecycle-alerts",
+    "file": "src/app/api/cron/revenue-lifecycle-alerts/route.ts"
+  },
+  {
     "route": "/api/cron/sequence-worker",
     "file": "src/app/api/cron/sequence-worker/route.ts"
   },
@@ -628,8 +880,20 @@
     "file": "src/app/api/cron/social-publish/route.ts"
   },
   {
+    "route": "/api/cron/sync-social-analytics",
+    "file": "src/app/api/cron/sync-social-analytics/route.ts"
+  },
+  {
     "route": "/api/cron/sync-zoho-inbox",
     "file": "src/app/api/cron/sync-zoho-inbox/route.ts"
+  },
+  {
+    "route": "/api/cron/tenant-event-inbox-digest",
+    "file": "src/app/api/cron/tenant-event-inbox-digest/route.ts"
+  },
+  {
+    "route": "/api/cron/tenant-schedule",
+    "file": "src/app/api/cron/tenant-schedule/route.ts"
   },
   {
     "route": "/api/cron/webhook-deliveries",
@@ -644,6 +908,10 @@
     "file": "src/app/api/cron/zoho-token-health/route.ts"
   },
   {
+    "route": "/api/daily",
+    "file": "src/app/api/daily/route.ts"
+  },
+  {
     "route": "/api/daily/token",
     "file": "src/app/api/daily/token/route.ts"
   },
@@ -656,8 +924,32 @@
     "file": "src/app/api/dashboard/action-queue/route.ts"
   },
   {
+    "route": "/api/dashboard/business-control",
+    "file": "src/app/api/dashboard/business-control/route.ts"
+  },
+  {
+    "route": "/api/dashboard/chase-action",
+    "file": "src/app/api/dashboard/chase-action/route.ts"
+  },
+  {
+    "route": "/api/dashboard/chase-brief",
+    "file": "src/app/api/dashboard/chase-brief/route.ts"
+  },
+  {
+    "route": "/api/dashboard/chase-health",
+    "file": "src/app/api/dashboard/chase-health/route.ts"
+  },
+  {
+    "route": "/api/dashboard/chase-inbox",
+    "file": "src/app/api/dashboard/chase-inbox/route.ts"
+  },
+  {
     "route": "/api/dashboard/hub-stats",
     "file": "src/app/api/dashboard/hub-stats/route.ts"
+  },
+  {
+    "route": "/api/dashboard/next-actions",
+    "file": "src/app/api/dashboard/next-actions/route.ts"
   },
   {
     "route": "/api/dashboard/overview",
@@ -672,6 +964,10 @@
     "file": "src/app/api/dashboard/stats/route.ts"
   },
   {
+    "route": "/api/dashboard/workspace-activity",
+    "file": "src/app/api/dashboard/workspace-activity/route.ts"
+  },
+  {
     "route": "/api/data/deleted-records",
     "file": "src/app/api/data/deleted-records/route.ts"
   },
@@ -684,6 +980,10 @@
     "file": "src/app/api/deals/[dealId]/stakeholders/route.ts"
   },
   {
+    "route": "/api/deals/stats",
+    "file": "src/app/api/deals/stats/route.ts"
+  },
+  {
     "route": "/api/debug-ai",
     "file": "src/app/api/debug-ai/route.ts"
   },
@@ -694,6 +994,14 @@
   {
     "route": "/api/docs",
     "file": "src/app/api/docs/route.ts"
+  },
+  {
+    "route": "/api/document-data-rooms",
+    "file": "src/app/api/document-data-rooms/route.ts"
+  },
+  {
+    "route": "/api/document-requirements",
+    "file": "src/app/api/document-requirements/route.ts"
   },
   {
     "route": "/api/email/auto-reply/pending",
@@ -720,8 +1028,20 @@
     "file": "src/app/api/email/drafts/route.ts"
   },
   {
+    "route": "/api/email/gallery",
+    "file": "src/app/api/email/gallery/route.ts"
+  },
+  {
     "route": "/api/email/platform-transactional",
     "file": "src/app/api/email/platform-transactional/route.ts"
+  },
+  {
+    "route": "/api/email/preferences",
+    "file": "src/app/api/email/preferences/route.ts"
+  },
+  {
+    "route": "/api/email/preview",
+    "file": "src/app/api/email/preview/route.ts"
   },
   {
     "route": "/api/email/providers/test",
@@ -754,6 +1074,10 @@
   {
     "route": "/api/engine/ingest",
     "file": "src/app/api/engine/ingest/route.ts"
+  },
+  {
+    "route": "/api/facebook/accounts",
+    "file": "src/app/api/facebook/accounts/route.ts"
   },
   {
     "route": "/api/facebook/activity",
@@ -880,6 +1204,10 @@
     "file": "src/app/api/health/route.ts"
   },
   {
+    "route": "/api/health/workspace",
+    "file": "src/app/api/health/workspace/route.ts"
+  },
+  {
     "route": "/api/hubspot/delete",
     "file": "src/app/api/hubspot/delete/route.ts"
   },
@@ -914,6 +1242,14 @@
   {
     "route": "/api/indexnow",
     "file": "src/app/api/indexnow/route.ts"
+  },
+  {
+    "route": "/api/instagram/disconnect",
+    "file": "src/app/api/instagram/disconnect/route.ts"
+  },
+  {
+    "route": "/api/instagram/post",
+    "file": "src/app/api/instagram/post/route.ts"
   },
   {
     "route": "/api/integrations/actions",
@@ -976,6 +1312,10 @@
     "file": "src/app/api/internal/leads/mcp-sync/route.ts"
   },
   {
+    "route": "/api/invoices/[id]/attachments",
+    "file": "src/app/api/invoices/[id]/attachments/route.ts"
+  },
+  {
     "route": "/api/invoices/[id]/audit-log",
     "file": "src/app/api/invoices/[id]/audit-log/route.ts"
   },
@@ -1004,6 +1344,10 @@
     "file": "src/app/api/invoices/[id]/public-link/route.ts"
   },
   {
+    "route": "/api/invoices/[id]/receipt",
+    "file": "src/app/api/invoices/[id]/receipt/route.ts"
+  },
+  {
     "route": "/api/invoices/[id]/reconcile",
     "file": "src/app/api/invoices/[id]/reconcile/route.ts"
   },
@@ -1012,12 +1356,24 @@
     "file": "src/app/api/invoices/[id]/route.ts"
   },
   {
+    "route": "/api/invoices/[id]/statement",
+    "file": "src/app/api/invoices/[id]/statement/route.ts"
+  },
+  {
     "route": "/api/invoices/[id]/view",
     "file": "src/app/api/invoices/[id]/view/route.ts"
   },
   {
     "route": "/api/invoices/[id]/void",
     "file": "src/app/api/invoices/[id]/void/route.ts"
+  },
+  {
+    "route": "/api/invoices/[id]/workspace",
+    "file": "src/app/api/invoices/[id]/workspace/route.ts"
+  },
+  {
+    "route": "/api/invoices/bulk",
+    "file": "src/app/api/invoices/bulk/route.ts"
   },
   {
     "route": "/api/invoices/confirm-payment",
@@ -1076,8 +1432,16 @@
     "file": "src/app/api/leads/candidates/[id]/review/route.ts"
   },
   {
+    "route": "/api/leads/embed",
+    "file": "src/app/api/leads/embed/route.ts"
+  },
+  {
     "route": "/api/leads/enrich",
     "file": "src/app/api/leads/enrich/route.ts"
+  },
+  {
+    "route": "/api/leads/lists/[id]/members",
+    "file": "src/app/api/leads/lists/[id]/members/route.ts"
   },
   {
     "route": "/api/leads/lists",
@@ -1104,6 +1468,18 @@
     "file": "src/app/api/leads/searches/route.ts"
   },
   {
+    "route": "/api/leads/stats",
+    "file": "src/app/api/leads/stats/route.ts"
+  },
+  {
+    "route": "/api/legal/acceptance",
+    "file": "src/app/api/legal/acceptance/route.ts"
+  },
+  {
+    "route": "/api/legal/consent-record",
+    "file": "src/app/api/legal/consent-record/route.ts"
+  },
+  {
     "route": "/api/legal/data-export",
     "file": "src/app/api/legal/data-export/route.ts"
   },
@@ -1114,6 +1490,10 @@
   {
     "route": "/api/legal/dpa-request",
     "file": "src/app/api/legal/dpa-request/route.ts"
+  },
+  {
+    "route": "/api/linkedin/ads",
+    "file": "src/app/api/linkedin/ads/route.ts"
   },
   {
     "route": "/api/linkedin/capture-lead",
@@ -1128,6 +1508,10 @@
     "file": "src/app/api/linkedin/comments/route.ts"
   },
   {
+    "route": "/api/linkedin/diagnostics",
+    "file": "src/app/api/linkedin/diagnostics/route.ts"
+  },
+  {
     "route": "/api/linkedin/engagement",
     "file": "src/app/api/linkedin/engagement/route.ts"
   },
@@ -1138,6 +1522,10 @@
   {
     "route": "/api/linkedin/link-company-page",
     "file": "src/app/api/linkedin/link-company-page/route.ts"
+  },
+  {
+    "route": "/api/linkedin/pipeline-metrics",
+    "file": "src/app/api/linkedin/pipeline-metrics/route.ts"
   },
   {
     "route": "/api/linkedin/posts",
@@ -1152,8 +1540,16 @@
     "file": "src/app/api/linkedin/refresh-pages/route.ts"
   },
   {
+    "route": "/api/linkedin/webhook",
+    "file": "src/app/api/linkedin/webhook/route.ts"
+  },
+  {
     "route": "/api/livekit/token",
     "file": "src/app/api/livekit/token/route.ts"
+  },
+  {
+    "route": "/api/location/search",
+    "file": "src/app/api/location/search/route.ts"
   },
   {
     "route": "/api/location/validate",
@@ -1166,6 +1562,14 @@
   {
     "route": "/api/marketing/campaigns",
     "file": "src/app/api/marketing/campaigns/route.ts"
+  },
+  {
+    "route": "/api/marketing/overview",
+    "file": "src/app/api/marketing/overview/route.ts"
+  },
+  {
+    "route": "/api/marketing/week-insight",
+    "file": "src/app/api/marketing/week-insight/route.ts"
   },
   {
     "route": "/api/mcp/authorize",
@@ -1232,6 +1636,10 @@
     "file": "src/app/api/mcp/well-known/oauth-protected-resource/route.ts"
   },
   {
+    "route": "/api/media/[assetId]",
+    "file": "src/app/api/media/[assetId]/route.ts"
+  },
+  {
     "route": "/api/meetings/[callId]/chat",
     "file": "src/app/api/meetings/[callId]/chat/route.ts"
   },
@@ -1276,12 +1684,68 @@
     "file": "src/app/api/notifications/route.ts"
   },
   {
+    "route": "/api/notifications/test-push",
+    "file": "src/app/api/notifications/test-push/route.ts"
+  },
+  {
     "route": "/api/onboarding/start",
     "file": "src/app/api/onboarding/start/route.ts"
   },
   {
+    "route": "/api/operations",
+    "file": "src/app/api/operations/route.ts"
+  },
+  {
+    "route": "/api/outbound/icps",
+    "file": "src/app/api/outbound/icps/route.ts"
+  },
+  {
+    "route": "/api/outbound/mailboxes",
+    "file": "src/app/api/outbound/mailboxes/route.ts"
+  },
+  {
+    "route": "/api/outbound/overview",
+    "file": "src/app/api/outbound/overview/route.ts"
+  },
+  {
+    "route": "/api/outbound/qualify",
+    "file": "src/app/api/outbound/qualify/route.ts"
+  },
+  {
+    "route": "/api/outbound/verify-email",
+    "file": "src/app/api/outbound/verify-email/route.ts"
+  },
+  {
+    "route": "/api/outreach/acknowledgement",
+    "file": "src/app/api/outreach/acknowledgement/route.ts"
+  },
+  {
+    "route": "/api/outreach/audiences",
+    "file": "src/app/api/outreach/audiences/route.ts"
+  },
+  {
+    "route": "/api/outreach/batch-review",
+    "file": "src/app/api/outreach/batch-review/route.ts"
+  },
+  {
+    "route": "/api/outreach/events",
+    "file": "src/app/api/outreach/events/route.ts"
+  },
+  {
+    "route": "/api/outreach/experiments",
+    "file": "src/app/api/outreach/experiments/route.ts"
+  },
+  {
     "route": "/api/outreach/generate",
     "file": "src/app/api/outreach/generate/route.ts"
+  },
+  {
+    "route": "/api/outreach/inbox",
+    "file": "src/app/api/outreach/inbox/route.ts"
+  },
+  {
+    "route": "/api/outreach/recipients",
+    "file": "src/app/api/outreach/recipients/route.ts"
   },
   {
     "route": "/api/outreach",
@@ -1290,6 +1754,14 @@
   {
     "route": "/api/outreach/send",
     "file": "src/app/api/outreach/send/route.ts"
+  },
+  {
+    "route": "/api/outreach/senders",
+    "file": "src/app/api/outreach/senders/route.ts"
+  },
+  {
+    "route": "/api/outreach/sequences",
+    "file": "src/app/api/outreach/sequences/route.ts"
   },
   {
     "route": "/api/outreach/stats",
@@ -1306,6 +1778,10 @@
   {
     "route": "/api/platform-advantage/snapshot",
     "file": "src/app/api/platform-advantage/snapshot/route.ts"
+  },
+  {
+    "route": "/api/platform-status",
+    "file": "src/app/api/platform-status/route.ts"
   },
   {
     "route": "/api/playwright/jobs",
@@ -1364,6 +1840,10 @@
     "file": "src/app/api/proposals/respond/route.ts"
   },
   {
+    "route": "/api/public/document-data-rooms/[token]",
+    "file": "src/app/api/public/document-data-rooms/[token]/route.ts"
+  },
+  {
     "route": "/api/public/shares/[id]/download",
     "file": "src/app/api/public/shares/[id]/download/route.ts"
   },
@@ -1388,12 +1868,20 @@
     "file": "src/app/api/quotes/convert/route.ts"
   },
   {
+    "route": "/api/quotes/convert-contract",
+    "file": "src/app/api/quotes/convert-contract/route.ts"
+  },
+  {
     "route": "/api/quotes/respond",
     "file": "src/app/api/quotes/respond/route.ts"
   },
   {
     "route": "/api/quotes/send",
     "file": "src/app/api/quotes/send/route.ts"
+  },
+  {
+    "route": "/api/quotes/stats",
+    "file": "src/app/api/quotes/stats/route.ts"
   },
   {
     "route": "/api/readiness",
@@ -1408,12 +1896,36 @@
     "file": "src/app/api/reports/export/route.ts"
   },
   {
+    "route": "/api/research/jobs/[id]/import",
+    "file": "src/app/api/research/jobs/[id]/import/route.ts"
+  },
+  {
+    "route": "/api/research/jobs/[id]/results",
+    "file": "src/app/api/research/jobs/[id]/results/route.ts"
+  },
+  {
+    "route": "/api/research/jobs/[id]",
+    "file": "src/app/api/research/jobs/[id]/route.ts"
+  },
+  {
+    "route": "/api/research/jobs",
+    "file": "src/app/api/research/jobs/route.ts"
+  },
+  {
+    "route": "/api/research/results/[id]",
+    "file": "src/app/api/research/results/[id]/route.ts"
+  },
+  {
     "route": "/api/resend/domains",
     "file": "src/app/api/resend/domains/route.ts"
   },
   {
     "route": "/api/resend/send",
     "file": "src/app/api/resend/send/route.ts"
+  },
+  {
+    "route": "/api/revenue-lifecycle",
+    "file": "src/app/api/revenue-lifecycle/route.ts"
   },
   {
     "route": "/api/scraper/affordable",
@@ -1564,6 +2076,10 @@
     "file": "src/app/api/sms/send/route.ts"
   },
   {
+    "route": "/api/social/analytics/sync",
+    "file": "src/app/api/social/analytics/sync/route.ts"
+  },
+  {
     "route": "/api/social/command-center",
     "file": "src/app/api/social/command-center/route.ts"
   },
@@ -1580,12 +2096,20 @@
     "file": "src/app/api/social/stats/route.ts"
   },
   {
+    "route": "/api/social-media/public/[token]",
+    "file": "src/app/api/social-media/public/[token]/route.ts"
+  },
+  {
     "route": "/api/storage/[bucket]/[...path]",
     "file": "src/app/api/storage/[bucket]/[...path]/route.ts"
   },
   {
     "route": "/api/stripe/connect/callback",
     "file": "src/app/api/stripe/connect/callback/route.ts"
+  },
+  {
+    "route": "/api/stripe/connect/disconnect",
+    "file": "src/app/api/stripe/connect/disconnect/route.ts"
   },
   {
     "route": "/api/stripe/connect/login",
@@ -1616,10 +2140,6 @@
     "file": "src/app/api/stripe/create-invoice-session/route.ts"
   },
   {
-    "route": "/api/stripe/create-legacy-invoice-session",
-    "file": "src/app/api/stripe/create-legacy-invoice-session/route.ts"
-  },
-  {
     "route": "/api/stripe/create-payment-intent",
     "file": "src/app/api/stripe/create-payment-intent/route.ts"
   },
@@ -1644,6 +2164,22 @@
     "file": "src/app/api/stripe/webhook/route.ts"
   },
   {
+    "route": "/api/system-health",
+    "file": "src/app/api/system-health/route.ts"
+  },
+  {
+    "route": "/api/tasks/stats",
+    "file": "src/app/api/tasks/stats/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/accounting/periods/[periodId]",
+    "file": "src/app/api/tenant/[tenantId]/accounting/periods/[periodId]/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/accounting/periods",
+    "file": "src/app/api/tenant/[tenantId]/accounting/periods/route.ts"
+  },
+  {
     "route": "/api/tenant/[tenantId]/activity",
     "file": "src/app/api/tenant/[tenantId]/activity/route.ts"
   },
@@ -1664,12 +2200,28 @@
     "file": "src/app/api/tenant/[tenantId]/booking-types/route.ts"
   },
   {
+    "route": "/api/tenant/[tenantId]/bookings",
+    "file": "src/app/api/tenant/[tenantId]/bookings/route.ts"
+  },
+  {
     "route": "/api/tenant/[tenantId]/business-events",
     "file": "src/app/api/tenant/[tenantId]/business-events/route.ts"
   },
   {
     "route": "/api/tenant/[tenantId]/business-settings",
     "file": "src/app/api/tenant/[tenantId]/business-settings/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/clients/[clientId]/360",
+    "file": "src/app/api/tenant/[tenantId]/clients/[clientId]/360/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/clients/[clientId]/messages",
+    "file": "src/app/api/tenant/[tenantId]/clients/[clientId]/messages/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/clients/[clientId]/timeline",
+    "file": "src/app/api/tenant/[tenantId]/clients/[clientId]/timeline/route.ts"
   },
   {
     "route": "/api/tenant/[tenantId]/clients",
@@ -1704,6 +2256,10 @@
     "file": "src/app/api/tenant/[tenantId]/email-sequences/route.ts"
   },
   {
+    "route": "/api/tenant/[tenantId]/entities/[entityType]/[entityId]/context",
+    "file": "src/app/api/tenant/[tenantId]/entities/[entityType]/[entityId]/context/route.ts"
+  },
+  {
     "route": "/api/tenant/[tenantId]/files",
     "file": "src/app/api/tenant/[tenantId]/files/route.ts"
   },
@@ -1736,6 +2292,22 @@
     "file": "src/app/api/tenant/[tenantId]/invitations/route.ts"
   },
   {
+    "route": "/api/tenant/[tenantId]/kanban/metrics",
+    "file": "src/app/api/tenant/[tenantId]/kanban/metrics/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/kanban/transitions",
+    "file": "src/app/api/tenant/[tenantId]/kanban/transitions/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/leads",
+    "file": "src/app/api/tenant/[tenantId]/leads/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/marketing/listmonk/health",
+    "file": "src/app/api/tenant/[tenantId]/marketing/listmonk/health/route.ts"
+  },
+  {
     "route": "/api/tenant/[tenantId]/meetings/permanent-room",
     "file": "src/app/api/tenant/[tenantId]/meetings/permanent-room/route.ts"
   },
@@ -1748,6 +2320,14 @@
     "file": "src/app/api/tenant/[tenantId]/members/route.ts"
   },
   {
+    "route": "/api/tenant/[tenantId]/notification-preferences",
+    "file": "src/app/api/tenant/[tenantId]/notification-preferences/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/onboarding/progress",
+    "file": "src/app/api/tenant/[tenantId]/onboarding/progress/route.ts"
+  },
+  {
     "route": "/api/tenant/[tenantId]/onboarding",
     "file": "src/app/api/tenant/[tenantId]/onboarding/route.ts"
   },
@@ -1756,12 +2336,60 @@
     "file": "src/app/api/tenant/[tenantId]/pages/route.ts"
   },
   {
+    "route": "/api/tenant/[tenantId]/presentations",
+    "file": "src/app/api/tenant/[tenantId]/presentations/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/project-milestones",
+    "file": "src/app/api/tenant/[tenantId]/project-milestones/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/project-templates",
+    "file": "src/app/api/tenant/[tenantId]/project-templates/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/projects/[projectId]/approvals",
+    "file": "src/app/api/tenant/[tenantId]/projects/[projectId]/approvals/route.ts"
+  },
+  {
     "route": "/api/tenant/[tenantId]/projects/[projectId]/comments",
     "file": "src/app/api/tenant/[tenantId]/projects/[projectId]/comments/route.ts"
   },
   {
+    "route": "/api/tenant/[tenantId]/projects/[projectId]/designs",
+    "file": "src/app/api/tenant/[tenantId]/projects/[projectId]/designs/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/projects/[projectId]/financials",
+    "file": "src/app/api/tenant/[tenantId]/projects/[projectId]/financials/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/projects/[projectId]/issues/[issueId]",
+    "file": "src/app/api/tenant/[tenantId]/projects/[projectId]/issues/[issueId]/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/projects/[projectId]/issues",
+    "file": "src/app/api/tenant/[tenantId]/projects/[projectId]/issues/route.ts"
+  },
+  {
     "route": "/api/tenant/[tenantId]/projects/[projectId]",
     "file": "src/app/api/tenant/[tenantId]/projects/[projectId]/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/projects/[projectId]/summary",
+    "file": "src/app/api/tenant/[tenantId]/projects/[projectId]/summary/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/projects/automation-policy",
+    "file": "src/app/api/tenant/[tenantId]/projects/automation-policy/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/projects/bulk",
+    "file": "src/app/api/tenant/[tenantId]/projects/bulk/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/projects/execution",
+    "file": "src/app/api/tenant/[tenantId]/projects/execution/route.ts"
   },
   {
     "route": "/api/tenant/[tenantId]/projects",
@@ -1808,6 +2436,10 @@
     "file": "src/app/api/tenant/[tenantId]/workflows/route.ts"
   },
   {
+    "route": "/api/tenant/[tenantId]/workspace-preferences",
+    "file": "src/app/api/tenant/[tenantId]/workspace-preferences/route.ts"
+  },
+  {
     "route": "/api/tenant/bootstrap",
     "file": "src/app/api/tenant/bootstrap/route.ts"
   },
@@ -1844,6 +2476,10 @@
     "file": "src/app/api/unsubscribe/route.ts"
   },
   {
+    "route": "/api/webhooks/cal",
+    "file": "src/app/api/webhooks/cal/route.ts"
+  },
+  {
     "route": "/api/webhooks/calendly",
     "file": "src/app/api/webhooks/calendly/route.ts"
   },
@@ -1874,6 +2510,14 @@
   {
     "route": "/api/webhooks/facebook/whatsapp",
     "file": "src/app/api/webhooks/facebook/whatsapp/route.ts"
+  },
+  {
+    "route": "/api/webhooks/leads",
+    "file": "src/app/api/webhooks/leads/route.ts"
+  },
+  {
+    "route": "/api/webhooks/linkedin/leads",
+    "file": "src/app/api/webhooks/linkedin/leads/route.ts"
   },
   {
     "route": "/api/webhooks/twilio/sms",

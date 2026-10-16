@@ -57,8 +57,24 @@ export const contractServerService = {
 
     generateHash(text: string): string {
         return crypto.createHash('sha256').update(text).digest('hex');
+    },
+
+    resolveContractSignLifecycle(requiredParties: Array<{ signature_status?: string | null }> | null | undefined, updates: Record<string, any> = {}) {
+        const hasCanonicalParties = Boolean(requiredParties?.length);
+        const allCanonicalPartiesSigned =
+            hasCanonicalParties && requiredParties!.every((party) => party.signature_status === 'signed');
+        updates.lifecycle_status = allCanonicalPartiesSigned ? 'signed' : 'sent';
+        return { hasCanonicalParties, allCanonicalPartiesSigned, updates };
     }
 };
+
+export function resolveContractSignLifecycle(requiredParties: Array<{ signature_status?: string | null }> | null | undefined, updates: Record<string, any> = {}) {
+    const hasCanonicalParties = Boolean(requiredParties?.length);
+    const allCanonicalPartiesSigned =
+        hasCanonicalParties && requiredParties!.every((party) => party.signature_status === 'signed');
+    updates.lifecycle_status = allCanonicalPartiesSigned ? 'signed' : 'sent';
+    return { hasCanonicalParties, allCanonicalPartiesSigned, updates };
+}
 
 async function recordAtomicSignature(req: SignatureRequest | TokenSignatureRequest) {
     const admin = createSupabaseAdminClient();

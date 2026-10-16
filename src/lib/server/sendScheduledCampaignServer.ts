@@ -665,7 +665,7 @@ export async function sendScheduledCampaignServer(campaignId: string, options?: 
 
     let failedCount = 0;
 
-    for (const recipient of emailRecipients) {
+    const sendRecipientEmail = async (recipient: (typeof emailRecipients)[number]) => {
       // Atomic recipient claim: concurrent workers may read the same pending
       // batch, but only one is allowed to cross the provider side-effect gate.
       const { data: claimedRecipient, error: claimError } = await admin
@@ -677,7 +677,7 @@ export async function sendScheduledCampaignServer(campaignId: string, options?: 
         .eq("status", "pending")
         .select("id")
         .maybeSingle();
-      if (claimError || !claimedRecipient) continue;
+      if (claimError || !claimedRecipient) return;
 
       if (await isEmailSuppressed(String(c.tenant_id || ""), recipient.email)) {
         await admin
@@ -688,7 +688,7 @@ export async function sendScheduledCampaignServer(campaignId: string, options?: 
           })
           .eq("id", recipient.id);
         failedCount += 1;
-        continue;
+        return;
       }
 
       const consentOk = await hasRecipientMarketingConsent(admin, tenantId, {
@@ -704,7 +704,7 @@ export async function sendScheduledCampaignServer(campaignId: string, options?: 
           })
           .eq("id", recipient.id);
         failedCount += 1;
-        continue;
+        return;
       }
 
       const maxPerSevenDays = Number(
@@ -730,7 +730,7 @@ export async function sendScheduledCampaignServer(campaignId: string, options?: 
             })
             .eq("id", recipient.id);
           failedCount += 1;
-          continue;
+          return;
         }
       }
 
@@ -798,7 +798,7 @@ export async function sendScheduledCampaignServer(campaignId: string, options?: 
           })
           .eq("id", recipient.id);
         failedCount += 1;
-        continue;
+        return;
       }
 
       const fromEmail = provider.fromEmail || campaignFromEmail;
@@ -874,6 +874,24 @@ export async function sendScheduledCampaignServer(campaignId: string, options?: 
             },
           })
           .eq("id", recipient.id);
+
+        // Synchronize CRM contact and lead last_contacted_at timestamps
+        if (recipient.contact_id) {
+          await admin
+            .from("contacts")
+            .update({ last_contacted_at: new Date().toISOString() })
+            .eq("id", recipient.contact_id)
+            .eq("tenant_id", tenantId);
+        }
+        await admin
+          .from("leads")
+          .update({
+            last_contacted_at: new Date().toISOString(),
+            outreach_status: "contacted",
+          })
+          .eq("tenant_id", tenantId)
+          .ilike("email", recipient.email);
+
         await admin.from("outreach_events").insert({
           tenant_id: tenantId,
           campaign_id: campaignId,
@@ -934,7 +952,20 @@ export async function sendScheduledCampaignServer(campaignId: string, options?: 
           })
           .eq("id", recipient.id);
       }
-    }
+    };
+
+    // Execute email sending in parallel workers with bounded concurrency (5 workers)
+    const CAMPAIGN_SEND_CONCURRENCY = 5;
+    let recipientQueueIndex = 0;
+    const sendWorkers = new Array(Math.min(CAMPAIGN_SEND_CONCURRENCY, emailRecipients.length))
+      .fill(0)
+      .map(async () => {
+        while (recipientQueueIndex < emailRecipients.length) {
+          const currentIdx = recipientQueueIndex++;
+          await sendRecipientEmail(emailRecipients[currentIdx]);
+        }
+      });
+    await Promise.all(sendWorkers);
 
     if (sentCount === 0 && emailRecipients.length > 0) {
       await admin

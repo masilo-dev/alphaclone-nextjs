@@ -284,6 +284,18 @@
     "target": "/settings/billing"
   },
   {
+    "file": "qa/playwright/02-user-journeys-qa.cjs",
+    "target": "/dashboard/contacts"
+  },
+  {
+    "file": "qa/playwright/02-user-journeys-qa.cjs",
+    "target": "/dashboard/leads/finder"
+  },
+  {
+    "file": "scripts/client-portal-fixture-qa.mjs",
+    "target": "/ui.css"
+  },
+  {
     "file": "src/DASHBOARD_VIDEO_AUDIO_ANALYSIS.md",
     "target": "/dashboard"
   },
@@ -320,26 +332,6 @@
     "target": "/fonts/inter.woff2"
   },
   {
-    "file": "src/app/api/crm/follow-ups/route.ts",
-    "target": "/dashboard/contacts"
-  },
-  {
-    "file": "src/app/api/crm/follow-ups/route.ts",
-    "target": "/dashboard/crm/accounts"
-  },
-  {
-    "file": "src/app/api/crm/follow-ups/route.ts",
-    "target": "/dashboard/crm/accounts"
-  },
-  {
-    "file": "src/app/api/crm/follow-ups/route.ts",
-    "target": "/dashboard/deals"
-  },
-  {
-    "file": "src/app/api/crm/follow-ups/route.ts",
-    "target": "/dashboard/leads"
-  },
-  {
     "file": "src/app/api/dashboard/action-queue/route.ts",
     "target": "/dashboard/comms?tab=needs-reply"
   },
@@ -352,12 +344,40 @@
     "target": "/dashboard/business/contracts/manage"
   },
   {
+    "file": "src/app/api/dashboard/action-queue/route.ts",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/app/api/dashboard/action-queue/route.ts",
+    "target": "/dashboard/leads?filter=stale"
+  },
+  {
+    "file": "src/app/api/marketing/overview/route.ts",
+    "target": "/dashboard/marketing/deliverability"
+  },
+  {
+    "file": "src/app/api/marketing/overview/route.ts",
+    "target": "/dashboard/marketing/outreach"
+  },
+  {
+    "file": "src/app/api/marketing/overview/route.ts",
+    "target": "/dashboard/business/social-command"
+  },
+  {
+    "file": "src/app/api/marketing/overview/route.ts",
+    "target": "/dashboard/marketplace"
+  },
+  {
     "file": "src/app/api/mcp/authorize/route.ts",
     "target": "/dashboard/marketplace"
   },
   {
     "file": "src/app/auth/auth-code-error/AuthCodeErrorClient.tsx",
     "target": "/dashboard"
+  },
+  {
+    "file": "src/app/auth/login/page.tsx",
+    "target": "/"
   },
   {
     "file": "src/app/auth/login/page.tsx",
@@ -373,6 +393,10 @@
   },
   {
     "file": "src/app/book/page.tsx",
+    "target": "/"
+  },
+  {
+    "file": "src/app/book-demo/BookDemoContent.tsx",
     "target": "/"
   },
   {
@@ -413,6 +437,14 @@
   },
   {
     "file": "src/app/not-found.tsx",
+    "target": "/"
+  },
+  {
+    "file": "src/app/platform-status/StatusDashboard.tsx",
+    "target": "/"
+  },
+  {
+    "file": "src/app/portal-login/page.tsx",
     "target": "/"
   },
   {
@@ -517,19 +549,19 @@
   },
   {
     "file": "src/components/dashboard/AnalyticsTab.tsx",
-    "target": "/dashboard/business/reports"
+    "target": "/dashboard/business/billing"
   },
   {
     "file": "src/components/dashboard/AnalyticsTab.tsx",
-    "target": "/dashboard/business/projects"
+    "target": "/dashboard/deals"
   },
   {
     "file": "src/components/dashboard/AnalyticsTab.tsx",
-    "target": "/dashboard/contacts"
+    "target": "/dashboard/tasks"
   },
   {
     "file": "src/components/dashboard/AnalyticsTab.tsx",
-    "target": "/dashboard/performance"
+    "target": "/dashboard/business/campaigns"
   },
   {
     "file": "src/components/dashboard/AttentionFirstDashboard.tsx",
@@ -569,7 +601,7 @@
   },
   {
     "file": "src/components/dashboard/AttentionFirstDashboard.tsx",
-    "target": "/dashboard/crm/workspace"
+    "target": "/dashboard/crm/workspace?quickAdd=true"
   },
   {
     "file": "src/components/dashboard/AttentionFirstDashboard.tsx",
@@ -582,6 +614,18 @@
   {
     "file": "src/components/dashboard/AttentionFirstDashboard.tsx",
     "target": "/dashboard/business/calendar"
+  },
+  {
+    "file": "src/components/dashboard/BottomNav.tsx",
+    "target": "/dashboard"
+  },
+  {
+    "file": "src/components/dashboard/BottomNav.tsx",
+    "target": "/dashboard/projects"
+  },
+  {
+    "file": "src/components/dashboard/BottomNav.tsx",
+    "target": "/dashboard/comms"
   },
   {
     "file": "src/components/dashboard/CalendarComponent.tsx",
@@ -606,22 +650,6 @@
   {
     "file": "src/components/dashboard/ExecutiveDashboard.tsx",
     "target": "/dashboard/business/billing"
-  },
-  {
-    "file": "src/components/dashboard/Layout/Sidebar.tsx",
-    "target": "/dashboard"
-  },
-  {
-    "file": "src/components/dashboard/Layout/Sidebar.tsx",
-    "target": "/dashboard/clients"
-  },
-  {
-    "file": "src/components/dashboard/Layout/Sidebar.tsx",
-    "target": "/dashboard/projects"
-  },
-  {
-    "file": "src/components/dashboard/Layout/Sidebar.tsx",
-    "target": "/dashboard/settings"
   },
   {
     "file": "src/components/dashboard/OperatingSystemHome.tsx",
@@ -657,7 +685,11 @@
   },
   {
     "file": "src/components/dashboard/OperatingSystemHome.tsx",
-    "target": "/dashboard/business/campaigns"
+    "target": "/dashboard/marketing"
+  },
+  {
+    "file": "src/components/dashboard/OperatingSystemHome.tsx",
+    "target": "/dashboard/outbound"
   },
   {
     "file": "src/components/dashboard/OperatingSystemHome.tsx",
@@ -669,15 +701,11 @@
   },
   {
     "file": "src/components/dashboard/OperatingSystemHome.tsx",
-    "target": "/dashboard/business/billing/manage"
+    "target": "/dashboard/business/bonnie"
   },
   {
     "file": "src/components/dashboard/OperatingSystemHome.tsx",
     "target": "/dashboard/tasks"
-  },
-  {
-    "file": "src/components/dashboard/OperatingSystemHome.tsx",
-    "target": "/dashboard/business/bonnie"
   },
   {
     "file": "src/components/dashboard/OperatingSystemHome.tsx",
@@ -701,35 +729,39 @@
   },
   {
     "file": "src/components/dashboard/OperatingSystemHome.tsx",
-    "target": "/dashboard/business/billing"
+    "target": "/dashboard/crm?quickAdd=true"
   },
   {
     "file": "src/components/dashboard/OperatingSystemHome.tsx",
-    "target": "/dashboard/leads"
-  },
-  {
-    "file": "src/components/dashboard/OperatingSystemHome.tsx",
-    "target": "/dashboard/deals"
-  },
-  {
-    "file": "src/components/dashboard/OperatingSystemHome.tsx",
-    "target": "/dashboard/business/billing/manage"
-  },
-  {
-    "file": "src/components/dashboard/OperatingSystemHome.tsx",
-    "target": "/dashboard/tasks"
-  },
-  {
-    "file": "src/components/dashboard/OperatingSystemHome.tsx",
-    "target": "/dashboard/business/bonnie"
+    "target": "/dashboard/business/settings"
   },
   {
     "file": "src/components/dashboard/SettingsPage.tsx",
     "target": "/dashboard/help"
   },
   {
-    "file": "src/components/dashboard/Sidebar.tsx",
-    "target": "/dashboard/admin/operations"
+    "file": "src/components/dashboard/SettingsPage.tsx",
+    "target": "/dashboard/business/team"
+  },
+  {
+    "file": "src/components/dashboard/SettingsPage.tsx",
+    "target": "/dashboard/marketplace"
+  },
+  {
+    "file": "src/components/dashboard/SettingsPage.tsx",
+    "target": "/dashboard/business/bonnie"
+  },
+  {
+    "file": "src/components/dashboard/SettingsPage.tsx",
+    "target": "/dashboard/business/quotas"
+  },
+  {
+    "file": "src/components/dashboard/SettingsPage.tsx",
+    "target": "/dashboard/pwa-settings"
+  },
+  {
+    "file": "src/components/dashboard/SettingsPage.tsx",
+    "target": "/dashboard/business/quotas"
   },
   {
     "file": "src/components/dashboard/admin/PlatformOwnerHome.tsx",
@@ -738,6 +770,10 @@
   {
     "file": "src/components/dashboard/admin/PlatformOwnerHome.tsx",
     "target": "/dashboard/admin/operations"
+  },
+  {
+    "file": "src/components/dashboard/admin/PlatformOwnerHome.tsx",
+    "target": "/dashboard/admin/mcp-sessions"
   },
   {
     "file": "src/components/dashboard/admin/PlatformOwnerHome.tsx",
@@ -754,6 +790,10 @@
   {
     "file": "src/components/dashboard/admin/PlatformOwnerHome.tsx",
     "target": "/dashboard/admin/settings"
+  },
+  {
+    "file": "src/components/dashboard/admin/PlatformOwnerHome.tsx",
+    "target": "/dashboard/admin/subscriptions"
   },
   {
     "file": "src/components/dashboard/admin/PlatformOwnerHome.tsx",
@@ -796,44 +836,44 @@
     "target": "/dashboard/outreach"
   },
   {
-    "file": "src/components/dashboard/business/BookingTab.tsx",
-    "target": "/dashboard/business/settings"
+    "file": "src/components/dashboard/bonnie/workspace/BonnieWorkspaceViews.tsx",
+    "target": "/dashboard/bonnie"
   },
   {
-    "file": "src/components/dashboard/business/BookingTab.tsx",
-    "target": "/dashboard/business/calendar"
+    "file": "src/components/dashboard/bonnie/workspace/BonnieWorkspaceViews.tsx",
+    "target": "/dashboard/bonnie"
   },
   {
-    "file": "src/components/dashboard/business/BusinessWelcomeModal.tsx",
-    "target": "/dashboard/crm/workspace?quickAdd=true"
+    "file": "src/components/dashboard/bonnie/workspace/BonnieWorkspaceViews.tsx",
+    "target": "/dashboard/bonnie?tab=interventions"
   },
   {
-    "file": "src/components/dashboard/business/BusinessWelcomeModal.tsx",
-    "target": "/dashboard/business/billing/manage?create=true"
+    "file": "src/components/dashboard/bonnie/workspace/BonnieWorkspaceViews.tsx",
+    "target": "/dashboard/bonnie?tab=interventions"
   },
   {
-    "file": "src/components/dashboard/business/BusinessWelcomeModal.tsx",
-    "target": "/dashboard/mail"
+    "file": "src/components/dashboard/business/BusinessDashboard.tsx",
+    "target": "/dashboard/comms"
   },
   {
-    "file": "src/components/dashboard/business/CalendarPage.tsx",
+    "file": "src/components/dashboard/business/BusinessDashboard.tsx",
     "target": "/dashboard/tasks"
   },
   {
-    "file": "src/components/dashboard/business/CalendarPage.tsx",
+    "file": "src/components/dashboard/business/BusinessDashboard.tsx",
+    "target": "/dashboard/business/billing/manage"
+  },
+  {
+    "file": "src/components/dashboard/business/BusinessDashboard.tsx",
     "target": "/dashboard/business/projects"
   },
   {
-    "file": "src/components/dashboard/business/CalendarPage.tsx",
-    "target": "/dashboard/leads"
+    "file": "src/components/dashboard/business/BusinessPerformanceDashboard.tsx",
+    "target": "/dashboard/business/social"
   },
   {
-    "file": "src/components/dashboard/business/ClientsPage.tsx",
-    "target": "/dashboard/calendar"
-  },
-  {
-    "file": "src/components/dashboard/business/ClientsPage.tsx",
-    "target": "/dashboard/reports"
+    "file": "src/components/dashboard/business/BusinessPerformanceDashboard.tsx",
+    "target": "/dashboard/deals"
   },
   {
     "file": "src/components/dashboard/business/LaunchActivationChecklist.tsx",
@@ -857,23 +897,71 @@
   },
   {
     "file": "src/components/dashboard/business/NewUserSetupPanel.tsx",
+    "target": "/dashboard/settings"
+  },
+  {
+    "file": "src/components/dashboard/business/NewUserSetupPanel.tsx",
     "target": "/dashboard/crm/workspace?quickAdd=true"
   },
   {
     "file": "src/components/dashboard/business/NewUserSetupPanel.tsx",
-    "target": "/dashboard/business/billing/manage?create=true"
+    "target": "/dashboard/business/projects/manage?create=true"
   },
   {
     "file": "src/components/dashboard/business/NewUserSetupPanel.tsx",
-    "target": "/dashboard/mail"
+    "target": "/dashboard/settings/integrations"
   },
   {
-    "file": "src/components/dashboard/business/ProjectsPage.tsx",
-    "target": "/dashboard/business/documents"
+    "file": "src/components/dashboard/business/NewUserSetupPanel.tsx",
+    "target": "/dashboard/business/social"
   },
   {
-    "file": "src/components/dashboard/business/UnifiedInboxView.tsx",
+    "file": "src/components/dashboard/business/NewUserSetupPanel.tsx",
+    "target": "/dashboard/bonnie"
+  },
+  {
+    "file": "src/components/dashboard/business/WorkspaceGuide.tsx",
+    "target": "/dashboard/crm/workspace"
+  },
+  {
+    "file": "src/components/dashboard/business/WorkspaceGuide.tsx",
+    "target": "/dashboard/business/projects"
+  },
+  {
+    "file": "src/components/dashboard/business/WorkspaceGuide.tsx",
     "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/components/dashboard/business/WorkspaceGuide.tsx",
+    "target": "/dashboard/business/billing/manage"
+  },
+  {
+    "file": "src/components/dashboard/business/WorkspaceGuide.tsx",
+    "target": "/dashboard/business/bonnie"
+  },
+  {
+    "file": "src/components/dashboard/crm/CRMReportsTab.tsx",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/components/dashboard/crm/CRMReportsTab.tsx",
+    "target": "/dashboard/leads?status=qualified"
+  },
+  {
+    "file": "src/components/dashboard/crm/CRMReportsTab.tsx",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/components/dashboard/crm/CRMWorkspaceBridge.tsx",
+    "target": "/dashboard/clients?view=contacts"
+  },
+  {
+    "file": "src/components/dashboard/crm/CRMWorkspaceBridge.tsx",
+    "target": "/dashboard/marketing/outreach"
+  },
+  {
+    "file": "src/components/dashboard/crm/CRMWorkspaceBridge.tsx",
+    "target": "/dashboard/outreach/inbox"
   },
   {
     "file": "src/components/dashboard/crm/CrmSyncToolbar.tsx",
@@ -893,7 +981,7 @@
   },
   {
     "file": "src/components/dashboard/crm/SalesConsole.tsx",
-    "target": "/dashboard/tasks"
+    "target": "/dashboard/deals?stage=closed_won"
   },
   {
     "file": "src/components/dashboard/hubs/ChannelsHub.tsx",
@@ -917,23 +1005,19 @@
   },
   {
     "file": "src/components/dashboard/hubs/DocumentsHub.tsx",
-    "target": "/dashboard/business/vault"
-  },
-  {
-    "file": "src/components/dashboard/hubs/DocumentsHub.tsx",
     "target": "/dashboard/business/contracts"
   },
   {
     "file": "src/components/dashboard/hubs/DocumentsHub.tsx",
-    "target": "/dashboard/business/contracts/manage"
+    "target": "/dashboard/business/quotes"
   },
   {
     "file": "src/components/dashboard/hubs/DocumentsHub.tsx",
-    "target": "/dashboard/business/projects"
+    "target": "/dashboard/business/billing"
   },
   {
     "file": "src/components/dashboard/hubs/DocumentsHub.tsx",
-    "target": "/dashboard/business/onboarding"
+    "target": "/dashboard/business/vault"
   },
   {
     "file": "src/components/dashboard/hubs/InsightsHub.tsx",
@@ -957,11 +1041,15 @@
   },
   {
     "file": "src/components/dashboard/hubs/MarketingHub.tsx",
-    "target": "/dashboard/business/social"
+    "target": "/dashboard/marketing"
   },
   {
     "file": "src/components/dashboard/hubs/MarketingHub.tsx",
-    "target": "/dashboard/business/social/compose"
+    "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/components/dashboard/hubs/MarketingHub.tsx",
+    "target": "/dashboard/marketing/outreach"
   },
   {
     "file": "src/components/dashboard/hubs/MarketingHub.tsx",
@@ -969,11 +1057,11 @@
   },
   {
     "file": "src/components/dashboard/hubs/MarketingHub.tsx",
-    "target": "/dashboard/business/linkedin"
+    "target": "/dashboard/business/facebook"
   },
   {
     "file": "src/components/dashboard/hubs/MarketingHub.tsx",
-    "target": "/dashboard/business/facebook"
+    "target": "/dashboard/business/linkedin"
   },
   {
     "file": "src/components/dashboard/hubs/MarketingHub.tsx",
@@ -985,43 +1073,15 @@
   },
   {
     "file": "src/components/dashboard/hubs/MarketingHub.tsx",
-    "target": "/dashboard/business/campaigns"
+    "target": "/dashboard/crm/unified-contacts"
   },
   {
     "file": "src/components/dashboard/hubs/MarketingHub.tsx",
-    "target": "/dashboard/marketing/sequences"
+    "target": "/dashboard/marketing/deliverability"
   },
   {
     "file": "src/components/dashboard/hubs/MarketingHub.tsx",
-    "target": "/dashboard/business/forms"
-  },
-  {
-    "file": "src/components/dashboard/hubs/MarketingHub.tsx",
-    "target": "/dashboard/business/sms"
-  },
-  {
-    "file": "src/components/dashboard/hubs/MarketingHub.tsx",
-    "target": "/dashboard/mail"
-  },
-  {
-    "file": "src/components/dashboard/hubs/MoneyHub.tsx",
-    "target": "/dashboard/accounting"
-  },
-  {
-    "file": "src/components/dashboard/hubs/MoneyHub.tsx",
-    "target": "/dashboard/accounting/banking"
-  },
-  {
-    "file": "src/components/dashboard/hubs/MoneyHub.tsx",
-    "target": "/dashboard/accounting/bills"
-  },
-  {
-    "file": "src/components/dashboard/hubs/MoneyHub.tsx",
-    "target": "/dashboard/vendors"
-  },
-  {
-    "file": "src/components/dashboard/hubs/MoneyHub.tsx",
-    "target": "/dashboard/business/billing"
+    "target": "/dashboard/marketing/delivery"
   },
   {
     "file": "src/components/dashboard/hubs/MoneyHub.tsx",
@@ -1029,55 +1089,23 @@
   },
   {
     "file": "src/components/dashboard/hubs/MoneyHub.tsx",
-    "target": "/dashboard/business/expenses"
+    "target": "/dashboard/business/billing"
   },
   {
     "file": "src/components/dashboard/hubs/MoneyHub.tsx",
-    "target": "/dashboard/business/quotes"
+    "target": "/dashboard/accounting"
+  },
+  {
+    "file": "src/components/dashboard/hubs/MoneyHub.tsx",
+    "target": "/dashboard/business/expenses"
   },
   {
     "file": "src/components/dashboard/hubs/MoneyHub.tsx",
     "target": "/dashboard/business/cash-flow"
   },
   {
-    "file": "src/components/dashboard/hubs/SalesHub.tsx",
-    "target": "/dashboard/crm"
-  },
-  {
-    "file": "src/components/dashboard/hubs/SalesHub.tsx",
-    "target": "/dashboard/crm/unified-contacts"
-  },
-  {
-    "file": "src/components/dashboard/hubs/SalesHub.tsx",
-    "target": "/dashboard/crm/accounts"
-  },
-  {
-    "file": "src/components/dashboard/hubs/SalesHub.tsx",
-    "target": "/dashboard/leads"
-  },
-  {
-    "file": "src/components/dashboard/hubs/SalesHub.tsx",
-    "target": "/dashboard/deals"
-  },
-  {
-    "file": "src/components/dashboard/hubs/SalesHub.tsx",
-    "target": "/dashboard/crm/follow-ups"
-  },
-  {
-    "file": "src/components/dashboard/hubs/SalesHub.tsx",
-    "target": "/dashboard/outreach"
-  },
-  {
-    "file": "src/components/dashboard/hubs/SalesHub.tsx",
-    "target": "/dashboard/tasks"
-  },
-  {
-    "file": "src/components/dashboard/hubs/SalesHub.tsx",
-    "target": "/dashboard/forecast"
-  },
-  {
-    "file": "src/components/dashboard/hubs/SalesHub.tsx",
-    "target": "/dashboard/crm/workspace"
+    "file": "src/components/dashboard/hubs/MoneyHub.tsx",
+    "target": "/dashboard/accounting/banking"
   },
   {
     "file": "src/components/dashboard/hubs/SalesWorkspaceTabs.tsx",
@@ -1164,6 +1192,90 @@
     "target": "/dashboard/zoho/crm"
   },
   {
+    "file": "src/components/dashboard/leads/ScraperCampaignsPage.tsx",
+    "target": "/dashboard/contacts"
+  },
+  {
+    "file": "src/components/dashboard/leads/ScraperCampaignsPage.tsx",
+    "target": "/dashboard/outreach"
+  },
+  {
+    "file": "src/components/dashboard/leads/ScraperCampaignsPage.tsx",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/components/dashboard/marketing/MarketingDeliveryPage.tsx",
+    "target": "/dashboard/marketplace"
+  },
+  {
+    "file": "src/components/dashboard/marketing/MarketingOutreachPage.tsx",
+    "target": "/dashboard/outreach/inbox"
+  },
+  {
+    "file": "src/components/dashboard/marketing/MarketingOutreachPage.tsx",
+    "target": "/dashboard/crm"
+  },
+  {
+    "file": "src/components/dashboard/marketing/MarketingOutreachPage.tsx",
+    "target": "/dashboard/outreach/inbox"
+  },
+  {
+    "file": "src/components/dashboard/marketing/MarketingOverview.tsx",
+    "target": "/dashboard/business/campaigns?new=1"
+  },
+  {
+    "file": "src/components/dashboard/marketing/MarketingOverview.tsx",
+    "target": "/dashboard/business/social/compose"
+  },
+  {
+    "file": "src/components/dashboard/marketing/MarketingOverview.tsx",
+    "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/components/dashboard/marketing/MarketingOverview.tsx",
+    "target": "/dashboard/business/campaigns?new=1"
+  },
+  {
+    "file": "src/components/dashboard/marketing/MarketingOverview.tsx",
+    "target": "/dashboard/business/social-command"
+  },
+  {
+    "file": "src/components/dashboard/marketing/MarketingOverview.tsx",
+    "target": "/dashboard/marketing/delivery"
+  },
+  {
+    "file": "src/components/dashboard/operations/OperationsCommandCenter.tsx",
+    "target": "/dashboard/tasks"
+  },
+  {
+    "file": "src/components/dashboard/outbound/OutboundEngine.tsx",
+    "target": "/dashboard/leads/finder"
+  },
+  {
+    "file": "src/components/dashboard/outbound/OutboundEngine.tsx",
+    "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/components/dashboard/outbound/OutboundEngine.tsx",
+    "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/components/dashboard/outbound/OutboundEngine.tsx",
+    "target": "/dashboard/outbound/icp"
+  },
+  {
+    "file": "src/components/dashboard/outbound/OutboundEngine.tsx",
+    "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/components/dashboard/outbound/OutboundEngine.tsx",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/components/dashboard/payments/PaymentRailBanner.tsx",
+    "target": "/dashboard/business/settings?tab=integrations"
+  },
+  {
     "file": "src/components/dashboard/planning/AnnualPlanningTab.tsx",
     "target": "/dashboard/goals"
   },
@@ -1172,12 +1284,32 @@
     "target": "/dashboard/bonnie/approvals"
   },
   {
+    "file": "src/components/dashboard/responsive/MobileCreateSheet.tsx",
+    "target": "/dashboard/crm/workspace?quickAdd=true"
+  },
+  {
+    "file": "src/components/dashboard/responsive/MobileCreateSheet.tsx",
+    "target": "/dashboard/mail?compose=true"
+  },
+  {
+    "file": "src/components/dashboard/responsive/MobileCreateSheet.tsx",
+    "target": "/dashboard/tasks?create=true"
+  },
+  {
+    "file": "src/components/dashboard/responsive/MobileCreateSheet.tsx",
+    "target": "/dashboard/deals?create=true"
+  },
+  {
     "file": "src/components/dashboard/settings/EmailProviderSettings.tsx",
     "target": "/dashboard/business/campaigns"
   },
   {
     "file": "src/components/dashboard/social/InstagramIntegrationTab.tsx",
     "target": "/dashboard/business/facebook"
+  },
+  {
+    "file": "src/components/dashboard/social/InstagramIntegrationTab.tsx",
+    "target": "/dashboard/business/social/compose"
   },
   {
     "file": "src/components/dashboard/vendors/VendorsTab.tsx",
@@ -1272,15 +1404,51 @@
     "target": "/"
   },
   {
+    "file": "src/components/onboarding/OnboardingFlow.tsx",
+    "target": "/dashboard/leads/campaigns"
+  },
+  {
+    "file": "src/components/onboarding/OnboardingFlow.tsx",
+    "target": "/dashboard/business/social/compose"
+  },
+  {
+    "file": "src/components/onboarding/OnboardingFlow.tsx",
+    "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/components/onboarding/OnboardingFlow.tsx",
+    "target": "/dashboard/crm/workspace?quickAdd=true"
+  },
+  {
+    "file": "src/components/onboarding/OnboardingFlow.tsx",
+    "target": "/dashboard/business/billing/manage?create=true"
+  },
+  {
+    "file": "src/components/onboarding/OnboardingFlow.tsx",
+    "target": "/dashboard/business/projects/manage?create=true"
+  },
+  {
+    "file": "src/components/onboarding/OnboardingFlow.tsx",
+    "target": "/dashboard"
+  },
+  {
     "file": "src/components/onboarding/SetupWizard.tsx",
     "target": "/dashboard"
   },
   {
-    "file": "src/components/pages/ContactPage.tsx",
+    "file": "src/components/pages/EcosystemPage.tsx",
     "target": "/"
   },
   {
     "file": "src/components/pages/EcosystemPage.tsx",
+    "target": "/#workflow"
+  },
+  {
+    "file": "src/components/pages/ExecutionSessionPage.tsx",
+    "target": "/"
+  },
+  {
+    "file": "src/components/pages/HowItWorksPage.tsx",
     "target": "/"
   },
   {
@@ -1288,12 +1456,80 @@
     "target": "/"
   },
   {
+    "file": "src/components/pages/PlatformGuide.tsx",
+    "target": "/dashboard/leads/campaigns"
+  },
+  {
+    "file": "src/components/pages/PlatformGuide.tsx",
+    "target": "/dashboard/business/social/compose"
+  },
+  {
+    "file": "src/components/pages/PlatformGuide.tsx",
+    "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/components/pages/PlatformGuide.tsx",
+    "target": "/dashboard/crm/workspace?quickAdd=true"
+  },
+  {
+    "file": "src/components/pages/PlatformGuide.tsx",
+    "target": "/dashboard/business/billing/manage?create=true"
+  },
+  {
+    "file": "src/components/pages/PlatformGuide.tsx",
+    "target": "/dashboard/business/projects/manage?create=true"
+  },
+  {
+    "file": "src/components/pages/PlatformGuide.tsx",
+    "target": "/dashboard"
+  },
+  {
+    "file": "src/components/pages/PlatformGuide.tsx",
+    "target": "/dashboard/leads/campaigns"
+  },
+  {
+    "file": "src/components/pages/PlatformGuide.tsx",
+    "target": "/dashboard/crm/workspace"
+  },
+  {
+    "file": "src/components/pages/PlatformGuide.tsx",
+    "target": "/dashboard/business/projects"
+  },
+  {
+    "file": "src/components/pages/PlatformGuide.tsx",
+    "target": "/dashboard/tasks"
+  },
+  {
+    "file": "src/components/pages/PlatformGuide.tsx",
+    "target": "/dashboard/business/social"
+  },
+  {
+    "file": "src/components/pages/PlatformGuide.tsx",
+    "target": "/dashboard/comms"
+  },
+  {
+    "file": "src/components/pages/PlatformGuide.tsx",
+    "target": "/dashboard/business/billing"
+  },
+  {
     "file": "src/components/pages/PublicPortfolio.tsx",
     "target": "/#contact"
   },
   {
+    "file": "src/components/pages/ReliabilityPage.tsx",
+    "target": "/"
+  },
+  {
+    "file": "src/components/pages/ReliabilityPage.tsx",
+    "target": "/#workflow"
+  },
+  {
+    "file": "src/components/pages/ServicesPage.tsx",
+    "target": "/#workflow"
+  },
+  {
     "file": "src/components/payments/PaymentPage.tsx",
-    "target": "/dashboard/invoices"
+    "target": "/dashboard/business/invoices"
   },
   {
     "file": "src/components/ui/os/CommunicationComposer.tsx",
@@ -1364,6 +1600,14 @@
     "target": "/dashboard/business/messages"
   },
   {
+    "file": "src/config/emptyStatePresets.ts",
+    "target": "/dashboard/crm"
+  },
+  {
+    "file": "src/config/emptyStatePresets.ts",
+    "target": "/dashboard/crm"
+  },
+  {
     "file": "src/config/moduleDashboardActions.ts",
     "target": "/dashboard/crm/workspace"
   },
@@ -1378,6 +1622,18 @@
   {
     "file": "src/config/moduleDashboardActions.ts",
     "target": "/dashboard/tasks"
+  },
+  {
+    "file": "src/config/moduleDashboardActions.ts",
+    "target": "/dashboard/crm/workspace?quickAdd=true"
+  },
+  {
+    "file": "src/config/moduleDashboardActions.ts",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/config/moduleDashboardActions.ts",
+    "target": "/dashboard/deals"
   },
   {
     "file": "src/config/moduleDashboardActions.ts",
@@ -1401,6 +1657,14 @@
   },
   {
     "file": "src/config/moduleDashboardActions.ts",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/config/moduleDashboardActions.ts",
+    "target": "/dashboard/crm/workspace"
+  },
+  {
+    "file": "src/config/moduleDashboardActions.ts",
     "target": "/dashboard/mail"
   },
   {
@@ -1421,6 +1685,10 @@
   },
   {
     "file": "src/config/moduleDashboardActions.ts",
+    "target": "/dashboard/accounting"
+  },
+  {
+    "file": "src/config/moduleDashboardActions.ts",
     "target": "/dashboard/deals"
   },
   {
@@ -1433,7 +1701,15 @@
   },
   {
     "file": "src/config/moduleDashboardActions.ts",
+    "target": "/dashboard/tasks"
+  },
+  {
+    "file": "src/config/moduleDashboardActions.ts",
     "target": "/dashboard/business/team"
+  },
+  {
+    "file": "src/config/moduleDashboardActions.ts",
+    "target": "/dashboard/crm/workspace"
   },
   {
     "file": "src/config/moduleDashboardActions.ts",
@@ -1473,6 +1749,10 @@
   },
   {
     "file": "src/config/responsive/mobileNav.ts",
+    "target": "/dashboard/comms"
+  },
+  {
+    "file": "src/config/responsive/mobileNav.ts",
     "target": "/dashboard/marketplace"
   },
   {
@@ -1481,51 +1761,7 @@
   },
   {
     "file": "src/constants.ts",
-    "target": "/dashboard/projects"
-  },
-  {
-    "file": "src/constants.ts",
-    "target": "/dashboard/calendar"
-  },
-  {
-    "file": "src/constants.ts",
-    "target": "/dashboard/messages"
-  },
-  {
-    "file": "src/constants.ts",
-    "target": "/dashboard/mail"
-  },
-  {
-    "file": "src/constants.ts",
-    "target": "/dashboard/notifications"
-  },
-  {
-    "file": "src/constants.ts",
-    "target": "/dashboard/finance"
-  },
-  {
-    "file": "src/constants.ts",
-    "target": "/dashboard/contracts"
-  },
-  {
-    "file": "src/constants.ts",
-    "target": "/dashboard/ai-studio"
-  },
-  {
-    "file": "src/constants.ts",
-    "target": "/dashboard/submit"
-  },
-  {
-    "file": "src/constants.ts",
-    "target": "/dashboard/settings"
-  },
-  {
-    "file": "src/constants.ts",
-    "target": "/dashboard/help"
-  },
-  {
-    "file": "src/constants.ts",
-    "target": "/dashboard"
+    "target": "/dashboard/operations"
   },
   {
     "file": "src/constants.ts",
@@ -1534,6 +1770,10 @@
   {
     "file": "src/constants.ts",
     "target": "/dashboard/admin/operations"
+  },
+  {
+    "file": "src/constants.ts",
+    "target": "/dashboard/admin/mcp-sessions"
   },
   {
     "file": "src/constants.ts",
@@ -1553,6 +1793,10 @@
   },
   {
     "file": "src/constants.ts",
+    "target": "/dashboard/admin/subscriptions"
+  },
+  {
+    "file": "src/constants.ts",
     "target": "/dashboard/contact-submissions"
   },
   {
@@ -1562,6 +1806,10 @@
   {
     "file": "src/constants.ts",
     "target": "/dashboard/bonnie/approvals"
+  },
+  {
+    "file": "src/constants.ts",
+    "target": "/dashboard/bonnie/chases"
   },
   {
     "file": "src/constants.ts",
@@ -1597,7 +1845,7 @@
   },
   {
     "file": "src/constants.ts",
-    "target": "/dashboard/business/bonnie"
+    "target": "/dashboard/operations"
   },
   {
     "file": "src/constants.ts",
@@ -1697,19 +1945,15 @@
   },
   {
     "file": "src/constants.ts",
-    "target": "/dashboard/bonnie/approvals"
+    "target": "/dashboard/business/calendar"
   },
   {
     "file": "src/constants.ts",
-    "target": "/dashboard/business/workflows"
+    "target": "/dashboard/business/meetings"
   },
   {
     "file": "src/constants.ts",
-    "target": "/dashboard/analytics"
-  },
-  {
-    "file": "src/constants.ts",
-    "target": "/dashboard/executive"
+    "target": "/dashboard/business/booking"
   },
   {
     "file": "src/constants.ts",
@@ -1741,19 +1985,35 @@
   },
   {
     "file": "src/constants.ts",
-    "target": "/dashboard/business/calendar"
+    "target": "/dashboard/business/bonnie"
   },
   {
     "file": "src/constants.ts",
-    "target": "/dashboard/business/booking"
+    "target": "/dashboard/bonnie/approvals"
   },
   {
     "file": "src/constants.ts",
-    "target": "/dashboard/business/meetings"
+    "target": "/dashboard/bonnie/chases"
+  },
+  {
+    "file": "src/constants.ts",
+    "target": "/dashboard/business/workflows"
+  },
+  {
+    "file": "src/constants.ts",
+    "target": "/dashboard/analytics"
+  },
+  {
+    "file": "src/constants.ts",
+    "target": "/dashboard/executive"
   },
   {
     "file": "src/constants.ts",
     "target": "/dashboard/business/settings"
+  },
+  {
+    "file": "src/constants.ts",
+    "target": "/dashboard/business/audit"
   },
   {
     "file": "src/constants.ts",
@@ -1764,12 +2024,140 @@
     "target": "/dashboard/help"
   },
   {
-    "file": "src/lib/crmNextSteps.ts",
+    "file": "src/lib/analytics/dashboardViewModel.ts",
+    "target": "/dashboard/business/billing"
+  },
+  {
+    "file": "src/lib/analytics/dashboardViewModel.ts",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/lib/analytics/dashboardViewModel.ts",
+    "target": "/dashboard/deals"
+  },
+  {
+    "file": "src/lib/analytics/dashboardViewModel.ts",
+    "target": "/dashboard/business/billing/manage"
+  },
+  {
+    "file": "src/lib/analytics/dashboardViewModel.ts",
+    "target": "/dashboard/deals"
+  },
+  {
+    "file": "src/lib/analytics/dashboardViewModel.ts",
+    "target": "/dashboard/tasks"
+  },
+  {
+    "file": "src/lib/analytics/dashboardViewModel.ts",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/lib/analytics/dashboardViewModel.ts",
     "target": "/dashboard/contacts"
   },
   {
-    "file": "src/lib/crmNextSteps.ts",
+    "file": "src/lib/analytics/dashboardViewModel.ts",
+    "target": "/dashboard/business/billing/manage"
+  },
+  {
+    "file": "src/lib/analytics/dashboardViewModel.ts",
+    "target": "/dashboard/leads?filter=stale"
+  },
+  {
+    "file": "src/lib/analytics/dashboardViewModel.ts",
     "target": "/dashboard/deals"
+  },
+  {
+    "file": "src/lib/analytics/dashboardViewModel.ts",
+    "target": "/dashboard/tasks"
+  },
+  {
+    "file": "src/lib/analytics/dashboardViewModel.ts",
+    "target": "/dashboard/business/settings/integrations"
+  },
+  {
+    "file": "src/lib/behavioral/crmPrimaryAction.ts",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/lib/behavioral/crmPrimaryAction.ts",
+    "target": "/dashboard/business/lead-finder"
+  },
+  {
+    "file": "src/lib/behavioral/crmPrimaryAction.ts",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/lib/behavioral/crmPrimaryAction.ts",
+    "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/lib/behavioral/crmPrimaryAction.ts",
+    "target": "/dashboard/deals"
+  },
+  {
+    "file": "src/lib/behavioral/dealStagePrimaryAction.ts",
+    "target": "/dashboard/quotes"
+  },
+  {
+    "file": "src/lib/behavioral/dealStagePrimaryAction.ts",
+    "target": "/dashboard/business/billing"
+  },
+  {
+    "file": "src/lib/behavioral/dealStagePrimaryAction.ts",
+    "target": "/dashboard/deals"
+  },
+  {
+    "file": "src/lib/behavioral/workspaceContinuity.ts",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/lib/behavioral/workspaceContinuity.ts",
+    "target": "/dashboard/crm"
+  },
+  {
+    "file": "src/lib/behavioral/workspaceContinuity.ts",
+    "target": "/dashboard/deals"
+  },
+  {
+    "file": "src/lib/behavioral/workspaceContinuity.ts",
+    "target": "/dashboard/business/billing"
+  },
+  {
+    "file": "src/lib/behavioral/workspaceContinuity.ts",
+    "target": "/dashboard/business/billing"
+  },
+  {
+    "file": "src/lib/behavioral/workspaceContinuity.ts",
+    "target": "/dashboard/tasks"
+  },
+  {
+    "file": "src/lib/bonnie/rankedRecommendations.ts",
+    "target": "/dashboard/bonnie"
+  },
+  {
+    "file": "src/lib/bonnie/rankedRecommendations.ts",
+    "target": "/dashboard/business/billing"
+  },
+  {
+    "file": "src/lib/bonnie/rankedRecommendations.ts",
+    "target": "/dashboard/crm"
+  },
+  {
+    "file": "src/lib/bonnie/rankedRecommendations.ts",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/lib/bonnie/rankedRecommendations.ts",
+    "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/lib/bonnie/rankedRecommendations.ts",
+    "target": "/dashboard/tasks"
+  },
+  {
+    "file": "src/lib/crmNextSteps.ts",
+    "target": "/dashboard/contacts"
   },
   {
     "file": "src/lib/crmNextSteps.ts",
@@ -1825,7 +2213,7 @@
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
-    "target": "/dashboard/crm/unified-contacts"
+    "target": "/dashboard/contacts"
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
@@ -1853,7 +2241,7 @@
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
-    "target": "/dashboard/leads"
+    "target": "/dashboard/leads/finder"
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
@@ -1897,11 +2285,19 @@
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
+    "target": "/dashboard/outreach/inbox"
+  },
+  {
+    "file": "src/lib/dashboard/moduleSubnav.ts",
     "target": "/dashboard/outreach"
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
     "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/lib/dashboard/moduleSubnav.ts",
+    "target": "/dashboard/business/campaigns/zoho"
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
@@ -1961,7 +2357,7 @@
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
-    "target": "/dashboard/business/tasks"
+    "target": "/dashboard/tasks"
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
@@ -1969,7 +2365,7 @@
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
-    "target": "/dashboard/business/tasks"
+    "target": "/dashboard/tasks?scope=team"
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
@@ -1989,11 +2385,23 @@
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
+    "target": "/dashboard/business/contracts"
+  },
+  {
+    "file": "src/lib/dashboard/moduleSubnav.ts",
+    "target": "/dashboard/business/quotes"
+  },
+  {
+    "file": "src/lib/dashboard/moduleSubnav.ts",
+    "target": "/dashboard/business/billing"
+  },
+  {
+    "file": "src/lib/dashboard/moduleSubnav.ts",
     "target": "/dashboard/business/vault"
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
-    "target": "/dashboard/business/contracts"
+    "target": "/dashboard/marketing"
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
@@ -2001,19 +2409,23 @@
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
-    "target": "/dashboard/email-campaigns"
+    "target": "/dashboard/marketing/outreach"
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
-    "target": "/dashboard/marketing/sequences"
+    "target": "/dashboard/business/social-command"
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
-    "target": "/dashboard/business/forms"
+    "target": "/dashboard/crm/unified-contacts"
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
     "target": "/dashboard/marketing/deliverability"
+  },
+  {
+    "file": "src/lib/dashboard/moduleSubnav.ts",
+    "target": "/dashboard/marketing/delivery"
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
@@ -2069,7 +2481,11 @@
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
-    "target": "/dashboard/business/bonnie/approvals"
+    "target": "/dashboard/bonnie/approvals"
+  },
+  {
+    "file": "src/lib/dashboard/moduleSubnav.ts",
+    "target": "/dashboard/business/bonnie/chases"
   },
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
@@ -2078,6 +2494,238 @@
   {
     "file": "src/lib/dashboard/moduleSubnav.ts",
     "target": "/dashboard/help"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/billing"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/crm/reports"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/billing/manage"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/calendar"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/tasks"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/workflows"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/crm/unified-contacts"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/crm/unified-contacts"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/deals"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/deals"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/deals"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/leads/campaigns"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/outreach/inbox"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/outreach/inbox"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/outreach/inbox"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/outreach/inbox"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/marketing/suppressions"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/social"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/social"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/social"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/social"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/billing"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/billing/manage"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/billing/manage"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/billing/manage"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/cash-flow"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/billing/manage"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/billing/manage"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/billing/manage"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/billing/manage"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/documents"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/documents"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/documents"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/projects"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/projects"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/projects"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/workflows"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/workflows"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/workflows"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/bonnie"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/bonnie/approvals"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/bonnie"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/settings"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/business/settings"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/admin/users"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/admin/tenants"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/admin/subscriptions"
+  },
+  {
+    "file": "src/lib/metrics/platformMetricRegistry.ts",
+    "target": "/dashboard/admin/operations"
   },
   {
     "file": "src/lib/revenueLifecycle.ts",
@@ -2117,10 +2765,198 @@
   },
   {
     "file": "src/lib/revenueLifecycle.ts",
+    "target": "/dashboard/calendar"
+  },
+  {
+    "file": "src/lib/revenueLifecycle.ts",
     "target": "/dashboard/crm/console"
   },
   {
     "file": "src/lib/scraper/emailLeadAutoSearch.ts",
     "target": "/dashboard/leads/campaigns"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/settings"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/calendar"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/crm/workspace"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/billing/manage"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/billing"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/accounting"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/projects/manage"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/tasks"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/billing/manage"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/crm/unified-contacts"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/deals"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/quotes"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/deals"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/forecast"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/quotes"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/tasks"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/tasks"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/projects/manage"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/crm/workspace"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/deals"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/quotes"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/accounting"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/billing/manage"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/accounting/banking"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/social/compose"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/crm/workspace"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/leads"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/campaigns"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/crm/workspace"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/executive"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/analytics"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/performance"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/documents"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/contracts/manage"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/vault"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/mail"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/tickets"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/crm/workspace"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/calendar"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/booking"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/crm/workspace"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/marketplace"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/jobs"
+  },
+  {
+    "file": "src/lib/ui/dashboardExecutionSteps.ts",
+    "target": "/dashboard/business/workflows"
+  },
+  {
+    "file": "tests/unit/master-program-phases.test.mjs",
+    "target": "/"
   }
 ]

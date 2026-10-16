@@ -11,7 +11,6 @@ export async function loadMessageProject(admin:SupabaseClient,tenantId:string,pr
 /** Notifications accompany a persisted conversation; provider acceptance is not inbox delivery. */
 export async function notifyPortalProjectMessage(input:{admin:SupabaseClient;tenantId:string;projectId:string;messageId:string;content:string;authorName:string;direction:'to_creator'|'to_client'}) {
   const {admin,tenantId,projectId,messageId,content,authorName,direction}=input;
-  if(direction==='to_client')return {sent:false,status:'queued_for_policy_evaluation',error:undefined};
   const project=await loadMessageProject(admin,tenantId,projectId);
   if(!project)return {sent:false,error:'project_not_found'};
   let email:string|undefined;let url:string;

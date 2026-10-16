@@ -8,6 +8,7 @@ import { domainResultFromGateway, type DomainExecutionResult } from '@/lib/execu
 import {
   normalizeProjectStage,
   normalizeProjectStatus,
+  toCanonicalProjectStage,
 } from '@/lib/projects/projectEnums';
 
 export type ProjectCreateInput = {
@@ -134,8 +135,18 @@ export async function executeProjectCreateCommand(
       const clientId = params.input.clientId ? await resolveCanonicalLifecycleClient(admin, params.tenantId, params.input.clientId) : null;
       const status = normalizeProjectStatus(params.input.status || 'Pending');
       if (!status) throw Object.assign(new Error('input.status is not a supported project status'), {code: 'VALIDATION_ERROR'});
-      const currentStage = normalizeProjectStage(params.input.currentStage || 'Discovery') || 'Discovery';
+      const currentStage = toCanonicalProjectStage(params.input.currentStage || 'Initiation');
       const ownerId = params.input.ownerId || params.userId;
+
+      const portalEnabled = params.input.extras?.portal_enabled !== undefined
+        ? Boolean(params.input.extras.portal_enabled)
+        : Boolean(clientId);
+      const isPublic = params.input.extras?.is_public !== undefined
+        ? Boolean(params.input.extras.is_public)
+        : Boolean(clientId);
+      const clientVisible = params.input.extras?.client_visible !== undefined
+        ? Boolean(params.input.extras.client_visible)
+        : portalEnabled;
 
       const row: Record<string, unknown> = {
         ...params.input.extras,
@@ -154,16 +165,22 @@ export async function executeProjectCreateCommand(
         contract_id: params.input.contractId || null,
         team: params.input.extras?.team || [],
         resources: params.input.extras?.resources || [],
-        is_public: Boolean(params.input.extras?.is_public),
+        is_public: isPublic,
         show_in_portfolio: Boolean(params.input.extras?.show_in_portfolio),
-        portal_enabled: Boolean(params.input.extras?.portal_enabled),
-        portal_token: params.input.extras?.portal_enabled ? globalThis.crypto.randomUUID() : null,
+        portal_enabled: portalEnabled,
+        portal_token: portalEnabled ? globalThis.crypto.randomUUID() : null,
         auto_invoice_enabled: false,
         contract_status: 'None',
         budget_used: 0,
         project_type: params.input.projectType || null,
         progress_method: params.input.progressMethod || 'weighted_tasks',
-        metadata: {creation_idempotency_key: idempotencyKey, is_test_data: Boolean(params.input.isTestData), historical_import: Boolean(params.input.historicalImport), execution_authorized:Boolean(params.input.executionAuthorized), client_visible: Boolean(params.input.extras?.portal_enabled)},
+        metadata: {
+          creation_idempotency_key: idempotencyKey,
+          is_test_data: Boolean(params.input.isTestData),
+          historical_import: Boolean(params.input.historicalImport),
+          execution_authorized: Boolean(params.input.executionAuthorized),
+          client_visible: clientVisible,
+        },
       };
 
       let templateId=params.input.templateId;

@@ -785,6 +785,43 @@ export class MailboxService {
     ).data;
     if (canonical?.provider_thread_id)
       message.thread_id = canonical.provider_thread_id;
+
+    // Bridge to unified_messages so Universal Inbox & Email Workspace display live messages
+    try {
+      const extId = String(message.id || message.messageId || data);
+      const isOutbound = ['sent', 'drafts', 'templates', 'outbox'].includes(folderName.toLowerCase());
+      const fromAddr = String(message.from || account.email_address || '');
+      const toAddr = Array.isArray(message.to) ? message.to.join(', ') : String(message.to || '');
+      const ccAddr = Array.isArray(message.cc) ? message.cc.join(', ') : String(message.cc || '');
+      const msgDate = mailboxDate(message.date) || new Date().toISOString();
+
+      await this.db.from('unified_messages').upsert({
+        tenant_id: this.tenantId,
+        source: account.provider || 'zoho',
+        channel: 'email',
+        direction: isOutbound ? 'outbound' : 'inbound',
+        external_id: extId,
+        thread_id: message.thread_id ? String(message.thread_id) : null,
+        subject: String(message.subject || ''),
+        body: String(message.body_text || message.bodyText || message.body || '').slice(0, 50000),
+        html_body: String(message.body_html || message.bodyHtml || message.html || '').slice(0, 100000),
+        from_address: fromAddr,
+        to_address: toAddr,
+        cc_address: ccAddr || null,
+        read: Boolean(message.is_read ?? message.read),
+        starred: false,
+        archived: folderName.toLowerCase() === 'archive',
+        folder: folderName.toLowerCase(),
+        needs_response: !isOutbound,
+        received_at: isOutbound ? null : msgDate,
+        sent_at: isOutbound ? msgDate : null,
+        created_at: msgDate,
+        synced_at: new Date().toISOString(),
+      }, { onConflict: 'tenant_id,source,external_id' });
+    } catch (bridgeErr) {
+      console.warn('[MailboxService] unified_messages bridge skipped:', bridgeErr);
+    }
+
     return String(data);
   }
 
@@ -881,6 +918,7 @@ export class MailboxService {
         const folder = folders[folderIndex];
         const messages = await provider.getMessages(folder.folderId, 10, start);
         let reachedWatermark = false;
+        let consecutiveOld = 0;
         for (const message of messages) {
           const timestamp = mailboxDate(message.receivedTime);
           if (
@@ -888,9 +926,14 @@ export class MailboxService {
             timestamp &&
             Date.parse(timestamp) < watermark
           ) {
-            reachedWatermark = true;
-            break;
+            consecutiveOld++;
+            if (consecutiveOld >= 3) {
+              reachedWatermark = true;
+              break;
+            }
+            continue;
           }
+          consecutiveOld = 0;
           await this.ingest(
             account,
             (await provider.getFullMessagePayload(

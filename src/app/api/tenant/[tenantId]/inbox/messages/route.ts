@@ -12,6 +12,48 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('replied'), messageId: z.string().uuid() }),
 ]);
 
+export async function GET(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
+  try {
+    const { tenantId } = await context.params;
+    await requireTenantAccess(tenantId, req);
+
+    const { searchParams } = new URL(req.url);
+    const folder = searchParams.get('folder') || 'inbox';
+    const search = searchParams.get('search')?.trim();
+    const limit = Math.max(1, Math.min(Number(searchParams.get('limit') || 50), 200));
+
+    const admin = createSupabaseAdminClient();
+    let query = admin
+      .from('unified_messages')
+      .select('*', { count: 'exact' })
+      .eq('tenant_id', tenantId);
+
+    if (folder !== 'all') {
+      query = query.eq('folder', folder.toLowerCase());
+    }
+
+    if (search) {
+      query = query.or(`subject.ilike.%${search}%,from_address.ilike.%${search}%,body.ilike.%${search}%`);
+    }
+
+    const { data, error, count } = await query
+      .order('received_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    return NextResponse.json({
+      success: true,
+      messages: data || [],
+      total: count || 0,
+      folder,
+    });
+  } catch (error) {
+    return routeErrorResponse(error, 'Inbox messages could not be loaded', req);
+  }
+}
+
 export async function PATCH(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
   try {
     const { tenantId } = await context.params;

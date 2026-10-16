@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { readRecipientWorkbook } from '@/lib/import/recipientWorkbook';
 
 type ParsedRecipient = {
   name: string;
@@ -129,12 +130,15 @@ export async function POST(request: NextRequest) {
 
     let rawRows: Array<Record<string, unknown>> = [];
     const isCsv = file.type.includes('csv') || file.name.toLowerCase().endsWith('.csv');
+    const isXlsx = file.name.toLowerCase().endsWith('.xlsx') || file.type.includes('spreadsheetml');
     if (isCsv) {
       const text = await file.text();
       rawRows = parseCsv(text);
+    } else if (isXlsx) {
+      rawRows = await readRecipientWorkbook(file);
     } else {
       return NextResponse.json(
-        { error: 'Only CSV imports are supported. Please export as CSV and re-upload.', code: 'VALIDATION_ERROR' },
+        { error: 'Only CSV and Excel (.xlsx) imports are supported. Please export as CSV or .xlsx and re-upload.', code: 'VALIDATION_ERROR' },
         { status: 400 }
       );
     }
@@ -197,6 +201,7 @@ export async function POST(request: NextRequest) {
       company: r.company || null,
       sales_stage: 'lead',
       value: 0,
+      is_test_data: false,
       updated_at: new Date().toISOString(),
     }));
     await admin.from('business_clients').upsert(clientRows, { onConflict: 'tenant_id,email' });
@@ -210,6 +215,7 @@ export async function POST(request: NextRequest) {
       source: 'Campaign import',
       status: 'new',
       notes: 'Imported from email recipient file upload',
+      is_test_data: false,
     }));
     await admin.from('leads').upsert(leadRows, { onConflict: 'tenant_id,email' });
 

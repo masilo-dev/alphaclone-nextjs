@@ -114,6 +114,25 @@ export async function checkCrmDuplicate(
       }
     }
 
+    if (normDomain) {
+      const { data: leadDomainMatch } = await supabase
+        .from('leads')
+        .select('id, business_name, website')
+        .eq('tenant_id', tenantId)
+        .ilike('website', `%${normDomain}%`)
+        .limit(1)
+        .maybeSingle();
+
+      if (leadDomainMatch) {
+        return {
+          isDuplicate: true,
+          duplicateReason: `Duplicate of existing CRM Lead (${leadDomainMatch.business_name || leadDomainMatch.id}): matching website/domain ${normDomain}`,
+          matchedEntityId: leadDomainMatch.id,
+          matchType: 'crm_lead',
+        };
+      }
+    }
+
     // 2. Check CRM contacts by email
     if (normEmail) {
       const { data: contactMatch } = await supabase

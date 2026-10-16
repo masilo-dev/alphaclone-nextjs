@@ -94,14 +94,24 @@ async function loadProjectForClientNotify(
   projectId: string,
   tenantId: string
 ): Promise<{ row: ProjectNotifyRow | null; skipped?: string }> {
-  const { data: project, error } = await admin
+  let { data: project } = await admin
     .from('projects')
     .select('id, tenant_id, name, progress, current_stage, client_id, portal_token, is_public, owner_name, owner_id')
     .eq('id', projectId)
     .eq('tenant_id', tenantId)
     .maybeSingle();
 
-  if (error || !project) {
+  if (!project) {
+    const { data: legacyProject } = await admin
+      .from('business_projects')
+      .select('id, tenant_id, name, progress, current_stage, client_id, portal_token, is_public, owner_name, owner_id')
+      .eq('id', projectId)
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+    project = legacyProject;
+  }
+
+  if (!project) {
     return { row: null, skipped: 'project_not_found' };
   }
 
@@ -303,11 +313,150 @@ export async function notifyProjectFinished(params: {
   tenantId: string;
   origin: string;
   ownerId?: string | null;
-}): Promise<{ client: { sent: boolean; skipped?: string }; owner: { sent: boolean; skipped?: string } }> { return {client:{sent:false,skipped:'lifecycle_notifications_use_durable_outbox'},owner:{sent:false,skipped:'owner_digest_policy'}}; }
+}): Promise<{ client: { sent: boolean; skipped?: string }; owner: { sent: boolean; skipped?: string } }> {
+  const { admin, projectId, tenantId, origin, ownerId } = params;
+  const { data: project, error } = await admin
+    .from('projects')
+    .select('id, tenant_id, name, progress, current_stage, client_id, portal_token, is_public, owner_name, owner_id')
+    .eq('id', projectId)
+    .eq('tenant_id', tenantId)
+    .maybeSingle();
+
+  const empty = {
+    client: { sent: false, skipped: 'project_not_found' },
+    owner: { sent: false, skipped: 'project_not_found' },
+  };
+  if (error || !project) return empty;
+
+  const row = project as ProjectNotifyRow;
+  const portalUrl = buildPortalUrl(origin, row.portal_token);
+  const dashboardUrl = `${origin.replace(/\/$/, '')}/dashboard/business/projects/manage?project=${projectId}`;
+
+  const clientResult = { sent: false, skipped: undefined as string | undefined };
+  const { email: clientEmail, name: clientName } = await resolveClientRecipient(admin, tenantId, row.client_id);
+  if (!clientEmail || !clientEmail.includes('@')) {
+    clientResult.skipped = 'no_client_email';
+  } else if (await wasClientEmailSentRecently(admin, projectId, 'finished_email_sent', 'done')) {
+    clientResult.skipped = 'duplicate_recent';
+  } else {
+    const greeting = clientName ? `Hi ${clientName},` : 'Hello,';
+    const sendResult = await sendClientProjectNoReplyEmail({
+      tenantId,
+      to: clientEmail,
+      subject: `Project complete: ${row.name}`,
+      html: `<p>${greeting}</p>
+<p>Your project <strong>${row.name}</strong> is finished.</p>
+<p>The team has marked it complete. If anything still needs a follow-up, reply through the project portal or contact the owner directly.</p>
+${portalUrl ? `<p><a href="${portalUrl}">View your project portal</a></p>` : ''}
+<p style="color:#64748b;font-size:12px;">Automated update — replies to this address are not monitored.</p>`,
+      text: [
+        greeting,
+        '',
+        `Your project "${row.name}" is finished.`,
+        portalUrl ? `View portal: ${portalUrl}` : '',
+        NOREPLY_FOOTER,
+      ]
+        .filter(Boolean)
+        .join('\n'),
+      templateName: 'projectFinishedClient',
+    });
+    if (sendResult.success) {
+      clientResult.sent = true;
+      await admin.from('client_portal_events').insert({
+        tenant_id: tenantId,
+        project_id: projectId,
+        client_id: row.client_id,
+        event_type: 'custom',
+        metadata: {
+          kind: 'finished_email_sent',
+          dedupe_key: 'done',
+          recipient: clientEmail,
+        },
+      });
+    } else {
+      clientResult.skipped = sendResult.error || 'send_failed';
+    }
+  }
+
+  const ownerResult = { sent: false, skipped: undefined as string | undefined };
+  const ownerUserId = ownerId || row.owner_id;
+  if (!ownerUserId) {
+    ownerResult.skipped = 'no_owner';
+  } else {
+    const { data: ownerProfile } = await admin
+      .from('profiles')
+      .select('email, name, phone')
+      .eq('id', ownerUserId)
+      .maybeSingle();
+    if (!ownerProfile?.email) {
+      ownerResult.skipped = 'no_owner_email';
+    } else {
+      const ownerName = ownerProfile.name || 'there';
+      const sendResult = await sendEmailServer({
+        tenantId,
+        to: ownerProfile.email,
+        subject: `Project done: ${row.name}`,
+        fromName: 'AlphaClone Project Updates',
+        isPlatformNotification: true,
+        templateName: 'projectFinishedOwner',
+        idempotencyKey: `project-finished:${projectId}:${new Date().toISOString().slice(0, 10)}`,
+        html: `<p>Hi ${ownerName},</p>
+<p><strong>${row.name}</strong> is marked done.</p>
+<p>The client${clientEmail ? ` (${clientEmail})` : ''} ${clientResult.sent ? 'has been emailed' : 'could not be emailed automatically'}.</p>
+<p><a href="${dashboardUrl}">Open the project</a></p>
+<p style="color:#64748b;font-size:12px;">Automated notification from AlphaClone Systems.</p>`,
+      });
+      if (sendResult.success) {
+        ownerResult.sent = true;
+        if (ownerProfile.phone) {
+          try {
+            const { sendWhatsAppMessage } = await import('@/lib/whatsapp/sendWhatsApp');
+            await sendWhatsAppMessage({
+              tenantId,
+              phone: ownerProfile.phone,
+              message: `Project done: "${row.name}". The client has been notified.`,
+              metadata: { source: 'auto_outreach', kind: 'project_finished' },
+            });
+          } catch (err) {
+            console.warn('[project-finished] WhatsApp skipped:', err);
+          }
+        }
+      } else {
+        ownerResult.skipped = sendResult.error || 'send_failed';
+      }
+    }
+  }
+
+  return { client: clientResult, owner: ownerResult };
+}
 
 /** A milestone date/name/status update merits an email even if project % is unchanged. */
 export async function notifyProjectClientMilestoneUpdate(params: {
   admin: SupabaseClient; tenantId: string; projectId: string;
   milestone: { id: string; name: string; status: string; due_date?: string | null; updated_at?: string };
   action: 'created' | 'updated' | 'deleted'; progress?: number;
-}): Promise<{ sent: boolean; skipped?: string; email?: string; status?: string }> { return {sent:false,skipped:'lifecycle_notifications_use_durable_outbox'}; }
+}): Promise<{ sent: boolean; skipped?: string; email?: string; status?: string }> {
+  const { admin, tenantId, projectId, milestone, action } = params;
+  const loaded = await loadProjectForClientNotify(admin, projectId, tenantId);
+  if (!loaded.row) return { sent: false, skipped: loaded.skipped };
+  const project = loaded.row;
+  const { email, name } = await resolveClientRecipient(admin, tenantId, project.client_id);
+  if (!email) return { sent: false, skipped: 'no_client_email' };
+  const key = `milestone:${tenantId}:${milestone.id}:${action}:${milestone.updated_at || 'initial'}`;
+  const portalUrl = project.is_public && project.portal_token ? buildCanonicalProjectPortalUrl(project.portal_token) : null;
+  const lines = [
+    `Milestone ${action}: ${milestone.name}`,
+    `Status: ${milestone.status.replace(/_/g, ' ')}`,
+    `Due date: ${milestone.due_date ? milestone.due_date.slice(0, 10) : 'Not set'}`,
+    `Project progress: ${params.progress ?? project.progress ?? 0}%`,
+  ];
+  const result = await sendClientProjectNoReplyEmail({
+    tenantId, to: email, subject: `Milestone update: ${project.name}`,
+    templateName: 'projectMilestoneUpdate', idempotencyKey: key,
+    html: `<p>Hi ${escapeHtml(name || 'there')},</p><p>Your project <strong>${escapeHtml(project.name)}</strong> has an update.</p><ul>${lines.map(line => `<li>${escapeHtml(line)}</li>`).join('')}</ul>${portalUrl ? `<p><a href="${escapeHtml(portalUrl)}">Open your project</a></p>` : ''}<p>You can contact the business through your client workspace.</p>`,
+    text: [`Hi ${name || 'there'},`, '', `Project: ${project.name}`, ...lines, portalUrl || '', NOREPLY_FOOTER].filter(Boolean).join('\n'),
+  });
+  const saved = await admin.from('client_portal_events').insert({ tenant_id: tenantId, project_id: projectId, client_id: project.client_id, event_type: 'custom', metadata: { kind: 'milestone_email', milestone_id: milestone.id, action, recipient: email, status: result.success ? 'provider_accepted' : 'failed', error: result.error || null, idempotency_key: key } });
+  if (saved.error) console.error('[milestone-notify] receipt event failed:', saved.error.message);
+  return { sent: result.success, skipped: result.error, email, status: result.success ? 'provider_accepted' : 'failed' };
+}

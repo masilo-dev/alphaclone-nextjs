@@ -320,8 +320,9 @@ export const taskService = {
             }).catch(err => console.error('Failed to emit task_created event:', err));
 
             // Trigger project progress recalculation if linked to a project
-            if (data.related_to_project) {
-                projectService.recalculateProjectProgress(data.related_to_project).catch(err => console.error('Failed to update project progress:', err));
+            const linkedProjectId = data.related_to_project || (data as any).project_id;
+            if (linkedProjectId) {
+                projectService.recalculateProjectProgress(linkedProjectId).catch(err => console.error('Failed to update project progress:', err));
             }
 
             if (data.due_date) {
@@ -511,8 +512,9 @@ export const taskService = {
             }
 
             // Trigger project progress recalculation if linked to a project
-            if (data.related_to_project) {
-                projectService.recalculateProjectProgress(data.related_to_project).catch(err => console.error('Failed to update project progress:', err));
+            const linkedProjectId = data.related_to_project || (data as any).project_id;
+            if (linkedProjectId) {
+                projectService.recalculateProjectProgress(linkedProjectId).catch(err => console.error('Failed to update project progress:', err));
             }
 
             if (updates.dueDate !== undefined || updates.status !== undefined) {
@@ -650,9 +652,10 @@ export const taskService = {
             // Fetch task first to check for project linkage
             const { data: taskData } = await supabase
                 .from('tasks')
-                .select('related_to_project')
+                .select('related_to_project, project_id')
                 .eq('id', taskId)
                 .eq('tenant_id', tenantId)
+                .maybeSingle();
             const nowIso = new Date().toISOString();
             const { data: { user } } = await supabase.auth.getUser();
 
@@ -691,8 +694,9 @@ export const taskService = {
             }
 
             // Trigger project progress recalculation if it was linked to a project
-            if (taskData?.related_to_project) {
-                projectService.recalculateProjectProgress(taskData.related_to_project).catch(err => console.error('Failed to update project progress:', err));
+            const linkedProjectId = taskData?.related_to_project || (taskData as any)?.project_id;
+            if (linkedProjectId) {
+                projectService.recalculateProjectProgress(linkedProjectId).catch(err => console.error('Failed to update project progress:', err));
             }
 
             return { success: true, error: null };

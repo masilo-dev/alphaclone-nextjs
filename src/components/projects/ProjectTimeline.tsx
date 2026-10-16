@@ -224,9 +224,18 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
         
         {project.next_steps.length === 0 ? (
           <div className="text-center py-8 bg-[var(--ws-surface-tertiary)] rounded-xl border border-dashed border-slate-600">
-            <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-            <h5 className="text-lg font-medium text-white mb-2">All Caught Up!</h5>
-            <p className="text-[var(--ws-text-muted)]">No immediate next steps. Great progress!</p>
+            <CheckCircle className={`w-12 h-12 mx-auto mb-4 ${project.progress >= 100 || project.current_stage === 'Closure' ? 'text-green-500' : 'text-slate-500'}`} />
+            {project.progress >= 100 || project.current_stage === 'Closure' ? (
+              <>
+                <h5 className="text-lg font-medium text-white mb-2">All Caught Up!</h5>
+                <p className="text-[var(--ws-text-muted)]">Project lifecycle complete. All deliverables delivered!</p>
+              </>
+            ) : (
+              <>
+                <h5 className="text-lg font-medium text-white mb-2">No Scheduled Next Steps</h5>
+                <p className="text-[var(--ws-text-muted)]">Currently in {project.current_stage || 'Initiation'} ({project.progress}% completed). Add a task or milestone action to continue progress.</p>
+              </>
+            )}
             <button
               onClick={() => handleStepAction('new', 'create')}
               className="mt-4 px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-black type-ui font-medium rounded-lg transition-colors"

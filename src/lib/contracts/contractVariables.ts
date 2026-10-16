@@ -233,18 +233,23 @@ export function buildContractVariableContext(params: {
     project: {
       name: project?.name || project?.title || meta?.project_name || 'Commercial Services Engagement',
       description: project?.description || meta?.project_description || meta?.scope_of_work || 'Services and deliverables as mutually agreed in writing.',
-      deliverables: meta?.deliverables || 'Project deliverables as agreed upon in the statement of work.',
-      timeline: meta?.timeline || 'Per agreed milestone schedule.',
-      milestones: meta?.milestones || 'Standard commercial milestone delivery.',
+      deliverables: (project as any)?.deliverables || meta?.deliverables || 'Project deliverables as agreed upon in the statement of work.',
+      timeline: (project as any)?.timeline || meta?.timeline || 'Per agreed milestone schedule.',
+      milestones: (project as any)?.milestones || meta?.milestones || 'Standard commercial milestone delivery.',
     },
     custom: meta?.custom_variables || {},
   };
 }
 
 /**
- * Replaces canonical tokens ({{namespace.key}}) and common legacy bracket placeholders ([Client Name], etc.).
+ * Replaces canonical tokens ({{namespace.key}}), flat shorthand tokens ({{client_name}}),
+ * and comprehensive legacy bracket placeholders ([Client Name], [Deliverables], etc.).
  */
-export function resolveContractVariables(text: string, context: ContractVariableContext): string {
+export function resolveContractVariables(
+  text: string,
+  context: ContractVariableContext,
+  options?: { removeUnresolved?: boolean; fallbackValue?: string }
+): string {
   if (!text) return '';
 
   const flatMap: Record<string, string> = {};
@@ -276,42 +281,105 @@ export function resolveContractVariables(text: string, context: ContractVariable
   }
   if (context.custom) {
     for (const [k, v] of Object.entries(context.custom)) {
-      if (v != null) flatMap[`custom.${k}`] = String(v);
+      if (v != null) {
+        flatMap[`custom.${k}`] = String(v);
+        flatMap[k] = String(v); // also allow direct {{key}}
+      }
     }
   }
 
-  // 1. Replace {{namespace.key}} tokens
+  // Flat shorthand aliases for common tokens
+  if (context.client?.name) flatMap['client_name'] = context.client.name;
+  if (context.client?.company) flatMap['client_company'] = context.client.company;
+  if (context.client?.email) flatMap['client_email'] = context.client.email;
+  if (context.client?.phone) flatMap['client_phone'] = context.client.phone;
+  if (context.client?.address) flatMap['client_address'] = context.client.address;
+  if (context.client?.signatory_name) flatMap['client_signatory'] = context.client.signatory_name;
+  if (context.business?.name) flatMap['business_name'] = context.business.name;
+  if (context.business?.legal_name) flatMap['legal_name'] = context.business.legal_name;
+  if (context.business?.address) flatMap['business_address'] = context.business.address;
+  if (context.business?.email) flatMap['business_email'] = context.business.email;
+  if (context.business?.phone) flatMap['business_phone'] = context.business.phone;
+  if (context.business?.signatory_name) flatMap['provider_signatory'] = context.business.signatory_name;
+  if (context.contract?.title) flatMap['contract_title'] = context.contract.title;
+  if (context.contract?.number) flatMap['contract_number'] = context.contract.number;
+  if (context.contract?.effective_date) flatMap['effective_date'] = context.contract.effective_date;
+  if (context.contract?.expiry_date) flatMap['expiry_date'] = context.contract.expiry_date;
+  if (context.contract?.governing_law) flatMap['governing_law'] = context.contract.governing_law;
+  if (context.contract?.jurisdiction) flatMap['jurisdiction'] = context.contract.jurisdiction;
+  if (context.financial?.total) {
+    flatMap['total'] = String(context.financial.total);
+    flatMap['total_amount'] = String(context.financial.total);
+  }
+  if (context.financial?.currency) flatMap['currency'] = context.financial.currency;
+  if (context.financial?.payment_terms) flatMap['payment_terms'] = context.financial.payment_terms;
+  if (context.financial?.deposit_amount) flatMap['deposit_amount'] = String(context.financial.deposit_amount);
+  if (context.project?.name) flatMap['project_name'] = context.project.name;
+  if (context.project?.description) flatMap['project_description'] = context.project.description;
+  if (context.project?.deliverables) flatMap['deliverables'] = context.project.deliverables;
+  if (context.project?.timeline) flatMap['timeline'] = context.project.timeline;
+  if (context.project?.milestones) flatMap['milestones'] = context.project.milestones;
+
+  // 1. Replace {{namespace.key}} and {{key}} tokens
   let resolved = text.replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (match, tokenKey) => {
     const key = tokenKey.trim();
     if (key in flatMap && flatMap[key] !== undefined && flatMap[key] !== '') {
       return flatMap[key];
     }
+    if (options?.removeUnresolved) {
+      return options.fallbackValue !== undefined ? options.fallbackValue : '—';
+    }
     return match; // Leave unreplaced for validation check
   });
 
-  // 2. Legacy bracket replacement mappings for backwards compatibility
+  // 2. Comprehensive legacy bracket replacement mappings
   const legacyBracketMap: Record<string, string | undefined> = {
     '[Client Name]': context.client?.name,
     '[Client Company]': context.client?.company,
     '[Client Email]': context.client?.email,
+    '[Client Phone]': context.client?.phone,
     '[Client Address]': context.client?.address,
+    '[Client Signatory]': context.client?.signatory_name,
+    '[Client Title]': context.client?.signatory_title,
+    '[Client Contact]': context.client?.contact_person,
     '[Your Business Name]': context.business?.name,
     '[Business Name]': context.business?.name,
     '[Company Name]': context.business?.name,
     '[Business Address]': context.business?.address,
+    '[Business Email]': context.business?.email,
+    '[Business Phone]': context.business?.phone,
+    '[Provider Signatory]': context.business?.signatory_name,
+    '[Provider Title]': context.business?.signatory_title,
+    '[Business Signatory]': context.business?.signatory_name,
     '[Effective Date]': context.contract?.effective_date,
+    '[Expiry Date]': context.contract?.expiry_date,
+    '[Contract Title]': context.contract?.title,
+    '[Contract Number]': context.contract?.number,
     '[Total Amount]': context.financial?.total ? `${context.financial.total} ${context.financial.currency || ''}`.trim() : undefined,
+    '[Deposit Amount]': context.financial?.deposit_amount ? `${context.financial.deposit_amount} ${context.financial.currency || ''}`.trim() : undefined,
     '[Payment Terms]': context.financial?.payment_terms,
+    '[Billing Cadence]': context.financial?.billing_cadence,
+    '[Late Fee Rate]': context.financial?.late_fee_rate,
     '[Project Name]': context.project?.name,
     '[Scope Description]': context.project?.description,
+    '[Deliverables]': context.project?.deliverables,
+    '[Timeline]': context.project?.timeline,
+    '[Milestones]': context.project?.milestones,
     '[Governing Law]': context.contract?.governing_law,
     '[Jurisdiction]': context.contract?.jurisdiction,
+    '[Term]': context.contract?.term_months ? `${context.contract.term_months} Months` : undefined,
   };
 
   for (const [bracketPlaceholder, replacement] of Object.entries(legacyBracketMap)) {
     if (replacement) {
       resolved = resolved.split(bracketPlaceholder).join(replacement);
+    } else if (options?.removeUnresolved) {
+      resolved = resolved.split(bracketPlaceholder).join(options.fallbackValue !== undefined ? options.fallbackValue : '—');
     }
+  }
+
+  if (options?.removeUnresolved) {
+    resolved = resolved.replace(/\[([A-Z][a-zA-Z0-9_\s]+)\]/g, options.fallbackValue !== undefined ? options.fallbackValue : '—');
   }
 
   return resolved;
@@ -332,8 +400,8 @@ export function validateContractVariables(content: string): VariableValidationRe
     }
   }
 
-  // Also check for unresolved legacy placeholders like [Client Name], [Your Business Name]
-  const legacyRegex = /\[(Client Name|Client Company|Your Business Name|Business Name|Total Amount|Effective Date|Payment Terms|Governing Law)\]/g;
+  // Also check for unresolved legacy placeholders
+  const legacyRegex = /\[(Client Name|Client Company|Client Email|Client Address|Your Business Name|Business Name|Total Amount|Effective Date|Payment Terms|Governing Law|Deliverables|Timeline|Milestones)\]/g;
   while ((match = legacyRegex.exec(content)) !== null) {
     if (!unresolvedTokens.includes(match[0])) {
       unresolvedTokens.push(match[0]);

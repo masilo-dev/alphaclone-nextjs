@@ -197,15 +197,16 @@ export function buildContractDocumentInput(
   const signers: NonNullable<RenderDocumentInput['signers']> = [];
   const explicitParties = (contract.contract_parties || contract.parties || meta.parties || meta.signers) as Array<Record<string, unknown>> | undefined;
 
-  const providerSigned = Boolean(contract.admin_signature || contract.admin_signed_at);
+  const isDraft = contract.status === 'draft';
+  const providerSigned = !isDraft && Boolean(contract.admin_signature || contract.admin_signed_at);
   const providerSigner: NonNullable<RenderDocumentInput['signers']>[number] = {
       role: 'Service Provider',
       name: String(meta.provider_signatory_name || tenantBrandingFromRecord(tenant).legalName || tenantBrandingFromRecord(tenant).name),
       title: String(meta.provider_signatory_title || 'Authorized Representative'),
       email: String(meta.provider_email || ''),
       signed: providerSigned,
-      signatureUrl: contract.admin_signature ? String(contract.admin_signature) : undefined,
-      date: contract.admin_signed_at ? new Date(String(contract.admin_signed_at)).toISOString() : undefined,
+      signatureUrl: (!isDraft && contract.admin_signature) ? String(contract.admin_signature) : undefined,
+      date: (!isDraft && contract.admin_signed_at) ? new Date(String(contract.admin_signed_at)).toISOString() : undefined,
   };
 
   if (Array.isArray(explicitParties) && explicitParties.length > 0) {
@@ -219,13 +220,13 @@ export function buildContractDocumentInput(
       const uniqueRole = explicitParties.filter(p => roleGroup.test(String(p.signer_role || p.role || ''))).length === 1;
       const roleDate = /client/i.test(rawRole) ? contract.client_signed_at : /provider|admin|owner/i.test(rawRole) ? contract.admin_signed_at : undefined;
       const roleEvidence = /client/i.test(rawRole) ? contract.client_signature : /provider|admin|owner/i.test(rawRole) ? contract.admin_signature : undefined;
-      const signed = party.signature_status === 'signed' || Boolean(uniqueRole && roleDate && roleEvidence);
-      const signatureUrl = party.signature_url
+      const signed = !isDraft && (party.signature_status === 'signed' || Boolean(uniqueRole && roleDate && roleEvidence));
+      const signatureUrl = !isDraft && party.signature_url
         ? String(party.signature_url)
         : signed && uniqueRole
           ? String(/client/i.test(rawRole) ? (contract.client_signature || '') : /provider|admin|owner/i.test(rawRole) ? (contract.admin_signature || '') : '')
           : undefined;
-      const signedAt = party.signed_at || (uniqueRole ? roleDate : undefined);
+      const signedAt = !isDraft ? (party.signed_at || (uniqueRole ? roleDate : undefined)) : undefined;
       const date = signedAt ? new Date(String(signedAt)).toISOString() : undefined;
 
       signers.push({
@@ -244,15 +245,15 @@ export function buildContractDocumentInput(
   } else {
     signers.push(providerSigner);
 
-    const clientSigned = Boolean(contract.client_signature || contract.client_signed_at);
+    const clientSigned = !isDraft && Boolean(contract.client_signature || contract.client_signed_at);
     signers.push({
       role: 'Client',
       name: client?.name || String(meta.client_signatory_name || meta.client_name || contract.client_name || 'Client Signatory'),
       title: String(meta.client_signatory_title || 'Authorized Signatory'),
       email: client?.email || String(meta.client_email || contract.client_email || ''),
       signed: clientSigned,
-      signatureUrl: contract.client_signature ? String(contract.client_signature) : undefined,
-      date: contract.client_signed_at ? new Date(String(contract.client_signed_at)).toISOString() : undefined,
+      signatureUrl: (!isDraft && contract.client_signature) ? String(contract.client_signature) : undefined,
+      date: (!isDraft && contract.client_signed_at) ? new Date(String(contract.client_signed_at)).toISOString() : undefined,
     });
   }
 
@@ -260,12 +261,12 @@ export function buildContractDocumentInput(
   const tamperSeal = String(meta.tamper_seal || meta.tamperSeal || '');
   const signingTimes = [contract.client_signed_at, contract.admin_signed_at, meta.signed_at]
     .filter(Boolean).map(value => Date.parse(String(value))).filter(Number.isFinite);
-  const completedAt = signers.length > 0 && signers.every(s => s.signed) && signingTimes.length
+  const completedAt = !isDraft && signers.length > 0 && signers.every(s => s.signed) && signingTimes.length
     ? new Date(Math.max(...signingTimes)).toISOString()
     : undefined;
 
   const auditCertificate =
-    contentHash || tamperSeal || (signers.some((s) => s.signed) && completedAt)
+    !isDraft && (contentHash || tamperSeal || (signers.some((s) => s.signed) && completedAt))
       ? {
           documentHash: contentHash || undefined,
           tamperSeal: tamperSeal || undefined,

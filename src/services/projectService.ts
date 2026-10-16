@@ -44,9 +44,9 @@ export const projectService = {
                 .select('*')
                 .eq('tenant_id', tenantId);
 
-            // Regular clients: also filter by owner
-            if (role !== 'tenant_admin' && role !== 'admin') {
-                query = query.eq('owner_id', userId);
+            // Regular clients: only show projects they own or are associated with
+            if (role === 'client') {
+                query = query.or(`owner_id.eq.${userId},client_id.eq.${userId}`);
             }
 
             const { data, error } = await query

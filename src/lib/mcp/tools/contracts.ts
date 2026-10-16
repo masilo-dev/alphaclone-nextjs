@@ -363,3 +363,102 @@ registerTool('contracts', {
       contractId: args.contract_id, expectedContentHash: args.expected_content_hash, ownerApproved: args.owner_approved, consentGiven: args.consent_given });
   },
 });
+
+// 8. get_contract_status
+registerTool('contracts', {
+  name: 'get_contract_status',
+  description: 'Retrieve detailed lifecycle status, signer progression, and verification evidence for a specific contract.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    contract_id: z.string().uuid(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid', description: 'AlphaClone Workspace Tenant ID' },
+      contract_id: { type: 'string', format: 'uuid', description: 'Contract UUID' },
+    },
+    required: ['tenant_id', 'contract_id'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    const { data: contract, error } = await supabase
+      .from('contracts')
+      .select('*')
+      .eq('tenant_id', args.tenant_id)
+      .eq('id', args.contract_id)
+      .single();
+
+    if (error || !contract) throw new Error('Contract not found');
+
+    const { data: parties } = await supabase
+      .from('contract_parties')
+      .select('id,signer_role,signing_order,signature_status,signed_at,signature_required,party_snapshot')
+      .eq('tenant_id', args.tenant_id)
+      .eq('contract_id', args.contract_id)
+      .order('signing_order');
+
+    const issues = inspectContractLifecycle(contract);
+    const isFullySigned = ['fully_signed', 'signed', 'completed'].includes(String(contract.status).toLowerCase());
+
+    const result = {
+      contract_id: contract.id,
+      title: contract.title,
+      status: contract.status,
+      lifecycle_status: contract.lifecycle_status || contract.status,
+      is_fully_signed: isFullySigned,
+      client_signed_at: contract.client_signed_at,
+      admin_signed_at: contract.admin_signed_at,
+      pdf_url: contract.pdf_url,
+      parties: parties || [],
+      lifecycle_issues: issues,
+      created_at: contract.created_at,
+      updated_at: contract.updated_at,
+    };
+
+    return attachLlmExecutionTruth(result, buildLlmExecutionTruth({ toolName: 'get_contract_status', parsedResult: result }));
+  },
+});
+
+// 9. schedule_contract_reminder
+registerTool('contracts', {
+  name: 'schedule_contract_reminder',
+  description: 'Trigger or schedule an automated electronic signature reminder for the next pending signatory of a contract.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    contract_id: z.string().uuid(),
+    force: z.boolean().optional().default(false),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid', description: 'AlphaClone Workspace Tenant ID' },
+      contract_id: { type: 'string', format: 'uuid', description: 'Contract UUID' },
+      force: { type: 'boolean', description: 'Bypass the 3-day reminder cooldown interval', default: false },
+    },
+    required: ['tenant_id', 'contract_id'],
+  },
+  handler: async (args, ctx) => {
+    const { sendOrderedContractSignatureReminders } = await import('@/services/contractSignatureReminderService');
+    const result = await sendOrderedContractSignatureReminders({
+      tenantId: args.tenant_id,
+      contractId: args.contract_id,
+      actorUserId: ctx?.userId,
+      force: args.force,
+    });
+
+    return attachLlmExecutionTruth(
+      {
+        contract_id: args.contract_id,
+        ...result,
+        message: result.sent > 0
+          ? `Signature reminder sent to next eligible party.`
+          : result.complete
+            ? 'Contract signing is already complete or no signers are pending.'
+            : 'Reminder skipped due to recent notification within cooldown window.',
+      },
+      buildLlmExecutionTruth({ toolName: 'schedule_contract_reminder', parsedResult: result })
+    );
+  },
+});
+
