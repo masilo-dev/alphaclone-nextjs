@@ -264,7 +264,7 @@ class ProjectStageService {
 
             // Log to workspace activity so client portal and dashboard stay synchronized
             try {
-                const { appendWorkspaceActivity } = await import('./finance/workspaceActivityService');
+                const { appendWorkspaceActivity } = await import('./finance/workspaceActivityWriter');
                 await appendWorkspaceActivity(supabase as any, {
                     tenant_id: tenantId,
                     project_id: projectId,
