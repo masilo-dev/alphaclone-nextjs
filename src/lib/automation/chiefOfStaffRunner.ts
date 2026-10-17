@@ -67,13 +67,40 @@ export async function runChiefOfStaffForTenant(tenantId: string, userId?: string
 
 export async function getChiefOfStaffLastRunAt(tenantId: string): Promise<string | null> {
   const admin = createSupabaseAdminClient();
-  const { data } = await admin
-    .from('mcp_sessions')
-    .select('created_at')
-    .eq('tenant_id', tenantId)
-    .eq('tool_name', 'run_chief_of_staff_routine')
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  return data?.created_at || null;
+  const [mcpRes, cronRes, workflowRes] = await Promise.all([
+    admin
+      .from('mcp_sessions')
+      .select('created_at')
+      .eq('tenant_id', tenantId)
+      .eq('tool_name', 'run_chief_of_staff_routine')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    admin
+      .from('automation_cron_logs')
+      .select('ran_at')
+      .eq('trigger_type', 'chief-of-staff')
+      .eq('status', 'success')
+      .order('ran_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    admin
+      .from('workflow_runs')
+      .select('created_at')
+      .eq('tenant_id', tenantId)
+      .ilike('workflow_id', '%chief_of_staff%')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const timestamps = [
+    mcpRes.data?.created_at,
+    cronRes.data?.ran_at,
+    workflowRes.data?.created_at,
+  ].filter(Boolean) as string[];
+
+  if (!timestamps.length) return null;
+  timestamps.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+  return timestamps[0];
 }

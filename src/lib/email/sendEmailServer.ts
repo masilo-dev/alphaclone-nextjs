@@ -68,6 +68,7 @@ function inferCategory(params: SendEmailServerParams): EmailGatewayCategory {
   if (template.includes('contract') || template.includes('signature')) return 'contract_document';
   if (template.includes('booking') || template.includes('appointment')) return 'booking_calendar';
   if (template.includes('security') || template.includes('password') || template.includes('auth')) return 'account_security';
+  if (template.includes('project') || template.includes('task') || template.includes('lead') || template.includes('deal') || template.includes('message')) return 'transactional';
   if (params.isReply) return 'transactional';
   if (params.isPlatformNotification) return 'internal_notification';
   return 'transactional';
@@ -87,7 +88,15 @@ function sourceParts(params: SendEmailServerParams): { module: string; action: s
 export async function sendEmailServer(params: SendEmailServerParams): Promise<SendEmailServerResult> {
   "use step";
   const category = inferCategory(params);
-  if (category === 'internal_notification' && !params.internalNotificationKind) {
+  const isImmediateLifecycle =
+    params.internalNotificationKind === 'immediate_exception' ||
+    Boolean((params as any).immediate) ||
+    Boolean((params as any).is_lifecycle_confirmation) ||
+    Boolean(params.auditMetadata?.immediate) ||
+    Boolean(params.auditMetadata?.is_lifecycle_confirmation) ||
+    ['websiteContact', 'taskReminder', 'projectUpdate', 'approvalRequest', 'userInvite'].includes(String(params.templateName || ''));
+
+  if (category === 'internal_notification' && !params.internalNotificationKind && !isImmediateLifecycle) {
     return { success: false, error: 'Internal notifications are digest-only unless explicitly classified as an immediate exception.', code: 'DIGEST_REQUIRED' };
   }
 

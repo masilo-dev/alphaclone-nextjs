@@ -21,7 +21,9 @@ export type ReconcileOutcome = 'verified' | 'failed' | 'still_unknown';
 const MAX_ATTEMPTS = 8;
 
 function backoffMinutes(attempt: number): number {
-  return Math.min(60 * 24, 5 * 2 ** Math.min(attempt, 6));
+  const base = Math.min(60 * 24, 5 * 2 ** Math.min(attempt, 6));
+  const jitter = 0.8 + Math.random() * 0.4;
+  return Math.round(base * jitter);
 }
 
 async function reconcileEmailAction(row: ReconcileRow): Promise<ReconcileOutcome> {
@@ -180,11 +182,12 @@ async function reconcileOne(row: ReconcileRow): Promise<{ actionId: string; outc
       }).catch(() => undefined);
     }
   } else if (attempts >= MAX_ATTEMPTS) {
-    // Explicit unresolved state — never invent a failure!
+    // Explicit unresolved state — routed to dead letter for operator review
     patch.status = 'outcome_unknown';
-    patch.failure_reason = 'Verification window expired without provider evidence. Outcome remains unresolved.';
+    patch.failure_reason = 'Verification window expired without provider evidence. Outcome routed to dead-letter queue for review.';
     (patch.payload as Record<string, unknown>).unresolved = true;
-    (patch.payload as Record<string, unknown>).canonical_state = 'pending_verification';
+    (patch.payload as Record<string, unknown>).dead_letter = true;
+    (patch.payload as Record<string, unknown>).canonical_state = 'dead_letter';
   } else {
     patch.status = 'outcome_unknown';
     patch.failure_reason = row.failure_reason || 'Awaiting provider evidence';

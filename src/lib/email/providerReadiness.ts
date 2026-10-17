@@ -15,12 +15,33 @@ export async function checkEmailProviderReadiness(config: {
       if (!actual || !addresses.some(address => address.toLowerCase() === actual)) return { ...base, ready: false, code: 'EMAIL_SENDER_NOT_VERIFIED', issue: 'The selected sender is not available on this Zoho mailbox.', verification_scope: 'mailbox_sender' };
       return { ...base, from_email: actual, ready: true, code: null, issue: null, verification_scope: 'mailbox_sender' };
     }
-    if (!sender) return { ...base, ready: false, code: 'EMAIL_SENDER_MISSING', issue: 'Select a sender for this connected provider.', verification_scope: 'configuration' };
     if (config.provider === 'brevo') {
       if (!config.apiKey) return { ...base, ready: false, code: 'EMAIL_CREDENTIAL_UNAVAILABLE', issue: 'The saved Brevo credential could not be loaded.', verification_scope: 'provider_sender' };
-      await assertBrevoSender(config.apiKey, sender);
-      return { ...base, ready: true, code: null, issue: null, verification_scope: 'provider_sender' };
+      const { getBrevoActiveSenders } = await import('@/lib/email/providerSenderIdentity');
+      const activeSenders = await getBrevoActiveSenders(config.apiKey);
+      if (!activeSenders.length) {
+        return {
+          ...base,
+          ready: false,
+          code: 'EMAIL_SENDER_NOT_VERIFIED',
+          issue: 'No active verified senders found in your Brevo account. Please add and verify a sender domain or address in Brevo.',
+          verification_scope: 'provider_sender',
+        };
+      }
+      const actual = sender || activeSenders[0];
+      if (sender && !activeSenders.includes(sender)) {
+        return {
+          ...base,
+          from_email: sender,
+          ready: false,
+          code: 'EMAIL_SENDER_NOT_VERIFIED',
+          issue: `The configured Brevo sender ${sender} is not active. Available senders: ${activeSenders.join(', ')}`,
+          verification_scope: 'provider_sender',
+        };
+      }
+      return { ...base, from_email: actual, ready: true, code: null, issue: null, verification_scope: 'provider_sender' };
     }
+    if (!sender) return { ...base, ready: false, code: 'EMAIL_SENDER_MISSING', issue: 'Select a sender for this connected provider.', verification_scope: 'configuration' };
     return { ...base, ready: true, code: null, issue: null, verification_scope: 'configuration' };
   } catch (error) {
     const failure = error as Error & { code?: string };

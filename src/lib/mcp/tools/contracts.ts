@@ -167,6 +167,7 @@ registerTool('contracts', {
       .from('contracts')
       .update({
         status: args.status,
+        lifecycle_status: args.status,
         updated_at: new Date().toISOString(),
       })
       .eq('id', args.contract_id)

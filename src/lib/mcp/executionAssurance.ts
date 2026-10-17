@@ -9,6 +9,8 @@ export type ReceiptIssue =
   | 'missing_live_url'
   | 'success_without_evidence'
   | 'stale_pending_action'
+  | 'provider_failure'
+  | 'outcome_unknown'
   | 'ok';
 
 export type ReceiptAssuranceRow = {
@@ -229,7 +231,7 @@ export async function buildExecutionAssuranceReport(params: {
       .limit(5000),
     admin
       .from('external_actions')
-      .select('id, status, created_at')
+      .select('id, status, created_at, tool_name, failure_reason, provider, provider_reference')
       .eq('tenant_id', params.tenantId)
       .gte('created_at', since)
       .limit(2000),
@@ -271,6 +273,20 @@ export async function buildExecutionAssuranceReport(params: {
   const stalePending = actions.filter((a) => a.status === 'stale_pending').length;
   const pending = actions.filter((a) => a.status === 'pending').length;
   const failedActions = actions.filter((a) => a.status === 'failed').length;
+  const failedActionRows: ReceiptAssuranceRow[] = actions
+    .filter((a) => a.status === 'failed' || a.status === 'outcome_unknown')
+    .slice(0, 20)
+    .map((row) => ({
+      id: row.id,
+      tool: row.tool_name || 'external_action',
+      success: false,
+      final_status: row.status,
+      provider_reference: row.provider_reference || null,
+      live_url: null,
+      error_code: row.failure_reason || 'EXTERNAL_ACTION_FAILED',
+      entity_id: null,
+      issue: (row.status === 'failed' ? 'provider_failure' : 'outcome_unknown') as ReceiptIssue,
+    }));
 
   const runs = runRes.data || [];
   const verifiedCompleted = runs.filter((r) =>
@@ -299,7 +315,7 @@ export async function buildExecutionAssuranceReport(params: {
       verified_completed: verifiedCompleted,
       failed: failedRuns,
     },
-    issues: incompleteRows,
+    issues: [...incompleteRows, ...failedActionRows].slice(0, 30),
   };
 }
 

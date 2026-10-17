@@ -421,9 +421,9 @@ export function resolvePublishIdentityFromList(
 
   const platformHint = provider ? ` for ${provider}` : '';
   throw new TenantIsolationError(
-    `identity_id or identity_type is required when the tenant has multiple social identities${platformHint}. Call connected_accounts or get_social_identities.`,
+    `Destination selection required: tenant has multiple social destinations${platformHint}. Integration is connected and operational. Pass identity_id or identity_type ('personal' vs 'organization') from get_social_identities.`,
     publishable.length > 1 ? 'TARGET_AMBIGUOUS' : 'MISSING_IDENTITY',
-    { available_identities: availableIdentities }
+    { available_identities: availableIdentities, selection_required: true }
   );
 }
 

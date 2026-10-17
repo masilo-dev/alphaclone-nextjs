@@ -374,6 +374,14 @@ export async function resolveAllConnectedEmailProviders(params: {
           config.senderVerificationError = 'Zoho sender discovery failed; verify account credentials and permissions.';
         }
       }
+      if (provider === 'brevo' && !config.fromEmail && config.apiKey) {
+        try {
+          const { resolveBrevoSender } = await import('@/lib/email/providerSenderIdentity');
+          config.fromEmail = await resolveBrevoSender(config.apiKey);
+        } catch {
+          config.senderVerificationError = 'Brevo sender discovery failed; verify account credentials and permissions.';
+        }
+      }
       if (seen.has(config.providerAccountId)) continue;
       seen.add(config.providerAccountId);
       resolved.push(config);

@@ -14,7 +14,12 @@ async function queryProjects(supabase: ReturnType<typeof createSupabaseAdminClie
     if (status) query = query.eq('status', table === 'projects' ? normalizeProjectStatus(status) || status : status);
     const {data, error} = await query;
     if (error) throw error;
-    for (const row of data || []) if (!rows.has(row.id)) rows.set(row.id, row);
+    for (const row of data || []) {
+      if (!rows.has(row.id)) {
+        const { portal_password_hash, ...safe } = row;
+        rows.set(row.id, safe);
+      }
+    }
   }
   return [...rows.values()];
 }

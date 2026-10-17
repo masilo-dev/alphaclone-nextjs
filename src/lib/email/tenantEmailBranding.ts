@@ -67,7 +67,7 @@ export async function loadTenantEmailBrandingProfile(
   const supabase = createSupabaseAdminClient();
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, logo_url, brand_color_primary, brand_color_secondary, settings, domain')
+    .select('id, name, logo_url, brand_color_primary, brand_color_secondary, settings, domain, business_address')
     .eq('id', tenantId)
     .maybeSingle();
 
@@ -93,9 +93,14 @@ export async function loadTenantEmailBrandingProfile(
   const supportEmail = readString(emailSettings.supportEmail) || readString(extracted.supportEmail);
   const replyTo = readString(emailSettings.replyTo) || readString(emailSettings.reply_to) || supportEmail;
   const address =
+    readString((tenant as any)?.business_address) ||
+    readString(brandingSettings.business_address) ||
     readString(brandingSettings.businessAddress) ||
     readString(brandingSettings.postalAddress) ||
-    readString(settings.business_address as string);
+    readString(brandingSettings.address) ||
+    readString(settings.business_address as string) ||
+    readString(settings.address as string) ||
+    readString((extracted as any).address);
 
   const hasTenantBrand = Boolean(logoUrl || address || website || supportEmail);
 

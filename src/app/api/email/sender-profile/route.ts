@@ -32,9 +32,8 @@ export async function GET(request: NextRequest) {
 
         const { data, error } = await admin
             .from('integrations')
-            .select('type, config')
+            .select('type, config, user_id')
             .eq('tenant_id', tenantId)
-            .eq('user_id', tenantCtx.user.id)
             .eq('enabled', true)
             .in('type', [...EMAIL_PROVIDER_TYPES, 'email_profile']);
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });

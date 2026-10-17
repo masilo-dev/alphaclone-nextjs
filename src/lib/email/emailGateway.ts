@@ -75,6 +75,12 @@ export interface EmailGatewayResult extends SendEmailResult {
   brandingVersion?: string;
   category: EmailGatewayCategory;
   quotaCharged?: boolean;
+  actionableValidation?: {
+    code: string;
+    message: string;
+    missingFields?: string[];
+    resolutionUrl?: string;
+  };
 }
 
 const GATEWAY_VERSION = 'email-gateway-v1';
@@ -277,6 +283,7 @@ async function executeEmailGateway(request: EmailGatewayRequest): Promise<EmailG
       errorCode: blocking[0]?.code,
       idempotencyKey: request.idempotencyKey,
     });
+    const hasPostalRequired = blocking.some((issue) => issue.code === 'POSTAL_ADDRESS_REQUIRED');
     return {
       success: false,
       tried: [],
@@ -286,6 +293,14 @@ async function executeEmailGateway(request: EmailGatewayRequest): Promise<EmailG
       templateVersion: request.templateId || 'default',
       brandingVersion: branding.version,
       category: request.category,
+      actionableValidation: hasPostalRequired
+        ? {
+            code: 'POSTAL_ADDRESS_REQUIRED',
+            message: 'A physical business postal address is required for commercial email compliance.',
+            missingFields: ['business_address'],
+            resolutionUrl: '/settings?tab=branding',
+          }
+        : undefined,
     };
   }
 

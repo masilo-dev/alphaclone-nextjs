@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "node scripts/postinstall.mjs && rm -rf app && npm run typecheck && cross-env NEXT_TELEMETRY_DISABLED=1 SERWIST_SUPPRESS_TURBOPACK_WARNING=1 RAYON_NUM_THREADS=1 ALPHACLONE_SEQUENTIAL_TYPECHECK=1 NODE_OPTIONS=--max-old-space-size=4096 next build --webpack && npm run typecheck:build",
+    "build": "node scripts/postinstall.mjs && rm -rf app && npm run typecheck && cross-env NEXT_TELEMETRY_DISABLED=1 SERWIST_SUPPRESS_TURBOPACK_WARNING=1 RAYON_NUM_THREADS=1 ALPHACLONE_SEQUENTIAL_TYPECHECK=1 NODE_OPTIONS=--max-old-space-size=6144 next build --webpack && npm run typecheck:build",
     "build:prod": "npm run build",
     "start": "node scripts/validate-production-env.mjs --warn-only && NODE_OPTIONS=\"${NODE_OPTIONS:---max-old-space-size=4096}\" next start -H 0.0.0.0 -p ${PORT:-3000}",
     "start:worker": "tsx src/worker/index.ts",

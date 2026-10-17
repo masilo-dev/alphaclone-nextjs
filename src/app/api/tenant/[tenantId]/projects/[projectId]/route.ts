@@ -139,7 +139,7 @@ export async function PATCH(
     }
     const { data: before, error: beforeError } = await admin
       .from("projects")
-      .select("id, name, description, due_date, client_id, current_stage, status, progress, portal_expires_at, owner_id, metadata, progress_method")
+      .select("id, name, description, due_date, client_id, current_stage, status, progress, portal_expires_at, portal_token, owner_id, metadata, progress_method")
       .eq("id", projectId)
       .eq("tenant_id", tenantId)
       .maybeSingle();
@@ -187,6 +187,17 @@ export async function PATCH(
         : value;
     }
     if (parsed.data.portalEnabled === false) patch.portal_token = null;
+    if (parsed.data.portalEnabled === true) {
+      patch.portal_enabled = true;
+      patch.is_public = true;
+      if (!before.portal_token) {
+        patch.portal_token = globalThis.crypto.randomUUID();
+      }
+      patch.metadata = {
+        ...((patch.metadata as Record<string, unknown>) || before.metadata || {}),
+        client_visible: true,
+      };
+    }
     const nextStatus = typeof patch.status === "string" ? patch.status : before.status;
     const nextStage =
       typeof patch.current_stage === "string" ? patch.current_stage : before.current_stage;
@@ -209,6 +220,9 @@ export async function PATCH(
       if (typeof patch.progress !== "number") patch.progress = finished.progress;
       if (!patch.estimated_completion_date) {
         patch.estimated_completion_date = finished.estimated_completion_date;
+      }
+      if (!patch.completed_at) {
+        patch.completed_at = new Date().toISOString();
       }
     }
     if (willBeComplete && !wasComplete && !before.portal_expires_at) {

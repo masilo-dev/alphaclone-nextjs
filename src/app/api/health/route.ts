@@ -22,13 +22,25 @@ export async function GET(request: NextRequest) {
         },
     };
 
+    const { isMemoryPressureHigh, getMemorySnapshot } = await import('@/lib/runtime/memoryTelemetry');
+    const memory = getMemorySnapshot();
+    const memoryDegraded = isMemoryPressureHigh(80);
+    const shallowStatus = memoryDegraded ? 'degraded' : 'healthy';
+
     if (!deepDiagnostics) {
         return NextResponse.json(
             {
-                status: 'healthy',
+                status: shallowStatus,
                 timestamp: new Date().toISOString(),
                 responseTime: Date.now() - startTime,
-                checks: baseChecks,
+                checks: {
+                    ...baseChecks,
+                    runtime: {
+                        status: shallowStatus,
+                        responseTime: Date.now() - startTime,
+                        heapUsedPct: memory.heapUsedPct,
+                    },
+                },
                 version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
             },
             { status: 200 }
@@ -151,13 +163,12 @@ export async function GET(request: NextRequest) {
     };
 
     // 6. System runtime
-    const { getMemorySnapshot, getMemoryBaseline, resolveHeapLimitMb } = await import(
+    const { getMemoryBaseline, resolveHeapLimitMb } = await import(
       '@/lib/runtime/memoryTelemetry'
     );
-    const memory = getMemorySnapshot();
     const memoryBaseline = getMemoryBaseline();
     checks.system = {
-        status: memory.heapUsedPct >= 90 ? 'degraded' : 'operational',
+        status: memory.heapUsedPct >= 80 ? 'degraded' : 'operational',
         memory,
         memoryBaseline: memoryBaseline || undefined,
         heapLimitMb: resolveHeapLimitMb(),

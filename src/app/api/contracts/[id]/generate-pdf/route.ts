@@ -32,8 +32,13 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
             return NextResponse.json({ error: 'Contract not found', code: 'NOT_FOUND' }, { status: 404 });
         }
 
-        if (['client_signed', 'fully_signed', 'signed', 'completed'].includes(contract.status)) {
-            return NextResponse.json({ error: 'Executed agreements must use their recorded original PDF', code: 'SIGNED_DOCUMENT_IMMUTABLE' }, { status: 409 });
+        const isExecuted = ['client_signed', 'fully_signed', 'signed', 'completed'].includes(contract.status);
+        if (isExecuted && contract.pdf_url) {
+            return NextResponse.json({
+                success: true,
+                pdfUrl: contract.pdf_url,
+                message: 'Executed agreement uses recorded original PDF',
+            });
         }
 
         const { data: tenant } = await admin
@@ -70,7 +75,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
 
         const pdfUrl = `/api/storage/uploads/${filePath}`;
 
-        const { data: recordedPdf, error: updateError } = await admin
+        let updateQuery = admin
             .from('contracts')
             .update({
                 pdf_url: pdfUrl,
@@ -79,9 +84,15 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
             })
             .eq('id', id)
             .eq('tenant_id', tenantId)
-            .eq('status', contract.status)
-            .is('client_signed_at', null)
-            .filter('admin_signed_at', contract.admin_signed_at ? 'eq' : 'is', contract.admin_signed_at || null)
+            .eq('status', contract.status);
+
+        if (!isExecuted) {
+            updateQuery = updateQuery
+                .is('client_signed_at', null)
+                .filter('admin_signed_at', contract.admin_signed_at ? 'eq' : 'is', contract.admin_signed_at || null);
+        }
+
+        const { data: recordedPdf, error: updateError } = await updateQuery
             .select('id')
             .maybeSingle();
 
