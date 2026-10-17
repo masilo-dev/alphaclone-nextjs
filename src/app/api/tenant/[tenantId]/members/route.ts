@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { requireTenantAccess, requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
+import { invalidateMembershipCache, requireTenantAccess, requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 import { accountDeletionService } from '@/services/accountDeletionService';
 import { canRemoveWorkspaceMember, isPlatformAdminRole, WORKSPACE_OWNER_ROLES } from '@/lib/platformAdmin';
 import { ENV } from '@/config/env';
@@ -18,6 +18,7 @@ async function deleteMembershipRows(
   if (error) throw error;
   // Some deployments also keep tenant_members — best-effort cleanup.
   await admin.from('tenant_members').delete().eq('tenant_id', tenantId).eq('user_id', userId);
+  invalidateMembershipCache(userId, tenantId);
 }
 
 export async function GET(req: NextRequest, context: Context) {
@@ -58,6 +59,7 @@ export async function PATCH(req: NextRequest, context: Context) {
       .eq('tenant_id', tenantId)
       .eq('user_id', body.userId);
     if (error) throw error;
+    invalidateMembershipCache(body.userId, tenantId);
     await admin.from('business_automation_events').insert({
       tenant_id: tenantId,
       event_type: 'tenant_member_role_updated',

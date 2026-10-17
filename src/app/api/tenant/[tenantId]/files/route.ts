@@ -4,6 +4,7 @@ import { requireTenantAccess, requireTenantRole, routeErrorResponse } from '@/li
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { tenantStoragePath } from '@/lib/tenant/platformTenant';
 import { queueDocumentIntelligence } from '@/lib/documents/fileDocument';
+import { validateFileSignature } from '@/lib/security/fileSignatureGuard';
 
 export const runtime = 'nodejs';
 
@@ -84,6 +85,14 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
     );
 
     const bytes = Buffer.from(await file.arrayBuffer());
+    try {
+      validateFileSignature(bytes, mimeType);
+    } catch (sigErr: any) {
+      return NextResponse.json(
+        { error: sigErr?.message || 'File content signature does not match declared type', code: 'INVALID_FILE_SIGNATURE' },
+        { status: 415 }
+      );
+    }
     const supabaseAdmin = admin || createSupabaseAdminClient();
 
     const { data: uploadData, error: uploadError } = await supabaseAdmin.storage

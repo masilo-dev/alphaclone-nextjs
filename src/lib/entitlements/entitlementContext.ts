@@ -23,6 +23,8 @@ export type EntitlementAccessMode =
   | 'paid_free'
   | 'free';
 
+export const PAST_DUE_GRACE_PERIOD_MS = 7 * 24 * 60 * 60 * 1000;
+
 export type TenantEntitlementSnapshot = {
   tenantId: string;
   rawPlan: string;
@@ -33,6 +35,8 @@ export type TenantEntitlementSnapshot = {
   trialEndsAt: Date | null;
   legacyAccessUntil: Date | null;
   stripeSubscriptionId: string | null;
+  currentPeriodEnd?: Date | null;
+  cancelAtPeriodEnd?: boolean;
 };
 
 export type ResolvedEntitlementContext = {
@@ -58,18 +62,32 @@ export function resolveEntitlementContext(snapshot: TenantEntitlementSnapshot): 
   const normalizedPlan = normalizePlanId(rawPlan);
   const status = String(snapshot.subscriptionStatus || 'free').toLowerCase();
   const trialEndsAt = parseDate(snapshot.trialEndsAt);
+  const currentPeriodEnd = parseDate(snapshot.currentPeriodEnd);
   const legacyAccessUntil =
     parseDate(snapshot.legacyAccessUntil) ??
     (snapshot.createdAt && snapshot.createdAt < new Date(USAGE_ROLLOUT_ISO)
       ? new Date(LEGACY_ACCESS_DEADLINE_ISO)
       : null);
 
-  const paidActive = status === 'active' && Boolean(snapshot.stripeSubscriptionId);
+  const hasStripe = Boolean(snapshot.stripeSubscriptionId);
+  const isCanceledOrUnpaid = status === 'canceled' || status === 'cancelled' || status === 'unpaid';
+  const isPastDue = status === 'past_due' && hasStripe;
+
+  // 7-day grace period for past_due
+  const pastDueGraceActive =
+    isPastDue &&
+    (!currentPeriodEnd || now - currentPeriodEnd.getTime() < PAST_DUE_GRACE_PERIOD_MS);
+
+  const paidActive =
+    (status === 'active' || pastDueGraceActive) &&
+    hasStripe &&
+    !isCanceledOrUnpaid;
+
   const premiumPaid = paidActive && isUnlimitedPlan(rawPlan);
   const legacyActive =
-    !paidActive && legacyAccessUntil !== null && legacyAccessUntil.getTime() >= now;
+    !paidActive && !isCanceledOrUnpaid && legacyAccessUntil !== null && legacyAccessUntil.getTime() >= now;
   const trialActive =
-    !paidActive && status === 'trial' && trialEndsAt !== null && trialEndsAt.getTime() > now;
+    !paidActive && !isCanceledOrUnpaid && status === 'trial' && trialEndsAt !== null && trialEndsAt.getTime() > now;
 
   if (legacyActive) {
     return {
@@ -101,7 +119,7 @@ export function resolveEntitlementContext(snapshot: TenantEntitlementSnapshot): 
     };
   }
 
-  if (premiumPaid || isUnlimitedPlan(rawPlan)) {
+  if (premiumPaid || (!isCanceledOrUnpaid && isUnlimitedPlan(rawPlan) && !isPastDue)) {
     return {
       accessMode: 'paid_unlimited',
       quotaEnforced: false,
@@ -110,11 +128,13 @@ export function resolveEntitlementContext(snapshot: TenantEntitlementSnapshot): 
       displayPlan: 'Premium',
       legacyAccessUntil: null,
       trialEndsAt: null,
-      bannerMessage: null,
+      bannerMessage: pastDueGraceActive
+        ? 'Payment past due — active grace period. Please update your payment method to avoid interruption.'
+        : null,
     };
   }
 
-  if (paidActive || normalizedPlan === 'pro') {
+  if (paidActive || (!isCanceledOrUnpaid && normalizedPlan === 'pro' && !isPastDue)) {
     return {
       accessMode: 'paid_pro',
       quotaEnforced: true,
@@ -123,7 +143,9 @@ export function resolveEntitlementContext(snapshot: TenantEntitlementSnapshot): 
       displayPlan: 'Pro',
       legacyAccessUntil: null,
       trialEndsAt: null,
-      bannerMessage: null,
+      bannerMessage: pastDueGraceActive
+        ? 'Payment past due — active grace period. Please update your payment method to avoid interruption.'
+        : null,
     };
   }
 
@@ -135,7 +157,11 @@ export function resolveEntitlementContext(snapshot: TenantEntitlementSnapshot): 
     displayPlan: 'Free',
     legacyAccessUntil: null,
     trialEndsAt: null,
-    bannerMessage: null,
+    bannerMessage: isCanceledOrUnpaid
+      ? 'Subscription is inactive. Free plan limits apply.'
+      : isPastDue
+        ? 'Grace period expired for past due subscription. Free plan limits apply.'
+        : null,
   };
 }
 

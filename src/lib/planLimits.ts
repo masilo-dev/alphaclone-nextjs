@@ -72,20 +72,29 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
     },
 };
 
-export function getPlanLimits(plan: SubscriptionPlan): PlanLimits {
-    return PLAN_LIMITS[plan];
+export function normalizePlanForLimits(rawPlan: string | null | undefined): SubscriptionPlan {
+    const p = String(rawPlan || 'free').trim().toLowerCase();
+    if (p === 'enterprise' || p === 'premium' || p === 'custom') return 'enterprise';
+    if (p === 'pro') return 'pro';
+    if (p === 'starter') return 'starter';
+    return 'free';
+}
+
+export function getPlanLimits(plan: string | null | undefined): PlanLimits {
+    const normalized = normalizePlanForLimits(plan);
+    return PLAN_LIMITS[normalized] || PLAN_LIMITS.free;
 }
 
 // All features are available on all plans — check quotas instead
 export function canAccessFeature(
-    _plan: SubscriptionPlan,
+    _plan: string | null | undefined,
     _feature: keyof PlanLimits
 ): boolean {
     return true;
 }
 
 export function isWithinQuota(
-    plan: SubscriptionPlan,
+    plan: string | null | undefined,
     resource: keyof PlanLimits,
     currentUsage: number
 ): boolean {
@@ -96,7 +105,7 @@ export function isWithinQuota(
 }
 
 export function isWithinLimit(
-    plan: SubscriptionPlan,
+    plan: string | null | undefined,
     resource: 'users' | 'storage' | 'projects',
     currentCount: number
 ): boolean {

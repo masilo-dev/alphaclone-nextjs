@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { validateFileSignature } from '@/lib/security/fileSignatureGuard';
 import {
   ensureInvoiceDocumentsBucket,
   INVOICE_DOCUMENTS_BUCKET,
@@ -86,6 +87,15 @@ export async function POST(
     if (!ALLOWED_MIME_TYPES.has(mimeType)) {
       return NextResponse.json(
         { error: `Unsupported file type (${mimeType}). Allowed: PDF, PNG, JPG, WEBP, CSV, TXT, DOC/DOCX, XLS/XLSX.` },
+        { status: 415 }
+      );
+    }
+
+    try {
+      validateFileSignature(buffer, mimeType);
+    } catch (sigErr: any) {
+      return NextResponse.json(
+        { error: sigErr?.message || 'File content signature does not match declared type', code: 'INVALID_FILE_SIGNATURE' },
         { status: 415 }
       );
     }

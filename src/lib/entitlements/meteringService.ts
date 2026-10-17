@@ -23,7 +23,7 @@ async function loadTenantSnapshot(tenantId: string): Promise<TenantEntitlementSn
   const { data } = await admin
     .from('tenants')
     .select(
-      'id, subscription_plan, subscription_status, created_at, trial_started_at, trial_ends_at, legacy_access_until, stripe_subscription_id',
+      'id, subscription_plan, subscription_status, created_at, trial_started_at, trial_ends_at, legacy_access_until, stripe_subscription_id, current_period_end, cancel_at_period_end',
     )
     .eq('id', tenantId)
     .maybeSingle();
@@ -39,6 +39,8 @@ async function loadTenantSnapshot(tenantId: string): Promise<TenantEntitlementSn
     trialEndsAt: data.trial_ends_at ? new Date(data.trial_ends_at) : null,
     legacyAccessUntil: data.legacy_access_until ? new Date(data.legacy_access_until) : null,
     stripeSubscriptionId: data.stripe_subscription_id || null,
+    currentPeriodEnd: (data as any).current_period_end ? new Date((data as any).current_period_end) : null,
+    cancelAtPeriodEnd: Boolean((data as any).cancel_at_period_end),
   };
 }
 

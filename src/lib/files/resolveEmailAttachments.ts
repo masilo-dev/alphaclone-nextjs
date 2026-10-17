@@ -190,7 +190,7 @@ export async function resolveEmailAttachmentsFromFileIds(
 
     const { data: blob, error } = await supabase.storage.from(row.bucket).download(row.storagePath);
     if (error || !blob) {
-      throw new Error(error?.message || `Could not download ${row.filename}`);
+      throw new Error(`ATTACHMENT_DOWNLOAD_FAILED: Could not download attachment "${row.filename}" from storage (${error?.message || 'missing object'}). Draft has been preserved.`);
     }
     attachments.push({
       filename: row.filename,

@@ -187,3 +187,51 @@ export function getPublicPlanDisplayName(rawPlan: string): string {
   if (normalized === 'pro') return 'Pro';
   return 'Free';
 }
+
+export type FeatureKey =
+  | 'workflows'
+  | 'aiAssistant'
+  | 'videoConferencing'
+  | 'customDomain'
+  | 'mcp'
+  | 'bulkOutreach'
+  | 'advancedAccounting';
+
+export type FeatureEntitlementResult = {
+  allowed: boolean;
+  requiredPlan: NormalizedPlanId;
+  currentPlan: NormalizedPlanId;
+  message: string;
+  upgradeUrl: string;
+};
+
+export function evaluateFeatureEntitlement(params: {
+  rawPlan: string | null | undefined;
+  feature: FeatureKey;
+}): FeatureEntitlementResult {
+  const currentPlan = normalizePlanId(params.rawPlan);
+  const featureRequirements: Record<FeatureKey, NormalizedPlanId> = {
+    workflows: 'free',
+    aiAssistant: 'free',
+    videoConferencing: 'pro',
+    customDomain: 'pro',
+    mcp: 'free',
+    bulkOutreach: 'pro',
+    advancedAccounting: 'pro',
+  };
+
+  const requiredPlan = featureRequirements[params.feature] || 'free';
+  const planWeights: Record<NormalizedPlanId, number> = { free: 1, pro: 2, premium: 3 };
+  const allowed = planWeights[currentPlan] >= planWeights[requiredPlan];
+
+  const upgradeTarget = requiredPlan === 'premium' ? 'Premium' : 'Pro or Premium';
+  return {
+    allowed,
+    requiredPlan,
+    currentPlan,
+    message: allowed
+      ? `Feature ${params.feature} is active on your ${currentPlan.toUpperCase()} plan.`
+      : `Feature ${params.feature} requires ${upgradeTarget} (currently on ${currentPlan.toUpperCase()}). Upgrade to access this feature.`,
+    upgradeUrl: '/billing/upgrade',
+  };
+}

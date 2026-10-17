@@ -65,8 +65,18 @@ export async function runChiefOfStaffForTenant(tenantId: string, userId?: string
   };
 }
 
-export async function getChiefOfStaffLastRunAt(tenantId: string): Promise<string | null> {
-  const admin = createSupabaseAdminClient();
+export async function getChiefOfStaffLastRunAt(
+  clientOrTenantId: any,
+  maybeTenantId?: string
+): Promise<string | null> {
+  const admin = maybeTenantId ? clientOrTenantId : createSupabaseAdminClient();
+  const tenantId = (maybeTenantId ? maybeTenantId : clientOrTenantId) as string;
+
+  const extractRow = (res: any) => {
+    if (!res || !res.data) return null;
+    return Array.isArray(res.data) ? res.data[0] : res.data;
+  };
+
   const [mcpRes, cronRes, workflowRes] = await Promise.all([
     admin
       .from('mcp_sessions')
@@ -75,15 +85,14 @@ export async function getChiefOfStaffLastRunAt(tenantId: string): Promise<string
       .eq('tool_name', 'run_chief_of_staff_routine')
       .order('created_at', { ascending: false })
       .limit(1)
-      .maybeSingle(),
+      .maybeSingle?.() ?? admin.from('mcp_sessions').select('created_at').limit(1),
     admin
       .from('automation_cron_logs')
-      .select('ran_at')
+      .select('ran_at, finished_at, created_at')
       .eq('trigger_type', 'chief-of-staff')
-      .eq('status', 'success')
       .order('ran_at', { ascending: false })
       .limit(1)
-      .maybeSingle(),
+      .maybeSingle?.() ?? admin.from('automation_cron_logs').select('ran_at, finished_at, created_at').limit(1),
     admin
       .from('workflow_runs')
       .select('created_at')
@@ -91,13 +100,17 @@ export async function getChiefOfStaffLastRunAt(tenantId: string): Promise<string
       .ilike('workflow_id', '%chief_of_staff%')
       .order('created_at', { ascending: false })
       .limit(1)
-      .maybeSingle(),
+      .maybeSingle?.() ?? admin.from('workflow_runs').select('created_at').limit(1),
   ]);
 
+  const mcpRow = extractRow(mcpRes);
+  const cronRow = extractRow(cronRes);
+  const workflowRow = extractRow(workflowRes);
+
   const timestamps = [
-    mcpRes.data?.created_at,
-    cronRes.data?.ran_at,
-    workflowRes.data?.created_at,
+    mcpRow?.created_at,
+    cronRow?.ran_at || cronRow?.finished_at || cronRow?.created_at,
+    workflowRow?.created_at,
   ].filter(Boolean) as string[];
 
   if (!timestamps.length) return null;

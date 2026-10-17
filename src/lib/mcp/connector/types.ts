@@ -3,7 +3,7 @@
  * Every connector tool returns a structured JSON envelope.
  */
 
-export type ConnectorRole = 'owner' | 'admin' | 'member' | 'viewer' | 'guest';
+export type ConnectorRole = 'owner' | 'admin' | 'member' | 'viewer' | 'guest' | 'client';
 
 export type ConnectorPermission =
   | 'platform:read'

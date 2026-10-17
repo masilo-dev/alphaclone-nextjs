@@ -61,7 +61,7 @@ export interface SendEmailServerResult {
   deliveredAt?: string | null;
 }
 
-function inferCategory(params: SendEmailServerParams): EmailGatewayCategory {
+export function inferCategory(params: SendEmailServerParams): EmailGatewayCategory {
   if (params.category) return params.category;
   const template = String(params.templateName || '').toLowerCase();
   if (template.includes('invoice') || template.includes('receipt') || template.includes('payment')) return 'invoice_payment';
@@ -72,6 +72,17 @@ function inferCategory(params: SendEmailServerParams): EmailGatewayCategory {
   if (params.isReply) return 'transactional';
   if (params.isPlatformNotification) return 'internal_notification';
   return 'transactional';
+}
+
+export function isImmediateLifecycleNotification(params: SendEmailServerParams): boolean {
+  return (
+    params.internalNotificationKind === 'immediate_exception' ||
+    Boolean((params as any).immediate) ||
+    Boolean((params as any).is_lifecycle_confirmation) ||
+    Boolean(params.auditMetadata?.immediate) ||
+    Boolean(params.auditMetadata?.is_lifecycle_confirmation) ||
+    ['websiteContact', 'taskReminder', 'projectUpdate', 'approvalRequest', 'userInvite'].includes(String(params.templateName || ''))
+  );
 }
 
 function sourceParts(params: SendEmailServerParams): { module: string; action: string } {
@@ -88,13 +99,7 @@ function sourceParts(params: SendEmailServerParams): { module: string; action: s
 export async function sendEmailServer(params: SendEmailServerParams): Promise<SendEmailServerResult> {
   "use step";
   const category = inferCategory(params);
-  const isImmediateLifecycle =
-    params.internalNotificationKind === 'immediate_exception' ||
-    Boolean((params as any).immediate) ||
-    Boolean((params as any).is_lifecycle_confirmation) ||
-    Boolean(params.auditMetadata?.immediate) ||
-    Boolean(params.auditMetadata?.is_lifecycle_confirmation) ||
-    ['websiteContact', 'taskReminder', 'projectUpdate', 'approvalRequest', 'userInvite'].includes(String(params.templateName || ''));
+  const isImmediateLifecycle = isImmediateLifecycleNotification(params);
 
   if (category === 'internal_notification' && !params.internalNotificationKind && !isImmediateLifecycle) {
     return { success: false, error: 'Internal notifications are digest-only unless explicitly classified as an immediate exception.', code: 'DIGEST_REQUIRED' };

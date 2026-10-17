@@ -3,6 +3,7 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 
 import { BrowserManager } from '@/lib/scraper/browserManager';
+import { validateSafeOutgoingUrl } from '@/lib/security/ssrfGuard';
 import {
   RouteAuthError,
   createAdminSupabaseClientOrThrow,
@@ -213,17 +214,19 @@ export async function POST(request: NextRequest) {
 
     await requireTenantAccess(tenantId);
 
-    // Basic URL validation
+    // Comprehensive SSRF and URL validation
     try {
-      const parsedUrl = new URL(url);
-      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-        throw new Error('Unsupported protocol');
-      }
-    } catch {
-      const clientError = CLIENT_ERRORS.NOT_FOUND;
+      validateSafeOutgoingUrl(url);
+    } catch (err: any) {
       return NextResponse.json({
-        error: clientError,
-        clientFriendly: true
+        error: {
+          title: 'Security Block',
+          message: err?.message || 'Destination host is restricted.',
+          suggestion: 'Please provide a valid public web address. Internal network addresses cannot be scraped.',
+          type: 'error',
+        },
+        code: 'SSRF_BLOCKED',
+        clientFriendly: true,
       }, { status: 400 });
     }
 

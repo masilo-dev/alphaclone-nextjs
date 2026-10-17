@@ -27,6 +27,27 @@ function readString(value: unknown): string | undefined {
   return trimmed || undefined;
 }
 
+export function resolveTenantPostalAddress(tenant?: Record<string, unknown> | null): string {
+  if (!tenant || typeof tenant !== 'object') {
+    return '';
+  }
+  const settings = (tenant.settings || {}) as Record<string, unknown>;
+  const brandingSettings = (settings.branding || settings.publicBranding || {}) as Record<string, unknown>;
+  const extracted = extractTenantBranding(tenant as any);
+
+  return (
+    readString(tenant.business_address) ||
+    readString(brandingSettings.business_address) ||
+    readString(brandingSettings.businessAddress) ||
+    readString(brandingSettings.postalAddress) ||
+    readString(brandingSettings.address) ||
+    readString(settings.business_address) ||
+    readString(settings.address) ||
+    readString((extracted as any)?.address) ||
+    ''
+  );
+}
+
 export function buildPlatformEmailBranding(tenantName?: string): TenantEmailBrandingProfile {
   return {
     tenantId: 'platform',
@@ -92,15 +113,7 @@ export async function loadTenantEmailBrandingProfile(
   const website = readString(brandingSettings.website) || readString(tenant.domain) || readString(emailSettings.website);
   const supportEmail = readString(emailSettings.supportEmail) || readString(extracted.supportEmail);
   const replyTo = readString(emailSettings.replyTo) || readString(emailSettings.reply_to) || supportEmail;
-  const address =
-    readString((tenant as any)?.business_address) ||
-    readString(brandingSettings.business_address) ||
-    readString(brandingSettings.businessAddress) ||
-    readString(brandingSettings.postalAddress) ||
-    readString(brandingSettings.address) ||
-    readString(settings.business_address as string) ||
-    readString(settings.address as string) ||
-    readString((extracted as any).address);
+  const address = resolveTenantPostalAddress(tenant);
 
   const hasTenantBrand = Boolean(logoUrl || address || website || supportEmail);
 

@@ -4,6 +4,8 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 import { sendWithProviderSdk } from '@/lib/email/providerSdk';
 
+import { getPlanLimits } from '@/lib/planLimits';
+
 type Context = { params: Promise<{ tenantId: string }> };
 const adminRoles = ['owner', 'admin', 'tenant_admin', 'super_admin'];
 
@@ -18,8 +20,27 @@ export async function POST(req: NextRequest, context: Context) {
     const normalizedEmail = email.toLowerCase();
     const admin = createSupabaseAdminClient();
 
-    const { data: tenant, error: tenantError } = await admin.from('tenants').select('name').eq('id', tenantId).single();
+    const { data: tenant, error: tenantError } = await admin.from('tenants').select('name, subscription_plan').eq('id', tenantId).single();
     if (tenantError) throw tenantError;
+
+    if (role !== 'client') {
+      const planLimits = getPlanLimits(tenant?.subscription_plan);
+      if (planLimits.users !== -1) {
+        const { count: memberCount } = await admin
+          .from('tenant_users')
+          .select('user_id', { count: 'exact', head: true })
+          .eq('tenant_id', tenantId)
+          .neq('role', 'client');
+        if ((memberCount || 0) >= planLimits.users) {
+          return NextResponse.json({
+            error: `Seat limit reached (${memberCount}/${planLimits.users} users) on your ${(tenant?.subscription_plan || 'free').toUpperCase()} plan. Upgrade to invite more team members.`,
+            code: 'SEAT_LIMIT_EXCEEDED',
+            upgradeUrl: '/billing/upgrade',
+          }, { status: 403 });
+        }
+      }
+    }
+
     const { data: existingUser } = await admin.from('profiles').select('id').ilike('email', normalizedEmail).maybeSingle();
     if (existingUser?.id) {
       const { data: membership } = await admin.from('tenant_users').select('user_id').eq('tenant_id', tenantId).eq('user_id', existingUser.id).maybeSingle();

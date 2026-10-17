@@ -88,6 +88,23 @@ const profileCache = new Map<string, CachedProfile>();
 const membershipCache = new Map<string, { membership: TenantMembership; cachedAt: number }>();
 const AUTH_CACHE_TTL_MS = 15_000;
 
+export function invalidateMembershipCache(userId?: string, tenantId?: string) {
+    if (userId && tenantId) {
+        membershipCache.delete(`${userId}:${tenantId.trim()}`);
+    } else if (userId) {
+        for (const key of membershipCache.keys()) {
+            if (key.startsWith(`${userId}:`)) membershipCache.delete(key);
+        }
+    } else if (tenantId) {
+        const clean = tenantId.trim();
+        for (const key of membershipCache.keys()) {
+            if (key.endsWith(`:${clean}`)) membershipCache.delete(key);
+        }
+    } else {
+        membershipCache.clear();
+    }
+}
+
 const pendingAuthLookups = new Map<string, Promise<unknown>>();
 async function singleFlightAuthLookup<T>(key: string, lookup: () => Promise<T>): Promise<T> {
     const existing = pendingAuthLookups.get(key);

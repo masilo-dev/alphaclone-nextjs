@@ -138,15 +138,22 @@ const ROLE_PERMISSIONS: Record<ConnectorRole, ConnectorPermission[]> = {
     'finance:read',
   ],
   guest: ['platform:read', 'crm:read', 'reports:read'],
+  client: [
+    'documents:read',
+    'contracts:read',
+    'finance:read',
+    'support:read',
+  ],
 };
 
 function normalizeRole(raw: unknown): ConnectorRole {
-  const role = String(raw || 'member').toLowerCase();
-  if (role === 'owner' || role === 'admin' || role === 'member' || role === 'viewer' || role === 'guest') {
+  const role = String(raw || 'viewer').toLowerCase();
+  if (role === 'owner' || role === 'admin' || role === 'member' || role === 'viewer' || role === 'guest' || role === 'client') {
     return role;
   }
+  if (role === 'customer' || role === 'portal') return 'client';
   if (role === 'super_admin' || role === 'superadmin' || role === 'tenant_admin') return 'owner';
-  return 'member';
+  return 'viewer';
 }
 
 async function isTenantOwner(tenantId: string, userId: string): Promise<boolean> {
